@@ -1,0 +1,118 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>pl.grzeslowski.supla</groupId>
+  <artifactId>openhab</artifactId>
+  <version>0.1.0-SNAPSHOT</version>
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <maven.compiler.source>17</maven.compiler.source>
+    <maven.compiler.target>17</maven.compiler.target>
+
+    <openhab.version>4.1.0</openhab.version>
+  </properties>
+
+  <dependencies>
+    <!-- ✅ OPENHAB -->
+    <dependency>
+      <groupId>org.openhab.core.bom</groupId>
+      <artifactId>org.openhab.core.bom.compile</artifactId>
+      <type>pom</type>
+      <scope>provided</scope>
+      <version>${openhab.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.openhab.core.bom</groupId>
+      <artifactId>org.openhab.core.bom.openhab-core</artifactId>
+      <type>pom</type>
+      <scope>provided</scope>
+      <version>${openhab.version}</version>
+    </dependency>
+    <!-- ❌ OPENHAB -->
+  </dependencies>
+
+  <build>
+    <plugins>
+    <plugin>
+      <groupId>biz.aQute.bnd</groupId>
+      <artifactId>bnd-maven-plugin</artifactId>
+      <executions>
+        <execution>
+          <goals>
+            <goal>bnd-process</goal>
+          </goals>
+          <configuration>
+            <bnd>Bundle-SymbolicName: ${project.artifactId}
+              Automatic-Module-Name: ${def;bsn}
+              Import-Package: \\
+              io.swagger.v3.oas.annotations.*;resolution:=optional,\\
+              javax.annotation.security.*;resolution:=optional,\\
+              org.eclipse.jdt.annotation.*;resolution:=optional,\\
+              org.openhab.core.automation.annotation.*;resolution:=optional;version=!,\\
+              org.openhab.*;version=!,\\
+              com.google.common.*;version="14.0",\\
+              ,\\
+              *
+              -exportcontents: \\
+              !*.internal.*,\\
+              !*.impl.*, \\
+              org.openhab.*, \\
+
+              -noimportjava: true
+              -sources: false
+              -removeheaders: Require-Capability,Provide-Capability
+              -contract: *
+              -includeresource: -${.}/NOTICE, -${.}/*.xsd
+              -fixupmessages: "Classes found in the wrong directory"; is:=warning</bnd>
+          </configuration>
+        </execution>
+      </executions>
+    </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-source-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>attach-sources</id>
+            <goals>
+              <goal>jar</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+
+  <repositories>
+    <repository>
+      <id>jcenter</id>
+      <name>JCenter Repository</name>
+      <url>https://jcenter.bintray.com</url>
+      <releases>
+        <enabled>true</enabled>
+        <updatePolicy>never</updatePolicy>
+      </releases>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </repository>
+    <repository>
+      <id>openhab-artifactory-release</id>
+      <name>JFrog Artifactory Repository</name>
+      <url>https://openhab.jfrog.io/openhab/libs-release</url>
+      <releases>
+        <enabled>true</enabled>
+        <updatePolicy>never</updatePolicy>
+      </releases>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </repository>
+  </repositories>
+</project>
