@@ -307,7 +307,7 @@ org.openhab.*
                     <formats>
                         <format>
                             <includes>
-                                <include>**.*</include>
+                                <include>**/*.*</include>
                             </includes>
                             <excludes>
                                 <exclude>pom.xml</exclude>
