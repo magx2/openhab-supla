@@ -11,9 +11,9 @@
 package pl.grzeslowski.supla.openhab.internal.server;
 
 import static java.lang.String.valueOf;
-import static java.util.Objects.requireNonNull;
 import static pl.grzeslowski.supla.openhab.internal.SuplaBindingConstants.Channels.*;
 
+import lombok.RequiredArgsConstructor;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
 import org.openhab.core.thing.Channel;
@@ -26,14 +26,10 @@ import pl.grzeslowski.supla.openhab.internal.SuplaBindingConstants;
 
 /** @author Grzeslowski - Initial contribution */
 @NonNullByDefault
+@RequiredArgsConstructor
 public class ChannelCallback implements ChannelValueSwitch.Callback<@Nullable Channel> {
     private final ThingUID thingUID;
     private final int number;
-
-    public ChannelCallback(final ThingUID thingUID, final int number) {
-        this.thingUID = requireNonNull(thingUID);
-        this.number = number;
-    }
 
     private ChannelUID createChannelUid() {
         return new ChannelUID(thingUID, valueOf(number));

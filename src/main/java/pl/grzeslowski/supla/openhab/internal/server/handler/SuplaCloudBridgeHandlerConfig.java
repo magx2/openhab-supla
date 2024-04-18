@@ -10,74 +10,33 @@
  */
 package pl.grzeslowski.supla.openhab.internal.server.handler;
 
-import static java.util.Objects.requireNonNull;
-
 import java.math.BigDecimal;
+import lombok.Data;
+import lombok.ToString;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
 import pl.grzeslowski.supla.openhab.internal.SuplaBindingConstants;
 
 /** @author Grzeslowski - Initial contribution */
 @NonNullByDefault
+@Data
 public class SuplaCloudBridgeHandlerConfig {
     @Nullable
     private BigDecimal serverAccessId;
 
     @Nullable
+    @ToString.Exclude
     private String serverAccessIdPassword;
 
     @Nullable
     private String email;
 
     @Nullable
+    @ToString.Exclude
     private String authKey;
 
     private BigDecimal port = new BigDecimal(SuplaBindingConstants.DEFAULT_PORT);
     private boolean ssl = true;
-
-    @Nullable
-    public Integer getServerAccessId() {
-        return serverAccessId != null ? serverAccessId.intValue() : null;
-    }
-
-    public void setServerAccessId(BigDecimal serverAccessId) {
-        this.serverAccessId = serverAccessId;
-    }
-
-    @Nullable
-    public String getServerAccessIdPassword() {
-        return serverAccessIdPassword;
-    }
-
-    public void setServerAccessIdPassword(String serverAccessIdPassword) {
-        this.serverAccessIdPassword = serverAccessIdPassword;
-    }
-
-    @Nullable
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    @Nullable
-    public String getAuthKey() {
-        return authKey;
-    }
-
-    public void setAuthKey(String authKey) {
-        this.authKey = authKey;
-    }
-
-    public BigDecimal getPort() {
-        return requireNonNull(port);
-    }
-
-    public void setPort(BigDecimal port) {
-        this.port = port;
-    }
 
     public boolean isServerAuth() {
         return serverAccessId != null && serverAccessIdPassword != null;
@@ -85,23 +44,5 @@ public class SuplaCloudBridgeHandlerConfig {
 
     public boolean isEmailAuth() {
         return email != null && authKey != null;
-    }
-
-    public boolean isSsl() {
-        return ssl;
-    }
-
-    public void setSsl(boolean ssl) {
-        this.ssl = ssl;
-    }
-
-    @Override
-    public String toString() {
-        return "SuplaCloudBridgeHandlerConfig{" + "serverAccessId="
-                + serverAccessId + ", serverAccessIdPassword='<SECRET>'"
-                + ", email='"
-                + email + '\'' + ", authKey='<SECRET>'"
-                + ", port="
-                + port + '}';
     }
 }

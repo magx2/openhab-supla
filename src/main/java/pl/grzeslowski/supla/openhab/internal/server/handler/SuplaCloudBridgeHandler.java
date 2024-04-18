@@ -101,7 +101,8 @@ public class SuplaCloudBridgeHandler extends BaseBridgeHandler {
             updateStatus(OFFLINE, CONFIGURATION_ERROR, "You need to pass port!");
             return;
         }
-        var serverAccessId = config.getServerAccessId();
+        var serverAccessId =
+                config.getServerAccessId() != null ? config.getServerAccessId().intValue() : null;
         var serverAccessIdPassword = config.getServerAccessIdPassword();
         var email = config.getEmail();
         var authKey = config.getAuthKey();
