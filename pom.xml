@@ -311,6 +311,10 @@ org.openhab.*
                             </includes>
                             <excludes>
                                 <exclude>pom.xml</exclude>
+                                <exclude>target/**</exclude>
+                                <exclude>.idea/**</exclude>
+                                <exclude>src/main/java/**/*.java</exclude>
+                                <exclude>src/test/java/**/*.java</exclude>
                             </excludes>
                             <trimTrailingWhitespace/>
                             <endWithNewline/>
@@ -320,12 +324,6 @@ org.openhab.*
                             </indent>
                         </format>
                     </formats>
-                    <markdown>
-                        <includes>
-                            <include>**/*.md</include>
-                        </includes>
-                        <flexmark/>
-                    </markdown>
                     <java>
                         <importOrder/>
                         <removeUnusedImports/>
