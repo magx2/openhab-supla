@@ -10,6 +10,8 @@
  */
 package pl.grzeslowski.supla.openhab.internal.server;
 
+import static org.openhab.core.types.UnDefType.NULL;
+
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
 import org.openhab.core.library.types.*;
@@ -21,37 +23,38 @@ import pl.grzeslowski.jsupla.protocoljava.api.channels.values.*;
 public class ChannelValueToState implements ChannelValueSwitch.Callback<State> {
     @Override
     public State onDecimalValue(@Nullable final DecimalValue decimalValue) {
-        Number value;
         if (decimalValue == null) {
-            value = 0;
-        } else {
-            value = decimalValue.value;
+            return NULL;
         }
-        return new DecimalType(value);
+        return new DecimalType(decimalValue.value);
     }
 
     @Override
     public State onOnOff(@Nullable final OnOff onOff) {
-        if (onOff == OnOff.ON) {
-            return OnOffType.ON;
-        } else {
-            return OnOffType.OFF;
+        if (onOff == null) {
+            return NULL;
         }
+        return switch (onOff) {
+            case ON -> OnOffType.ON;
+            case OFF -> OnOffType.OFF;
+        };
     }
 
     @Override
     public State onOpenClose(@Nullable final OpenClose openClose) {
-        if (openClose == OpenClose.OPEN) {
-            return OpenClosedType.OPEN;
-        } else {
-            return OpenClosedType.CLOSED;
+        if (openClose == null) {
+            return NULL;
         }
+        return switch (openClose) {
+            case OPEN -> OpenClosedType.OPEN;
+            case CLOSE -> OpenClosedType.CLOSED;
+        };
     }
 
     @Override
     public State onPercentValue(@Nullable final PercentValue percentValue) {
         if (percentValue == null) {
-            return PercentType.ZERO;
+            return NULL;
         }
         return new PercentType(percentValue.getValue());
     }
@@ -59,51 +62,44 @@ public class ChannelValueToState implements ChannelValueSwitch.Callback<State> {
     @Override
     public State onRgbValue(@Nullable final RgbValue rgbValue) {
         if (rgbValue == null) {
-            return HSBType.fromRGB(0, 0, 0);
+            return NULL;
         }
         return HSBType.fromRGB(rgbValue.red, rgbValue.green, rgbValue.blue);
     }
 
     @Override
     public State onStoppableOpenClose(@Nullable final StoppableOpenClose stoppableOpenClose) {
-        if (stoppableOpenClose == StoppableOpenClose.OPEN) {
-            return OpenClosedType.OPEN;
-        } else {
-            return OpenClosedType.CLOSED;
+        if (stoppableOpenClose == null) {
+            return NULL;
         }
+        return switch (stoppableOpenClose) {
+            case OPEN -> OpenClosedType.OPEN;
+            case CLOSE, STOP -> OpenClosedType.CLOSED;
+        };
     }
 
     @Override
     public State onTemperatureValue(@Nullable final TemperatureValue temperatureValue) {
-        Number temperature;
         if (temperatureValue == null) {
-            temperature = 0;
-        } else {
-            temperature = temperatureValue.temperature;
+            return NULL;
         }
-        return new DecimalType(temperature);
+        return new DecimalType(temperatureValue.temperature);
     }
 
     @Override
     public State onTemperatureAndHumidityValue(
             @Nullable final TemperatureAndHumidityValue temperatureAndHumidityValue) {
-        Number temperature;
         if (temperatureAndHumidityValue == null) {
-            temperature = 0;
-        } else {
-            temperature = temperatureAndHumidityValue.temperature;
+            return NULL;
         }
-        return new DecimalType(temperature); // TODO support humidity also
+        return new DecimalType(temperatureAndHumidityValue.temperature); // TODO support humidity also
     }
 
     @Override
     public State onUnknownValue(@Nullable final UnknownValue unknownValue) {
-        String message;
         if (unknownValue == null) {
-            message = "null";
-        } else {
-            message = unknownValue.message;
+            return NULL;
         }
-        return StringType.valueOf(message);
+        return StringType.valueOf(unknownValue.message);
     }
 }
