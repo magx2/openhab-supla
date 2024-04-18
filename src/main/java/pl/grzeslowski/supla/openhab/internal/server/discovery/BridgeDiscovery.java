@@ -52,6 +52,7 @@ public class BridgeDiscovery extends AbstractDiscoveryService {
         final String label = "Supla Server";
         var discoveryResult = DiscoveryResultBuilder.create(thingUID)
                 .withProperties(buildThingProperties())
+                .withRepresentationProperty(CONFIG_PORT)
                 .withLabel(label)
                 .build();
         logger.debug("Adding server to discovery; {}", label);
