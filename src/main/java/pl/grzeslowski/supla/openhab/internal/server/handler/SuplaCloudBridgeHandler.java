@@ -13,14 +13,19 @@ package pl.grzeslowski.supla.openhab.internal.server.handler;
 import static java.util.Objects.requireNonNull;
 import static org.openhab.core.thing.ThingStatus.OFFLINE;
 import static org.openhab.core.thing.ThingStatus.ONLINE;
+import static org.openhab.core.thing.ThingStatusDetail.COMMUNICATION_ERROR;
 import static org.openhab.core.thing.ThingStatusDetail.CONFIGURATION_ERROR;
 import static pl.grzeslowski.jsupla.server.api.ServerProperties.fromList;
 import static pl.grzeslowski.jsupla.server.netty.api.NettyServerFactory.PORT;
 import static pl.grzeslowski.jsupla.server.netty.api.NettyServerFactory.SSL_CTX;
+import static pl.grzeslowski.supla.openhab.internal.Documentation.SSL_PROBLEM;
+import static pl.grzeslowski.supla.openhab.internal.SuplaBindingConstants.BINDING_ID;
+import static pl.grzeslowski.supla.openhab.internal.SuplaBindingConstants.CONNECTED_DEVICES_CHANNEL_ID;
 
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.util.SelfSignedCertificate;
+import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.util.Arrays;
 import java.util.concurrent.ScheduledExecutorService;
@@ -32,7 +37,6 @@ import org.openhab.core.common.ThreadPoolManager;
 import org.openhab.core.library.types.DecimalType;
 import org.openhab.core.thing.Bridge;
 import org.openhab.core.thing.ChannelUID;
-import org.openhab.core.thing.ThingStatusDetail;
 import org.openhab.core.thing.binding.BaseBridgeHandler;
 import org.openhab.core.types.Command;
 import org.slf4j.Logger;
@@ -45,7 +49,6 @@ import pl.grzeslowski.jsupla.server.api.Server;
 import pl.grzeslowski.jsupla.server.api.ServerFactory;
 import pl.grzeslowski.jsupla.server.api.ServerProperties;
 import pl.grzeslowski.jsupla.server.netty.api.NettyServerFactory;
-import pl.grzeslowski.supla.openhab.internal.SuplaBindingConstants;
 import pl.grzeslowski.supla.openhab.internal.server.SuplaChannel;
 import pl.grzeslowski.supla.openhab.internal.server.SuplaDeviceRegistry;
 import pl.grzeslowski.supla.openhab.internal.server.discovery.ServerDiscoveryService;
@@ -53,6 +56,7 @@ import pl.grzeslowski.supla.openhab.internal.server.discovery.ServerDiscoverySer
 /** @author Grzeslowski - Initial contribution */
 @NonNullByDefault
 public class SuplaCloudBridgeHandler extends BaseBridgeHandler {
+    private static final int PROPER_AES_KEY_SIZE = 2147483647;
     private Logger logger = LoggerFactory.getLogger(SuplaCloudBridgeHandler.class);
     private final SuplaDeviceRegistry suplaDeviceRegistry;
 
@@ -71,36 +75,64 @@ public class SuplaCloudBridgeHandler extends BaseBridgeHandler {
 
     @Override
     public void initialize() {
-        updateConnectedDevices(0);
-        final ServerFactory factory = buildServerFactory();
         try {
-            var config = this.getConfigAs(SuplaCloudBridgeHandlerConfig.class);
-            if (!config.isValid()) {
-                updateStatus(OFFLINE, CONFIGURATION_ERROR, "Configuration is not correct!");
-                return;
-            }
-            var serverAccessId = config.getServerAccessId();
-            var serverAccessIdPassword = config.getServerAccessIdPassword();
-            var email = config.getEmail();
-            var authKey = config.getAuthKey();
-            var port = config.getPort().intValue();
-
-            var scheduledPool = ThreadPoolManager.getScheduledPool(SuplaBindingConstants.BINDING_ID + "." + port);
-
-            var localServer = server = factory.createNewServer(buildServerProperties(port));
-            localServer
-                    .getNewChannelsPipe()
-                    .subscribe(
-                            o -> channelConsumer(
-                                    o, serverAccessId, serverAccessIdPassword, email, authKey, scheduledPool),
-                            this::errorOccurredInChannel);
-
-            logger = LoggerFactory.getLogger(SuplaCloudBridgeHandler.class.getName() + "." + port);
-            logger.debug("jSuplaServer running on port {}", port);
-            updateStatus(ONLINE);
+            internalInitialize();
         } catch (CertificateException | SSLException ex) {
+            logger.debug("Problem with generating certificates! ", ex);
+            updateStatus(
+                    OFFLINE,
+                    CONFIGURATION_ERROR,
+                    "Problem with generating certificates! " + ex.getLocalizedMessage() + ". See: " + SSL_PROBLEM);
+        } catch (Exception ex) {
+            logger.debug("Cannot start server! ", ex);
             updateStatus(OFFLINE, CONFIGURATION_ERROR, "Cannot start server! " + ex.getLocalizedMessage());
         }
+    }
+
+    private void internalInitialize() throws NoSuchAlgorithmException, CertificateException, SSLException {
+        updateConnectedDevices(0);
+        var factory = buildServerFactory();
+        var config = this.getConfigAs(SuplaCloudBridgeHandlerConfig.class);
+        if (!config.isServerAuth() && !config.isEmailAuth()) {
+            updateStatus(OFFLINE, CONFIGURATION_ERROR, "You need to pass either server auth or email auth!");
+            return;
+        }
+        if (config.getPort().intValue() <= 0) {
+            updateStatus(OFFLINE, CONFIGURATION_ERROR, "You need to pass port!");
+            return;
+        }
+        var serverAccessId = config.getServerAccessId();
+        var serverAccessIdPassword = config.getServerAccessIdPassword();
+        var email = config.getEmail();
+        var authKey = config.getAuthKey();
+        var port = config.getPort().intValue();
+
+        logger = LoggerFactory.getLogger(SuplaCloudBridgeHandler.class.getName() + "." + port);
+
+        var scheduledPool = ThreadPoolManager.getScheduledPool(BINDING_ID + "." + port);
+
+        if (config.isSsl()) {
+            var maxKeySize = javax.crypto.Cipher.getMaxAllowedKeyLength("AES");
+            if (maxKeySize < PROPER_AES_KEY_SIZE) {
+                logger.warn(
+                        "AES key size is too small, {} < {}! Probably you need to enable unlimited crypto. See: {}",
+                        maxKeySize,
+                        PROPER_AES_KEY_SIZE,
+                        SSL_PROBLEM);
+            }
+        } else {
+            logger.info("Disabling SSL is not supported");
+        }
+
+        var localServer = server = factory.createNewServer(buildServerProperties(port));
+        localServer
+                .getNewChannelsPipe()
+                .subscribe(
+                        o -> channelConsumer(o, serverAccessId, serverAccessIdPassword, email, authKey, scheduledPool),
+                        this::errorOccurredInChannel);
+
+        logger.debug("jSuplaServer running on port {}", port);
+        updateStatus(ONLINE);
     }
 
     private void channelConsumer(
@@ -119,8 +151,8 @@ public class SuplaCloudBridgeHandler extends BaseBridgeHandler {
             final Channel channel,
             @Nullable Integer serverAccessId,
             @Nullable String serverAccessIdPassword,
-            @Nullable final String email,
-            @Nullable final String authKey,
+            @Nullable String email,
+            @Nullable String authKey,
             final ScheduledExecutorService scheduledPool) {
         logger.debug("New channel {}", channel);
         var jSuplaChannel = new SuplaChannel(
@@ -140,9 +172,7 @@ public class SuplaCloudBridgeHandler extends BaseBridgeHandler {
     private void errorOccurredInChannel(Throwable ex) {
         logger.error("Error occurred in server pipe", ex);
         updateStatus(
-                OFFLINE,
-                ThingStatusDetail.COMMUNICATION_ERROR,
-                "Error occurred in server pipe. Message: " + ex.getLocalizedMessage());
+                OFFLINE, COMMUNICATION_ERROR, "Error occurred in server pipe. Message: " + ex.getLocalizedMessage());
     }
 
     public void completedChannel() {
@@ -156,7 +186,7 @@ public class SuplaCloudBridgeHandler extends BaseBridgeHandler {
     }
 
     private void updateConnectedDevices(int numberOfConnectedDevices) {
-        updateState(SuplaBindingConstants.CONNECTED_DEVICES_CHANNEL_ID, new DecimalType(numberOfConnectedDevices));
+        updateState(CONNECTED_DEVICES_CHANNEL_ID, new DecimalType(numberOfConnectedDevices));
     }
 
     private ServerFactory buildServerFactory() {
@@ -175,7 +205,6 @@ public class SuplaCloudBridgeHandler extends BaseBridgeHandler {
 
     @Override
     public void dispose() {
-        super.dispose();
         var local = server;
         if (local != null) {
             try {
@@ -186,6 +215,8 @@ public class SuplaCloudBridgeHandler extends BaseBridgeHandler {
                 server = null;
             }
         }
+        logger = LoggerFactory.getLogger(SuplaCloudBridgeHandler.class);
+        super.dispose();
     }
 
     @Override

@@ -1,4 +1,4 @@
-# Supla ❤️ Open HAB 
+# Supla ❤️ Open HAB
 
 ## FAQ
 

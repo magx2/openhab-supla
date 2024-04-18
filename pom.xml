@@ -46,6 +46,11 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xs
 	<version>1.8.3</version>
 	<scope>compile</scope>
 	</dependency>
+	<dependency>
+		<groupId>org.bouncycastle</groupId>
+		<artifactId>bcprov-jdk18on</artifactId>
+		<version>1.76</version>
+	</dependency>
 	<!-- ❌ JSupla -->
 	<!-- ✅ OPENHAB -->
 	<dependency>
@@ -188,7 +193,6 @@ Import-Package: !com.aayushatharva.*, \
 	!kotlin.*, \
 	!lzma.*, \
 	!net.jpountz.*, \
-	!org.bouncycastle.*, \
 	!org.conscrypt, \
 	!org.eclipse.jetty.*, \
 	!org.jboss.marshalling, \
@@ -216,7 +220,10 @@ common-*.jar;lib:=true,\
 server-*.jar;lib:=true,\
 reactor-*.jar;lib:=true,\
 threetenbp-*.jar;lib:=true,\
-gson-*.jar;lib:=true
+gson-*.jar;lib:=true,\
+bcpkix-jdk18on-*.jar;lib:=true,\
+bcprov-jdk18on-*.jar;lib:=true,\
+bcutil-jdk18on-*.jar;lib:=true
 -exportcontents: \
 !*.internal.*,\
 !*.impl.*, \
