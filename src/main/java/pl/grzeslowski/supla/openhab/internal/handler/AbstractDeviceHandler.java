@@ -77,11 +77,11 @@ public abstract class AbstractDeviceHandler extends BaseThingHandler {
                         channelUID);
             }
         } catch (Exception ex) {
-            throw new RuntimeException(
-                    "Error occurred while handling command `" + command + "` ("
-                            + command.getClass().getSimpleName() + ") " + //
-                            "on channel `"
-                            + channelUID + "`!",
+            logger.error(
+                    "Error occurred while handling command `{}` ({}) on channel `{}`!",
+                    command,
+                    command.getClass().getSimpleName(),
+                    channelUID,
                     ex);
         }
     }
