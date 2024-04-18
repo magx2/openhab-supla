@@ -53,22 +53,22 @@ public abstract class AbstractDeviceHandler extends BaseThingHandler {
         try {
             if (command instanceof RefreshType) {
                 handleRefreshCommand(channelUID);
-            } else if (command instanceof OnOffType) {
-                handleOnOffCommand(channelUID, (OnOffType) command);
-            } else if (command instanceof UpDownType) {
-                handleUpDownCommand(channelUID, (UpDownType) command);
-            } else if (command instanceof HSBType) {
-                handleHsbCommand(channelUID, (HSBType) command);
-            } else if (command instanceof OpenClosedType) {
-                handleOpenClosedCommand(channelUID, (OpenClosedType) command);
-            } else if (command instanceof PercentType) {
-                handlePercentCommand(channelUID, (PercentType) command);
-            } else if (command instanceof DecimalType) {
-                handleDecimalCommand(channelUID, (DecimalType) command);
-            } else if (command instanceof StopMoveType) {
-                handleStopMoveTypeCommand(channelUID, (StopMoveType) command);
-            } else if (command instanceof StringType) {
-                handleStringCommand(channelUID, (StringType) command);
+            } else if (command instanceof OnOffType onOffValue) {
+                handleOnOffCommand(channelUID, onOffValue);
+            } else if (command instanceof UpDownType upDownValue) {
+                handleUpDownCommand(channelUID, upDownValue);
+            } else if (command instanceof HSBType hsBValue) {
+                handleHsbCommand(channelUID, hsBValue);
+            } else if (command instanceof OpenClosedType openClosedValue) {
+                handleOpenClosedCommand(channelUID, openClosedValue);
+            } else if (command instanceof PercentType percentValue) {
+                handlePercentCommand(channelUID, percentValue);
+            } else if (command instanceof DecimalType decimalValue) {
+                handleDecimalCommand(channelUID, decimalValue);
+            } else if (command instanceof StopMoveType stopMoveValue) {
+                handleStopMoveTypeCommand(channelUID, stopMoveValue);
+            } else if (command instanceof StringType stringValue) {
+                handleStringCommand(channelUID, stringValue);
             } else {
                 logger.warn(
                         "Does not know how to handle command `{}` ({}) on channel `{}`!",
