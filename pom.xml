@@ -258,9 +258,31 @@ org.openhab.*
 		<artifactId>spotless-maven-plugin</artifactId>
 		<version>2.43.0</version>
 		<configuration>
+            <pom>
+                <includes>
+                    <include>pom.xml</include>
+                </includes>
+                <sortPom>
+                    <predefinedSortOrder>recommended_2008_06</predefinedSortOrder>
+                    <sortDependencies/>
+                    <sortDependencyManagement/>
+                    <sortDependencyExclusions/>
+                    <sortPlugins/>
+                    <sortProperties>true</sortProperties>
+                    <sortExecutions>true</sortExecutions>
+                    <nrOfIndentSpace>4</nrOfIndentSpace>
+                    <keepBlankLines>true</keepBlankLines>
+                    <spaceBeforeCloseEmptyElement>false</spaceBeforeCloseEmptyElement>
+                    <expandEmptyElements>false</expandEmptyElements>
+                    <encoding>${project.build.sourceEncoding}</encoding>
+                </sortPom>
+            </pom>
 		<formats>
 			<format>
 			<includes><include>**.*</include></includes>
+				<excludes>
+					<exclude>pom.xml</exclude>
+				</excludes>
 			<trimTrailingWhitespace />
 			<endWithNewline />
 			<indent>
@@ -268,9 +290,6 @@ org.openhab.*
 			<spacesPerTab>4</spacesPerTab>
 			</indent></format>
 		</formats>
-		<pom>
-			<sortPom />
-		</pom>
 		<markdown>
 			<includes>
 			<include>**/*.md</include>
