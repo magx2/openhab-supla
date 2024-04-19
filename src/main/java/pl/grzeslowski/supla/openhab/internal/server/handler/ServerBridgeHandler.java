@@ -110,11 +110,7 @@ public class ServerBridgeHandler extends BaseBridgeHandler {
             updateStatus(OFFLINE, CONFIGURATION_ERROR, "You need to pass port!");
             return;
         }
-        var serverAccessId =
-                config.getServerAccessId() != null ? config.getServerAccessId().intValue() : null;
-        var serverAccessIdPassword = config.getServerAccessIdPassword();
-        var email = config.getEmail();
-        var authKey = config.getAuthKey();
+        var authData = buildAuthData(config);
         var port = config.getPort().intValue();
         var protocols =
                 stream(config.getProtocols().split(",")).map(String::trim).collect(toSet());
@@ -172,45 +168,40 @@ public class ServerBridgeHandler extends BaseBridgeHandler {
         var localServer = server = factory.createNewServer(buildServerProperties(port, protocols));
         newChannelsPipeline = localServer
                 .getNewChannelsPipe()
-                .subscribe(
-                        o -> channelConsumer(o, serverAccessId, serverAccessIdPassword, email, authKey, scheduledPool),
-                        this::errorOccurredInChannel);
+                .subscribe(o -> channelConsumer(o, authData, scheduledPool), this::errorOccurredInChannel);
 
         logger.debug("jSuplaServer running on port {}", port);
         updateStatus(ONLINE);
         updateConnectedDevices(0);
     }
 
-    private void channelConsumer(
-            Channel channel,
-            @Nullable Integer serverAccessId,
-            @Nullable String serverAccessIdPassword,
-            @Nullable String email,
-            @Nullable String authKey,
-            @NonNull ScheduledExecutorService scheduledPool) {
-        logger.debug("Device connected");
-        changeNumberOfConnectedDevices(1);
-        newChannel(channel, serverAccessId, serverAccessIdPassword, email, authKey, scheduledPool);
+    private static AuthData buildAuthData(ServerBridgeHandlerConfig config) {
+        AuthData.@Nullable LocationAuthData locationAuthData;
+        if (config.getServerAccessId() != null && config.getServerAccessIdPassword() != null) {
+            locationAuthData = new AuthData.LocationAuthData(
+                    config.getServerAccessId().intValue(), config.getServerAccessIdPassword());
+        } else {
+            locationAuthData = null;
+        }
+        AuthData.@Nullable EmailAuthData emailAuthData;
+        if (config.getEmail() != null && config.getAuthKey() != null) {
+            emailAuthData = new AuthData.EmailAuthData(config.getEmail(), config.getAuthKey());
+        } else {
+            emailAuthData = null;
+        }
+        return new AuthData(locationAuthData, emailAuthData);
     }
 
-    private void newChannel(
-            final Channel channel,
-            @Nullable Integer serverAccessId,
-            @Nullable String serverAccessIdPassword,
-            @Nullable String email,
-            @Nullable String authKey,
-            @NonNull ScheduledExecutorService scheduledPool) {
+    private void channelConsumer(Channel channel, AuthData authData, @NonNull ScheduledExecutorService scheduledPool) {
+        logger.debug("Device connected");
+        changeNumberOfConnectedDevices(1);
+        newChannel(channel, authData, scheduledPool);
+    }
+
+    private void newChannel(Channel channel, AuthData authData, @NonNull ScheduledExecutorService scheduledPool) {
         logger.debug("New channel {}", channel);
         var jSuplaChannel = new ServerChannel(
-                suplaDeviceRegistry,
-                this,
-                serverAccessId,
-                serverAccessIdPassword,
-                email,
-                authKey,
-                requireNonNull(serverDiscoveryService),
-                channel,
-                scheduledPool);
+                suplaDeviceRegistry, this, authData, requireNonNull(serverDiscoveryService), channel, scheduledPool);
         var subscription = channel.getMessagePipe()
                 .subscribe(jSuplaChannel::onNext, jSuplaChannel::onError, jSuplaChannel::onComplete);
         synchronized (channelsLock) {

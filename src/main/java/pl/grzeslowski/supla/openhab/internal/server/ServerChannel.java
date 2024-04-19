@@ -41,6 +41,7 @@ import pl.grzeslowski.jsupla.protocoljava.api.entities.sdc.SetActivityTimeoutRes
 import pl.grzeslowski.jsupla.protocoljava.api.types.ToServerEntity;
 import pl.grzeslowski.jsupla.server.api.Channel;
 import pl.grzeslowski.supla.openhab.internal.server.discovery.ServerDiscoveryService;
+import pl.grzeslowski.supla.openhab.internal.server.handler.AuthData;
 import pl.grzeslowski.supla.openhab.internal.server.handler.ServerBridgeHandler;
 import pl.grzeslowski.supla.openhab.internal.server.handler.ServerDeviceHandler;
 
@@ -53,19 +54,7 @@ public final class ServerChannel implements AutoCloseable {
     private Logger logger = LoggerFactory.getLogger(ServerChannel.class);
     private final ServerBridgeHandler serverBridgeHandler;
 
-    // Location Authorization
-    @Nullable
-    private final Integer serverAccessId;
-
-    @Nullable
-    private final String serverAccessIdPassword;
-
-    // Email authorization
-    @Nullable
-    private final String email;
-
-    @Nullable
-    private final String authKey;
+    private final AuthData authData;
 
     private final ServerDiscoveryService serverDiscoveryService;
     private final Channel channel;
@@ -155,17 +144,18 @@ public final class ServerChannel implements AutoCloseable {
     }
 
     private void authorizeForLocation(final String guid, final int accessId, final char[] accessIdPassword) {
-        if (this.serverAccessId == null || this.serverAccessIdPassword == null) {
+        var locationAuthData = this.authData.locationAuthData();
+        if (locationAuthData == null) {
             // not using access id authorization
             authorized = false;
             return;
         }
-        if (serverAccessId != accessId) {
-            logger.debug("Wrong accessId for GUID {}; {} != {}", guid, accessId, serverAccessId);
+        if (locationAuthData.serverAccessId() != accessId) {
+            logger.debug("Wrong accessId for GUID {}; {} != {}", guid, accessId, locationAuthData.serverAccessId());
             authorized = false;
             return;
         }
-        if (!isGoodPassword(this.serverAccessIdPassword.toCharArray(), accessIdPassword)) {
+        if (!isGoodPassword(locationAuthData.serverAccessIdPassword().toCharArray(), accessIdPassword)) {
             logger.debug("Wrong accessIdPassword for GUID {}", guid);
             authorized = false;
             return;
@@ -175,18 +165,19 @@ public final class ServerChannel implements AutoCloseable {
     }
 
     private void authorizeForEmail(final String guid, final String email, final String authKey) {
-        if (this.email == null || this.authKey == null) {
+        var emailAuthData = this.authData.emailAuthData();
+        if (emailAuthData == null) {
             // not using email authorization
             authorized = false;
             return;
         }
-        if (!this.email.equals(email)) {
-            logger.debug("Wrong email for GUID {}; {} != {}", guid, email, this.email);
+        if (!emailAuthData.email().equals(email)) {
+            logger.debug("Wrong email for GUID {}; {} != {}", guid, email, emailAuthData.email());
             authorized = false;
             return;
         }
-        if (!this.authKey.equals(authKey)) {
-            logger.debug("Wrong auth key for GUID {}; {} != {}", guid, authKey, this.authKey);
+        if (!emailAuthData.authKey().equals(authKey)) {
+            logger.debug("Wrong auth key for GUID {}; {} != {}", guid, authKey, emailAuthData.authKey());
             authorized = false;
             return;
         }
