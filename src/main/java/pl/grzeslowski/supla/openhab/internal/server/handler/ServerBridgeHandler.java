@@ -52,16 +52,16 @@ import pl.grzeslowski.jsupla.server.api.Server;
 import pl.grzeslowski.jsupla.server.api.ServerFactory;
 import pl.grzeslowski.jsupla.server.api.ServerProperties;
 import pl.grzeslowski.jsupla.server.netty.api.NettyServerFactory;
-import pl.grzeslowski.supla.openhab.internal.server.SuplaChannel;
+import pl.grzeslowski.supla.openhab.internal.server.ServerChannel;
 import pl.grzeslowski.supla.openhab.internal.server.SuplaDeviceRegistry;
 import pl.grzeslowski.supla.openhab.internal.server.discovery.ServerDiscoveryService;
 import reactor.core.Disposable;
 
 /** @author Grzeslowski - Initial contribution */
 @NonNullByDefault
-public class SuplaCloudBridgeHandler extends BaseBridgeHandler {
+public class ServerBridgeHandler extends BaseBridgeHandler {
     private static final int PROPER_AES_KEY_SIZE = 2147483647;
-    private Logger logger = LoggerFactory.getLogger(SuplaCloudBridgeHandler.class);
+    private Logger logger = LoggerFactory.getLogger(ServerBridgeHandler.class);
     private final SuplaDeviceRegistry suplaDeviceRegistry;
 
     @Nullable
@@ -77,7 +77,7 @@ public class SuplaCloudBridgeHandler extends BaseBridgeHandler {
     @Nullable
     private Disposable newChannelsPipeline;
 
-    public SuplaCloudBridgeHandler(final Bridge bridge, final SuplaDeviceRegistry suplaDeviceRegistry) {
+    public ServerBridgeHandler(final Bridge bridge, final SuplaDeviceRegistry suplaDeviceRegistry) {
         super(bridge);
         this.suplaDeviceRegistry = suplaDeviceRegistry;
     }
@@ -99,7 +99,7 @@ public class SuplaCloudBridgeHandler extends BaseBridgeHandler {
     }
 
     private void internalInitialize() throws Exception {
-        var config = this.getConfigAs(SuplaCloudBridgeHandlerConfig.class);
+        var config = this.getConfigAs(ServerBridgeHandlerConfig.class);
         if (!config.isServerAuth() && !config.isEmailAuth()) {
             updateStatus(OFFLINE, CONFIGURATION_ERROR, "You need to pass either server auth or email auth!");
             return;
@@ -115,7 +115,7 @@ public class SuplaCloudBridgeHandler extends BaseBridgeHandler {
         var authKey = config.getAuthKey();
         var port = config.getPort().intValue();
 
-        logger = LoggerFactory.getLogger(SuplaCloudBridgeHandler.class.getName() + "." + port);
+        logger = LoggerFactory.getLogger(ServerBridgeHandler.class.getName() + "." + port);
 
         var scheduledPool = ThreadPoolManager.getScheduledPool(BINDING_ID + "." + port);
 
@@ -173,7 +173,7 @@ public class SuplaCloudBridgeHandler extends BaseBridgeHandler {
             @Nullable String authKey,
             @NonNull ScheduledExecutorService scheduledPool) {
         logger.debug("New channel {}", channel);
-        var jSuplaChannel = new SuplaChannel(
+        var jSuplaChannel = new ServerChannel(
                 suplaDeviceRegistry,
                 this,
                 serverAccessId,
@@ -232,7 +232,7 @@ public class SuplaCloudBridgeHandler extends BaseBridgeHandler {
         disposeNewChannelsPipeline();
         disposeChannels();
         disposeServer();
-        logger = LoggerFactory.getLogger(SuplaCloudBridgeHandler.class);
+        logger = LoggerFactory.getLogger(ServerBridgeHandler.class);
         super.dispose();
     }
 
@@ -258,7 +258,7 @@ public class SuplaCloudBridgeHandler extends BaseBridgeHandler {
                     logger.debug("Closing channel {}", channel);
                     channel.subscribe.dispose();
                     channel.channel.close();
-                    channel.jSuplaChannel.close();
+                    channel.jServerChannel.close();
                 } catch (Exception ex) {
                     logger.error("Could not close channel! Probably you need to restart Open HAB (or machine)", ex);
                 }
@@ -288,5 +288,6 @@ public class SuplaCloudBridgeHandler extends BaseBridgeHandler {
         this.serverDiscoveryService = serverDiscoveryService;
     }
 
-    private static record ChannelWithSubscription(Channel channel, Disposable subscribe, SuplaChannel jSuplaChannel) {}
+    private static record ChannelWithSubscription(
+            Channel channel, Disposable subscribe, ServerChannel jServerChannel) {}
 }

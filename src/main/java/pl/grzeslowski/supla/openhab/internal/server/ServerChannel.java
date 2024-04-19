@@ -41,17 +41,17 @@ import pl.grzeslowski.jsupla.protocoljava.api.entities.sdc.SetActivityTimeoutRes
 import pl.grzeslowski.jsupla.protocoljava.api.types.ToServerEntity;
 import pl.grzeslowski.jsupla.server.api.Channel;
 import pl.grzeslowski.supla.openhab.internal.server.discovery.ServerDiscoveryService;
-import pl.grzeslowski.supla.openhab.internal.server.handler.SuplaCloudBridgeHandler;
-import pl.grzeslowski.supla.openhab.internal.server.handler.SuplaDeviceHandler;
+import pl.grzeslowski.supla.openhab.internal.server.handler.ServerBridgeHandler;
+import pl.grzeslowski.supla.openhab.internal.server.handler.ServerDeviceHandler;
 
 /** @author Grzeslowski - Initial contribution */
 @NonNullByDefault
 @ToString(onlyExplicitlyIncluded = true)
 @RequiredArgsConstructor
-public final class SuplaChannel implements AutoCloseable {
+public final class ServerChannel implements AutoCloseable {
     private final SuplaDeviceRegistry suplaDeviceRegistry;
-    private Logger logger = LoggerFactory.getLogger(SuplaChannel.class);
-    private final SuplaCloudBridgeHandler suplaCloudBridgeHandler;
+    private Logger logger = LoggerFactory.getLogger(ServerChannel.class);
+    private final ServerBridgeHandler serverBridgeHandler;
 
     // Location Authorization
     @Nullable
@@ -82,7 +82,7 @@ public final class SuplaChannel implements AutoCloseable {
     private final AtomicLong lastMessageFromDevice = new AtomicLong();
 
     @Nullable
-    private SuplaDeviceHandler suplaDeviceHandler;
+    private ServerDeviceHandler serverDeviceHandler;
 
     @SuppressWarnings("deprecation")
     public synchronized void onNext(final ToServerEntity entity) {
@@ -195,18 +195,18 @@ public final class SuplaChannel implements AutoCloseable {
     }
 
     public void onError(final Throwable ex) {
-        if (suplaDeviceHandler != null) {
+        if (serverDeviceHandler != null) {
             logger.error("Error occurred in device. ", ex);
-            suplaDeviceHandler.updateStatus(
+            serverDeviceHandler.updateStatus(
                     OFFLINE, COMMUNICATION_ERROR, "Error occurred in channel pipe. " + ex.getLocalizedMessage());
         }
     }
 
     public void onComplete() {
         logger.debug("onComplete() {}", this);
-        this.suplaCloudBridgeHandler.completedChannel();
-        if (suplaDeviceHandler != null) {
-            suplaDeviceHandler.updateStatus(OFFLINE, ThingStatusDetail.NONE, "Device went offline");
+        this.serverBridgeHandler.completedChannel();
+        if (serverDeviceHandler != null) {
+            serverDeviceHandler.updateStatus(OFFLINE, ThingStatusDetail.NONE, "Device went offline");
         }
     }
 
@@ -229,7 +229,7 @@ public final class SuplaChannel implements AutoCloseable {
             if (scheduledFuture != null) {
                 scheduledFuture.cancel(false);
             }
-            var localSuplaDeviceHandler = suplaDeviceHandler;
+            var localSuplaDeviceHandler = serverDeviceHandler;
             if (localSuplaDeviceHandler != null) {
                 localSuplaDeviceHandler.updateStatus(
                         OFFLINE, ThingStatusDetail.NONE, "Device do not response on pings.");
@@ -270,9 +270,9 @@ public final class SuplaChannel implements AutoCloseable {
         logger.debug("Trying to bind channels...");
         var suplaDevice = suplaDeviceRegistry.getSuplaDevice(requireNonNull(guid));
         if (suplaDevice.isPresent()) {
-            suplaDeviceHandler = suplaDevice.get();
-            suplaDeviceHandler.setChannels(channels);
-            suplaDeviceHandler.setSuplaChannel(channel);
+            serverDeviceHandler = suplaDevice.get();
+            serverDeviceHandler.setChannels(channels);
+            serverDeviceHandler.setSuplaChannel(channel);
         } else {
             if (createTask) {
                 logger.debug("Thing not found. Binding of channels will happen later...");
@@ -282,7 +282,7 @@ public final class SuplaChannel implements AutoCloseable {
     }
 
     private void deviceChannelValue(final DeviceChannelValue entity) {
-        requireNonNull(suplaDeviceHandler).updateStatus(entity.getChannelNumber(), entity.getValue());
+        requireNonNull(serverDeviceHandler).updateStatus(entity.getChannelNumber(), entity.getValue());
     }
 
     @Override
@@ -297,7 +297,7 @@ public final class SuplaChannel implements AutoCloseable {
             if (scheduledFuture != null) {
                 scheduledFuture.cancel(false);
             }
-            suplaDeviceHandler = null;
+            serverDeviceHandler = null;
         }
     }
 }

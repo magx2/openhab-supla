@@ -41,13 +41,13 @@ import pl.grzeslowski.supla.openhab.internal.server.SuplaDeviceRegistry;
 import reactor.core.Disposable;
 
 /**
- * The {@link SuplaDeviceHandler} is responsible for handling commands, which are sent to one of the channels.
+ * The {@link ServerDeviceHandler} is responsible for handling commands, which are sent to one of the channels.
  *
  * @author Grzeslowski - Initial contribution
  */
 @NonNullByDefault
-public class SuplaDeviceHandler extends AbstractDeviceHandler {
-    private final Logger logger = LoggerFactory.getLogger(SuplaDeviceHandler.class);
+public class ServerDeviceHandler extends AbstractDeviceHandler {
+    private final Logger logger = LoggerFactory.getLogger(ServerDeviceHandler.class);
 
     private pl.grzeslowski.jsupla.server.api.@Nullable Channel suplaChannel;
     private final Object channelLock = new Object();
@@ -60,7 +60,7 @@ public class SuplaDeviceHandler extends AbstractDeviceHandler {
 
     private final SuplaDeviceRegistry suplaDeviceRegistry;
 
-    public SuplaDeviceHandler(Thing thing, SuplaDeviceRegistry suplaDeviceRegistry) {
+    public ServerDeviceHandler(Thing thing, SuplaDeviceRegistry suplaDeviceRegistry) {
         super(thing);
         this.suplaDeviceRegistry = suplaDeviceRegistry;
     }

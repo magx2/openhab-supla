@@ -20,17 +20,17 @@ import org.openhab.core.config.discovery.DiscoveryResultBuilder;
 import org.openhab.core.thing.ThingUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import pl.grzeslowski.supla.openhab.internal.server.handler.SuplaCloudBridgeHandler;
+import pl.grzeslowski.supla.openhab.internal.server.handler.ServerBridgeHandler;
 
 /** @author Grzeslowski - Initial contribution */
 @NonNullByDefault
 public class ServerDiscoveryService extends AbstractDiscoveryService {
     private final Logger logger = LoggerFactory.getLogger(ServerDiscoveryService.class);
-    private final SuplaCloudBridgeHandler suplaCloudBridgeHandler;
+    private final ServerBridgeHandler serverBridgeHandler;
 
-    public ServerDiscoveryService(final SuplaCloudBridgeHandler suplaCloudBridgeHandler) {
+    public ServerDiscoveryService(final ServerBridgeHandler serverBridgeHandler) {
         super(SUPPORTED_THING_TYPES_UIDS, 10, true);
-        this.suplaCloudBridgeHandler = requireNonNull(suplaCloudBridgeHandler);
+        this.serverBridgeHandler = requireNonNull(serverBridgeHandler);
     }
 
     @Override
@@ -40,7 +40,7 @@ public class ServerDiscoveryService extends AbstractDiscoveryService {
     }
 
     public void addSuplaDevice(String guid, String name) {
-        var bridgeUID = suplaCloudBridgeHandler.getThing().getUID();
+        var bridgeUID = serverBridgeHandler.getThing().getUID();
         var thingUID = new ThingUID(SUPLA_SERVER_DEVICE_TYPE, bridgeUID, guid);
         var discoveryResult = DiscoveryResultBuilder.create(thingUID)
                 .withBridge(bridgeUID)

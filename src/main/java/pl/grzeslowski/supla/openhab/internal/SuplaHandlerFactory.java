@@ -33,8 +33,8 @@ import pl.grzeslowski.supla.openhab.internal.cloud.handler.CloudBridgeHandler;
 import pl.grzeslowski.supla.openhab.internal.cloud.handler.CloudDeviceHandler;
 import pl.grzeslowski.supla.openhab.internal.server.SuplaDeviceRegistry;
 import pl.grzeslowski.supla.openhab.internal.server.discovery.ServerDiscoveryService;
-import pl.grzeslowski.supla.openhab.internal.server.handler.SuplaCloudBridgeHandler;
-import pl.grzeslowski.supla.openhab.internal.server.handler.SuplaDeviceHandler;
+import pl.grzeslowski.supla.openhab.internal.server.handler.ServerBridgeHandler;
+import pl.grzeslowski.supla.openhab.internal.server.handler.ServerDeviceHandler;
 
 /**
  * The {@link SuplaHandlerFactory} is responsible for creating things and thing handlers.
@@ -77,12 +77,12 @@ public class SuplaHandlerFactory extends BaseThingHandlerFactory {
 
     @NonNull
     private ThingHandler newSuplaDeviceHandler(final Thing thing) {
-        return new SuplaDeviceHandler(thing, requireNonNull(suplaDeviceRegistry));
+        return new ServerDeviceHandler(thing, requireNonNull(suplaDeviceRegistry));
     }
 
     @NonNull
     private ThingHandler newSuplaCloudBridgeHandler(final Bridge thing) {
-        var bridgeHandler = new SuplaCloudBridgeHandler(thing, requireNonNull(suplaDeviceRegistry));
+        var bridgeHandler = new ServerBridgeHandler(thing, requireNonNull(suplaDeviceRegistry));
         var discovery = new ServerDiscoveryService(bridgeHandler);
         registerThingDiscovery(discovery);
         bridgeHandler.setSuplaDiscoveryService(discovery);

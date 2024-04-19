@@ -19,7 +19,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.osgi.service.component.annotations.Component;
-import pl.grzeslowski.supla.openhab.internal.server.handler.SuplaDeviceHandler;
+import pl.grzeslowski.supla.openhab.internal.server.handler.ServerDeviceHandler;
 
 /** @author Grzeslowski - Initial contribution */
 @Slf4j
@@ -27,22 +27,22 @@ import pl.grzeslowski.supla.openhab.internal.server.handler.SuplaDeviceHandler;
 @Component(service = SuplaDeviceRegistry.class, immediate = true, configurationPid = "binding.supla")
 public class SuplaDeviceRegistry {
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
-    private final Set<SuplaDeviceHandler> suplaDeviceHandlers = new HashSet<>();
+    private final Set<ServerDeviceHandler> serverDeviceHandlers = new HashSet<>();
 
-    public void addSuplaDevice(final SuplaDeviceHandler suplaDeviceHandler) {
+    public void addSuplaDevice(final ServerDeviceHandler serverDeviceHandler) {
         lock.writeLock().lock();
         try {
-            suplaDeviceHandlers.add(suplaDeviceHandler);
+            serverDeviceHandlers.add(serverDeviceHandler);
         } finally {
             lock.writeLock().unlock();
         }
     }
 
-    public Optional<SuplaDeviceHandler> getSuplaDevice(final String guid) {
+    public Optional<ServerDeviceHandler> getSuplaDevice(final String guid) {
         requireNonNull(guid);
         lock.readLock().lock();
         try {
-            return suplaDeviceHandlers.stream()
+            return serverDeviceHandlers.stream()
                     .filter(device -> guid.equals(device.getThing().getUID().getId()))
                     .findAny();
         } finally {
@@ -50,12 +50,12 @@ public class SuplaDeviceRegistry {
         }
     }
 
-    public void removeSuplaDevice(SuplaDeviceHandler suplaDeviceHandler) {
+    public void removeSuplaDevice(ServerDeviceHandler serverDeviceHandler) {
         lock.writeLock().lock();
         try {
-            var remove = suplaDeviceHandlers.remove(suplaDeviceHandler);
+            var remove = serverDeviceHandlers.remove(serverDeviceHandler);
             if (!remove) {
-                log.warn("Could not remove SuplaDeviceHandler from registry: {}", suplaDeviceHandler);
+                log.warn("Could not remove SuplaDeviceHandler from registry: {}", serverDeviceHandler);
             }
         } finally {
             lock.writeLock().unlock();

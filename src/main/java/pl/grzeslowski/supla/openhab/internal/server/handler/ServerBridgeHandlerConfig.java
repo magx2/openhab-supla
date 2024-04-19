@@ -20,7 +20,7 @@ import pl.grzeslowski.supla.openhab.internal.SuplaBindingConstants;
 /** @author Grzeslowski - Initial contribution */
 @NonNullByDefault
 @Data
-public class SuplaCloudBridgeHandlerConfig {
+public class ServerBridgeHandlerConfig {
     @Nullable
     private BigDecimal serverAccessId;
 
