@@ -10,7 +10,10 @@
  */
 package pl.grzeslowski.supla.openhab.internal.server.handler;
 
+import static java.util.Arrays.stream;
 import static java.util.Objects.requireNonNull;
+import static java.util.stream.Collectors.toCollection;
+import static java.util.stream.Collectors.toSet;
 import static org.openhab.core.thing.ThingStatus.OFFLINE;
 import static org.openhab.core.thing.ThingStatus.ONLINE;
 import static org.openhab.core.thing.ThingStatusDetail.COMMUNICATION_ERROR;
@@ -18,6 +21,7 @@ import static org.openhab.core.thing.ThingStatusDetail.CONFIGURATION_ERROR;
 import static pl.grzeslowski.jsupla.server.api.ServerProperties.fromList;
 import static pl.grzeslowski.jsupla.server.netty.api.NettyServerFactory.PORT;
 import static pl.grzeslowski.jsupla.server.netty.api.NettyServerFactory.SSL_CTX;
+import static pl.grzeslowski.supla.openhab.internal.Documentation.DISABLED_ALGORITHMS_PROBLEM;
 import static pl.grzeslowski.supla.openhab.internal.Documentation.SSL_PROBLEM;
 import static pl.grzeslowski.supla.openhab.internal.SuplaBindingConstants.BINDING_ID;
 import static pl.grzeslowski.supla.openhab.internal.SuplaBindingConstants.CONNECTED_DEVICES_CHANNEL_ID;
@@ -25,11 +29,9 @@ import static pl.grzeslowski.supla.openhab.internal.SuplaBindingConstants.CONNEC
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.util.SelfSignedCertificate;
-import java.lang.reflect.Field;
 import java.security.Security;
 import java.security.cert.CertificateException;
 import java.util.*;
-import java.util.ArrayList;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.net.ssl.SSLException;
@@ -114,6 +116,12 @@ public class ServerBridgeHandler extends BaseBridgeHandler {
         var email = config.getEmail();
         var authKey = config.getAuthKey();
         var port = config.getPort().intValue();
+        var protocols =
+                stream(config.getProtocols().split(",")).map(String::trim).collect(toSet());
+        if (protocols.isEmpty()) {
+            updateStatus(OFFLINE, CONFIGURATION_ERROR, "You need to pass at least one protocol!");
+            return;
+        }
 
         logger = LoggerFactory.getLogger(ServerBridgeHandler.class.getName() + "." + port);
 
@@ -132,16 +140,36 @@ public class ServerBridgeHandler extends BaseBridgeHandler {
             logger.info("Disabling SSL is not supported");
         }
 
-        {
-            Field f = Security.class.getDeclaredField("props");
-            f.setAccessible(true);
-            Properties allProps = (Properties) f.get(null); // Static field, so null object.
-            var disabled = allProps.get("jdk.tls.disabledAlgorithms");
-            logger.info("jdk.tls.disabledAlgorithms={}", disabled);
+        try {
+            var propsFiled = Security.class.getDeclaredField("props");
+            propsFiled.setAccessible(true);
+            var props = (Properties) propsFiled.get(null); // Static field, so null object.
+            var disabled = props.get("jdk.tls.disabledAlgorithms");
+            logger.debug("jdk.tls.disabledAlgorithms={}", disabled);
+            if (disabled != null) {
+                var disabledAlgorithms =
+                        stream(disabled.toString().split(",")).map(String::trim).collect(toCollection(HashSet::new));
+                var protocolsWithSslv3 = new HashSet<>(protocols);
+                protocolsWithSslv3.add("SSLv3");
+                disabledAlgorithms.retainAll(protocolsWithSslv3);
+                if (!disabledAlgorithms.isEmpty()) {
+                    var algorithms = String.join(", ", disabledAlgorithms);
+                    updateStatus(
+                            OFFLINE,
+                            CONFIGURATION_ERROR,
+                            "Those protocols are disabled in java.security: %s. See: %s"
+                                    .formatted(algorithms, DISABLED_ALGORITHMS_PROBLEM));
+                    return;
+                }
+            } else {
+                logger.debug("jdk.tls.disabledAlgorithms is null, should not be a problem, carry on...");
+            }
+        } catch (Exception ex) {
+            logger.warn("Cannot get disabled algorithms! {}", ex.getLocalizedMessage());
         }
 
         var factory = buildServerFactory();
-        var localServer = server = factory.createNewServer(buildServerProperties(port));
+        var localServer = server = factory.createNewServer(buildServerProperties(port, protocols));
         newChannelsPipeline = localServer
                 .getNewChannelsPipe()
                 .subscribe(
@@ -215,15 +243,15 @@ public class ServerBridgeHandler extends BaseBridgeHandler {
                 new CallTypeParserImpl(), DecoderFactoryImpl.INSTANCE, EncoderFactoryImpl.INSTANCE);
     }
 
-    private ServerProperties buildServerProperties(int port) throws CertificateException, SSLException {
-        return fromList(Arrays.asList(PORT, port, SSL_CTX, buildSslContext()));
+    private ServerProperties buildServerProperties(int port, Set<String> protocols)
+            throws CertificateException, SSLException {
+        return fromList(Arrays.asList(PORT, port, SSL_CTX, buildSslContext(protocols)));
     }
 
-    private SslContext buildSslContext() throws CertificateException, SSLException {
+    private SslContext buildSslContext(Set<String> protocols) throws CertificateException, SSLException {
         SelfSignedCertificate ssc = new SelfSignedCertificate();
         return SslContextBuilder.forServer(ssc.certificate(), ssc.privateKey())
-                //                .sslProvider(SslProvider.OPENSSL)
-                .protocols("TLSv1.3", "TLSv1.2", "TLSv1")
+                .protocols(protocols)
                 .build();
     }
 

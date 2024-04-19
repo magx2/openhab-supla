@@ -37,6 +37,7 @@ public class ServerBridgeHandlerConfig {
 
     private BigDecimal port = new BigDecimal(SuplaBindingConstants.DEFAULT_PORT);
     private boolean ssl = true;
+    private String protocols = "TLSv1.3, TLSv1.2, TLSv1";
 
     public boolean isServerAuth() {
         return serverAccessId != null && serverAccessIdPassword != null;

@@ -83,6 +83,12 @@
 				<default>true</default>
 				<advanced>true</advanced>
 			</parameter>
+			<parameter name="protocols" type="text">
+				<label>Protocols</label>
+				<description>Protocols to support when opening SSL connection.</description>
+				<default>TLSv1.3, TLSv1.2, TLSv1</default>
+				<advanced>true</advanced>
+			</parameter>
 		</config-description>
 
 	</bridge-type>
