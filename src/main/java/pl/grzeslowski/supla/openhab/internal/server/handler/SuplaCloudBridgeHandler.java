@@ -25,12 +25,15 @@ import static pl.grzeslowski.supla.openhab.internal.SuplaBindingConstants.CONNEC
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.util.SelfSignedCertificate;
-import java.security.NoSuchAlgorithmException;
+import java.lang.reflect.Field;
+import java.security.Security;
 import java.security.cert.CertificateException;
-import java.util.Arrays;
+import java.util.*;
+import java.util.ArrayList;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.net.ssl.SSLException;
+import org.eclipse.jdt.annotation.NonNull;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
 import org.openhab.core.common.ThreadPoolManager;
@@ -52,6 +55,7 @@ import pl.grzeslowski.jsupla.server.netty.api.NettyServerFactory;
 import pl.grzeslowski.supla.openhab.internal.server.SuplaChannel;
 import pl.grzeslowski.supla.openhab.internal.server.SuplaDeviceRegistry;
 import pl.grzeslowski.supla.openhab.internal.server.discovery.ServerDiscoveryService;
+import reactor.core.Disposable;
 
 /** @author Grzeslowski - Initial contribution */
 @NonNullByDefault
@@ -67,6 +71,11 @@ public class SuplaCloudBridgeHandler extends BaseBridgeHandler {
     private ServerDiscoveryService serverDiscoveryService;
 
     private final AtomicInteger numberOfConnectedDevices = new AtomicInteger();
+    private final Collection<ChannelWithSubscription> channels = new ArrayList<>();
+    private final Object channelsLock = new Object();
+
+    @Nullable
+    private Disposable newChannelsPipeline;
 
     public SuplaCloudBridgeHandler(final Bridge bridge, final SuplaDeviceRegistry suplaDeviceRegistry) {
         super(bridge);
@@ -89,9 +98,7 @@ public class SuplaCloudBridgeHandler extends BaseBridgeHandler {
         }
     }
 
-    private void internalInitialize() throws NoSuchAlgorithmException, CertificateException, SSLException {
-        updateConnectedDevices(0);
-        var factory = buildServerFactory();
+    private void internalInitialize() throws Exception {
         var config = this.getConfigAs(SuplaCloudBridgeHandlerConfig.class);
         if (!config.isServerAuth() && !config.isEmailAuth()) {
             updateStatus(OFFLINE, CONFIGURATION_ERROR, "You need to pass either server auth or email auth!");
@@ -125,8 +132,17 @@ public class SuplaCloudBridgeHandler extends BaseBridgeHandler {
             logger.info("Disabling SSL is not supported");
         }
 
+        {
+            Field f = Security.class.getDeclaredField("props");
+            f.setAccessible(true);
+            Properties allProps = (Properties) f.get(null); // Static field, so null object.
+            var disabled = allProps.get("jdk.tls.disabledAlgorithms");
+            logger.info("jdk.tls.disabledAlgorithms={}", disabled);
+        }
+
+        var factory = buildServerFactory();
         var localServer = server = factory.createNewServer(buildServerProperties(port));
-        localServer
+        newChannelsPipeline = localServer
                 .getNewChannelsPipe()
                 .subscribe(
                         o -> channelConsumer(o, serverAccessId, serverAccessIdPassword, email, authKey, scheduledPool),
@@ -134,15 +150,16 @@ public class SuplaCloudBridgeHandler extends BaseBridgeHandler {
 
         logger.debug("jSuplaServer running on port {}", port);
         updateStatus(ONLINE);
+        updateConnectedDevices(0);
     }
 
     private void channelConsumer(
             Channel channel,
             @Nullable Integer serverAccessId,
             @Nullable String serverAccessIdPassword,
-            @Nullable final String email,
-            @Nullable final String authKey,
-            final ScheduledExecutorService scheduledPool) {
+            @Nullable String email,
+            @Nullable String authKey,
+            @NonNull ScheduledExecutorService scheduledPool) {
         logger.debug("Device connected");
         changeNumberOfConnectedDevices(1);
         newChannel(channel, serverAccessId, serverAccessIdPassword, email, authKey, scheduledPool);
@@ -154,20 +171,23 @@ public class SuplaCloudBridgeHandler extends BaseBridgeHandler {
             @Nullable String serverAccessIdPassword,
             @Nullable String email,
             @Nullable String authKey,
-            final ScheduledExecutorService scheduledPool) {
+            @NonNull ScheduledExecutorService scheduledPool) {
         logger.debug("New channel {}", channel);
         var jSuplaChannel = new SuplaChannel(
+                suplaDeviceRegistry,
                 this,
                 serverAccessId,
                 serverAccessIdPassword,
+                email,
+                authKey,
                 requireNonNull(serverDiscoveryService),
                 channel,
-                requireNonNull(scheduledPool),
-                suplaDeviceRegistry,
-                email,
-                authKey);
-
-        channel.getMessagePipe().subscribe(jSuplaChannel::onNext, jSuplaChannel::onError, jSuplaChannel::onComplete);
+                scheduledPool);
+        var subscription = channel.getMessagePipe()
+                .subscribe(jSuplaChannel::onNext, jSuplaChannel::onError, jSuplaChannel::onComplete);
+        synchronized (channelsLock) {
+            channels.add(new ChannelWithSubscription(channel, subscription, jSuplaChannel));
+        }
     }
 
     private void errorOccurredInChannel(Throwable ex) {
@@ -201,23 +221,61 @@ public class SuplaCloudBridgeHandler extends BaseBridgeHandler {
 
     private SslContext buildSslContext() throws CertificateException, SSLException {
         SelfSignedCertificate ssc = new SelfSignedCertificate();
-        return SslContextBuilder.forServer(ssc.certificate(), ssc.privateKey()).build();
+        return SslContextBuilder.forServer(ssc.certificate(), ssc.privateKey())
+                //                .sslProvider(SslProvider.OPENSSL)
+                .protocols("TLSv1.3", "TLSv1.2", "TLSv1")
+                .build();
     }
 
     @Override
     public void dispose() {
+        disposeNewChannelsPipeline();
+        disposeChannels();
+        disposeServer();
+        logger = LoggerFactory.getLogger(SuplaCloudBridgeHandler.class);
+        super.dispose();
+    }
+
+    private void disposeNewChannelsPipeline() {
+        logger.debug("Disposing newChannelsPipeline");
+        var local = newChannelsPipeline;
+        newChannelsPipeline = null;
+        if (local != null) {
+            local.dispose();
+        }
+    }
+
+    private void disposeChannels() {
+        synchronized (channelsLock) {
+            if (channels.isEmpty()) {
+                logger.debug("No channels to close");
+                return;
+            }
+            var channelsCopy = new ArrayList<>(channels);
+            channels.clear();
+            for (var channel : channelsCopy) {
+                try {
+                    logger.debug("Closing channel {}", channel);
+                    channel.subscribe.dispose();
+                    channel.channel.close();
+                    channel.jSuplaChannel.close();
+                } catch (Exception ex) {
+                    logger.error("Could not close channel! Probably you need to restart Open HAB (or machine)", ex);
+                }
+            }
+        }
+    }
+
+    private void disposeServer() {
         var local = server;
+        server = null;
         if (local != null) {
             try {
                 local.close();
             } catch (Exception ex) {
                 logger.error("Could not close server! Probably you need to restart Open HAB (or machine)", ex);
-            } finally {
-                server = null;
             }
         }
-        logger = LoggerFactory.getLogger(SuplaCloudBridgeHandler.class);
-        super.dispose();
     }
 
     @Override
@@ -229,4 +287,6 @@ public class SuplaCloudBridgeHandler extends BaseBridgeHandler {
         logger.trace("setSuplaDiscoveryService#{}", serverDiscoveryService.hashCode());
         this.serverDiscoveryService = serverDiscoveryService;
     }
+
+    private static record ChannelWithSubscription(Channel channel, Disposable subscribe, SuplaChannel jSuplaChannel) {}
 }

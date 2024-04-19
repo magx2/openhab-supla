@@ -15,7 +15,9 @@ import static java.time.format.DateTimeFormatter.ISO_DATE_TIME;
 import static java.util.Objects.requireNonNull;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.openhab.core.thing.ThingStatus.OFFLINE;
+import static org.openhab.core.thing.ThingStatusDetail.COMMUNICATION_ERROR;
 import static pl.grzeslowski.jsupla.protocol.api.ResultCode.SUPLA_RESULTCODE_TRUE;
+import static pl.grzeslowski.supla.openhab.internal.SuplaBindingConstants.DEVICE_TIMEOUT_SEC;
 import static reactor.core.publisher.Flux.just;
 
 import java.util.concurrent.ScheduledExecutorService;
@@ -23,6 +25,8 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
+import lombok.RequiredArgsConstructor;
+import lombok.ToString;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
 import org.openhab.core.thing.ThingStatusDetail;
@@ -36,15 +40,15 @@ import pl.grzeslowski.jsupla.protocoljava.api.entities.sdc.PingServerResultClien
 import pl.grzeslowski.jsupla.protocoljava.api.entities.sdc.SetActivityTimeoutResult;
 import pl.grzeslowski.jsupla.protocoljava.api.types.ToServerEntity;
 import pl.grzeslowski.jsupla.server.api.Channel;
-import pl.grzeslowski.supla.openhab.internal.SuplaBindingConstants;
 import pl.grzeslowski.supla.openhab.internal.server.discovery.ServerDiscoveryService;
 import pl.grzeslowski.supla.openhab.internal.server.handler.SuplaCloudBridgeHandler;
 import pl.grzeslowski.supla.openhab.internal.server.handler.SuplaDeviceHandler;
-import reactor.core.publisher.Flux;
 
 /** @author Grzeslowski - Initial contribution */
 @NonNullByDefault
-public final class SuplaChannel {
+@ToString(onlyExplicitlyIncluded = true)
+@RequiredArgsConstructor
+public final class SuplaChannel implements AutoCloseable {
     private final SuplaDeviceRegistry suplaDeviceRegistry;
     private Logger logger = LoggerFactory.getLogger(SuplaChannel.class);
     private final SuplaCloudBridgeHandler suplaCloudBridgeHandler;
@@ -66,9 +70,12 @@ public final class SuplaChannel {
     private final ServerDiscoveryService serverDiscoveryService;
     private final Channel channel;
     private final ScheduledExecutorService scheduledPool;
+
+    @ToString.Include
     private boolean authorized;
 
     @Nullable
+    @ToString.Include
     private String guid;
 
     private final AtomicReference<ScheduledFuture<?>> pingSchedule = new AtomicReference<>();
@@ -77,35 +84,14 @@ public final class SuplaChannel {
     @Nullable
     private SuplaDeviceHandler suplaDeviceHandler;
 
-    public SuplaChannel(
-            final SuplaCloudBridgeHandler suplaCloudBridgeHandler,
-            @Nullable final Integer serverAccessId,
-            @Nullable final String serverAccessIdPassword,
-            final ServerDiscoveryService serverDiscoveryService,
-            final Channel channel,
-            final ScheduledExecutorService scheduledPool,
-            final SuplaDeviceRegistry suplaDeviceRegistry,
-            @Nullable final String email,
-            @Nullable final String authKey) {
-        this.suplaCloudBridgeHandler = requireNonNull(suplaCloudBridgeHandler);
-        this.serverAccessId = serverAccessId;
-        this.serverAccessIdPassword = serverAccessIdPassword;
-        this.serverDiscoveryService = requireNonNull(serverDiscoveryService);
-        this.channel = channel;
-        this.scheduledPool = requireNonNull(scheduledPool);
-        this.suplaDeviceRegistry = requireNonNull(suplaDeviceRegistry);
-        this.email = email;
-        this.authKey = authKey;
-    }
-
     @SuppressWarnings("deprecation")
     public synchronized void onNext(final ToServerEntity entity) {
         logger.trace("{} -> {}", guid, entity);
         lastMessageFromDevice.set(now().getEpochSecond());
         if (!authorized) {
-            final Runnable auth;
+            @Nullable final Runnable auth;
             @Nullable final DeviceChannels channels;
-            final String name;
+            @Nullable final String name;
             if (entity instanceof RegisterDevice registerDevice) {
                 auth = () -> authorizeForLocation(
                         registerDevice.getGuid(), registerDevice.getLocationId(), registerDevice.getLocationPassword());
@@ -162,7 +148,7 @@ public final class SuplaChannel {
         if (authorized) {
             serverDiscoveryService.addSuplaDevice(requireNonNull(guid), name != null ? name : "<UNKNOWN>");
             sendRegistrationConfirmation();
-            bindToThingHandler(channels);
+            bindToThingHandler(channels, true);
         } else {
             logger.debug("Authorization failed for GUID {}", guid);
         }
@@ -212,14 +198,12 @@ public final class SuplaChannel {
         if (suplaDeviceHandler != null) {
             logger.error("Error occurred in device. ", ex);
             suplaDeviceHandler.updateStatus(
-                    OFFLINE,
-                    ThingStatusDetail.COMMUNICATION_ERROR,
-                    "Error occurred in channel pipe. " + ex.getLocalizedMessage());
+                    OFFLINE, COMMUNICATION_ERROR, "Error occurred in channel pipe. " + ex.getLocalizedMessage());
         }
     }
 
     public void onComplete() {
-        logger.debug("onComplete() {}", toString());
+        logger.debug("onComplete() {}", this);
         this.suplaCloudBridgeHandler.completedChannel();
         if (suplaDeviceHandler != null) {
             suplaDeviceHandler.updateStatus(OFFLINE, ThingStatusDetail.NONE, "Device went offline");
@@ -227,28 +211,29 @@ public final class SuplaChannel {
     }
 
     private void setActivityTimeout() {
-        final SetActivityTimeoutResult data = new SetActivityTimeoutResult(
-                SuplaBindingConstants.DEVICE_TIMEOUT_SEC,
-                SuplaBindingConstants.DEVICE_TIMEOUT_SEC - 2,
-                SuplaBindingConstants.DEVICE_TIMEOUT_SEC + 2);
-        channel.write(Flux.just(data))
+        final SetActivityTimeoutResult data =
+                new SetActivityTimeoutResult(DEVICE_TIMEOUT_SEC, DEVICE_TIMEOUT_SEC - 2, DEVICE_TIMEOUT_SEC + 2);
+        channel.write(just(data))
                 .subscribe(date -> logger.trace("setActivityTimeout {} {}", data, date.format(ISO_DATE_TIME)));
         final ScheduledFuture<?> pingSchedule = scheduledPool.scheduleWithFixedDelay(
-                this::checkIfDeviceIsUp,
-                SuplaBindingConstants.DEVICE_TIMEOUT_SEC * 2,
-                SuplaBindingConstants.DEVICE_TIMEOUT_SEC,
-                TimeUnit.SECONDS);
+                this::checkIfDeviceIsUp, DEVICE_TIMEOUT_SEC * 2, DEVICE_TIMEOUT_SEC, TimeUnit.SECONDS);
         this.pingSchedule.set(pingSchedule);
     }
 
     private void checkIfDeviceIsUp() {
         final long now = now().getEpochSecond();
-        if (now - lastMessageFromDevice.get() > SuplaBindingConstants.DEVICE_TIMEOUT_SEC) {
+        if (now - lastMessageFromDevice.get() > DEVICE_TIMEOUT_SEC) {
             logger.debug("Device {} is dead. Need to kill it!", guid);
             channel.close();
-            this.pingSchedule.get().cancel(false);
-            requireNonNull(suplaDeviceHandler)
-                    .updateStatus(OFFLINE, ThingStatusDetail.NONE, "Device do not response on pings.");
+            var scheduledFuture = this.pingSchedule.getAndSet(null);
+            if (scheduledFuture != null) {
+                scheduledFuture.cancel(false);
+            }
+            var localSuplaDeviceHandler = suplaDeviceHandler;
+            if (localSuplaDeviceHandler != null) {
+                localSuplaDeviceHandler.updateStatus(
+                        OFFLINE, ThingStatusDetail.NONE, "Device do not response on pings.");
+            }
         }
     }
 
@@ -280,16 +265,19 @@ public final class SuplaChannel {
         return true;
     }
 
-    private void bindToThingHandler(@SuppressWarnings("deprecation") final DeviceChannels channels) {
+    private void bindToThingHandler(
+            @SuppressWarnings("deprecation") final DeviceChannels channels, boolean createTask) {
+        logger.debug("Trying to bind channels...");
         var suplaDevice = suplaDeviceRegistry.getSuplaDevice(requireNonNull(guid));
         if (suplaDevice.isPresent()) {
             suplaDeviceHandler = suplaDevice.get();
             suplaDeviceHandler.setChannels(channels);
             suplaDeviceHandler.setSuplaChannel(channel);
         } else {
-            logger.debug("Thing not found. Binding of channels will happen later...");
-            scheduledPool.schedule(
-                    () -> bindToThingHandler(channels), SuplaBindingConstants.DEVICE_TIMEOUT_SEC, SECONDS);
+            if (createTask) {
+                logger.debug("Thing not found. Binding of channels will happen later...");
+                scheduledPool.schedule(() -> bindToThingHandler(channels, false), DEVICE_TIMEOUT_SEC, SECONDS);
+            }
         }
     }
 
@@ -298,12 +286,18 @@ public final class SuplaChannel {
     }
 
     @Override
-    public String toString() {
-        return "SuplaChannel{" + //
-                "authorized="
-                + authorized + //
-                ", guid='"
-                + guid + '\'' + //
-                '}';
+    public void close() {
+        try {
+            channel.close();
+        } catch (Exception ex) {
+            logger.error("Could not close Supla channel! Probably you need to restart Open HAB (or machine)", ex);
+        }
+        {
+            var scheduledFuture = this.pingSchedule.getAndSet(null);
+            if (scheduledFuture != null) {
+                scheduledFuture.cancel(false);
+            }
+            suplaDeviceHandler = null;
+        }
     }
 }

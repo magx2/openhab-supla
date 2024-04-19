@@ -41,12 +41,12 @@ public class ServerDiscoveryService extends AbstractDiscoveryService {
 
     public void addSuplaDevice(String guid, String name) {
         var bridgeUID = suplaCloudBridgeHandler.getThing().getUID();
-        var thingUID = new ThingUID(SUPLA_CLOUD_DEVICE_TYPE, bridgeUID, guid);
-        var discoveryResult = DiscoveryResultBuilder.create(thingUID) //
-                .withBridge(bridgeUID) //
-                .withProperties(buildProperties(guid)) //
-                .withRepresentationProperty(SUPLA_DEVICE_GUID) //
-                .withLabel(String.format("%s (%s)", name, guid)) //
+        var thingUID = new ThingUID(SUPLA_SERVER_DEVICE_TYPE, bridgeUID, guid);
+        var discoveryResult = DiscoveryResultBuilder.create(thingUID)
+                .withBridge(bridgeUID)
+                .withProperties(buildProperties(guid))
+                .withRepresentationProperty(SUPLA_DEVICE_GUID)
+                .withLabel(String.format("%s (%s)", name, guid))
                 .build();
         logger.debug("Discovered thing with GUID [{}]", guid);
         thingDiscovered(discoveryResult);

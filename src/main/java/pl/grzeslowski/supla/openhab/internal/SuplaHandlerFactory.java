@@ -77,10 +77,7 @@ public class SuplaHandlerFactory extends BaseThingHandlerFactory {
 
     @NonNull
     private ThingHandler newSuplaDeviceHandler(final Thing thing) {
-        final SuplaDeviceHandler suplaDeviceHandler = new SuplaDeviceHandler(thing);
-        var local = requireNonNull(suplaDeviceRegistry, "suplaDeviceRegistry is null!");
-        local.addSuplaDevice(suplaDeviceHandler);
-        return suplaDeviceHandler;
+        return new SuplaDeviceHandler(thing, requireNonNull(suplaDeviceRegistry));
     }
 
     @NonNull

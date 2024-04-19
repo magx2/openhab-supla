@@ -19,7 +19,6 @@ import static org.openhab.core.thing.ThingStatusDetail.NONE;
 import static reactor.core.publisher.Flux.just;
 
 import java.util.*;
-import java.util.stream.Collectors;
 import org.eclipse.jdt.annotation.NonNull;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
@@ -38,6 +37,8 @@ import pl.grzeslowski.jsupla.protocoljava.api.entities.sd.ChannelNewValue;
 import pl.grzeslowski.supla.openhab.internal.handler.AbstractDeviceHandler;
 import pl.grzeslowski.supla.openhab.internal.server.ChannelCallback;
 import pl.grzeslowski.supla.openhab.internal.server.ChannelValueToState;
+import pl.grzeslowski.supla.openhab.internal.server.SuplaDeviceRegistry;
+import reactor.core.Disposable;
 
 /**
  * The {@link SuplaDeviceHandler} is responsible for handling commands, which are sent to one of the channels.
@@ -52,19 +53,46 @@ public class SuplaDeviceHandler extends AbstractDeviceHandler {
     private final Object channelLock = new Object();
 
     private final Map<ChannelUID, Integer> channelUIDS = new HashMap<>();
+    private final ChannelValueSwitch<State> valueSwitch = new ChannelValueSwitch<>(new ChannelValueToState());
 
-    public SuplaDeviceHandler(Thing thing) {
+    @Nullable
+    private Disposable subscription;
+
+    private final SuplaDeviceRegistry suplaDeviceRegistry;
+
+    public SuplaDeviceHandler(Thing thing, SuplaDeviceRegistry suplaDeviceRegistry) {
         super(thing);
+        this.suplaDeviceRegistry = suplaDeviceRegistry;
+    }
+
+    @Override
+    protected void internalInitialize() {
+        if (getBridge() == null) {
+            logger.debug("No bridge for thing with UID {}", thing.getUID());
+            updateStatus(
+                    OFFLINE, BRIDGE_UNINITIALIZED, "There is no bridge for this thing. Remove it and add it again.");
+            return;
+        }
+
+        synchronized (channelLock) {
+            if (suplaChannel == null) {
+                updateStatus(OFFLINE, NONE, "Channel in server is not yet opened");
+            } else {
+                updateStatus(ThingStatus.ONLINE);
+            }
+        }
+
+        suplaDeviceRegistry.addSuplaDevice(this);
     }
 
     private void sendCommandToSuplaServer(ChannelUID channelUID, ChannelValue channelValue, Command command) {
-        final Integer channelNumber = channelUIDS.get(channelUID);
+        var channelNumber = channelUIDS.get(channelUID);
         if (channelNumber == null) {
             logger.debug("There is no channel number for channelUID={}", channelUID);
             return;
         }
-        final ChannelNewValue channelNewValue = new ChannelNewValue(1, channelNumber, 100, channelValue);
-        requireNonNull(suplaChannel)
+        var channelNewValue = new ChannelNewValue(1, channelNumber, 100, channelValue);
+        subscription = requireNonNull(suplaChannel)
                 .write(just(channelNewValue))
                 .subscribe(
                         date -> logger.debug(
@@ -150,24 +178,6 @@ public class SuplaDeviceHandler extends AbstractDeviceHandler {
                 channelUID);
     }
 
-    @Override
-    protected void internalInitialize() {
-        if (getBridge() == null) {
-            logger.debug("No bridge for thing with UID {}", thing.getUID());
-            updateStatus(
-                    OFFLINE, BRIDGE_UNINITIALIZED, "There is no bridge for this thing. Remove it and add it again.");
-            return;
-        }
-
-        synchronized (channelLock) {
-            if (suplaChannel == null) {
-                updateStatus(OFFLINE, NONE, "Channel in server is not yet opened");
-            } else {
-                updateStatus(ThingStatus.ONLINE);
-            }
-        }
-    }
-
     public void setSuplaChannel(final pl.grzeslowski.jsupla.server.api.Channel suplaChannel) {
         synchronized (channelLock) {
             this.suplaChannel = suplaChannel;
@@ -178,19 +188,15 @@ public class SuplaDeviceHandler extends AbstractDeviceHandler {
     @SuppressWarnings("deprecation")
     public void setChannels(final DeviceChannels deviceChannels) {
         logger.debug("Registering channels {}", deviceChannels);
-        var channels = deviceChannels
-                .getChannels() //
-                .stream() //
-                .sorted(Comparator.comparingInt(DeviceChannel::getNumber)) //
-                .map(this::createChannel) //
-                .filter(Optional::isPresent) //
-                .map(Optional::get) //
-                .collect(Collectors.toList());
+        var channels = deviceChannels.getChannels().stream()
+                .sorted(Comparator.comparingInt(DeviceChannel::getNumber))
+                .map(this::createChannel)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .toList();
         updateChannels(channels);
-        deviceChannels
-                .getChannels() //
-                .stream() //
-                .map(this::channelForUpdate) //
+        deviceChannels.getChannels().stream()
+                .map(this::channelForUpdate)
                 .forEach(pair -> updateState(pair.getValue0(), pair.getValue1()));
     }
 
@@ -204,21 +210,20 @@ public class SuplaDeviceHandler extends AbstractDeviceHandler {
     }
 
     private State findState(ChannelValue value) {
-        final ChannelValueSwitch<State> valueSwitch = new ChannelValueSwitch<>(new ChannelValueToState());
         return valueSwitch.doSwitch(value);
     }
 
     public void updateStatus(final int channelNumber, final ChannelValue channelValue) {
-        final ChannelUID channelUid = createChannelUid(channelNumber);
-        final State state = findState(channelValue);
+        var channelUid = createChannelUid(channelNumber);
+        var state = findState(channelValue);
         updateState(channelUid, state);
     }
 
     @SuppressWarnings("deprecation")
     private Optional<Channel> createChannel(final DeviceChannel deviceChannel) {
-        final ChannelCallback channelCallback = new ChannelCallback(getThing().getUID(), deviceChannel.getNumber());
-        final ChannelValueSwitch<@Nullable Channel> channelValueSwitch = new ChannelValueSwitch<>(channelCallback);
-        @Nullable final Channel channel = channelValueSwitch.doSwitch(deviceChannel.getValue());
+        var channelCallback = new ChannelCallback(getThing().getUID(), deviceChannel.getNumber());
+        var channelValueSwitch = new ChannelValueSwitch<>(channelCallback);
+        var channel = channelValueSwitch.doSwitch(deviceChannel.getValue());
         if (channel != null) {
             channelUIDS.put(channel.getUID(), deviceChannel.getNumber());
         }
@@ -231,9 +236,28 @@ public class SuplaDeviceHandler extends AbstractDeviceHandler {
         updateThing(thingBuilder.build());
     }
 
+    /** Only to change visibility from protected to public */
     @Override
     public void updateStatus(
             final ThingStatus status, final ThingStatusDetail statusDetail, @Nullable final String description) {
         super.updateStatus(status, statusDetail, description);
+    }
+
+    @Override
+    public String toString() {
+        return valueOf(getThing());
+    }
+
+    @Override
+    public void dispose() {
+        {
+            var local = subscription;
+            subscription = null;
+            if (local != null) {
+                local.dispose();
+            }
+        }
+        suplaDeviceRegistry.removeSuplaDevice(this);
+        super.dispose();
     }
 }

@@ -16,11 +16,13 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.osgi.service.component.annotations.Component;
 import pl.grzeslowski.supla.openhab.internal.server.handler.SuplaDeviceHandler;
 
 /** @author Grzeslowski - Initial contribution */
+@Slf4j
 @NonNullByDefault
 @Component(service = SuplaDeviceRegistry.class, immediate = true, configurationPid = "binding.supla")
 public class SuplaDeviceRegistry {
@@ -45,6 +47,18 @@ public class SuplaDeviceRegistry {
                     .findAny();
         } finally {
             lock.readLock().unlock();
+        }
+    }
+
+    public void removeSuplaDevice(SuplaDeviceHandler suplaDeviceHandler) {
+        lock.writeLock().lock();
+        try {
+            var remove = suplaDeviceHandlers.remove(suplaDeviceHandler);
+            if (!remove) {
+                log.warn("Could not remove SuplaDeviceHandler from registry: {}", suplaDeviceHandler);
+            }
+        } finally {
+            lock.writeLock().unlock();
         }
     }
 }
