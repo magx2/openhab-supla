@@ -14,7 +14,6 @@ import static java.lang.String.valueOf;
 import static pl.grzeslowski.supla.openhab.internal.SuplaBindingConstants.*;
 
 import java.util.Map;
-import java.util.Random;
 import java.util.Set;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.openhab.core.config.discovery.AbstractDiscoveryService;
@@ -30,7 +29,6 @@ import org.slf4j.LoggerFactory;
 @NonNullByDefault
 public class BridgeDiscovery extends AbstractDiscoveryService {
     private final Logger logger = LoggerFactory.getLogger(BridgeDiscovery.class);
-    private final Random random = new Random();
 
     public BridgeDiscovery() {
         super(Set.of(SUPLA_SERVER_TYPE), 10, true);
