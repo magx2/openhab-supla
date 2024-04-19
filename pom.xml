@@ -20,8 +20,7 @@
             <groupId>pl.grzeslowski.jSupla</groupId>
             <artifactId>nettyServer</artifactId>
             <version>0.10.0</version>
-            <scope>system</scope>
-            <systemPath>${project.basedir}/src/main/libs/nettyServer-fat-0.10.0.jar</systemPath>
+            <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>pl.grzeslowski.jsupla.api</groupId>
@@ -56,6 +55,11 @@
             <groupId>io.netty</groupId>
             <artifactId>netty-tcnative-boringssl-static</artifactId>
             <version>2.0.61.Final</version>
+        </dependency>
+        <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcprov-jdk18on</artifactId>
+            <version>1.76</version>
         </dependency>
         <!-- ❌ JSupla -->
         <!-- ✅ OPENHAB -->
@@ -253,14 +257,6 @@ Import-Package: !com.aayushatharva.*, \
 	!com.sun.nio.sctp, \
 	!org.checkerframework.*, \
 	!org.vesalainen.*, \
-	!com.github.luben.zstd, \
-	!com.oracle.svm.core.annotate, \
-	!io.micrometer.*, \
-	!io.netty.incubator.channel.uring, \
-	!org.bouncycastle.jsse, \
-	!org.bouncycastle.jsse.*, \
-	!reactor.blockhound, \
-	!reactor.blockhound.*, \
 	*
 Include-Resource: caffeine-*.jar;lib:=true,\
 okhttp-*.jar;lib:=true,\
@@ -274,12 +270,17 @@ com.google.gson-*.jar;lib:=true,\
 javax*.jar;lib:=true,\
 jakarta.validation-api-*.jar;lib:=true,\
 okio-*.jar;lib:=true,\
+javatuples-*.jar;lib:=true,\
 reactive-streams-*.jar;lib:=true,\
+protocol-*.jar;lib:=true,\
+protocolJava-*.jar;lib:=true,\
+common-*.jar;lib:=true,\
+server-*.jar;lib:=true,\
+reactor-*.jar;lib:=true,\
 threetenbp-*.jar;lib:=true,\
 gson-*.jar;lib:=true,\
 bcpkix-jdk18on-*.jar;lib:=true,\
 bcprov-jdk18on-*.jar;lib:=true,\
-nettyServer-fat-0.10.0.jar;lib:=true,\
 bcutil-jdk18on-*.jar;lib:=true
 -exportcontents: \
 !*.internal.*,\
@@ -343,7 +344,6 @@ org.openhab.*
                                 <exclude>pom.xml</exclude>
                                 <exclude>target/**</exclude>
                                 <exclude>.idea/**</exclude>
-                                <exclude>**/*.jar</exclude>
                                 <exclude>src/main/java/**/*.java</exclude>
                                 <exclude>src/test/java/**/*.java</exclude>
                                 <exclude>.github/workflows/*.yml</exclude>
