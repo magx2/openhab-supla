@@ -337,6 +337,7 @@ org.openhab.*
                                 <exclude>.idea/**</exclude>
                                 <exclude>src/main/java/**/*.java</exclude>
                                 <exclude>src/test/java/**/*.java</exclude>
+                                <exclude>.github/workflows/*.yml</exclude>
                             </excludes>
                             <trimTrailingWhitespace/>
                             <endWithNewline/>
