@@ -237,6 +237,7 @@ public class SuplaCloudBridgeHandler extends BaseBridgeHandler {
     }
 
     private void disposeNewChannelsPipeline() {
+        logger.debug("Disposing newChannelsPipeline");
         var local = newChannelsPipeline;
         newChannelsPipeline = null;
         if (local != null) {
@@ -267,13 +268,12 @@ public class SuplaCloudBridgeHandler extends BaseBridgeHandler {
 
     private void disposeServer() {
         var local = server;
+        server = null;
         if (local != null) {
             try {
                 local.close();
             } catch (Exception ex) {
                 logger.error("Could not close server! Probably you need to restart Open HAB (or machine)", ex);
-            } finally {
-                server = null;
             }
         }
     }

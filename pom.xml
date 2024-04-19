@@ -19,7 +19,7 @@
         <dependency>
             <groupId>pl.grzeslowski.jSupla</groupId>
             <artifactId>nettyServer</artifactId>
-            <version>0.10.0</version>
+            <version>0.11.0</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
