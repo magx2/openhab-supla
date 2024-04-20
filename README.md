@@ -4,7 +4,12 @@
 
 ### SSL Problem
 
-TDB
+In some Java environments, unlimited cryptography might be turned off. To enable it, you need to set the `crypto.policy` to `unlimited`.
+
+For more information, you can read the post [Enabling Unlimited Strength Cryptography in Java](https://www.baeldung.com/jce-enable-unlimited-strength).
+
+**Note:** In a Docker environment, it is sufficient to set the environment variable `CRYPTO_POLICY` to `unlimited`.
+
 
 ### Disabled algorithms
 
