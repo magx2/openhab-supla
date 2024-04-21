@@ -73,7 +73,7 @@ public class ServerBridgeHandler extends BaseBridgeHandler {
     private ServerDiscoveryService serverDiscoveryService;
 
     private final AtomicInteger numberOfConnectedDevices = new AtomicInteger();
-    private final Collection<ChannelWithSubscription> channels = new ArrayList<>();
+    private final Collection<ServerChannel> channels = new ArrayList<>();
     private final Object channelsLock = new Object();
 
     @Nullable
@@ -195,17 +195,10 @@ public class ServerBridgeHandler extends BaseBridgeHandler {
     private void channelConsumer(Channel channel, AuthData authData, @NonNull ScheduledExecutorService scheduledPool) {
         logger.debug("Device connected");
         changeNumberOfConnectedDevices(1);
-        newChannel(channel, authData, scheduledPool);
-    }
-
-    private void newChannel(Channel channel, AuthData authData, @NonNull ScheduledExecutorService scheduledPool) {
-        logger.debug("New channel {}", channel);
         var jSuplaChannel = new ServerChannel(
                 suplaDeviceRegistry, this, authData, requireNonNull(serverDiscoveryService), channel, scheduledPool);
-        var subscription = channel.getMessagePipe()
-                .subscribe(jSuplaChannel::onNext, jSuplaChannel::onError, jSuplaChannel::onComplete);
         synchronized (channelsLock) {
-            channels.add(new ChannelWithSubscription(channel, subscription, jSuplaChannel));
+            channels.add(jSuplaChannel);
         }
     }
 
@@ -275,9 +268,7 @@ public class ServerBridgeHandler extends BaseBridgeHandler {
             for (var channel : channelsCopy) {
                 try {
                     logger.debug("Closing channel {}", channel);
-                    channel.subscribe.dispose();
-                    channel.channel.close();
-                    channel.jServerChannel.close();
+                    channel.close();
                 } catch (Exception ex) {
                     logger.error("Could not close channel! Probably you need to restart Open HAB (or machine)", ex);
                 }
@@ -306,7 +297,4 @@ public class ServerBridgeHandler extends BaseBridgeHandler {
         logger.trace("setSuplaDiscoveryService#{}", serverDiscoveryService.hashCode());
         this.serverDiscoveryService = serverDiscoveryService;
     }
-
-    private static record ChannelWithSubscription(
-            Channel channel, Disposable subscribe, ServerChannel jServerChannel) {}
 }

@@ -25,7 +25,6 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
-import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
@@ -44,13 +43,14 @@ import pl.grzeslowski.supla.openhab.internal.server.discovery.ServerDiscoverySer
 import pl.grzeslowski.supla.openhab.internal.server.handler.AuthData;
 import pl.grzeslowski.supla.openhab.internal.server.handler.ServerBridgeHandler;
 import pl.grzeslowski.supla.openhab.internal.server.handler.ServerDeviceHandler;
+import reactor.core.Disposable;
 
 /** @author Grzeslowski - Initial contribution */
 @NonNullByDefault
 @ToString(onlyExplicitlyIncluded = true)
-@RequiredArgsConstructor
 public final class ServerChannel implements AutoCloseable {
     private final SuplaDeviceRegistry suplaDeviceRegistry;
+    private final Disposable subscription;
     private Logger logger = LoggerFactory.getLogger(ServerChannel.class);
     private final ServerBridgeHandler serverBridgeHandler;
 
@@ -72,6 +72,23 @@ public final class ServerChannel implements AutoCloseable {
 
     @Nullable
     private ServerDeviceHandler serverDeviceHandler;
+
+    public ServerChannel(
+            SuplaDeviceRegistry suplaDeviceRegistry,
+            ServerBridgeHandler serverBridgeHandler,
+            AuthData authData,
+            ServerDiscoveryService serverDiscoveryService,
+            Channel channel,
+            ScheduledExecutorService scheduledPool) {
+        this.suplaDeviceRegistry = suplaDeviceRegistry;
+        this.serverBridgeHandler = serverBridgeHandler;
+        this.authData = authData;
+        this.serverDiscoveryService = serverDiscoveryService;
+        this.channel = channel;
+        this.scheduledPool = scheduledPool;
+
+        subscription = channel.getMessagePipe().subscribe(this::onNext, this::onError, this::onComplete);
+    }
 
     @SuppressWarnings("deprecation")
     public synchronized void onNext(final ToServerEntity entity) {
@@ -283,6 +300,7 @@ public final class ServerChannel implements AutoCloseable {
         } catch (Exception ex) {
             logger.error("Could not close Supla channel! Probably you need to restart Open HAB (or machine)", ex);
         }
+        subscription.dispose();
         {
             var scheduledFuture = this.pingSchedule.getAndSet(null);
             if (scheduledFuture != null) {
