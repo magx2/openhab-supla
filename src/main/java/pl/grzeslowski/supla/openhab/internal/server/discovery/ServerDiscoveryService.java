@@ -14,7 +14,6 @@ import static java.util.Collections.synchronizedSet;
 import static java.util.Objects.requireNonNull;
 import static pl.grzeslowski.supla.openhab.internal.SuplaBindingConstants.*;
 
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;

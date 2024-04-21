@@ -22,11 +22,9 @@ import static reactor.core.publisher.Flux.just;
 
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import lombok.ToString;
-import lombok.val;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
 import org.openhab.core.thing.ThingStatusDetail;
@@ -133,10 +131,10 @@ public final class ServerChannel implements AutoCloseable {
             }
         } else if (entity instanceof SetActivityTimeout) {
             setActivityTimeout();
-        } else if (entity instanceof PingServer) {
-            pingServer((PingServer) entity);
-        } else if (entity instanceof DeviceChannelValue) {
-            deviceChannelValue((DeviceChannelValue) entity);
+        } else if (entity instanceof PingServer ping) {
+            pingServer(ping);
+        } else if (entity instanceof DeviceChannelValue value) {
+            deviceChannelValue(value);
         } else {
             logger.debug("Do not handling this command: {}", entity);
         }
@@ -220,12 +218,11 @@ public final class ServerChannel implements AutoCloseable {
     }
 
     private void setActivityTimeout() {
-        final SetActivityTimeoutResult data =
-                new SetActivityTimeoutResult(DEVICE_TIMEOUT_SEC, DEVICE_TIMEOUT_SEC - 2, DEVICE_TIMEOUT_SEC + 2);
+        var data = new SetActivityTimeoutResult(DEVICE_TIMEOUT_SEC, DEVICE_TIMEOUT_SEC - 2, DEVICE_TIMEOUT_SEC + 2);
         channel.write(just(data))
                 .subscribe(date -> logger.trace("setActivityTimeout {} {}", data, date.format(ISO_DATE_TIME)));
-        final ScheduledFuture<?> pingSchedule = scheduledPool.scheduleWithFixedDelay(
-                this::checkIfDeviceIsUp, DEVICE_TIMEOUT_SEC * 2, DEVICE_TIMEOUT_SEC, TimeUnit.SECONDS);
+        var pingSchedule = scheduledPool.scheduleWithFixedDelay(
+                this::checkIfDeviceIsUp, DEVICE_TIMEOUT_SEC * 2, DEVICE_TIMEOUT_SEC, SECONDS);
         this.pingSchedule.set(pingSchedule);
     }
 

@@ -233,7 +233,7 @@ public class ServerBridgeHandler extends BaseBridgeHandler {
     }
 
     private SslContext buildSslContext(Set<String> protocols) throws CertificateException, SSLException {
-        SelfSignedCertificate ssc = new SelfSignedCertificate();
+        var ssc = new SelfSignedCertificate();
         return SslContextBuilder.forServer(ssc.certificate(), ssc.privateKey())
                 .protocols(protocols)
                 .build();
