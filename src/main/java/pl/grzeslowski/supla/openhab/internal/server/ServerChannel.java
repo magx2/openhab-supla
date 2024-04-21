@@ -26,6 +26,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import lombok.ToString;
+import lombok.val;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
 import org.openhab.core.thing.ThingStatusDetail;
@@ -152,7 +153,7 @@ public final class ServerChannel implements AutoCloseable {
         logger = LoggerFactory.getLogger(this.getClass().getName() + "." + guid);
         authorize.run();
         if (authorized) {
-            serverDiscoveryService.addSuplaDevice(requireNonNull(guid), name != null ? name : "<UNKNOWN>");
+            serverDiscoveryService.addSuplaDevice(requireNonNull(guid), name);
             sendRegistrationConfirmation();
             bindToThingHandler(channels, true);
         } else {
@@ -301,6 +302,12 @@ public final class ServerChannel implements AutoCloseable {
             logger.error("Could not close Supla channel! Probably you need to restart Open HAB (or machine)", ex);
         }
         subscription.dispose();
+        {
+            var local = guid;
+            if (local != null) {
+                serverDiscoveryService.removeSuplaDevice(local);
+            }
+        }
         {
             var scheduledFuture = this.pingSchedule.getAndSet(null);
             if (scheduledFuture != null) {
