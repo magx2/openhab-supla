@@ -29,6 +29,16 @@ Follow the steps below to enable TLS 1.0 and TLS 1.1:
 
 4. Save and close the `java.security` file.
 
+##### Docker
+
+1. Log in into container: `docker exec -it 664f94d7b1ef /bin/bash`
+2. Go to folder with `java.security`: `cd /usr/lib/jvm/java-17-openjdk-amd64/conf/security`
+3. Do a backup: `cp java.security java.security.bak`
+4. Check current settings: `cat java.security | grep jdk.tls.disabledAlgorithms`
+5. Replace it: `sed -i 's/jdk.tls.disabledAlgorithms=SSLv3, TLSv1, TLSv1.1, RC4, DES, MD5withRSA, \\/jdk.tls.disabledAlgorithms=RC4, DES, MD5withRSA, \\/g' java.security`
+6. Check changed settings: `cat java.security | grep jdk.tls.disabledAlgorithms`
+7. Exit and restart docker container
+
 #### Restarting OpenHAB
 
 After enabling TLS 1.0 and TLS 1.1, a restart of OpenHAB is required for the changes to take effect. Please follow the standard procedure for restarting your OpenHAB instance.
