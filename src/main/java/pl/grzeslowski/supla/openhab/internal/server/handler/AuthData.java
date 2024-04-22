@@ -3,7 +3,7 @@ package pl.grzeslowski.supla.openhab.internal.server.handler;
 import lombok.NonNull;
 import org.eclipse.jdt.annotation.Nullable;
 
-public record AuthData(@Nullable LocationAuthData locationAuthData, @Nullable EmailAuthData emailAuthData) {
+record AuthData(@Nullable LocationAuthData locationAuthData, @Nullable EmailAuthData emailAuthData) {
 
     public AuthData {
         if (locationAuthData == null && emailAuthData == null) {

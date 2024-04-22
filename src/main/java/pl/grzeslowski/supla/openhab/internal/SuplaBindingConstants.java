@@ -34,12 +34,11 @@ public class SuplaBindingConstants {
             Set.of(SUPLA_SERVER_DEVICE_TYPE, SUPLA_CLOUD_DEVICE_TYPE, SUPLA_SERVER_TYPE, SUPLA_CLOUD_SERVER_TYPE);
 
     // supla device and cloud-device
-    public static final String SUPLA_DEVICE_GUID = "supla-device-guid";
+    public static final String SUPLA_DEVICE_GUID = "guid";
     public static final String SUPLA_DEVICE_CLOUD_ID = "cloud-id";
     public static final String THREAD_POOL_NAME = "supla-cloud-thread-pool";
 
     // SuplaServer constants
-    public static final int DEVICE_TIMEOUT_SEC = 10;
     public static final int DEFAULT_PORT = 2016;
     public static final String CONFIG_SERVER_ACCESS_ID = "serverAccessId";
     public static final String CONFIG_SERVER_ACCESS_ID_PASSWORD = "serverAccessIdPassword";

@@ -11,9 +11,9 @@
 package pl.grzeslowski.supla.openhab.internal.server.handler;
 
 import static java.util.Arrays.stream;
-import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toCollection;
 import static java.util.stream.Collectors.toSet;
+import static lombok.AccessLevel.PACKAGE;
 import static org.openhab.core.thing.ThingStatus.OFFLINE;
 import static org.openhab.core.thing.ThingStatus.ONLINE;
 import static org.openhab.core.thing.ThingStatusDetail.COMMUNICATION_ERROR;
@@ -32,31 +32,37 @@ import io.netty.handler.ssl.util.SelfSignedCertificate;
 import java.security.Security;
 import java.security.cert.CertificateException;
 import java.util.*;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import javax.net.ssl.SSLException;
-import org.eclipse.jdt.annotation.NonNull;
+import lombok.Getter;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
+import org.javatuples.Pair;
 import org.openhab.core.common.ThreadPoolManager;
 import org.openhab.core.library.types.DecimalType;
 import org.openhab.core.thing.Bridge;
 import org.openhab.core.thing.ChannelUID;
+import org.openhab.core.thing.Thing;
 import org.openhab.core.thing.binding.BaseBridgeHandler;
+import org.openhab.core.thing.binding.ThingHandler;
 import org.openhab.core.types.Command;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import pl.grzeslowski.jsupla.protocol.impl.calltypes.CallTypeParserImpl;
 import pl.grzeslowski.jsupla.protocol.impl.decoders.DecoderFactoryImpl;
 import pl.grzeslowski.jsupla.protocol.impl.encoders.EncoderFactoryImpl;
+import pl.grzeslowski.jsupla.protocoljava.api.entities.ds.RegisterDevice;
+import pl.grzeslowski.jsupla.protocoljava.api.entities.ds.RegisterDeviceD;
+import pl.grzeslowski.jsupla.protocoljava.api.types.traits.RegisterDeviceTrait;
 import pl.grzeslowski.jsupla.server.api.Channel;
 import pl.grzeslowski.jsupla.server.api.Server;
 import pl.grzeslowski.jsupla.server.api.ServerFactory;
 import pl.grzeslowski.jsupla.server.api.ServerProperties;
 import pl.grzeslowski.jsupla.server.netty.api.NettyServerFactory;
-import pl.grzeslowski.supla.openhab.internal.server.ServerChannel;
-import pl.grzeslowski.supla.openhab.internal.server.SuplaDeviceRegistry;
 import pl.grzeslowski.supla.openhab.internal.server.discovery.ServerDiscoveryService;
+import pl.grzeslowski.supla.openhab.internal.server.discovery.ServerDiscoveryService.SuplaDevice;
 import reactor.core.Disposable;
 
 /** @author Grzeslowski - Initial contribution */
@@ -64,24 +70,31 @@ import reactor.core.Disposable;
 public class ServerBridgeHandler extends BaseBridgeHandler {
     private static final int PROPER_AES_KEY_SIZE = 2147483647;
     private Logger logger = LoggerFactory.getLogger(ServerBridgeHandler.class);
-    private final SuplaDeviceRegistry suplaDeviceRegistry;
 
     @Nullable
     private Server server;
 
-    @Nullable
-    private ServerDiscoveryService serverDiscoveryService;
+    private final ServerDiscoveryService serverDiscoveryService;
 
     private final AtomicInteger numberOfConnectedDevices = new AtomicInteger();
-    private final Collection<ServerChannel> channels = new ArrayList<>();
-    private final Object channelsLock = new Object();
+
+    private final Collection<ServerDeviceHandler> childHandlers = new ArrayList<>();
+    private final ReadWriteLock childHandlersLock = new ReentrantReadWriteLock();
 
     @Nullable
     private Disposable newChannelsPipeline;
 
-    public ServerBridgeHandler(final Bridge bridge, final SuplaDeviceRegistry suplaDeviceRegistry) {
+    @Getter(PACKAGE)
+    @Nullable
+    private TimeoutConfiguration timeoutConfiguration;
+
+    @Getter(PACKAGE)
+    @Nullable
+    private AuthData authData;
+
+    public ServerBridgeHandler(Bridge bridge, ServerDiscoveryService serverDiscoveryService) {
         super(bridge);
-        this.suplaDeviceRegistry = suplaDeviceRegistry;
+        this.serverDiscoveryService = serverDiscoveryService;
     }
 
     @Override
@@ -110,7 +123,7 @@ public class ServerBridgeHandler extends BaseBridgeHandler {
             updateStatus(OFFLINE, CONFIGURATION_ERROR, "You need to pass port!");
             return;
         }
-        var authData = buildAuthData(config);
+        authData = buildAuthData(config);
         var port = config.getPort().intValue();
         var protocols =
                 stream(config.getProtocols().split(",")).map(String::trim).collect(toSet());
@@ -164,11 +177,15 @@ public class ServerBridgeHandler extends BaseBridgeHandler {
             logger.warn("Cannot get disabled algorithms! {}", ex.getLocalizedMessage());
         }
 
+        timeoutConfiguration = new TimeoutConfiguration(
+                config.getTimeout().intValue(),
+                config.getTimeoutMin().intValue(),
+                config.getTimeoutMax().intValue());
+
         var factory = buildServerFactory();
         var localServer = server = factory.createNewServer(buildServerProperties(port, protocols));
-        newChannelsPipeline = localServer
-                .getNewChannelsPipe()
-                .subscribe(o -> channelConsumer(o, authData, scheduledPool), this::errorOccurredInChannel);
+        newChannelsPipeline =
+                localServer.getNewChannelsPipe().subscribe(this::channelConsumer, this::errorOccurredInChannel);
 
         logger.debug("jSuplaServer running on port {}", port);
         updateStatus(ONLINE);
@@ -192,14 +209,60 @@ public class ServerBridgeHandler extends BaseBridgeHandler {
         return new AuthData(locationAuthData, emailAuthData);
     }
 
-    private void channelConsumer(Channel channel, AuthData authData, @NonNull ScheduledExecutorService scheduledPool) {
+    private void channelConsumer(Channel channel) {
         logger.debug("Device connected");
         changeNumberOfConnectedDevices(1);
-        var jSuplaChannel = new ServerChannel(
-                suplaDeviceRegistry, this, authData, requireNonNull(serverDiscoveryService), channel, scheduledPool);
-        synchronized (channelsLock) {
-            channels.add(jSuplaChannel);
-        }
+        var messagePipe = channel.getMessagePipe();
+        messagePipe
+                .filter(entity -> entity instanceof RegisterDeviceTrait registerDevice)
+                .map(entity -> (RegisterDeviceTrait) entity)
+                .<Optional<Pair<RegisterDeviceTrait, ServerDeviceHandler>>>handle((entity, sink) -> {
+                    childHandlersLock.readLock().lock();
+                    try {
+                        var pair = childHandlers.stream()
+                                .filter(handler -> entity.getGuid().equals(handler.getGuid()))
+                                .findAny()
+                                .map(handler -> new Pair<>(entity, handler));
+                        sink.next(pair);
+                    } finally {
+                        childHandlersLock.readLock().unlock();
+                    }
+                })
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .take(1)
+                .subscribe(pair -> {
+                    var registerDevice = pair.getValue0();
+                    var handler = pair.getValue1();
+                    handler.setChannel(channel, registerDevice);
+                    var guid = registerDevice.getGuid();
+                    if (guid != null) {
+                        serverDiscoveryService.removeSuplaDevice(guid);
+                    }
+                });
+
+        messagePipe
+                .map(entity -> {
+                    if (entity instanceof RegisterDevice registerDevice) {
+                        return Optional.of(new SuplaDevice(registerDevice.getGuid(), registerDevice.getName()));
+                    }
+                    if (entity instanceof RegisterDeviceD registerDevice) {
+                        return Optional.of(new SuplaDevice(registerDevice.getGuid(), registerDevice.getName()));
+                    }
+                    return Optional.<SuplaDevice>empty();
+                })
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .filter(suplaDevice -> {
+                    childHandlersLock.readLock().lock();
+                    try {
+                        return childHandlers.stream()
+                                .noneMatch(handler -> suplaDevice.guid().equals(handler.getGuid()));
+                    } finally {
+                        childHandlersLock.readLock().unlock();
+                    }
+                })
+                .subscribe(serverDiscoveryService::addSuplaDevice);
     }
 
     private void errorOccurredInChannel(Throwable ex) {
@@ -209,7 +272,7 @@ public class ServerBridgeHandler extends BaseBridgeHandler {
     }
 
     public void completedChannel() {
-        logger.debug("Device disconnected from");
+        logger.debug("Device disconnected from Server");
         changeNumberOfConnectedDevices(-1);
     }
 
@@ -242,7 +305,6 @@ public class ServerBridgeHandler extends BaseBridgeHandler {
     @Override
     public void dispose() {
         disposeNewChannelsPipeline();
-        disposeChannels();
         disposeServer();
         logger = LoggerFactory.getLogger(ServerBridgeHandler.class);
         super.dispose();
@@ -254,25 +316,6 @@ public class ServerBridgeHandler extends BaseBridgeHandler {
         newChannelsPipeline = null;
         if (local != null) {
             local.dispose();
-        }
-    }
-
-    private void disposeChannels() {
-        synchronized (channelsLock) {
-            if (channels.isEmpty()) {
-                logger.debug("No channels to close");
-                return;
-            }
-            var channelsCopy = new ArrayList<>(channels);
-            channels.clear();
-            for (var channel : channelsCopy) {
-                try {
-                    logger.debug("Closing channel {}", channel);
-                    channel.close();
-                } catch (Exception ex) {
-                    logger.error("Could not close channel! Probably you need to restart Open HAB (or machine)", ex);
-                }
-            }
         }
     }
 
@@ -293,8 +336,29 @@ public class ServerBridgeHandler extends BaseBridgeHandler {
         // no commands in this bridge
     }
 
-    public void setSuplaDiscoveryService(final ServerDiscoveryService serverDiscoveryService) {
-        logger.trace("setSuplaDiscoveryService#{}", serverDiscoveryService.hashCode());
-        this.serverDiscoveryService = serverDiscoveryService;
+    @Override
+    public void childHandlerInitialized(ThingHandler childHandler, Thing childThing) {
+        if (!(childHandler instanceof ServerDeviceHandler serverDevice)) {
+            return;
+        }
+        childHandlersLock.writeLock().lock();
+        try {
+            childHandlers.add(serverDevice);
+        } finally {
+            childHandlersLock.writeLock().unlock();
+        }
+    }
+
+    @Override
+    public void childHandlerDisposed(ThingHandler childHandler, Thing childThing) {
+        if (!(childHandler instanceof ServerDeviceHandler serverDevice)) {
+            return;
+        }
+        childHandlersLock.writeLock().lock();
+        try {
+            childHandlers.remove(serverDevice);
+        } finally {
+            childHandlersLock.writeLock().unlock();
+        }
     }
 }

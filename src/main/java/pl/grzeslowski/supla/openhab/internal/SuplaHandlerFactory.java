@@ -10,7 +10,6 @@
  */
 package pl.grzeslowski.supla.openhab.internal;
 
-import static java.util.Objects.requireNonNull;
 import static pl.grzeslowski.supla.openhab.internal.SuplaBindingConstants.*;
 
 import java.util.Hashtable;
@@ -25,13 +24,11 @@ import org.openhab.core.thing.binding.BaseThingHandlerFactory;
 import org.openhab.core.thing.binding.ThingHandler;
 import org.openhab.core.thing.binding.ThingHandlerFactory;
 import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import pl.grzeslowski.supla.openhab.internal.cloud.discovery.CloudDiscovery;
 import pl.grzeslowski.supla.openhab.internal.cloud.handler.CloudBridgeHandler;
 import pl.grzeslowski.supla.openhab.internal.cloud.handler.CloudDeviceHandler;
-import pl.grzeslowski.supla.openhab.internal.server.SuplaDeviceRegistry;
 import pl.grzeslowski.supla.openhab.internal.server.discovery.ServerDiscoveryService;
 import pl.grzeslowski.supla.openhab.internal.server.handler.ServerBridgeHandler;
 import pl.grzeslowski.supla.openhab.internal.server.handler.ServerDeviceHandler;
@@ -45,7 +42,6 @@ import pl.grzeslowski.supla.openhab.internal.server.handler.ServerDeviceHandler;
 @NonNullByDefault
 public class SuplaHandlerFactory extends BaseThingHandlerFactory {
     private final Logger logger = LoggerFactory.getLogger(SuplaHandlerFactory.class);
-    private @Nullable SuplaDeviceRegistry suplaDeviceRegistry;
 
     @Override
     public boolean supportsThingType(ThingTypeUID thingTypeUID) {
@@ -77,15 +73,14 @@ public class SuplaHandlerFactory extends BaseThingHandlerFactory {
 
     @NonNull
     private ThingHandler newSuplaDeviceHandler(final Thing thing) {
-        return new ServerDeviceHandler(thing, requireNonNull(suplaDeviceRegistry));
+        return new ServerDeviceHandler(thing);
     }
 
     @NonNull
     private ThingHandler newSuplaCloudBridgeHandler(final Bridge thing) {
-        var bridgeHandler = new ServerBridgeHandler(thing, requireNonNull(suplaDeviceRegistry));
-        var discovery = new ServerDiscoveryService(bridgeHandler);
+        var discovery = new ServerDiscoveryService(thing.getUID());
+        var bridgeHandler = new ServerBridgeHandler(thing, discovery);
         registerThingDiscovery(discovery);
-        bridgeHandler.setSuplaDiscoveryService(discovery);
         return bridgeHandler;
     }
 
@@ -99,17 +94,6 @@ public class SuplaHandlerFactory extends BaseThingHandlerFactory {
     @NonNull
     private ThingHandler newCloudDevice(final Thing thing) {
         return new CloudDeviceHandler(thing);
-    }
-
-    @Reference
-    @SuppressWarnings("unused") // used by OSGi
-    public void setSuplaDeviceRegistry(final SuplaDeviceRegistry suplaDeviceRegistry) {
-        this.suplaDeviceRegistry = suplaDeviceRegistry;
-    }
-
-    @SuppressWarnings("unused") // used by OSGi
-    public void unsetSuplaDeviceRegistry(final SuplaDeviceRegistry suplaDeviceRegistry) {
-        this.suplaDeviceRegistry = null;
     }
 
     private synchronized void registerThingDiscovery(DiscoveryService discoveryService) {

@@ -11,7 +11,6 @@
 package pl.grzeslowski.supla.openhab.internal.server.discovery;
 
 import static java.util.Collections.synchronizedSet;
-import static java.util.Objects.requireNonNull;
 import static pl.grzeslowski.supla.openhab.internal.SuplaBindingConstants.*;
 
 import java.util.HashSet;
@@ -25,32 +24,31 @@ import org.openhab.core.config.discovery.DiscoveryResultBuilder;
 import org.openhab.core.thing.ThingUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import pl.grzeslowski.supla.openhab.internal.server.handler.ServerBridgeHandler;
 
 /** @author Grzeslowski - Initial contribution */
 @NonNullByDefault
 public class ServerDiscoveryService extends AbstractDiscoveryService {
     private final Logger logger = LoggerFactory.getLogger(ServerDiscoveryService.class);
-    private final ServerBridgeHandler serverBridgeHandler;
     private final Set<SuplaDevice> suplaDevices = synchronizedSet(new HashSet<>());
+    private final ThingUID bridgeThingUID;
 
-    public ServerDiscoveryService(final ServerBridgeHandler serverBridgeHandler) {
+    public ServerDiscoveryService(org.openhab.core.thing.ThingUID bridgeThingUID) {
         super(SUPPORTED_THING_TYPES_UIDS, 10, true);
-        this.serverBridgeHandler = requireNonNull(serverBridgeHandler);
+        this.bridgeThingUID = bridgeThingUID;
     }
 
     @Override
     protected void startScan() {
         suplaDevices.stream().map(this::buildDiscoveryResult).forEach(this::thingDiscovered);
+        suplaDevices.clear();
         stopScan();
     }
 
     private DiscoveryResult buildDiscoveryResult(SuplaDevice suplaDevice) {
-        var bridgeUID = serverBridgeHandler.getThing().getUID();
-        var thingUID = new ThingUID(SUPLA_SERVER_DEVICE_TYPE, bridgeUID, suplaDevice.guid);
+        var thingUID = new ThingUID(SUPLA_SERVER_DEVICE_TYPE, bridgeThingUID, suplaDevice.guid);
         var label = buildLabel(suplaDevice);
         return DiscoveryResultBuilder.create(thingUID)
-                .withBridge(bridgeUID)
+                .withBridge(bridgeThingUID)
                 .withProperties(Map.of(SUPLA_DEVICE_GUID, suplaDevice.guid))
                 .withRepresentationProperty(SUPLA_DEVICE_GUID)
                 .withLabel(label)
@@ -64,17 +62,23 @@ public class ServerDiscoveryService extends AbstractDiscoveryService {
         return String.format("%s (%s)", suplaDevice.name, suplaDevice.guid);
     }
 
+    public void addSuplaDevice(SuplaDevice suplaDevice) {
+        logger.debug("Discovered thing with {}", suplaDevice);
+        suplaDevices.add(suplaDevice);
+    }
+
     public void addSuplaDevice(String guid, @Nullable String name) {
-        logger.debug("Discovered thing with GUID [{}]", guid);
-        suplaDevices.add(new SuplaDevice(guid, name));
+        addSuplaDevice(new SuplaDevice(guid, name));
     }
 
     public void removeSuplaDevice(String guid) {
-        logger.debug("Removing discovered thing with GUID [{}]", guid);
-        suplaDevices.remove(new SuplaDevice(guid, null));
+        var remove = suplaDevices.remove(new SuplaDevice(guid, null));
+        if (remove) {
+            logger.debug("Removing discovered thing with GUID [{}]", guid);
+        }
     }
 
-    private record SuplaDevice(String guid, @Nullable String name) {
+    public record SuplaDevice(String guid, @Nullable String name) {
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
