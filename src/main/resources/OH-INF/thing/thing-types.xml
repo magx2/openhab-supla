@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <thing:thing-descriptions bindingId="supla"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xmlns:thing="http://eclipse.org/smarthome/schemas/thing-description/v1.0.0"
-	xsi:schemaLocation="http://eclipse.org/smarthome/schemas/thing-description/v1.0.0 http://eclipse.org/smarthome/schemas/thing-description-1.0.0.xsd">
+						xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+						xmlns:thing="http://eclipse.org/smarthome/schemas/thing-description/v1.0.0"
+						xsi:schemaLocation="http://eclipse.org/smarthome/schemas/thing-description/v1.0.0 http://eclipse.org/smarthome/schemas/thing-description-1.0.0.xsd">
 
 	<!-- Sample Thing Type -->
 	<thing-type id="server-device">
@@ -14,10 +14,73 @@
 		<!-- Note: Channels will be discovered at runtime -->
 		<representation-property>Supla-device-guid</representation-property>
 		<config-description>
-			<parameter name="supla-device-guid" type="text" required="true">
+			<parameter name="guid" type="text" required="true">
 				<label>GUID</label>
 				<description>This is GUID of device. It can be found on website during device configuration.
 				</description>
+			</parameter>
+
+			<parameter-group name="accessIdLogin">
+				<label>Access ID Login</label>
+				<description>
+					If you want to authenticate your devices with access ID flow fill
+					&lt;strong&gt;both&lt;/strong&gt;
+					&lt;em&gt;Server Access ID&lt;/em&gt; and
+					&lt;em&gt;Server Access ID Password&lt;/em&gt;
+				</description>
+			</parameter-group>
+			<parameter name="serverAccessId" type="integer" min="1" groupName="accessIdLogin">
+				<label>Server Access ID</label>
+				<description>
+					This is ID that devices will use to register to your server.
+				</description>
+			</parameter>
+			<parameter name="serverAccessIdPassword" type="text" groupName="accessIdLogin">
+				<label>Server Access ID Password</label>
+				<description>
+					This is password required to register to your server.
+				</description>
+			</parameter>
+
+			<parameter-group name="emailIdLogin">
+				<label>Email Login</label>
+				<description>
+					If you want to authenticate your devices with email/password flow fill
+					&lt;strong&gt;both&lt;/strong&gt; &lt;em&gt;Email&lt;/em&gt; and
+					&lt;em&gt;Email Password&lt;/em&gt;
+				</description>
+			</parameter-group>
+			<parameter name="email" type="text" min="1" groupName="emailIdLogin">
+				<label>Email</label>
+				<description>
+					This is email that devices will use to register to your server.&lt;br/&gt;
+					&lt;em&gt;This email address
+					does not need to be reachable. It won't be used in any way, i.e. to
+					send email to.&lt;/em&gt;
+				</description>
+				<context>email</context>
+			</parameter>
+			<parameter name="authKey" type="text" groupName="emailIdLogin">
+				<label>Email Password</label>
+				<description>
+					This is password required to register to your server.
+				</description>
+			</parameter>
+
+			<parameter name="timeout" type="integer">
+				<label>Timeout</label>
+				<description/>
+				<advanced>true</advanced>
+			</parameter>
+			<parameter name="timeoutMin" type="integer">
+				<label>Timeout Min</label>
+				<description/>
+				<advanced>true</advanced>
+			</parameter>
+			<parameter name="timeoutMax" type="integer">
+				<label>Timeout Max</label>
+				<description/>
+				<advanced>true</advanced>
 			</parameter>
 		</config-description>
 	</thing-type>
@@ -82,7 +145,8 @@
 		<item-type>Number:ElectricPotential</item-type>
 		<label>Voltage</label>
 		<description>Voltage is the difference in electric potential between two points. In a static electric field, it
-			corresponds to the work needed per unit of charge to move a test charge between the two points.</description>
+			corresponds to the work needed per unit of charge to move a test charge between the two points.
+		</description>
 		<state readOnly="true" pattern="%.2f V"/>
 	</channel-type>
 
@@ -90,7 +154,8 @@
 		<item-type>Number:ElectricCurrent</item-type>
 		<label>Electric Current</label>
 		<description>An electric current is a flow of charged particles, such as electrons or ions, moving through an
-			electrical conductor or space. It is defined as the net rate of flow of electric charge through a surface.</description>
+			electrical conductor or space. It is defined as the net rate of flow of electric charge through a surface.
+		</description>
 		<state readOnly="true" pattern="%.2f A"/>
 	</channel-type>
 

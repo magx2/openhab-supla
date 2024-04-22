@@ -10,12 +10,13 @@
  */
 package pl.grzeslowski.supla.openhab.internal.server.handler;
 
+import static pl.grzeslowski.supla.openhab.internal.SuplaBindingConstants.DEFAULT_PORT;
+
 import java.math.BigDecimal;
 import lombok.Data;
 import lombok.ToString;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
-import pl.grzeslowski.supla.openhab.internal.SuplaBindingConstants;
 
 /** @author Grzeslowski - Initial contribution */
 @NonNullByDefault
@@ -35,9 +36,12 @@ public class ServerBridgeHandlerConfig {
     @ToString.Exclude
     private String authKey;
 
-    private BigDecimal port = new BigDecimal(SuplaBindingConstants.DEFAULT_PORT);
+    private BigDecimal port = new BigDecimal(DEFAULT_PORT);
     private boolean ssl = true;
     private String protocols = "TLSv1.3, TLSv1.2, TLSv1";
+    private BigDecimal timeout = new BigDecimal(8);
+    private BigDecimal timeoutMin = new BigDecimal(10);
+    private BigDecimal timeoutMax = new BigDecimal(12);
 
     public boolean isServerAuth() {
         return serverAccessId != null && serverAccessIdPassword != null;
