@@ -44,3 +44,9 @@ Follow the steps below to enable TLS 1.0 and TLS 1.1:
 After enabling TLS 1.0 and TLS 1.1, a restart of OpenHAB is required for the changes to take effect. Please follow the standard procedure for restarting your OpenHAB instance.
 
 **Note:** Always ensure to backup any files or settings before making changes. This will help you to restore the original settings if something goes wrong.
+
+## Support ❤️
+
+If you want to support the author of this binding, buy him a coffee:
+
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/S6S8UBWWY) <a href="https://buycoffee.to/magx2" target="_blank"><img src="https://buycoffee.to/btn/buycoffeeto-btn-primary.svg" alt="Postaw mi kawę na buycoffee.to" width="150"></a>
