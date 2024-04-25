@@ -148,13 +148,14 @@ public final class CloudDeviceHandler extends AbstractDeviceHandler {
 
     private boolean checkIfIsOnline() throws Exception {
         try {
-            final Device device = findDevice(singletonList("connected"));
+            var device = findDevice(singletonList("connected"));
             if (device.isConnected() == null || !device.isConnected()) {
                 updateStatus(OFFLINE, NONE, "This device is is not connected to Supla Cloud.");
                 return false;
             }
             return true;
         } catch (Exception e) {
+            logger.debug("Error when loading IO device from Supla Cloud!", e);
             updateStatus(
                     OFFLINE,
                     COMMUNICATION_ERROR,

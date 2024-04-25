@@ -72,10 +72,7 @@ import org.openhab.core.thing.ThingUID;
 import org.openhab.core.thing.binding.ThingHandlerCallback;
 import org.openhab.core.types.State;
 import pl.grzeslowski.supla.openhab.internal.cloud.AdditionalChannelType;
-import pl.grzeslowski.supla.openhab.internal.cloud.api.ChannelsCloudApi;
-import pl.grzeslowski.supla.openhab.internal.cloud.api.ChannelsCloudApiFactory;
 import pl.grzeslowski.supla.openhab.internal.cloud.api.IoDevicesCloudApi;
-import pl.grzeslowski.supla.openhab.internal.cloud.api.IoDevicesCloudApiFactory;
 import pl.grzeslowski.supla.openhab.internal.cloud.executors.LedCommandExecutor;
 import pl.grzeslowski.supla.openhab.internal.cloud.executors.LedCommandExecutorFactory;
 
@@ -106,15 +103,6 @@ class CloudDeviceHandlerTest {
 
     @Mock
     Configuration configuration;
-
-    @Mock
-    ChannelsCloudApiFactory channelsCloudApiFactory;
-
-    @Mock
-    IoDevicesCloudApiFactory ioDevicesCloudApiFactory;
-
-    @Mock
-    ChannelsCloudApi channelsCloudApi;
 
     @Mock
     IoDevicesCloudApi ioDevicesCloudApi;
@@ -244,15 +232,13 @@ class CloudDeviceHandlerTest {
         given(bridge.getHandler()).willReturn(bridgeHandler);
         given(thing.getConfiguration()).willReturn(configuration);
         given(configuration.get(SUPLA_DEVICE_CLOUD_ID)).willReturn(cloudId);
-        given(channelsCloudApiFactory.newChannelsCloudApi(oAuthToken)).willReturn(channelsCloudApi);
-        given(ioDevicesCloudApiFactory.newIoDevicesCloudApi(oAuthToken)).willReturn(ioDevicesCloudApi);
-        given(ioDevicesCloudApi.getIoDevice(eq(cloudId), any())).willReturn(device);
+        given(bridgeHandler.getIoDevice(eq(cloudId), any())).willReturn(device);
         given(device.isConnected()).willReturn(true);
         given(device.isEnabled()).willReturn(true);
         given(device.getChannels()).willReturn(allChannels);
         given(thing.getUID()).willReturn(thingUID);
-        given(ledCommandExecutorFactory.newLedCommandExecutor(channelsCloudApi)).willReturn(ledCommandExecutor);
-        given(channelsCloudApi.getChannel(anyInt(), any())).willAnswer(invocationOnMock -> {
+        given(ledCommandExecutorFactory.newLedCommandExecutor(bridgeHandler)).willReturn(ledCommandExecutor);
+        given(bridgeHandler.getChannel(anyInt(), any())).willAnswer(invocationOnMock -> {
             int channelId = invocationOnMock.getArgument(0);
             return allChannels.stream()
                     .filter(channel -> channel.getId() == channelId)
@@ -283,7 +269,7 @@ class CloudDeviceHandlerTest {
         handler.handleOnOffCommand(lightChannelUID, ON);
 
         // then
-        verify(channelsCloudApi).executeAction(channelExecuteActionRequestCaptor.capture(), eq(lightChannelId));
+        verify(bridgeHandler).executeAction(channelExecuteActionRequestCaptor.capture(), eq(lightChannelId));
         ChannelExecuteActionRequest value = channelExecuteActionRequestCaptor.getValue();
         assertThat(value.getAction()).isEqualTo(TURN_ON);
     }
@@ -299,7 +285,7 @@ class CloudDeviceHandlerTest {
         handler.handleOnOffCommand(lightChannelUID, OnOffType.OFF);
 
         // then
-        verify(channelsCloudApi).executeAction(channelExecuteActionRequestCaptor.capture(), eq(lightChannelId));
+        verify(bridgeHandler).executeAction(channelExecuteActionRequestCaptor.capture(), eq(lightChannelId));
         ChannelExecuteActionRequest value = channelExecuteActionRequestCaptor.getValue();
         assertThat(value.getAction()).isEqualTo(TURN_OFF);
     }
@@ -317,7 +303,7 @@ class CloudDeviceHandlerTest {
         handler.handleOnOffCommand(channelUID, ON);
 
         // then
-        verify(channelsCloudApi).executeAction(channelExecuteActionRequestCaptor.capture(), eq(id));
+        verify(bridgeHandler).executeAction(channelExecuteActionRequestCaptor.capture(), eq(id));
         ChannelExecuteActionRequest value = channelExecuteActionRequestCaptor.getValue();
         assertThat(value.getAction()).isEqualTo(OPEN_CLOSE);
     }
@@ -335,7 +321,7 @@ class CloudDeviceHandlerTest {
         handler.handleOnOffCommand(channelUID, OFF);
 
         // then
-        verify(channelsCloudApi).executeAction(channelExecuteActionRequestCaptor.capture(), eq(id));
+        verify(bridgeHandler).executeAction(channelExecuteActionRequestCaptor.capture(), eq(id));
         ChannelExecuteActionRequest value = channelExecuteActionRequestCaptor.getValue();
         assertThat(value.getAction()).isEqualTo(OPEN_CLOSE);
     }
@@ -353,7 +339,7 @@ class CloudDeviceHandlerTest {
         handler.handleOpenClosedCommand(channelUID, OpenClosedType.OPEN);
 
         // then
-        verify(channelsCloudApi).executeAction(channelExecuteActionRequestCaptor.capture(), eq(id));
+        verify(bridgeHandler).executeAction(channelExecuteActionRequestCaptor.capture(), eq(id));
         ChannelExecuteActionRequest value = channelExecuteActionRequestCaptor.getValue();
         assertThat(value.getAction()).isEqualTo(OPEN);
     }
@@ -371,7 +357,7 @@ class CloudDeviceHandlerTest {
         handler.handleOpenClosedCommand(channelUID, OpenClosedType.CLOSED);
 
         // then
-        verify(channelsCloudApi).executeAction(channelExecuteActionRequestCaptor.capture(), eq(id));
+        verify(bridgeHandler).executeAction(channelExecuteActionRequestCaptor.capture(), eq(id));
         ChannelExecuteActionRequest value = channelExecuteActionRequestCaptor.getValue();
         assertThat(value.getAction()).isEqualTo(CLOSE);
     }
@@ -387,7 +373,7 @@ class CloudDeviceHandlerTest {
         handler.handleUpDownCommand(rollerShutterChannelUID, UpDownType.UP);
 
         // then
-        verify(channelsCloudApi).executeAction(channelExecuteActionRequestCaptor.capture(), eq(rollerShutterChannelId));
+        verify(bridgeHandler).executeAction(channelExecuteActionRequestCaptor.capture(), eq(rollerShutterChannelId));
         ChannelExecuteActionRequest value = channelExecuteActionRequestCaptor.getValue();
         assertThat(value.getAction()).isEqualTo(REVEAL);
     }
@@ -403,7 +389,7 @@ class CloudDeviceHandlerTest {
         handler.handleUpDownCommand(rollerShutterChannelUID, UpDownType.DOWN);
 
         // then
-        verify(channelsCloudApi).executeAction(channelExecuteActionRequestCaptor.capture(), eq(rollerShutterChannelId));
+        verify(bridgeHandler).executeAction(channelExecuteActionRequestCaptor.capture(), eq(rollerShutterChannelId));
         ChannelExecuteActionRequest value = channelExecuteActionRequestCaptor.getValue();
         assertThat(value.getAction()).isEqualTo(SHUT);
     }
@@ -420,7 +406,7 @@ class CloudDeviceHandlerTest {
         handler.handlePercentCommand(rollerShutterChannelUID, new PercentType(percentage));
 
         // then
-        verify(channelsCloudApi).executeAction(channelExecuteActionRequestCaptor.capture(), eq(rollerShutterChannelId));
+        verify(bridgeHandler).executeAction(channelExecuteActionRequestCaptor.capture(), eq(rollerShutterChannelId));
         ChannelExecuteActionRequest value = channelExecuteActionRequestCaptor.getValue();
         assertThat(value.getAction()).isEqualTo(REVEAL_PARTIALLY);
         assertThat(value.getPercentage()).isEqualTo(100 - percentage);
@@ -469,7 +455,7 @@ class CloudDeviceHandlerTest {
         handler.handleStopMoveTypeCommand(rollerShutterChannelUID, StopMoveType.STOP);
 
         // then
-        verify(channelsCloudApi).executeAction(channelExecuteActionRequestCaptor.capture(), eq(rollerShutterChannelId));
+        verify(bridgeHandler).executeAction(channelExecuteActionRequestCaptor.capture(), eq(rollerShutterChannelId));
         ChannelExecuteActionRequest value = channelExecuteActionRequestCaptor.getValue();
         assertThat(value.getAction()).isEqualTo(STOP);
     }
@@ -485,7 +471,7 @@ class CloudDeviceHandlerTest {
         handler.handleStopMoveTypeCommand(rollerShutterChannelUID, StopMoveType.MOVE);
 
         // then
-        verify(channelsCloudApi, times(0))
+        verify(bridgeHandler, times(0))
                 .executeAction(channelExecuteActionRequestCaptor.capture(), eq(rollerShutterChannelId));
     }
 
@@ -497,7 +483,7 @@ class CloudDeviceHandlerTest {
         // given
         final int id = (int) FieldUtils.readDeclaredField(this, idFieldName, true);
         final ChannelUID channelUID = buildChannelUID(id);
-        final Channel channel = channelsCloudApi.getChannel(id, asList("supportedFunctions", "state"));
+        final Channel channel = bridgeHandler.getChannel(id, asList("supportedFunctions", "state"));
         given(channel.getState()).willReturn(new ChannelState().on(true));
 
         // when
@@ -515,7 +501,7 @@ class CloudDeviceHandlerTest {
         // given
         final int id = (int) FieldUtils.readDeclaredField(this, idFieldName, true);
         final ChannelUID channelUID = buildChannelUID(id);
-        final Channel channel = channelsCloudApi.getChannel(id, asList("supportedFunctions", "state"));
+        final Channel channel = bridgeHandler.getChannel(id, asList("supportedFunctions", "state"));
         given(channel.getState()).willReturn(new ChannelState().on(false));
 
         // when
@@ -534,7 +520,7 @@ class CloudDeviceHandlerTest {
         // given
         final int id = (int) FieldUtils.readDeclaredField(this, idFieldName, true);
         final ChannelUID channelUID = buildChannelUID(id);
-        final Channel channel = channelsCloudApi.getChannel(id, asList("supportedFunctions", "state"));
+        final Channel channel = bridgeHandler.getChannel(id, asList("supportedFunctions", "state"));
 
         given(channel.getState())
                 .willReturn(new ChannelState().color("0xFF0000").colorBrightness(100));
@@ -579,7 +565,7 @@ class CloudDeviceHandlerTest {
 
     @Test
     @DisplayName("should refresh roller shutter")
-    void reollerShutterRefresh() throws Exception {
+    void rollerShutterRefresh() throws Exception {
 
         // given
         final ChannelUID channelUID = findRollerShutterChannelUID();
