@@ -51,31 +51,31 @@ final class CacheApi implements ChannelsCloudApi, IoDevicesCloudApi, ServerCloud
         getChannelsCache = Caffeine.newBuilder()
                 .expireAfterWrite(cacheEvictTime, cacheEvictUnit)
                 .build(key -> {
-                    logger.debug("Missed cache for `getChannels({})`", join(", ", key));
+                    logger.trace("Missed cache for `getChannels({})`", join(", ", key));
                     return channelsCloudApi.getChannels(key);
                 });
         getChannelCache = Caffeine.newBuilder()
                 .expireAfterWrite(cacheEvictTime, cacheEvictUnit)
                 .build(key -> {
-                    logger.debug("Missed cache for `getChannel({})`", key);
+                    logger.trace("Missed cache for `getChannel({})`", key);
                     return channelsCloudApi.getChannel(key.id, key.include);
                 });
         getIoDeviceCache = Caffeine.newBuilder()
                 .expireAfterWrite(cacheEvictTime, cacheEvictUnit)
                 .build(key -> {
-                    logger.debug("Missed cache for `getIoDevice({})`", key);
+                    logger.trace("Missed cache for `getIoDevice({})`", key);
                     return ioDevicesCloudApi.getIoDevice(key.id, key.include);
                 });
         getIoDevicesCache = Caffeine.newBuilder()
                 .expireAfterWrite(cacheEvictTime, cacheEvictUnit)
                 .build(key -> {
-                    logger.debug("Missed cache for `getIoDevices({})`", join(", ", key));
+                    logger.trace("Missed cache for `getIoDevices({})`", join(", ", key));
                     return ioDevicesCloudApi.getIoDevices(key);
                 });
         getServerInfoCache = Caffeine.newBuilder()
                 .expireAfterWrite(cacheEvictTime, cacheEvictUnit)
                 .build(__ -> {
-                    logger.debug("Missed cache for `getServerInfo`");
+                    logger.trace("Missed cache for `getServerInfo`");
                     return serverCloudApi.getServerInfo();
                 });
         this.serverCloudApi = serverCloudApi;

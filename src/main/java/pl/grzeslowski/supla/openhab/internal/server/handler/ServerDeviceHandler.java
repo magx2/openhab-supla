@@ -22,6 +22,8 @@ import static org.openhab.core.thing.ThingStatus.ONLINE;
 import static org.openhab.core.thing.ThingStatusDetail.*;
 import static pl.grzeslowski.jsupla.protocol.api.ResultCode.SUPLA_RESULTCODE_TRUE;
 import static pl.grzeslowski.supla.openhab.internal.SuplaBindingConstants.BINDING_ID;
+import static pl.grzeslowski.supla.openhab.internal.SuplaBindingConstants.ServerDevicesProperties.CONFIG_AUTH_PROPERTY;
+import static pl.grzeslowski.supla.openhab.internal.SuplaBindingConstants.ServerDevicesProperties.SOFT_VERSION_PROPERTY;
 import static reactor.core.publisher.Flux.just;
 
 import java.time.LocalDateTime;
@@ -151,10 +153,20 @@ public class ServerDeviceHandler extends AbstractDeviceHandler {
                 locationAuthData = bridgeAuthData.locationAuthData();
             }
             AuthData.@Nullable EmailAuthData emailAuthData;
-            if (config.getEmail() != null && config.getAuthKey() != null) {
-                emailAuthData = new AuthData.EmailAuthData(config.getEmail(), config.getAuthKey());
+            var configEmail = config.getEmail();
+            var bridgeEmailAuthData = bridgeAuthData.emailAuthData();
+
+            if (configEmail == null && bridgeEmailAuthData == null) {
+                emailAuthData = null;
             } else {
-                emailAuthData = bridgeAuthData.emailAuthData();
+                String email;
+                //noinspection ReplaceNullCheck
+                if (configEmail != null) {
+                    email = configEmail;
+                } else {
+                    email = bridgeEmailAuthData.email();
+                }
+                emailAuthData = new AuthData.EmailAuthData(email);
             }
             var authData = new AuthData(locationAuthData, emailAuthData);
 
@@ -164,12 +176,13 @@ public class ServerDeviceHandler extends AbstractDeviceHandler {
         updateStatus(OFFLINE, HANDLER_CONFIGURATION_PENDING, "Waiting for Supla device to connect with the server");
     }
 
-    public void setChannel(pl.grzeslowski.jsupla.server.api.Channel channel, RegisterDeviceTrait registerEntity) {
+    public boolean joinDeviceWithHandler(
+            pl.grzeslowski.jsupla.server.api.Channel channel, RegisterDeviceTrait registerEntity) {
         this.channel = channel;
-        logger.debug("Setting channel");
         updateStatus(OFFLINE, HANDLER_CONFIGURATION_PENDING, "Device is authorizing...");
 
         // auth
+        logger.debug("Authorizing...");
         authorized = false;
         if (registerEntity instanceof RegisterDevice registerDevice) {
             authorized = authorizeForLocation(registerDevice.getLocationId(), registerDevice.getLocationPassword());
@@ -191,11 +204,25 @@ public class ServerDeviceHandler extends AbstractDeviceHandler {
                         "Device authorization failed. Device tried to log in with email=%s and authKey=%s"
                                 .formatted(registerDevice.getEmail(), registerDevice.getAuthKey()));
             }
+        } else {
+            updateStatus(
+                    OFFLINE,
+                    COMMUNICATION_ERROR,
+                    "Do not know how to handle %s during registration"
+                            .formatted(registerEntity.getClass().getSimpleName()));
         }
         if (!authorized) {
-            channel.close();
-            return;
+            return false;
         }
+        {
+            var local = bridgeHandler;
+            if (local != null) {
+                local.deviceConnected();
+            }
+        }
+
+        // set the software version
+        thing.setProperty(SOFT_VERSION_PROPERTY, registerEntity.getSoftVer());
 
         sendRegistrationConfirmation().subscribe(date -> {
             setChannels(registerEntity.getChannels().getChannels());
@@ -248,6 +275,8 @@ public class ServerDeviceHandler extends AbstractDeviceHandler {
                             updateStatus(OFFLINE, COMMUNICATION_ERROR, ex.getLocalizedMessage());
                         },
                         () -> logger.debug("Closing DeviceChannelValue pipeline"));
+
+        return true;
     }
 
     private boolean authorizeForLocation(int accessId, char[] accessIdPassword) {
@@ -270,7 +299,7 @@ public class ServerDeviceHandler extends AbstractDeviceHandler {
         return true;
     }
 
-    private boolean isGoodPassword(final char[] password, final char[] givenPassword) {
+    private boolean isGoodPassword(char[] password, char[] givenPassword) {
         if (password.length > givenPassword.length) {
             return false;
         }
@@ -295,8 +324,13 @@ public class ServerDeviceHandler extends AbstractDeviceHandler {
             logger.debug("Wrong email; {} != {}", email, emailAuthData.email());
             return false;
         }
-        if (!emailAuthData.authKey().equals(authKey)) {
-            logger.debug("Wrong auth key; {} != {}", authKey, emailAuthData.authKey());
+        var key = thing.getProperties().get(CONFIG_AUTH_PROPERTY);
+        if (key == null) {
+            logger.debug("Device is missing {} property", CONFIG_AUTH_PROPERTY);
+            return false;
+        }
+        if (!key.equals(authKey)) {
+            logger.debug("Wrong auth key; {} != {}", authKey, key);
             return false;
         }
         return true;
@@ -359,12 +393,6 @@ public class ServerDeviceHandler extends AbstractDeviceHandler {
                 pingSchedule = null;
                 if (local != null) {
                     local.cancel(true);
-                }
-            }
-            {
-                var local = bridgeHandler;
-                if (local != null) {
-                    local.completedChannel();
                 }
             }
         }
@@ -502,11 +530,10 @@ public class ServerDeviceHandler extends AbstractDeviceHandler {
                 local.close();
             }
         }
-        {
+        if (authorized) {
             var local = bridgeHandler;
-            bridgeHandler = null;
             if (local != null) {
-                local.dispose();
+                local.deviceDisconnected();
             }
         }
         logger = LoggerFactory.getLogger(ServerDeviceHandler.class);

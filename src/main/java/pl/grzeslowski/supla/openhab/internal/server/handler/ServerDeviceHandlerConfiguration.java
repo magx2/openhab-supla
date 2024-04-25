@@ -21,10 +21,6 @@ public class ServerDeviceHandlerConfiguration {
     private String email;
 
     @Nullable
-    @ToString.Exclude
-    private String authKey;
-
-    @Nullable
     private BigDecimal timeout;
 
     @Nullable

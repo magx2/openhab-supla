@@ -12,7 +12,7 @@
 		<label>Supla Native Server Device</label>
 		<description>Generic type for all Supla devices. Channels will be provided by device at runtime</description>
 		<!-- Note: Channels will be discovered at runtime -->
-		<representation-property>Supla-device-guid</representation-property>
+		<representation-property>guid</representation-property>
 		<config-description>
 			<parameter name="guid" type="text" required="true">
 				<label>GUID</label>
@@ -34,16 +34,19 @@
 				<description>
 					This is ID that devices will use to register to your server.
 				</description>
+				<advanced>true</advanced>
 			</parameter>
 			<parameter name="serverAccessIdPassword" type="text" groupName="accessIdLogin">
 				<label>Server Access ID Password</label>
 				<description>
 					This is password required to register to your server.
 				</description>
+				<advanced>true</advanced>
 			</parameter>
 
 			<parameter-group name="emailIdLogin">
 				<label>Email Login</label>
+				<context>email</context>
 				<description>
 					If you want to authenticate your devices with email/password flow fill
 					&lt;strong&gt;both&lt;/strong&gt; &lt;em&gt;Email&lt;/em&gt; and
@@ -59,12 +62,7 @@
 					send email to.&lt;/em&gt;
 				</description>
 				<context>email</context>
-			</parameter>
-			<parameter name="authKey" type="text" groupName="emailIdLogin">
-				<label>Email Password</label>
-				<description>
-					This is password required to register to your server.
-				</description>
+				<advanced>true</advanced>
 			</parameter>
 
 			<parameter name="timeout" type="integer">

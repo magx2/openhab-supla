@@ -101,7 +101,7 @@ public final class CloudDeviceHandler extends AbstractDeviceHandler {
             logger.debug(
                     "Bridge is not instance of {}! Current bridge class {}, Thing UID {}",
                     CloudBridgeHandler.class.getSimpleName(),
-                    bridgeHandler.getClass().getSimpleName(),
+                    bridgeHandler != null ? bridgeHandler.getClass().getSimpleName() : "<null>",
                     thing.getUID());
             updateStatus(OFFLINE, BRIDGE_UNINITIALIZED, "There is wrong type of bridge for cloud device!");
             return;
@@ -247,6 +247,7 @@ public final class CloudDeviceHandler extends AbstractDeviceHandler {
         final ChannelInfo channelInfo = ChannelInfoParser.PARSER.parse(channelUID);
         final int channelId = channelInfo.getChannelId();
         final io.swagger.client.model.Channel channel = queryForChannel(channelId);
+        //noinspection SwitchStatementWithTooFewBranches
         switch (channel.getFunction().getName()) {
             case CONTROLLINGTHEROLLERSHUTTER:
                 handleOneZeroCommand(channelId, command == UP, REVEAL, SHUT);
@@ -295,6 +296,14 @@ public final class CloudDeviceHandler extends AbstractDeviceHandler {
 
     @Override
     protected void handlePercentCommand(final ChannelUID channelUID, final PercentType command) throws Exception {
+        if (channelsApi == null) {
+            logger.debug("Cannot handle `{}` on channel `{}` because channelsApi is null", command, channelUID);
+            return;
+        }
+        if (ledCommandExecutor == null) {
+            logger.debug("Cannot handle `{}` on channel `{}` because ledCommandExecutor is null", command, channelUID);
+            return;
+        }
         final ChannelInfo channelInfo = ChannelInfoParser.PARSER.parse(channelUID);
         final int channelId = channelInfo.getChannelId();
         final io.swagger.client.model.Channel channel = queryForChannel(channelId);
@@ -343,6 +352,10 @@ public final class CloudDeviceHandler extends AbstractDeviceHandler {
             final ChannelFunctionActionEnum first,
             final ChannelFunctionActionEnum second)
             throws Exception {
+        if (channelsApi == null) {
+            logger.debug("Cannot handle `{}` on channel `{}` because channelsApi is null", firstOrSecond, channelId);
+            return;
+        }
         final ChannelFunctionActionEnum action = firstOrSecond ? first : second;
         logger.trace("Executing 0/1 command `{}`", action);
         channelsApi.executeAction(new ChannelExecuteActionRequest().action(action), channelId);
@@ -371,6 +384,10 @@ public final class CloudDeviceHandler extends AbstractDeviceHandler {
     private void handleStopMoveTypeCommandOnRollerShutter(
             final ChannelUID channelUID, final io.swagger.client.model.Channel channel, final StopMoveType command)
             throws Exception {
+        if (channelsApi == null) {
+            logger.debug("Cannot handle `{}` on channel `{}` because channelsApi is null", command, channelUID);
+            return;
+        }
         switch (command) {
             case MOVE:
                 logger.trace(
@@ -401,7 +418,7 @@ public final class CloudDeviceHandler extends AbstractDeviceHandler {
     }
 
     void refresh() {
-        logger.debug("Refreshing `{}`", thing.getUID());
+        logger.trace("Refreshing `{}`", thing.getUID());
         try {
             if (checkIfIsOnline() && checkIfIsEnabled()) {
                 updateStatus(ONLINE);
