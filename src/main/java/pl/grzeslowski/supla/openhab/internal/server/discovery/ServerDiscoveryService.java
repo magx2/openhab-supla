@@ -10,12 +10,12 @@
  */
 package pl.grzeslowski.supla.openhab.internal.server.discovery;
 
-import static java.util.Collections.synchronizedSet;
 import static pl.grzeslowski.supla.openhab.internal.SuplaBindingConstants.*;
+import static pl.grzeslowski.supla.openhab.internal.SuplaBindingConstants.ServerDevicesProperties.CONFIG_AUTH_PROPERTY;
 
-import java.util.HashSet;
+import java.time.Duration;
 import java.util.Map;
-import java.util.Set;
+import java.util.logging.Level;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
 import org.openhab.core.config.discovery.AbstractDiscoveryService;
@@ -24,73 +24,95 @@ import org.openhab.core.config.discovery.DiscoveryResultBuilder;
 import org.openhab.core.thing.ThingUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import pl.grzeslowski.jsupla.protocoljava.api.entities.ds.RegisterDeviceD;
+import pl.grzeslowski.jsupla.protocoljava.api.types.traits.RegisterDeviceTrait;
+import pl.grzeslowski.jsupla.server.api.Channel;
+import reactor.core.Disposable;
+import reactor.core.publisher.Flux;
 
 /** @author Grzeslowski - Initial contribution */
 @NonNullByDefault
 public class ServerDiscoveryService extends AbstractDiscoveryService {
-    private final Logger logger = LoggerFactory.getLogger(ServerDiscoveryService.class);
-    private final Set<SuplaDevice> suplaDevices = synchronizedSet(new HashSet<>());
+    private final Logger logger;
     private final ThingUID bridgeThingUID;
 
+    @Nullable
+    Flux<? extends Channel> newDeviceFlux;
+
+    @Nullable
+    private Disposable subscription;
+
     public ServerDiscoveryService(org.openhab.core.thing.ThingUID bridgeThingUID) {
-        super(SUPPORTED_THING_TYPES_UIDS, 10, true);
+        super(SUPPORTED_THING_TYPES_UIDS, DEVICE_REGISTER_MAX_DELAY * 2, false);
+        logger = LoggerFactory.getLogger(ServerDiscoveryService.class.getName() + "." + bridgeThingUID.getId());
         this.bridgeThingUID = bridgeThingUID;
     }
 
     @Override
     protected void startScan() {
-        suplaDevices.stream().map(this::buildDiscoveryResult).forEach(this::thingDiscovered);
-        suplaDevices.clear();
-        stopScan();
+        var channel = newDeviceFlux;
+        if (channel == null) {
+            logger.debug("No channel, canceling scan");
+            stopScan();
+            return;
+        }
+        logger.info("Starting scan...");
+        cancelSubscription();
+        subscription = newDeviceFlux
+                .flatMap(Channel::getMessagePipe)
+                .filter(entity -> entity instanceof RegisterDeviceTrait)
+                .cast(RegisterDeviceTrait.class)
+                .take(Duration.ofSeconds(getScanTimeout()))
+                .map(this::buildDiscoveryResult)
+                .log(logger.getName(), Level.FINE)
+                .subscribe(
+                        this::thingDiscovered,
+                        ex -> logger.error("Error occurred during discovery", ex),
+                        this::stopScan);
     }
 
-    private DiscoveryResult buildDiscoveryResult(SuplaDevice suplaDevice) {
-        var thingUID = new ThingUID(SUPLA_SERVER_DEVICE_TYPE, bridgeThingUID, suplaDevice.guid);
-        var label = buildLabel(suplaDevice);
+    @Override
+    protected synchronized void stopScan() {
+        cancelSubscription();
+        super.stopScan();
+    }
+
+    private synchronized void cancelSubscription() {
+        var local = subscription;
+        subscription = null;
+        if (local != null) {
+            logger.debug("Cancelling current subscription");
+            local.dispose();
+        }
+    }
+
+    private DiscoveryResult buildDiscoveryResult(RegisterDeviceTrait registerDeviceTrait) {
+        var builder = buildDiscoveryResult(registerDeviceTrait.getGuid(), registerDeviceTrait.getName());
+        if (registerDeviceTrait instanceof RegisterDeviceD registerDevice) {
+            builder.withProperties(Map.of(CONFIG_AUTH_PROPERTY, registerDevice.getAuthKey()));
+        }
+        return builder.build();
+    }
+
+    private DiscoveryResultBuilder buildDiscoveryResult(String guid, @Nullable String name) {
+        var thingUID = new ThingUID(SUPLA_SERVER_DEVICE_TYPE, bridgeThingUID, guid);
+        var label = buildLabel(guid, name);
         return DiscoveryResultBuilder.create(thingUID)
                 .withBridge(bridgeThingUID)
-                .withProperties(Map.of(SUPLA_DEVICE_GUID, suplaDevice.guid))
+                .withProperties(Map.of(SUPLA_DEVICE_GUID, guid))
                 .withRepresentationProperty(SUPLA_DEVICE_GUID)
-                .withLabel(label)
-                .build();
+                .withLabel(label);
     }
 
-    private static String buildLabel(SuplaDevice suplaDevice) {
-        if (suplaDevice.name == null || suplaDevice.name.isEmpty()) {
-            return suplaDevice.guid;
+    private static String buildLabel(String guid, @Nullable String name) {
+        if (name == null || name.isEmpty()) {
+            return guid;
         }
-        return String.format("%s (%s)", suplaDevice.name, suplaDevice.guid);
+        return name;
     }
 
-    public void addSuplaDevice(SuplaDevice suplaDevice) {
-        logger.debug("Discovered thing with {}", suplaDevice);
-        suplaDevices.add(suplaDevice);
-    }
-
-    public void addSuplaDevice(String guid, @Nullable String name) {
-        addSuplaDevice(new SuplaDevice(guid, name));
-    }
-
-    public void removeSuplaDevice(String guid) {
-        var remove = suplaDevices.remove(new SuplaDevice(guid, null));
-        if (remove) {
-            logger.debug("Removing discovered thing with GUID [{}]", guid);
-        }
-    }
-
-    public record SuplaDevice(String guid, @Nullable String name) {
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-
-            SuplaDevice that = (SuplaDevice) o;
-            return guid.equals(that.guid);
-        }
-
-        @Override
-        public int hashCode() {
-            return guid.hashCode();
-        }
+    public void setNewDeviceFlux(@Nullable Flux<? extends Channel> newDeviceFlux) {
+        cancelSubscription();
+        this.newDeviceFlux = newDeviceFlux;
     }
 }

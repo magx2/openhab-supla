@@ -53,38 +53,39 @@ public class SuplaHandlerFactory extends BaseThingHandlerFactory {
         ThingTypeUID thingTypeUID = thing.getThingTypeUID();
 
         if (SUPLA_SERVER_DEVICE_TYPE.equals(thingTypeUID)) {
-            return newSuplaDeviceHandler(thing);
+            return newServerDeviceHandler(thing);
         }
 
         if (SUPLA_CLOUD_DEVICE_TYPE.equals(thingTypeUID)) {
-            return newCloudDevice(thing);
+            return newCloudDeviceHandler(thing);
         }
 
         if (SUPLA_SERVER_TYPE.equals(thingTypeUID)) {
-            return newSuplaCloudBridgeHandler((Bridge) thing);
+            return newServerBridgeHandler((Bridge) thing);
         }
 
         if (SUPLA_CLOUD_SERVER_TYPE.equals(thingTypeUID)) {
-            return newSuplaCloudServerThingHandler(thing);
+            return newCloudBridgeHandler(thing);
         }
 
         return null;
     }
 
     @NonNull
-    private ThingHandler newSuplaDeviceHandler(final Thing thing) {
+    private ThingHandler newServerDeviceHandler(final Thing thing) {
         return new ServerDeviceHandler(thing);
     }
 
     @NonNull
-    private ThingHandler newSuplaCloudBridgeHandler(final Bridge thing) {
+    private ThingHandler newServerBridgeHandler(final Bridge thing) {
         var discovery = new ServerDiscoveryService(thing.getUID());
         var bridgeHandler = new ServerBridgeHandler(thing, discovery);
         registerThingDiscovery(discovery);
         return bridgeHandler;
     }
 
-    private ThingHandler newSuplaCloudServerThingHandler(final Thing thing) {
+    @NonNull
+    private ThingHandler newCloudBridgeHandler(final Thing thing) {
         var bridgeHandler = new CloudBridgeHandler((Bridge) thing);
         var cloudDiscovery = new CloudDiscovery(bridgeHandler);
         registerThingDiscovery(cloudDiscovery);
@@ -92,7 +93,7 @@ public class SuplaHandlerFactory extends BaseThingHandlerFactory {
     }
 
     @NonNull
-    private ThingHandler newCloudDevice(final Thing thing) {
+    private ThingHandler newCloudDeviceHandler(final Thing thing) {
         return new CloudDeviceHandler(thing);
     }
 

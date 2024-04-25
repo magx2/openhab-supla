@@ -10,6 +10,8 @@
  */
 package pl.grzeslowski.supla.openhab.internal;
 
+import static java.util.concurrent.TimeUnit.MINUTES;
+
 import java.util.Set;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.openhab.core.thing.ThingTypeUID;
@@ -23,6 +25,7 @@ import org.openhab.core.thing.ThingTypeUID;
 public class SuplaBindingConstants {
 
     public static final String BINDING_ID = "supla";
+    public static final int DEVICE_REGISTER_MAX_DELAY = (int) MINUTES.toSeconds(1);
 
     // List of all Thing Type UIDs
     public static final ThingTypeUID SUPLA_SERVER_DEVICE_TYPE = new ThingTypeUID(BINDING_ID, "server-device");
@@ -43,9 +46,13 @@ public class SuplaBindingConstants {
     public static final String CONFIG_SERVER_ACCESS_ID = "serverAccessId";
     public static final String CONFIG_SERVER_ACCESS_ID_PASSWORD = "serverAccessIdPassword";
     public static final String CONFIG_EMAIL = "email";
-    public static final String CONFIG_AUTH_KEY = "authKey";
     public static final String CONFIG_PORT = "port";
     public static final String CONNECTED_DEVICES_CHANNEL_ID = "server-devices";
+
+    public static class ServerDevicesProperties {
+        public static final String SOFT_VERSION_PROPERTY = "softVersion";
+        public static final String CONFIG_AUTH_PROPERTY = "authKey";
+    }
 
     // CloudBridgeHandler
     public static class CloudBridgeHandlerConstants {

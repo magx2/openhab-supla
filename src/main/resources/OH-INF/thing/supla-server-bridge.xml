@@ -53,12 +53,6 @@
 					send email to.&lt;/em&gt; </description>
 				<context>email</context>
 			</parameter>
-			<parameter name="authKey" type="text" groupName="emailIdLogin">
-				<label>Email Password</label>
-				<description>
-					This is password required to register to your server.
-				</description>
-			</parameter>
 
 			<parameter name="port" type="integer" required="true" min="1">
 				<label>Server port</label>
@@ -87,7 +81,7 @@
 			<parameter name="protocols" type="text">
 				<label>Protocols</label>
 				<description>Protocols to support when opening SSL connection.</description>
-				<default>TLSv1.3, TLSv1.2, TLSv1</default>
+				<default>TLSv1.3, TLSv1.2, TLSv1, TLSv1.1</default>
 				<advanced>true</advanced>
 			</parameter>
 

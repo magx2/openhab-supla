@@ -32,13 +32,9 @@ public class ServerBridgeHandlerConfig {
     @Nullable
     private String email;
 
-    @Nullable
-    @ToString.Exclude
-    private String authKey;
-
     private BigDecimal port = new BigDecimal(DEFAULT_PORT);
     private boolean ssl = true;
-    private String protocols = "TLSv1.3, TLSv1.2, TLSv1";
+    private String protocols = "TLSv1.3, TLSv1.2, TLSv1, TLSv1.1";
     private BigDecimal timeout = new BigDecimal(8);
     private BigDecimal timeoutMin = new BigDecimal(10);
     private BigDecimal timeoutMax = new BigDecimal(12);
@@ -48,6 +44,6 @@ public class ServerBridgeHandlerConfig {
     }
 
     public boolean isEmailAuth() {
-        return email != null && authKey != null;
+        return email != null;
     }
 }

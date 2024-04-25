@@ -19,7 +19,7 @@
         <dependency>
             <groupId>pl.grzeslowski.jSupla</groupId>
             <artifactId>nettyServer</artifactId>
-            <version>0.14.0</version>
+            <version>0.15.0</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
@@ -58,8 +58,18 @@
         </dependency>
         <dependency>
             <groupId>org.bouncycastle</groupId>
-            <artifactId>bcprov-jdk18on</artifactId>
-            <version>1.76</version>
+            <artifactId>bcprov-jdk15on</artifactId>
+            <version>1.70</version>
+        </dependency>
+        <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcpkix-jdk15on</artifactId>
+            <version>1.70</version>
+        </dependency>
+        <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcutil-jdk15on</artifactId>
+            <version>1.70</version>
         </dependency>
         <!-- ❌ JSupla -->
         <!-- ✅ OPENHAB -->
@@ -279,9 +289,9 @@ server-*.jar;lib:=true,\
 reactor-*.jar;lib:=true,\
 threetenbp-*.jar;lib:=true,\
 gson-*.jar;lib:=true,\
-bcpkix-jdk18on-*.jar;lib:=true,\
-bcprov-jdk18on-*.jar;lib:=true,\
-bcutil-jdk18on-*.jar;lib:=true
+bcpkix-jdk15on-*.jar;lib:=true,\
+bcprov-jdk15on-*.jar;lib:=true,\
+bcutil-jdk15on-*.jar;lib:=true
 -exportcontents: \
 !*.internal.*,\
 !*.impl.*, \
