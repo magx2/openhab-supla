@@ -1,0 +1,30 @@
+name: Publish to Git Hub
+
+on:
+  push:
+    tags:
+      - 'release/*'
+
+jobs:
+  build:
+    name: Publish binaries
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Build
+        run: mvn -B package -DskipTests --file pom.xml
+      - name: Extract Maven project version
+        run: echo ::set-output name=version::$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
+        id: project
+      - name: Show extracted Maven project version
+        run: echo "🤩 Released version=${{ steps.project.outputs.version }}"
+      - name: Upload binaries to release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: target/openhab-${{ steps.project.outputs.version }}.jar
+          asset_name: openhab-${{ steps.project.outputs.version }}.jar
+          tag: ${{ github.ref }}
+          overwrite: true
+          body: "Release of version ${{ steps.project.outputs.version }}"
