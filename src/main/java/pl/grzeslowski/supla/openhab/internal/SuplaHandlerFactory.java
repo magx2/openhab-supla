@@ -23,6 +23,7 @@ import org.openhab.core.thing.ThingTypeUID;
 import org.openhab.core.thing.binding.BaseThingHandlerFactory;
 import org.openhab.core.thing.binding.ThingHandler;
 import org.openhab.core.thing.binding.ThingHandlerFactory;
+import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.component.annotations.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -80,7 +81,11 @@ public class SuplaHandlerFactory extends BaseThingHandlerFactory {
     private ThingHandler newServerBridgeHandler(final Bridge thing) {
         var discovery = new ServerDiscoveryService(thing.getUID());
         var bridgeHandler = new ServerBridgeHandler(thing, discovery);
-        registerThingDiscovery(discovery);
+        var serviceRegistration = registerThingDiscovery(discovery);
+        bridgeHandler.setOnDispose(() -> {
+            discovery.setNewDeviceFlux(null);
+            unRegisterThingDiscovery(serviceRegistration);
+        });
         return bridgeHandler;
     }
 
@@ -88,7 +93,11 @@ public class SuplaHandlerFactory extends BaseThingHandlerFactory {
     private ThingHandler newCloudBridgeHandler(final Thing thing) {
         var bridgeHandler = new CloudBridgeHandler((Bridge) thing);
         var cloudDiscovery = new CloudDiscovery(bridgeHandler);
-        registerThingDiscovery(cloudDiscovery);
+        var serviceRegistration = registerThingDiscovery(cloudDiscovery);
+        bridgeHandler.setOnDispose(() -> {
+            cloudDiscovery.close();
+            unRegisterThingDiscovery(serviceRegistration);
+        });
         return bridgeHandler;
     }
 
@@ -97,11 +106,19 @@ public class SuplaHandlerFactory extends BaseThingHandlerFactory {
         return new CloudDeviceHandler(thing);
     }
 
-    private synchronized void registerThingDiscovery(DiscoveryService discoveryService) {
-        logger.trace(
+    private synchronized ServiceRegistration<?> registerThingDiscovery(DiscoveryService discoveryService) {
+        logger.debug(
                 "Try to register Discovery service on BundleID: {} Service: {}",
                 bundleContext.getBundle().getBundleId(),
                 DiscoveryService.class.getName());
-        bundleContext.registerService(DiscoveryService.class.getName(), discoveryService, new Hashtable<>());
+        return bundleContext.registerService(DiscoveryService.class.getName(), discoveryService, new Hashtable<>());
+    }
+
+    private synchronized void unRegisterThingDiscovery(ServiceRegistration<?> serviceRegistration) {
+        logger.debug(
+                "Try to unregister Discovery service on BundleID: {} Service: {}",
+                bundleContext.getBundle().getBundleId(),
+                DiscoveryService.class.getName());
+        bundleContext.ungetService(serviceRegistration.getReference());
     }
 }

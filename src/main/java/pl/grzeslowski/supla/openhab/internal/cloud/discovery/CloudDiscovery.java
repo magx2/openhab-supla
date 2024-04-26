@@ -27,21 +27,30 @@ import pl.grzeslowski.supla.openhab.internal.cloud.handler.CloudBridgeHandler;
 
 /** @author Martin Grzeslowski - Initial contribution */
 @NonNullByDefault
-public final class CloudDiscovery extends AbstractDiscoveryService {
-    private final Logger logger = LoggerFactory.getLogger(CloudDiscovery.class);
+public final class CloudDiscovery extends AbstractDiscoveryService implements AutoCloseable {
+    private final Logger logger;
     private final CloudBridgeHandler bridgeHandler;
+    private boolean close;
 
     public CloudDiscovery(CloudBridgeHandler bridgeHandler) {
         super(SUPPORTED_THING_TYPES_UIDS, 10, true);
+        logger = LoggerFactory.getLogger(CloudDiscovery.class.getName() + "."
+                + bridgeHandler.getThing().getUID().getId());
         this.bridgeHandler = bridgeHandler;
     }
 
     @Override
     protected void startScan() {
+        if (close) {
+            logger.debug("Discovery service is closed. Stop scan.");
+            stopScan();
+            return;
+        }
         try {
             bridgeHandler.getIoDevices(singletonList("channels")).forEach(this::addThing);
         } catch (Exception e) {
             logger.error("Cannot get IO devices from Supla Cloud!", e);
+            stopScan();
         }
     }
 
@@ -57,19 +66,19 @@ public final class CloudDiscovery extends AbstractDiscoveryService {
     }
 
     private DiscoveryResult createDiscoveryResult(ThingUID thingUID, String label, Map<String, Object> properties) {
-        return DiscoveryResultBuilder.create(thingUID) //
-                .withBridge(findBridgeUID()) //
-                .withProperties(properties) //
-                .withLabel(label) //
+        return DiscoveryResultBuilder.create(thingUID)
+                .withBridge(findBridgeUID())
+                .withProperties(properties)
+                .withLabel(label)
                 .build();
     }
 
     private String buildThingLabel(Device device) {
-        final StringBuilder sb = new StringBuilder();
+        var sb = new StringBuilder();
 
-        final String name = device.getName();
+        var name = device.getName();
         if (!isNullOrEmpty(name)) {
-            final String comment = device.getComment();
+            var comment = device.getComment();
             if (!isNullOrEmpty(comment)) {
                 sb.append(comment).append(" (").append(name).append(")");
             } else {
@@ -77,12 +86,12 @@ public final class CloudDiscovery extends AbstractDiscoveryService {
             }
         }
 
-        final String primaryLabel = sb.toString();
+        var primaryLabel = sb.toString();
         if (!isNullOrEmpty(primaryLabel)) {
             return primaryLabel;
-        } else {
-            return device.getGUIDString();
         }
+
+        return device.getGUIDString();
     }
 
     @SuppressWarnings("BooleanMethodIsAlwaysInverted")
@@ -92,5 +101,11 @@ public final class CloudDiscovery extends AbstractDiscoveryService {
 
     private Map<String, Object> buildThingProperties(Device device) {
         return Map.of(SUPLA_DEVICE_GUID, device.getGUIDString(), SUPLA_DEVICE_CLOUD_ID, device.getId());
+    }
+
+    @Override
+    public void close() {
+        close = true;
+        stopScan();
     }
 }
