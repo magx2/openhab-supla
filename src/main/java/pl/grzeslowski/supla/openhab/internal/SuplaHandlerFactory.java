@@ -10,9 +10,11 @@
  */
 package pl.grzeslowski.supla.openhab.internal;
 
+import static java.util.Collections.synchronizedMap;
 import static pl.grzeslowski.supla.openhab.internal.SuplaBindingConstants.*;
 
 import java.util.Hashtable;
+import java.util.Map;
 import org.eclipse.jdt.annotation.NonNull;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
@@ -21,8 +23,10 @@ import org.openhab.core.thing.Bridge;
 import org.openhab.core.thing.Thing;
 import org.openhab.core.thing.ThingTypeUID;
 import org.openhab.core.thing.binding.BaseThingHandlerFactory;
+import org.openhab.core.thing.binding.BridgeHandler;
 import org.openhab.core.thing.binding.ThingHandler;
 import org.openhab.core.thing.binding.ThingHandlerFactory;
+import org.osgi.framework.ServiceReference;
 import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.component.annotations.Component;
 import org.slf4j.Logger;
@@ -43,6 +47,7 @@ import pl.grzeslowski.supla.openhab.internal.server.handler.ServerDeviceHandler;
 @NonNullByDefault
 public class SuplaHandlerFactory extends BaseThingHandlerFactory {
     private final Logger logger = LoggerFactory.getLogger(SuplaHandlerFactory.class);
+    private final Map<BridgeHandler, ServiceReference<?>> servicesToDispose = synchronizedMap(new Hashtable<>());
 
     @Override
     public boolean supportsThingType(ThingTypeUID thingTypeUID) {
@@ -72,6 +77,18 @@ public class SuplaHandlerFactory extends BaseThingHandlerFactory {
         return null;
     }
 
+    @Override
+    protected void removeHandler(ThingHandler thingHandler) {
+        if (!(thingHandler instanceof BridgeHandler bridgeHandler)) {
+            return;
+        }
+        var reference = servicesToDispose.get(bridgeHandler);
+        if (reference != null) {
+            unRegisterThingDiscovery(reference);
+            servicesToDispose.remove(bridgeHandler);
+        }
+    }
+
     @NonNull
     private ThingHandler newServerDeviceHandler(final Thing thing) {
         return new ServerDeviceHandler(thing);
@@ -82,22 +99,16 @@ public class SuplaHandlerFactory extends BaseThingHandlerFactory {
         var discovery = new ServerDiscoveryService(thing.getUID());
         var bridgeHandler = new ServerBridgeHandler(thing, discovery);
         var serviceRegistration = registerThingDiscovery(discovery);
-        bridgeHandler.setOnDispose(() -> {
-            discovery.setNewDeviceFlux(null);
-            unRegisterThingDiscovery(serviceRegistration);
-        });
+        servicesToDispose.put(bridgeHandler, serviceRegistration.getReference());
         return bridgeHandler;
     }
 
     @NonNull
     private ThingHandler newCloudBridgeHandler(final Thing thing) {
         var bridgeHandler = new CloudBridgeHandler((Bridge) thing);
-        var cloudDiscovery = new CloudDiscovery(bridgeHandler);
-        var serviceRegistration = registerThingDiscovery(cloudDiscovery);
-        bridgeHandler.setOnDispose(() -> {
-            cloudDiscovery.close();
-            unRegisterThingDiscovery(serviceRegistration);
-        });
+        var discovery = new CloudDiscovery(bridgeHandler);
+        var serviceRegistration = registerThingDiscovery(discovery);
+        servicesToDispose.put(bridgeHandler, serviceRegistration.getReference());
         return bridgeHandler;
     }
 
@@ -114,11 +125,11 @@ public class SuplaHandlerFactory extends BaseThingHandlerFactory {
         return bundleContext.registerService(DiscoveryService.class.getName(), discoveryService, new Hashtable<>());
     }
 
-    private synchronized void unRegisterThingDiscovery(ServiceRegistration<?> serviceRegistration) {
+    private synchronized void unRegisterThingDiscovery(ServiceReference<?> serviceReference) {
         logger.debug(
                 "Try to unregister Discovery service on BundleID: {} Service: {}",
                 bundleContext.getBundle().getBundleId(),
                 DiscoveryService.class.getName());
-        bundleContext.ungetService(serviceRegistration.getReference());
+        bundleContext.ungetService(serviceReference);
     }
 }

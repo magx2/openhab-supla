@@ -37,7 +37,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import javax.net.ssl.SSLException;
 import lombok.Getter;
-import lombok.Setter;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
 import org.javatuples.Pair;
@@ -88,10 +87,6 @@ public class ServerBridgeHandler extends BaseBridgeHandler {
     @Getter(PACKAGE)
     @Nullable
     private AuthData authData;
-
-    @Nullable
-    @Setter
-    Runnable onDispose;
 
     public ServerBridgeHandler(Bridge bridge, ServerDiscoveryService serverDiscoveryService) {
         super(bridge);
@@ -283,13 +278,6 @@ public class ServerBridgeHandler extends BaseBridgeHandler {
     @Override
     public void dispose() {
         logger.debug("Disposing ServerBridgeHandler");
-        {
-            var local = onDispose;
-            onDispose = null;
-            if (local != null) {
-                local.run();
-            }
-        }
         disposeNewChannelsPipeline();
         disposeServer();
         serverDiscoveryService.setNewDeviceFlux(null);

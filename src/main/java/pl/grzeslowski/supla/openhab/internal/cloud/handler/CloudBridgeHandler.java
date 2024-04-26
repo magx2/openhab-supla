@@ -30,7 +30,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ScheduledFuture;
-import lombok.Setter;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
 import org.openhab.core.common.ThreadPoolManager;
@@ -71,10 +70,6 @@ public class CloudBridgeHandler extends BaseBridgeHandler implements IoDevicesCl
 
     @Nullable
     private ChannelsCloudApi channelsApi;
-
-    @Nullable
-    @Setter
-    Runnable onDispose;
 
     public CloudBridgeHandler(final Bridge bridge) {
         super(bridge);
@@ -165,13 +160,6 @@ public class CloudBridgeHandler extends BaseBridgeHandler implements IoDevicesCl
             if (local != null) {
                 local.cancel(true);
                 scheduledFutureForHandler = null;
-            }
-        }
-        {
-            var local = onDispose;
-            if (local != null) {
-                local.run();
-                onDispose = null;
             }
         }
     }

@@ -27,10 +27,9 @@ import pl.grzeslowski.supla.openhab.internal.cloud.handler.CloudBridgeHandler;
 
 /** @author Martin Grzeslowski - Initial contribution */
 @NonNullByDefault
-public final class CloudDiscovery extends AbstractDiscoveryService implements AutoCloseable {
+public final class CloudDiscovery extends AbstractDiscoveryService {
     private final Logger logger;
     private final CloudBridgeHandler bridgeHandler;
-    private boolean close;
 
     public CloudDiscovery(CloudBridgeHandler bridgeHandler) {
         super(SUPPORTED_THING_TYPES_UIDS, 10, true);
@@ -41,11 +40,6 @@ public final class CloudDiscovery extends AbstractDiscoveryService implements Au
 
     @Override
     protected void startScan() {
-        if (close) {
-            logger.debug("Discovery service is closed. Stop scan.");
-            stopScan();
-            return;
-        }
         try {
             bridgeHandler.getIoDevices(singletonList("channels")).forEach(this::addThing);
         } catch (Exception e) {
@@ -101,11 +95,5 @@ public final class CloudDiscovery extends AbstractDiscoveryService implements Au
 
     private Map<String, Object> buildThingProperties(Device device) {
         return Map.of(SUPLA_DEVICE_GUID, device.getGUIDString(), SUPLA_DEVICE_CLOUD_ID, device.getId());
-    }
-
-    @Override
-    public void close() {
-        close = true;
-        stopScan();
     }
 }
