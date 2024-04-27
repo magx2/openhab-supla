@@ -229,15 +229,14 @@ public class ServerDeviceHandler extends AbstractDeviceHandler {
             updateStatus(ONLINE);
         });
 
-        // updates `lastMessageFromDevice` when received any message from the device
-        channel.getMessagePipe().subscribe(__ -> lastMessageFromDevice.set(now().getEpochSecond()));
-
+        // updates `lastMessageFromDevice` when received a ping message from the device
         // ping pipeline
         channel.getMessagePipe()
                 .filter(entity -> entity instanceof PingServer)
-                .map(entity -> (PingServer) entity)
+                .cast(PingServer.class)
                 .subscribe(
                         entity -> {
+                            lastMessageFromDevice.set(now().getEpochSecond());
                             var response = new PingServerResultClient(entity.getTimeval());
                             channel.write(just(response))
                                     .subscribe(date -> logger.trace(
