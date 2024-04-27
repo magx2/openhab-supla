@@ -229,7 +229,7 @@ public class ServerBridgeHandler extends BaseBridgeHandler {
                     var handler = pair.getValue1();
                     return handler.joinDeviceWithHandler(channel, registerDevice);
                 })
-                .subscribe();
+                .subscribe(__ -> {}, ex -> logger.debug("Error occurred in auth pipeline", ex));
     }
 
     private void errorOccurredInChannel(Throwable ex) {
