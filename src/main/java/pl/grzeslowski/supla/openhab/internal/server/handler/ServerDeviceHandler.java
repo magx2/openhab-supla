@@ -351,7 +351,7 @@ public class ServerDeviceHandler extends AbstractDeviceHandler {
         try {
             channelNumber = parseInt(id);
         } catch (NumberFormatException ex) {
-            logger.warn("Cannot parse ID {] from {}", id, channelUID, ex);
+            logger.warn("Cannot parse ID {} from {}", id, channelUID, ex);
             return;
         }
         var channelNewValue = new ChannelNewValue(1, channelNumber, 100, channelValue);
