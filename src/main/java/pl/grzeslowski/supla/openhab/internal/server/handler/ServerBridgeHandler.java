@@ -279,7 +279,7 @@ public class ServerBridgeHandler extends BaseBridgeHandler {
     public void dispose() {
         logger.debug("Disposing ServerBridgeHandler");
         disposeNewChannelsPipeline();
-        disposeServer();
+        ThreadPoolManager.getScheduledPool(BINDING_ID).submit(this::disposeServer);
         serverDiscoveryService.setNewDeviceFlux(null);
         logger = LoggerFactory.getLogger(ServerBridgeHandler.class);
         super.dispose();
@@ -295,6 +295,7 @@ public class ServerBridgeHandler extends BaseBridgeHandler {
     }
 
     private void disposeServer() {
+        logger.debug("Disposing server");
         var local = server;
         server = null;
         if (local != null) {
@@ -304,6 +305,7 @@ public class ServerBridgeHandler extends BaseBridgeHandler {
                 logger.error("Could not close server! Probably you need to restart Open HAB (or machine)", ex);
             }
         }
+        logger.debug("Disposed server");
     }
 
     @Override
