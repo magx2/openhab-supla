@@ -52,6 +52,7 @@ public class SuplaBindingConstants {
     public static class ServerDevicesProperties {
         public static final String SOFT_VERSION_PROPERTY = "softVersion";
         public static final String CONFIG_AUTH_PROPERTY = "authKey";
+        public static final String SERVER_NAME_PROPERTY = "serverName";
     }
 
     // CloudBridgeHandler

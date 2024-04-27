@@ -90,6 +90,7 @@ public class ServerDiscoveryService extends AbstractDiscoveryService {
         var builder = buildDiscoveryResult(registerDeviceTrait.getGuid(), registerDeviceTrait.getName());
         if (registerDeviceTrait instanceof RegisterDeviceD registerDevice) {
             builder.withProperties(Map.of(CONFIG_AUTH_PROPERTY, registerDevice.getAuthKey()));
+            builder.withProperties(Map.of(CONFIG_AUTH_PROPERTY, registerDevice.getServerName()));
         }
         return builder.build();
     }
