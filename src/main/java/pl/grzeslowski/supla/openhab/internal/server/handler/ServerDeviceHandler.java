@@ -336,7 +336,7 @@ public class ServerDeviceHandler extends AbstractDeviceHandler {
     }
 
     private Flux<LocalDateTime> sendRegistrationConfirmation() {
-        var result = new RegisterDeviceResult(SUPLA_RESULTCODE_TRUE.getValue(), 100, 5, 1);
+        var result = new RegisterDeviceResult(SUPLA_RESULTCODE_TRUE.getValue(), 100, 6, 1);
         return requireNonNull(channel).write(just(result));
     }
 
