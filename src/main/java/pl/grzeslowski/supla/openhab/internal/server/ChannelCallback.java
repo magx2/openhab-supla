@@ -21,7 +21,7 @@ import org.openhab.core.thing.ChannelUID;
 import org.openhab.core.thing.ThingUID;
 import org.openhab.core.thing.binding.builder.ChannelBuilder;
 import org.openhab.core.thing.type.ChannelTypeUID;
-import pl.grzeslowski.jsupla.protocoljava.api.channels.values.*;
+import pl.grzeslowski.jsupla.protocol.api.channeltype.value.*;
 import pl.grzeslowski.supla.openhab.internal.SuplaBindingConstants;
 
 /** @author Grzeslowski - Initial contribution */

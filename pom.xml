@@ -26,7 +26,7 @@
         <dependency>
             <groupId>pl.grzeslowski.jSupla</groupId>
             <artifactId>nettyServer</artifactId>
-            <version>0.15.0</version>
+            <version>0.100.0-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
@@ -297,7 +297,6 @@ okio-*.jar;lib:=true,\
 javatuples-*.jar;lib:=true,\
 reactive-streams-*.jar;lib:=true,\
 protocol-*.jar;lib:=true,\
-protocolJava-*.jar;lib:=true,\
 common-*.jar;lib:=true,\
 server-*.jar;lib:=true,\
 reactor-*.jar;lib:=true,\

@@ -10,16 +10,18 @@
  */
 package pl.grzeslowski.supla.openhab.internal.server.handler;
 
-import static java.lang.Integer.parseInt;
+import static java.lang.Short.parseShort;
 import static java.lang.String.valueOf;
 import static java.time.Instant.now;
 import static java.time.format.DateTimeFormatter.ISO_DATE_TIME;
+import static java.util.Collections.synchronizedMap;
 import static java.util.Objects.requireNonNull;
 import static java.util.Objects.requireNonNullElse;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.openhab.core.thing.ThingStatus.OFFLINE;
 import static org.openhab.core.thing.ThingStatus.ONLINE;
 import static org.openhab.core.thing.ThingStatusDetail.*;
+import static pl.grzeslowski.jsupla.protocol.api.ProtocolHelpers.parseString;
 import static pl.grzeslowski.jsupla.protocol.api.ResultCode.SUPLA_RESULTCODE_TRUE;
 import static pl.grzeslowski.supla.openhab.internal.SuplaBindingConstants.BINDING_ID;
 import static pl.grzeslowski.supla.openhab.internal.SuplaBindingConstants.ServerDevicesProperties.CONFIG_AUTH_PROPERTY;
@@ -30,6 +32,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.ToString;
 import org.eclipse.jdt.annotation.NonNull;
@@ -41,23 +44,26 @@ import org.openhab.core.library.types.*;
 import org.openhab.core.thing.Channel;
 import org.openhab.core.thing.ChannelUID;
 import org.openhab.core.thing.Thing;
+import org.openhab.core.thing.ThingStatus;
 import org.openhab.core.thing.binding.builder.ThingBuilder;
 import org.openhab.core.types.Command;
 import org.openhab.core.types.State;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import pl.grzeslowski.jsupla.protocoljava.api.channels.values.*;
-import pl.grzeslowski.jsupla.protocoljava.api.entities.dcs.PingServer;
-import pl.grzeslowski.jsupla.protocoljava.api.entities.dcs.SetActivityTimeout;
-import pl.grzeslowski.jsupla.protocoljava.api.entities.ds.DeviceChannel;
-import pl.grzeslowski.jsupla.protocoljava.api.entities.ds.DeviceChannelValue;
-import pl.grzeslowski.jsupla.protocoljava.api.entities.ds.RegisterDevice;
-import pl.grzeslowski.jsupla.protocoljava.api.entities.ds.RegisterDeviceD;
-import pl.grzeslowski.jsupla.protocoljava.api.entities.sd.ChannelNewValue;
-import pl.grzeslowski.jsupla.protocoljava.api.entities.sd.RegisterDeviceResult;
-import pl.grzeslowski.jsupla.protocoljava.api.entities.sdc.PingServerResultClient;
-import pl.grzeslowski.jsupla.protocoljava.api.entities.sdc.SetActivityTimeoutResult;
-import pl.grzeslowski.jsupla.protocoljava.api.types.traits.RegisterDeviceTrait;
+import pl.grzeslowski.jsupla.protocol.api.channeltype.decoders.ChannelTypeDecoder;
+import pl.grzeslowski.jsupla.protocol.api.channeltype.encoders.ChannelTypeEncoderImpl;
+import pl.grzeslowski.jsupla.protocol.api.channeltype.value.*;
+import pl.grzeslowski.jsupla.protocol.api.structs.dcs.SuplaPingServer;
+import pl.grzeslowski.jsupla.protocol.api.structs.dcs.SuplaSetActivityTimeout;
+import pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaDeviceChannelValue;
+import pl.grzeslowski.jsupla.protocol.api.structs.sd.SuplaChannelNewValue;
+import pl.grzeslowski.jsupla.protocol.api.structs.sd.SuplaRegisterDeviceResult;
+import pl.grzeslowski.jsupla.protocol.api.structs.sdc.SuplaPingServerResultClient;
+import pl.grzeslowski.jsupla.protocol.api.structs.sdc.SuplaSetActivityTimeoutResult;
+import pl.grzeslowski.jsupla.protocol.api.traits.DeviceChannelTrait;
+import pl.grzeslowski.jsupla.protocol.api.traits.RegisterDeviceTrait;
+import pl.grzeslowski.jsupla.protocol.api.traits.RegisterEmailDeviceTrait;
+import pl.grzeslowski.jsupla.protocol.api.traits.RegisterLocationDeviceTrait;
 import pl.grzeslowski.supla.openhab.internal.handler.AbstractDeviceHandler;
 import pl.grzeslowski.supla.openhab.internal.server.ChannelCallback;
 import pl.grzeslowski.supla.openhab.internal.server.ChannelValueToState;
@@ -74,6 +80,7 @@ public class ServerDeviceHandler extends AbstractDeviceHandler {
     private Logger logger = LoggerFactory.getLogger(ServerDeviceHandler.class);
 
     private final ChannelValueSwitch<State> valueSwitch = new ChannelValueSwitch<>(new ChannelValueToState());
+    private final Map<Integer, Integer> channelTypes = synchronizedMap(new HashMap<>());
 
     @ToString.Include
     @Nullable
@@ -173,7 +180,10 @@ public class ServerDeviceHandler extends AbstractDeviceHandler {
             deviceConfiguration = new DeviceConfiguration(timeoutConfiguration, authData);
         }
 
-        updateStatus(OFFLINE, HANDLER_CONFIGURATION_PENDING, "Waiting for Supla device to connect with the server");
+        updateStatus(
+                ThingStatus.UNKNOWN,
+                HANDLER_CONFIGURATION_PENDING,
+                "Waiting for Supla device to connect with the server");
     }
 
     public boolean joinDeviceWithHandler(
@@ -184,19 +194,19 @@ public class ServerDeviceHandler extends AbstractDeviceHandler {
         // auth
         logger.debug("Authorizing...");
         authorized = false;
-        if (registerEntity instanceof RegisterDevice registerDevice) {
-            authorized = authorizeForLocation(registerDevice.getLocationId(), registerDevice.getLocationPassword());
+        if (registerEntity instanceof RegisterLocationDeviceTrait registerDevice) {
+            authorized = authorizeForLocation(registerDevice.getLocationId(), registerDevice.getLocationPwd());
             if (!authorized) {
                 updateStatus(
                         OFFLINE,
                         CONFIGURATION_ERROR,
                         "Device authorization failed. Device tried to log in with locationId=%s and locationPassword=%s"
                                 .formatted(
-                                        registerDevice.getLocationId(),
-                                        new String(registerDevice.getLocationPassword())));
+                                        registerDevice.getLocationId(), parseString(registerDevice.getLocationPwd())));
             }
-        } else if (registerEntity instanceof RegisterDeviceD registerDevice) {
-            authorized = authorizeForEmail(registerDevice.getEmail(), registerDevice.getAuthKey());
+        } else if (registerEntity instanceof RegisterEmailDeviceTrait registerDevice) {
+            authorized =
+                    authorizeForEmail(parseString(registerDevice.getEmail()), parseString(registerDevice.getAuthKey()));
             if (!authorized) {
                 updateStatus(
                         OFFLINE,
@@ -222,27 +232,27 @@ public class ServerDeviceHandler extends AbstractDeviceHandler {
         }
 
         // set the software version
-        thing.setProperty(SOFT_VERSION_PROPERTY, registerEntity.getSoftVer());
+        thing.setProperty(SOFT_VERSION_PROPERTY, parseString(registerEntity.getSoftVer()));
 
         sendRegistrationConfirmation().subscribe(date -> {
-            setChannels(registerEntity.getChannels().getChannels());
+            setChannels(registerEntity.getChannels());
             updateStatus(ONLINE);
         });
 
         // updates `lastMessageFromDevice` when received a ping message from the device
         // ping pipeline
         channel.getMessagePipe()
-                .filter(entity -> entity instanceof PingServer)
-                .cast(PingServer.class)
+                .filter(entity -> entity instanceof SuplaPingServer)
+                .cast(SuplaPingServer.class)
                 .subscribe(
                         entity -> {
                             lastMessageFromDevice.set(now().getEpochSecond());
-                            var response = new PingServerResultClient(entity.getTimeval());
+                            var response = new SuplaPingServerResultClient(entity.timeval);
                             channel.write(just(response))
                                     .subscribe(date -> logger.trace(
                                             "pingServer {}s {}ms",
-                                            response.getTimeval().getSeconds(),
-                                            response.getTimeval().getMilliseconds()));
+                                            response.timeval.seconds,
+                                            response.timeval.milliseconds));
                         },
                         ex -> logger.error("Error in ping pipeline", ex),
                         () -> logger.debug("Closing ping pipeline"));
@@ -250,11 +260,12 @@ public class ServerDeviceHandler extends AbstractDeviceHandler {
         // SetActivityTimeout pipeline
         var scheduledPool = ThreadPoolManager.getScheduledPool(BINDING_ID + "." + guid);
         channel.getMessagePipe()
-                .filter(entity -> entity instanceof SetActivityTimeout)
-                .map(entity -> (SetActivityTimeout) entity)
+                .filter(entity -> entity instanceof SuplaSetActivityTimeout)
+                .map(entity -> (SuplaSetActivityTimeout) entity)
                 .subscribe(entity -> {
                     var timeout = requireNonNull(deviceConfiguration).timeoutConfiguration();
-                    var data = new SetActivityTimeoutResult(timeout.timeout(), timeout.min(), timeout.max());
+                    var data = new SuplaSetActivityTimeoutResult(
+                            (short) timeout.timeout(), (short) timeout.min(), (short) timeout.max());
                     channel.write(just(data)).subscribe(date -> logger.trace("setActivityTimeout {}", data));
                     pingSchedule = scheduledPool.scheduleWithFixedDelay(
                             this::checkIfDeviceIsUp, timeout.timeout() * 2L, timeout.timeout(), SECONDS);
@@ -262,11 +273,11 @@ public class ServerDeviceHandler extends AbstractDeviceHandler {
 
         // messages to the device
         channel.getMessagePipe()
-                .filter(entity -> entity instanceof DeviceChannelValue)
-                .map(entity -> (DeviceChannelValue) entity)
+                .filter(entity -> entity instanceof SuplaDeviceChannelValue)
+                .map(entity -> (SuplaDeviceChannelValue) entity)
                 .subscribe(
                         entity -> {
-                            updateStatus(entity.getChannelNumber(), entity.getValue());
+                            updateStatus(entity.channelNumber, entity.value);
                             updateStatus(ONLINE);
                         },
                         ex -> {
@@ -278,7 +289,7 @@ public class ServerDeviceHandler extends AbstractDeviceHandler {
         return true;
     }
 
-    private boolean authorizeForLocation(int accessId, char[] accessIdPassword) {
+    private boolean authorizeForLocation(int accessId, byte[] accessIdPassword) {
         if (deviceConfiguration == null) {
             return false;
         }
@@ -298,7 +309,7 @@ public class ServerDeviceHandler extends AbstractDeviceHandler {
         return true;
     }
 
-    private boolean isGoodPassword(char[] password, char[] givenPassword) {
+    private boolean isGoodPassword(char[] password, byte[] givenPassword) {
         if (password.length > givenPassword.length) {
             return false;
         }
@@ -336,7 +347,7 @@ public class ServerDeviceHandler extends AbstractDeviceHandler {
     }
 
     private Flux<LocalDateTime> sendRegistrationConfirmation() {
-        var result = new RegisterDeviceResult(SUPLA_RESULTCODE_TRUE.getValue(), 100, 6, 1);
+        var result = new SuplaRegisterDeviceResult(SUPLA_RESULTCODE_TRUE.getValue(), (byte) 100, (byte) 6, (byte) 1);
         return requireNonNull(channel).write(just(result));
     }
 
@@ -346,14 +357,15 @@ public class ServerDeviceHandler extends AbstractDeviceHandler {
             return;
         }
         var id = channelUID.getId();
-        int channelNumber;
+        short channelNumber;
         try {
-            channelNumber = parseInt(id);
+            channelNumber = parseShort(id);
         } catch (NumberFormatException ex) {
             logger.warn("Cannot parse ID {} from {}", id, channelUID, ex);
             return;
         }
-        var channelNewValue = new ChannelNewValue(1, channelNumber, 100, channelValue);
+        var encode = ChannelTypeEncoderImpl.INSTANCE.encode(channelValue);
+        var channelNewValue = new SuplaChannelNewValue(1, channelNumber, 100, encode);
         channel.write(just(channelNewValue))
                 .subscribe(
                         date -> {
@@ -385,8 +397,8 @@ public class ServerDeviceHandler extends AbstractDeviceHandler {
             updateStatus(
                     OFFLINE,
                     COMMUNICATION_ERROR,
-                    "Device did not send ping message in last %s seconds. Last message was from %s"
-                            .formatted(delta, lastPingDate));
+                    "Device did not send ping message in last " + delta + " seconds. Last message was from "
+                            + lastPingDate);
             {
                 var local = pingSchedule;
                 pingSchedule = null;
@@ -468,42 +480,52 @@ public class ServerDeviceHandler extends AbstractDeviceHandler {
                 channelUID);
     }
 
-    private void setChannels(Collection<? extends DeviceChannel> deviceChannels) {
-        logger.debug("Registering channels {}", deviceChannels);
-        var channels = deviceChannels.stream()
-                .sorted(Comparator.comparingInt(DeviceChannel::getNumber))
+    private void setChannels(DeviceChannelTrait[] deviceChannels) {
+        if (logger.isDebugEnabled()) {
+            var channels = Arrays.stream(deviceChannels)
+                    .map(DeviceChannelTrait::toString)
+                    .collect(Collectors.joining("\n"));
+            logger.debug("Registering channels:\n{}", channels);
+        }
+        var channels = Arrays.stream(deviceChannels)
+                .sorted(Comparator.comparingInt(DeviceChannelTrait::getNumber))
                 .map(this::createChannel)
                 .filter(Optional::isPresent)
                 .map(Optional::get)
                 .toList();
         updateChannels(channels);
-        deviceChannels.stream()
+        Arrays.stream(deviceChannels)
                 .map(this::channelForUpdate)
                 .forEach(pair -> updateState(pair.getValue0(), pair.getValue1()));
     }
 
-    private Pair<ChannelUID, State> channelForUpdate(DeviceChannel deviceChannel) {
-        return Pair.with(createChannelUid(deviceChannel.getNumber()), findState(deviceChannel.getValue()));
+    private Pair<ChannelUID, State> channelForUpdate(DeviceChannelTrait deviceChannel) {
+        return Pair.with(
+                createChannelUid(deviceChannel.getNumber()),
+                findState(deviceChannel.getType(), deviceChannel.getValue()));
     }
 
     private ChannelUID createChannelUid(int channelNumber) {
         return new ChannelUID(getThing().getUID(), valueOf(channelNumber));
     }
 
-    private State findState(ChannelValue value) {
-        return valueSwitch.doSwitch(value);
+    private State findState(int type, byte[] value) {
+        return valueSwitch.doSwitch(ChannelTypeDecoder.INSTANCE.decode(type, value));
     }
 
-    private void updateStatus(int channelNumber, ChannelValue channelValue) {
+    private void updateStatus(int channelNumber, byte[] channelValue) {
         var channelUid = createChannelUid(channelNumber);
-        var state = findState(channelValue);
+        var type = channelTypes.get(channelNumber);
+        var state = findState(type, channelValue);
         updateState(channelUid, state);
     }
 
-    private Optional<Channel> createChannel(DeviceChannel deviceChannel) {
+    private Optional<Channel> createChannel(DeviceChannelTrait deviceChannel) {
         var channelCallback = new ChannelCallback(getThing().getUID(), deviceChannel.getNumber());
         var channelValueSwitch = new ChannelValueSwitch<>(channelCallback);
-        var channel = channelValueSwitch.doSwitch(deviceChannel.getValue());
+        var value = ChannelTypeDecoder.INSTANCE.decode(deviceChannel);
+        var channel = channelValueSwitch.doSwitch(value);
+        channelTypes.put((int) deviceChannel.getNumber(), deviceChannel.getType());
         return Optional.ofNullable(channel);
     }
 

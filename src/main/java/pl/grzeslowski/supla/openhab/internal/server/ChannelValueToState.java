@@ -16,7 +16,7 @@ import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
 import org.openhab.core.library.types.*;
 import org.openhab.core.types.State;
-import pl.grzeslowski.jsupla.protocoljava.api.channels.values.*;
+import pl.grzeslowski.jsupla.protocol.api.channeltype.value.*;
 
 /** @author Grzeslowski - Initial contribution */
 @NonNullByDefault
@@ -26,7 +26,7 @@ public class ChannelValueToState implements ChannelValueSwitch.Callback<State> {
         if (decimalValue == null) {
             return NULL;
         }
-        return new DecimalType(decimalValue.value);
+        return new DecimalType(decimalValue.getValue());
     }
 
     @Override
@@ -64,7 +64,7 @@ public class ChannelValueToState implements ChannelValueSwitch.Callback<State> {
         if (rgbValue == null) {
             return NULL;
         }
-        return HSBType.fromRGB(rgbValue.red, rgbValue.green, rgbValue.blue);
+        return HSBType.fromRGB(rgbValue.getRed(), rgbValue.getGreen(), rgbValue.getBlue());
     }
 
     @Override
@@ -83,7 +83,7 @@ public class ChannelValueToState implements ChannelValueSwitch.Callback<State> {
         if (temperatureValue == null) {
             return NULL;
         }
-        return new DecimalType(temperatureValue.temperature);
+        return new DecimalType(temperatureValue.getTemperature());
     }
 
     @Override
@@ -92,7 +92,7 @@ public class ChannelValueToState implements ChannelValueSwitch.Callback<State> {
         if (temperatureAndHumidityValue == null) {
             return NULL;
         }
-        return new DecimalType(temperatureAndHumidityValue.temperature); // TODO support humidity also
+        return new DecimalType(temperatureAndHumidityValue.getTemperature()); // TODO support humidity also
     }
 
     @Override
@@ -100,6 +100,6 @@ public class ChannelValueToState implements ChannelValueSwitch.Callback<State> {
         if (unknownValue == null) {
             return NULL;
         }
-        return StringType.valueOf(unknownValue.message);
+        return StringType.valueOf(unknownValue.getMessage());
     }
 }

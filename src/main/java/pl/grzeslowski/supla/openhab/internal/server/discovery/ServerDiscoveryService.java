@@ -10,8 +10,11 @@
  */
 package pl.grzeslowski.supla.openhab.internal.server.discovery;
 
+import static pl.grzeslowski.jsupla.protocol.api.ProtocolHelpers.parseHexString;
+import static pl.grzeslowski.jsupla.protocol.api.ProtocolHelpers.parseString;
 import static pl.grzeslowski.supla.openhab.internal.SuplaBindingConstants.*;
 import static pl.grzeslowski.supla.openhab.internal.SuplaBindingConstants.ServerDevicesProperties.CONFIG_AUTH_PROPERTY;
+import static pl.grzeslowski.supla.openhab.internal.SuplaBindingConstants.ServerDevicesProperties.SERVER_NAME_PROPERTY;
 
 import java.time.Duration;
 import java.util.Map;
@@ -24,8 +27,8 @@ import org.openhab.core.config.discovery.DiscoveryResultBuilder;
 import org.openhab.core.thing.ThingUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import pl.grzeslowski.jsupla.protocoljava.api.entities.ds.RegisterDeviceD;
-import pl.grzeslowski.jsupla.protocoljava.api.types.traits.RegisterDeviceTrait;
+import pl.grzeslowski.jsupla.protocol.api.traits.RegisterDeviceTrait;
+import pl.grzeslowski.jsupla.protocol.api.traits.RegisterEmailDeviceTrait;
 import pl.grzeslowski.jsupla.server.api.Channel;
 import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
@@ -87,10 +90,14 @@ public class ServerDiscoveryService extends AbstractDiscoveryService {
     }
 
     private DiscoveryResult buildDiscoveryResult(RegisterDeviceTrait registerDeviceTrait) {
-        var builder = buildDiscoveryResult(registerDeviceTrait.getGuid(), registerDeviceTrait.getName());
-        if (registerDeviceTrait instanceof RegisterDeviceD registerDevice) {
-            builder.withProperties(Map.of(CONFIG_AUTH_PROPERTY, registerDevice.getAuthKey()));
-            builder.withProperties(Map.of(CONFIG_AUTH_PROPERTY, registerDevice.getServerName()));
+        var guid = parseHexString(registerDeviceTrait.getGuid());
+        var name = parseString(registerDeviceTrait.getName());
+        var builder = buildDiscoveryResult(guid, name);
+        if (registerDeviceTrait instanceof RegisterEmailDeviceTrait registerDevice) {
+            var authKey = parseString(registerDevice.getAuthKey());
+            var serverName = parseString(registerDevice.getServerName());
+            builder.withProperties(Map.of(CONFIG_AUTH_PROPERTY, authKey));
+            builder.withProperties(Map.of(SERVER_NAME_PROPERTY, serverName));
         }
         return builder.build();
     }
