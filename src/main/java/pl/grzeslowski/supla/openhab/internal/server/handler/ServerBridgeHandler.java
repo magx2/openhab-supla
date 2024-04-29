@@ -50,10 +50,11 @@ import org.openhab.core.thing.binding.ThingHandler;
 import org.openhab.core.types.Command;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import pl.grzeslowski.jsupla.protocol.api.ProtocolHelpers;
+import pl.grzeslowski.jsupla.protocol.api.traits.RegisterDeviceTrait;
 import pl.grzeslowski.jsupla.protocol.impl.calltypes.CallTypeParserImpl;
 import pl.grzeslowski.jsupla.protocol.impl.decoders.DecoderFactoryImpl;
 import pl.grzeslowski.jsupla.protocol.impl.encoders.EncoderFactoryImpl;
-import pl.grzeslowski.jsupla.protocoljava.api.types.traits.RegisterDeviceTrait;
 import pl.grzeslowski.jsupla.server.api.Channel;
 import pl.grzeslowski.jsupla.server.api.Server;
 import pl.grzeslowski.jsupla.server.api.ServerFactory;
@@ -213,12 +214,13 @@ public class ServerBridgeHandler extends BaseBridgeHandler {
                 .cast(RegisterDeviceTrait.class)
                 .log(ServerBridgeHandler.class.getName() + ".auth", Level.FINE)
                 .map(entity -> {
+                    var guid = ProtocolHelpers.parseHexString(entity.getGuid());
                     var pair = childHandlers.stream()
-                            .filter(handler -> entity.getGuid().equals(handler.getGuid()))
+                            .filter(handler -> guid.equals(handler.getGuid()))
                             .findAny()
                             .map(handler -> new Pair<>(entity, handler));
                     if (pair.isEmpty()) {
-                        logger.debug("There is no handler for device with GUID={}", entity.getGuid());
+                        logger.debug("There is no handler for device with GUID={}", guid);
                     }
                     return pair;
                 })
