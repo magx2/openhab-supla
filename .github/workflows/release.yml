@@ -48,7 +48,7 @@ jobs:
           echo "tag=$tag"
           echo "tag=$tag" >> $GITHUB_OUTPUT
           echo "🤩 Released version=$version"
-      - name: Upload binaries to release
+      - name: Release with Github
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
