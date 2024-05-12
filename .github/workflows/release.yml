@@ -27,3 +27,19 @@ jobs:
         env:
           GITHUB_USERNAME: x-access-token
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Download latest open-hab
+        run: |
+          mkdir tmp
+          mvn dependency:copy  -Dartifact=pl.grzeslowski.supla:openhab-supla:LATEST -DoutputDirectory=./
+          version=$(ls tmp)
+          echo ::set-output name=version::$(echo $version)
+          echo "🤩 Released version=$version"
+      - name: Upload binaries to release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: tmp/${{ steps.project.outputs.version }}
+          asset_name: ${{ steps.project.outputs.version }}
+          tag: ${{ github.ref }}
+          overwrite: true
+          body: "Release of version ${{ steps.project.outputs.version }}"
