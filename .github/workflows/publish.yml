@@ -13,18 +13,18 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Build
-        run: mvn -B package -DskipTests -Dspotless.check.skip=true --file pom.xml
-      - name: Extract Maven project version
-        run: echo ::set-output name=version::$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
-        id: project
+        run: |
+          mkdir tmp
+          mvn dependency:copy  -Dartifact=pl.grzeslowski.supla:openhab-supla:LATEST -DoutputDirectory=./
+          echo ::set-output name=version::$(ls tmp)
       - name: Show extracted Maven project version
         run: echo "🤩 Released version=${{ steps.project.outputs.version }}"
       - name: Upload binaries to release
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: target/openhab-${{ steps.project.outputs.version }}.jar
-          asset_name: openhab-${{ steps.project.outputs.version }}.jar
+          file: tmp/${{ steps.project.outputs.version }}
+          asset_name: ${{ steps.project.outputs.version }}
           tag: ${{ github.ref }}
           overwrite: true
           body: "Release of version ${{ steps.project.outputs.version }}"
