@@ -47,7 +47,6 @@ jobs:
           fi
           echo "tag=$tag"
           echo "tag=$tag" >> $GITHUB_OUTPUT
-          echo "🤩 Released version=$version"
       - name: Release with Github
         uses: svenstaro/upload-release-action@v2
         with:
