@@ -239,30 +239,30 @@ public class ServerDeviceHandler extends AbstractDeviceHandler {
 
         var scheduledPool = ThreadPoolManager.getScheduledPool(BINDING_ID + "." + guid);
         channel.getMessagePipe()
-                        .subscribe(
-                                entity -> {
-                                    if(entity instanceof SuplaPingServer ping) {
-                                        consumeSuplaPingServer(ping);
-                                    } else if(entity instanceof SuplaSetActivityTimeout) {
-                                        consumeSuplaSetActivityTimeout(scheduledPool);
-                                    } else if(entity instanceof SuplaDeviceChannelValue value) {
-                                        updateStatus(value.channelNumber, value.value);
-                                        updateStatus(ONLINE);
-                                    } else {
-                                        logger.debug("Not supporting message:\n{}", entity);
-                                    }
-                                },
-                                ex -> {
-                                    logger.error("Error in message pipeline pipeline", ex);
-                                    updateStatus(OFFLINE, COMMUNICATION_ERROR, "Error: "+ ex.getLocalizedMessage());
-                                },
-                                () -> logger.debug("Closing DeviceChannelValue pipeline"));
+                .subscribe(
+                        entity -> {
+                            if (entity instanceof SuplaPingServer ping) {
+                                consumeSuplaPingServer(ping);
+                            } else if (entity instanceof SuplaSetActivityTimeout) {
+                                consumeSuplaSetActivityTimeout(scheduledPool);
+                            } else if (entity instanceof SuplaDeviceChannelValue value) {
+                                updateStatus(value.channelNumber, value.value);
+                                updateStatus(ONLINE);
+                            } else {
+                                logger.debug("Not supporting message:\n{}", entity);
+                            }
+                        },
+                        ex -> {
+                            logger.error("Error in message pipeline pipeline", ex);
+                            updateStatus(OFFLINE, COMMUNICATION_ERROR, "Error: " + ex.getLocalizedMessage());
+                        },
+                        () -> logger.debug("Closing DeviceChannelValue pipeline"));
         return true;
     }
 
     private void consumeSuplaSetActivityTimeout(ScheduledExecutorService scheduledPool) {
         var localChannel = channel;
-        if(localChannel == null) {
+        if (localChannel == null) {
             return;
         }
         var timeout = requireNonNull(deviceConfiguration).timeoutConfiguration();
@@ -275,14 +275,14 @@ public class ServerDeviceHandler extends AbstractDeviceHandler {
 
     private void consumeSuplaPingServer(SuplaPingServer ping) {
         var localChannel = channel;
-        if(localChannel == null) {
+        if (localChannel == null) {
             return;
         }
         lastMessageFromDevice.set(now().getEpochSecond());
         var response = new SuplaPingServerResult(ping.now);
-        localChannel.write(just(response))
-                .subscribe(date -> logger.trace(
-                        "pingServer {}s {}ms", response.now.tvSec, response.now.tvUsec));
+        localChannel
+                .write(just(response))
+                .subscribe(date -> logger.trace("pingServer {}s {}ms", response.now.tvSec, response.now.tvUsec));
     }
 
     private boolean authorizeForLocation(int accessId, byte[] accessIdPassword) {
