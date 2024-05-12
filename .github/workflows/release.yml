@@ -28,6 +28,7 @@ jobs:
           GITHUB_USERNAME: x-access-token
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Download latest open-hab
+        id: config
         run: |
           mkdir tmp
           mvn dependency:copy -q -Dartifact=pl.grzeslowski.supla:openhab-supla:LATEST -DoutputDirectory=./tmp
@@ -51,9 +52,9 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: tmp/${{ steps.project.outputs.version }}
-          asset_name: ${{ steps.project.outputs.version }}
-          tag: ${{ steps.project.outputs.tag }}
+          file: tmp/${{ steps.config.outputs.version }}
+          asset_name: ${{ steps.config.outputs.version }}
+          tag: ${{ steps.config.outputs.tag }}
           overwrite: true
-          release_name: Version ${{ steps.project.outputs.version }}
-          body: "Release of version ${{ steps.project.outputs.version }}"
+          release_name: Version ${{ steps.config.outputs.version }}
+          body: "Release of version ${{ steps.config.outputs.version }}"
