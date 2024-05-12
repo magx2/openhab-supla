@@ -18,7 +18,7 @@ jobs:
         run: |
           git config user.email "actions@github.com"
           git config user.name "GitHub Actions"
-      - name: Build with Maven
+      - name: Release with Maven
         run: mvn -B release:prepare release:perform -Dspotless.check.skip=true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
