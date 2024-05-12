@@ -238,7 +238,7 @@
                 <configuration>
                     <scmCommentPrefix>[ci skip]</scmCommentPrefix>
                     <arguments>-Dspotless.check.skip=true -DskipTests</arguments>
-                    <tagNameFormat>release/@{project.artifactId}/@{project.version}</tagNameFormat>
+                    <tagNameFormat>release/@{project.artifactId}-@{project.version}</tagNameFormat>
                 </configuration>
             </plugin>
             <plugin>
