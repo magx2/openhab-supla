@@ -8,7 +8,7 @@
 
     <scm>
         <connection>scm:git:${project.scm.url}</connection>
-        <developerConnection>scm:git:${project.scm.url}</developerConnection>
+        <developerConnection>scm:git:https://x-access-token:${GITHUB_TOKEN}@github.com/magx2/openhab-supla.git</developerConnection>
         <tag>HEAD</tag>
         <url>git@github.com:magx2/openhab-supla.git</url>
     </scm>
