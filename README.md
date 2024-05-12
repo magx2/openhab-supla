@@ -31,7 +31,7 @@ Follow the steps below to enable TLS 1.0 and TLS 1.1:
 
 ##### Docker
 
-1. Log in into container: `docker exec -it 664f94d7b1ef /bin/bash`
+1. Log in into container: `docker exec -it <docker-container-id> /bin/bash`
 2. Go to folder with `java.security`: `cd /usr/lib/jvm/java-17-openjdk-amd64/conf/security`
 3. Do a backup: `cp java.security java.security.bak`
 4. Check current settings: `cat java.security | grep jdk.tls.disabledAlgorithms`
