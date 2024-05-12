@@ -361,7 +361,7 @@ public class ServerDeviceHandler extends AbstractDeviceHandler {
             return;
         }
         var encode = ChannelTypeEncoderImpl.INSTANCE.encode(channelValue);
-        var channelNewValue = new SuplaChannelNewValue(1, channelNumber, 100, null, encode);
+        var channelNewValue = new SuplaChannelNewValue(1, channelNumber, 100L, null, encode);
         channel.write(just(channelNewValue))
                 .subscribe(
                         date -> {
