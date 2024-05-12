@@ -3,7 +3,7 @@ name: Publish to Git Hub
 on:
   push:
     tags:
-      - 'release/**'
+      - '**'
 
 jobs:
   build:
