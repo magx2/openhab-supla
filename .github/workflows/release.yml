@@ -23,7 +23,7 @@ jobs:
           git config user.email "actions@github.com"
           git config user.name "GitHub Actions"
       - name: Release with Maven
-        run: mvn  -Dspotless.check.skip=true -B  release:prepare release:perform
+        run: mvn  -Dspotless.check.skip=true -B spotless:check verify release:prepare release:perform
         env:
           GITHUB_USERNAME: x-access-token
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
