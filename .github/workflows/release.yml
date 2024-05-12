@@ -30,8 +30,12 @@ jobs:
       - name: Download latest open-hab
         run: |
           mkdir tmp
-          mvn dependency:copy  -Dartifact=pl.grzeslowski.supla:openhab-supla:LATEST -DoutputDirectory=./
+          mvn dependency:copy -q -Dartifact=pl.grzeslowski.supla:openhab-supla:LATEST -DoutputDirectory=./tmp
           version=$(ls tmp)
+          if [ -z ${version+x} ]; then
+            echo "version was not set!"
+            exit 12
+          fi
           echo ::set-output name=version::$(echo $version)
           echo "🤩 Released version=$version"
       - name: Upload binaries to release
