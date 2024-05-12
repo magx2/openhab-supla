@@ -3,3 +3,6 @@ target
 
 *.http
 *.ps1
+
+release.properties
+pom.xml.releaseBackup
