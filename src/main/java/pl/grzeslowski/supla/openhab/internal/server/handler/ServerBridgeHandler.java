@@ -19,8 +19,8 @@ import static org.openhab.core.thing.ThingStatus.ONLINE;
 import static org.openhab.core.thing.ThingStatusDetail.COMMUNICATION_ERROR;
 import static org.openhab.core.thing.ThingStatusDetail.CONFIGURATION_ERROR;
 import static pl.grzeslowski.jsupla.server.api.ServerProperties.fromList;
-import static pl.grzeslowski.jsupla.server.netty.api.NettyServerFactory.PORT;
-import static pl.grzeslowski.jsupla.server.netty.api.NettyServerFactory.SSL_CTX;
+import static pl.grzeslowski.jsupla.server.netty.NettyServerFactory.PORT;
+import static pl.grzeslowski.jsupla.server.netty.NettyServerFactory.SSL_CTX;
 import static pl.grzeslowski.supla.openhab.internal.Documentation.DISABLED_ALGORITHMS_PROBLEM;
 import static pl.grzeslowski.supla.openhab.internal.Documentation.SSL_PROBLEM;
 import static pl.grzeslowski.supla.openhab.internal.SuplaBindingConstants.BINDING_ID;
@@ -50,17 +50,16 @@ import org.openhab.core.thing.binding.ThingHandler;
 import org.openhab.core.types.Command;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import pl.grzeslowski.jsupla.protocol.api.ProtocolHelpers;
-import pl.grzeslowski.jsupla.protocol.api.traits.RegisterDeviceTrait;
-import pl.grzeslowski.jsupla.protocol.impl.calltypes.CallTypeParserImpl;
-import pl.grzeslowski.jsupla.protocol.impl.decoders.DecoderFactoryImpl;
-import pl.grzeslowski.jsupla.protocol.impl.encoders.EncoderFactoryImpl;
+import pl.grzeslowski.jsupla.protocol.api.calltypes.CallTypeParser;
+import pl.grzeslowski.jsupla.protocol.api.decoders.DecoderFactoryImpl;
+import pl.grzeslowski.jsupla.protocol.api.encoders.EncoderFactoryImpl;
 import pl.grzeslowski.jsupla.server.api.Channel;
 import pl.grzeslowski.jsupla.server.api.Server;
 import pl.grzeslowski.jsupla.server.api.ServerFactory;
 import pl.grzeslowski.jsupla.server.api.ServerProperties;
-import pl.grzeslowski.jsupla.server.netty.api.NettyServerFactory;
+import pl.grzeslowski.jsupla.server.netty.NettyServerFactory;
 import pl.grzeslowski.supla.openhab.internal.server.discovery.ServerDiscoveryService;
+import pl.grzeslowski.supla.openhab.internal.server.traits.RegisterDeviceTraitParser;
 import reactor.core.Disposable;
 
 /** @author Grzeslowski - Initial contribution */
@@ -210,11 +209,12 @@ public class ServerBridgeHandler extends BaseBridgeHandler {
     private void channelConsumer(Channel channel) {
         logger.debug("Device connected");
         channel.getMessagePipe()
-                .filter(entity -> entity instanceof RegisterDeviceTrait)
-                .cast(RegisterDeviceTrait.class)
+                .map(RegisterDeviceTraitParser::parse)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
                 .log(ServerBridgeHandler.class.getName() + ".auth", Level.FINE)
                 .map(entity -> {
-                    var guid = ProtocolHelpers.parseHexString(entity.getGuid());
+                    var guid = entity.getGuid();
                     var pair = childHandlers.stream()
                             .filter(handler -> guid.equals(handler.getGuid()))
                             .findAny()
@@ -261,7 +261,7 @@ public class ServerBridgeHandler extends BaseBridgeHandler {
 
     private ServerFactory buildServerFactory() {
         return new NettyServerFactory(
-                new CallTypeParserImpl(), DecoderFactoryImpl.INSTANCE, EncoderFactoryImpl.INSTANCE);
+                CallTypeParser.INSTANCE, DecoderFactoryImpl.INSTANCE, EncoderFactoryImpl.INSTANCE);
     }
 
     private ServerProperties buildServerProperties(int port, Set<String> protocols)

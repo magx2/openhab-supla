@@ -58,15 +58,13 @@ import pl.grzeslowski.jsupla.protocol.api.structs.dcs.SuplaSetActivityTimeout;
 import pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaDeviceChannelValue;
 import pl.grzeslowski.jsupla.protocol.api.structs.sd.SuplaChannelNewValue;
 import pl.grzeslowski.jsupla.protocol.api.structs.sd.SuplaRegisterDeviceResult;
-import pl.grzeslowski.jsupla.protocol.api.structs.sdc.SuplaPingServerResultClient;
+import pl.grzeslowski.jsupla.protocol.api.structs.sdc.SuplaPingServerResult;
 import pl.grzeslowski.jsupla.protocol.api.structs.sdc.SuplaSetActivityTimeoutResult;
-import pl.grzeslowski.jsupla.protocol.api.traits.DeviceChannelTrait;
-import pl.grzeslowski.jsupla.protocol.api.traits.RegisterDeviceTrait;
-import pl.grzeslowski.jsupla.protocol.api.traits.RegisterEmailDeviceTrait;
-import pl.grzeslowski.jsupla.protocol.api.traits.RegisterLocationDeviceTrait;
 import pl.grzeslowski.supla.openhab.internal.handler.AbstractDeviceHandler;
 import pl.grzeslowski.supla.openhab.internal.server.ChannelCallback;
 import pl.grzeslowski.supla.openhab.internal.server.ChannelValueToState;
+import pl.grzeslowski.supla.openhab.internal.server.traits.*;
+import pl.grzeslowski.supla.openhab.internal.server.traits.RegisterEmailDeviceTrait;
 import reactor.core.publisher.Flux;
 
 /**
@@ -205,8 +203,7 @@ public class ServerDeviceHandler extends AbstractDeviceHandler {
                                         registerDevice.getLocationId(), parseString(registerDevice.getLocationPwd())));
             }
         } else if (registerEntity instanceof RegisterEmailDeviceTrait registerDevice) {
-            authorized =
-                    authorizeForEmail(parseString(registerDevice.getEmail()), parseString(registerDevice.getAuthKey()));
+            authorized = authorizeForEmail(registerDevice.getEmail(), registerDevice.getAuthKey());
             if (!authorized) {
                 updateStatus(
                         OFFLINE,
@@ -232,7 +229,7 @@ public class ServerDeviceHandler extends AbstractDeviceHandler {
         }
 
         // set the software version
-        thing.setProperty(SOFT_VERSION_PROPERTY, parseString(registerEntity.getSoftVer()));
+        thing.setProperty(SOFT_VERSION_PROPERTY, registerEntity.getSoftVer());
 
         sendRegistrationConfirmation().subscribe(date -> {
             setChannels(registerEntity.getChannels());
@@ -247,12 +244,10 @@ public class ServerDeviceHandler extends AbstractDeviceHandler {
                 .subscribe(
                         entity -> {
                             lastMessageFromDevice.set(now().getEpochSecond());
-                            var response = new SuplaPingServerResultClient(entity.timeval);
+                            var response = new SuplaPingServerResult(entity.now);
                             channel.write(just(response))
                                     .subscribe(date -> logger.trace(
-                                            "pingServer {}s {}ms",
-                                            response.timeval.seconds,
-                                            response.timeval.milliseconds));
+                                            "pingServer {}s {}ms", response.now.tvSec, response.now.tvUsec));
                         },
                         ex -> logger.error("Error in ping pipeline", ex),
                         () -> logger.debug("Closing ping pipeline"));
@@ -365,7 +360,7 @@ public class ServerDeviceHandler extends AbstractDeviceHandler {
             return;
         }
         var encode = ChannelTypeEncoderImpl.INSTANCE.encode(channelValue);
-        var channelNewValue = new SuplaChannelNewValue(1, channelNumber, 100, encode);
+        var channelNewValue = new SuplaChannelNewValue(1, channelNumber, 100, null, encode);
         channel.write(just(channelNewValue))
                 .subscribe(
                         date -> {
@@ -480,21 +475,20 @@ public class ServerDeviceHandler extends AbstractDeviceHandler {
                 channelUID);
     }
 
-    private void setChannels(DeviceChannelTrait[] deviceChannels) {
+    private void setChannels(List<DeviceChannelTrait> deviceChannels) {
         if (logger.isDebugEnabled()) {
-            var channels = Arrays.stream(deviceChannels)
-                    .map(DeviceChannelTrait::toString)
-                    .collect(Collectors.joining("\n"));
+            var channels =
+                    deviceChannels.stream().map(DeviceChannelTrait::toString).collect(Collectors.joining("\n"));
             logger.debug("Registering channels:\n{}", channels);
         }
-        var channels = Arrays.stream(deviceChannels)
+        var channels = deviceChannels.stream()
                 .sorted(Comparator.comparingInt(DeviceChannelTrait::getNumber))
                 .map(this::createChannel)
                 .filter(Optional::isPresent)
                 .map(Optional::get)
                 .toList();
         updateChannels(channels);
-        Arrays.stream(deviceChannels)
+        deviceChannels.stream()
                 .map(this::channelForUpdate)
                 .forEach(pair -> updateState(pair.getValue0(), pair.getValue1()));
     }
@@ -523,7 +517,7 @@ public class ServerDeviceHandler extends AbstractDeviceHandler {
     private Optional<Channel> createChannel(DeviceChannelTrait deviceChannel) {
         var channelCallback = new ChannelCallback(getThing().getUID(), deviceChannel.getNumber());
         var channelValueSwitch = new ChannelValueSwitch<>(channelCallback);
-        var value = ChannelTypeDecoder.INSTANCE.decode(deviceChannel);
+        var value = ChannelTypeDecoder.INSTANCE.decode(deviceChannel.getType(), deviceChannel.getValue());
         var channel = channelValueSwitch.doSwitch(value);
         channelTypes.put((int) deviceChannel.getNumber(), deviceChannel.getType());
         return Optional.ofNullable(channel);

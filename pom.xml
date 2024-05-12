@@ -4,7 +4,7 @@
 
     <groupId>pl.grzeslowski.supla</groupId>
     <artifactId>openhab-supla</artifactId>
-    <version>0.1.0-SNAPSHOT</version>
+    <version>0.2.0-SNAPSHOT</version>
 
     <scm>
         <connection>scm:git:${project.scm.url}</connection>
@@ -25,8 +25,8 @@
         <!-- ✅ JSupla -->
         <dependency>
             <groupId>pl.grzeslowski.jSupla</groupId>
-            <artifactId>nettyServer</artifactId>
-            <version>0.100.0-SNAPSHOT</version>
+            <artifactId>server</artifactId>
+            <version>1.0.0</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
@@ -284,7 +284,6 @@ Import-Package: !com.aayushatharva.*, \
 	*
 Include-Resource: caffeine-*.jar;lib:=true,\
 okhttp-*.jar;lib:=true,\
-nettyServer-*.jar;lib:=true,\
 error_prone_annotations-*.jar;lib:=true,\
 netty-*.jar;lib:=true,\
 logging-interceptor-*.jar;lib:=true,\
@@ -297,7 +296,6 @@ okio-*.jar;lib:=true,\
 javatuples-*.jar;lib:=true,\
 reactive-streams-*.jar;lib:=true,\
 protocol-*.jar;lib:=true,\
-common-*.jar;lib:=true,\
 server-*.jar;lib:=true,\
 reactor-*.jar;lib:=true,\
 threetenbp-*.jar;lib:=true,\
