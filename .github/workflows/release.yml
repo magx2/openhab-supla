@@ -25,7 +25,7 @@ jobs:
       - name: Release with Maven
         run: |
           git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/$GITHUB_REPOSITORY
-          mvn  -Dspotless.check.skip=true -B  --settings .maven_settings.xml release:prepare release:perform
+          mvn  -Dspotless.check.skip=true -B  release:prepare release:perform
         env:
           GITHUB_USERNAME: x-access-token
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
