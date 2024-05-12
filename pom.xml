@@ -4,12 +4,12 @@
 
     <groupId>pl.grzeslowski.supla</groupId>
     <artifactId>openhab-supla</artifactId>
-    <version>0.2.12-SNAPSHOT</version>
+    <version>0.2.12</version>
 
     <scm>
         <connection>scm:git:${project.scm.url}</connection>
         <developerConnection>scm:git:https://x-access-token:${GITHUB_TOKEN}@github.com/magx2/openhab-supla.git</developerConnection>
-        <tag>HEAD</tag>
+        <tag>release/openhab-supla-0.2.12</tag>
         <url>git@github.com:magx2/openhab-supla.git</url>
     </scm>
 
