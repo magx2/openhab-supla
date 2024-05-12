@@ -370,6 +370,7 @@ org.openhab.*
                                 <exclude>src/main/java/**/*.java</exclude>
                                 <exclude>src/test/java/**/*.java</exclude>
                                 <exclude>.github/workflows/*.yml</exclude>
+                                <exclude>*.http</exclude>
                             </excludes>
                             <trimTrailingWhitespace/>
                             <endWithNewline/>
