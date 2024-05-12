@@ -30,6 +30,7 @@ import static reactor.core.publisher.Flux.just;
 
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
@@ -236,52 +237,52 @@ public class ServerDeviceHandler extends AbstractDeviceHandler {
             updateStatus(ONLINE);
         });
 
-        // updates `lastMessageFromDevice` when received a ping message from the device
-        // ping pipeline
-        channel.getMessagePipe()
-                .filter(entity -> entity instanceof SuplaPingServer)
-                .cast(SuplaPingServer.class)
-                .subscribe(
-                        entity -> {
-                            lastMessageFromDevice.set(now().getEpochSecond());
-                            var response = new SuplaPingServerResult(entity.now);
-                            channel.write(just(response))
-                                    .subscribe(date -> logger.trace(
-                                            "pingServer {}s {}ms", response.now.tvSec, response.now.tvUsec));
-                        },
-                        ex -> logger.error("Error in ping pipeline", ex),
-                        () -> logger.debug("Closing ping pipeline"));
-
-        // SetActivityTimeout pipeline
         var scheduledPool = ThreadPoolManager.getScheduledPool(BINDING_ID + "." + guid);
         channel.getMessagePipe()
-                .filter(entity -> entity instanceof SuplaSetActivityTimeout)
-                .map(entity -> (SuplaSetActivityTimeout) entity)
-                .subscribe(entity -> {
-                    var timeout = requireNonNull(deviceConfiguration).timeoutConfiguration();
-                    var data = new SuplaSetActivityTimeoutResult(
-                            (short) timeout.timeout(), (short) timeout.min(), (short) timeout.max());
-                    channel.write(just(data)).subscribe(date -> logger.trace("setActivityTimeout {}", data));
-                    pingSchedule = scheduledPool.scheduleWithFixedDelay(
-                            this::checkIfDeviceIsUp, timeout.timeout() * 2L, timeout.timeout(), SECONDS);
-                });
-
-        // messages to the device
-        channel.getMessagePipe()
-                .filter(entity -> entity instanceof SuplaDeviceChannelValue)
-                .map(entity -> (SuplaDeviceChannelValue) entity)
-                .subscribe(
-                        entity -> {
-                            updateStatus(entity.channelNumber, entity.value);
-                            updateStatus(ONLINE);
-                        },
-                        ex -> {
-                            logger.error("Error in DeviceChannelValue pipeline", ex);
-                            updateStatus(OFFLINE, COMMUNICATION_ERROR, ex.getLocalizedMessage());
-                        },
-                        () -> logger.debug("Closing DeviceChannelValue pipeline"));
-
+                        .subscribe(
+                                entity -> {
+                                    if(entity instanceof SuplaPingServer ping) {
+                                        consumeSuplaPingServer(ping);
+                                    } else if(entity instanceof SuplaSetActivityTimeout) {
+                                        consumeSuplaSetActivityTimeout(scheduledPool);
+                                    } else if(entity instanceof SuplaDeviceChannelValue value) {
+                                        updateStatus(value.channelNumber, value.value);
+                                        updateStatus(ONLINE);
+                                    } else {
+                                        logger.debug("Not supporting message:\n{}", entity);
+                                    }
+                                },
+                                ex -> {
+                                    logger.error("Error in message pipeline pipeline", ex);
+                                    updateStatus(OFFLINE, COMMUNICATION_ERROR, "Error: "+ ex.getLocalizedMessage());
+                                },
+                                () -> logger.debug("Closing DeviceChannelValue pipeline"));
         return true;
+    }
+
+    private void consumeSuplaSetActivityTimeout(ScheduledExecutorService scheduledPool) {
+        var localChannel = channel;
+        if(localChannel == null) {
+            return;
+        }
+        var timeout = requireNonNull(deviceConfiguration).timeoutConfiguration();
+        var data = new SuplaSetActivityTimeoutResult(
+                (short) timeout.timeout(), (short) timeout.min(), (short) timeout.max());
+        localChannel.write(just(data)).subscribe(date -> logger.trace("setActivityTimeout {}", data));
+        pingSchedule = scheduledPool.scheduleWithFixedDelay(
+                this::checkIfDeviceIsUp, timeout.timeout() * 2L, timeout.timeout(), SECONDS);
+    }
+
+    private void consumeSuplaPingServer(SuplaPingServer ping) {
+        var localChannel = channel;
+        if(localChannel == null) {
+            return;
+        }
+        lastMessageFromDevice.set(now().getEpochSecond());
+        var response = new SuplaPingServerResult(ping.now);
+        localChannel.write(just(response))
+                .subscribe(date -> logger.trace(
+                        "pingServer {}s {}ms", response.now.tvSec, response.now.tvUsec));
     }
 
     private boolean authorizeForLocation(int accessId, byte[] accessIdPassword) {
