@@ -16,6 +16,7 @@ import static pl.grzeslowski.supla.openhab.internal.SuplaBindingConstants.Server
 
 import java.time.Duration;
 import java.util.Map;
+import java.util.Optional;
 import java.util.logging.Level;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
@@ -27,6 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import pl.grzeslowski.jsupla.server.api.Channel;
 import pl.grzeslowski.supla.openhab.internal.server.traits.RegisterDeviceTrait;
+import pl.grzeslowski.supla.openhab.internal.server.traits.RegisterDeviceTraitParser;
 import pl.grzeslowski.supla.openhab.internal.server.traits.RegisterEmailDeviceTrait;
 import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
@@ -61,14 +63,18 @@ public class ServerDiscoveryService extends AbstractDiscoveryService {
         cancelSubscription();
         subscription = newDeviceFlux
                 .flatMap(Channel::getMessagePipe)
-                .filter(entity -> entity instanceof RegisterDeviceTrait)
-                .cast(RegisterDeviceTrait.class)
+                .map(RegisterDeviceTraitParser::parse)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
                 .take(Duration.ofSeconds(getScanTimeout()))
                 .map(this::buildDiscoveryResult)
                 .log(logger.getName(), Level.FINE)
                 .subscribe(
                         this::thingDiscovered,
-                        ex -> logger.error("Error occurred during discovery", ex),
+                        ex -> {
+                            logger.error("Error occurred during discovery", ex);
+                            stopScan();
+                        },
                         this::stopScan);
     }
 

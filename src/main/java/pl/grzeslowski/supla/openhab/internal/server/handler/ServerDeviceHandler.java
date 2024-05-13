@@ -34,8 +34,10 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import lombok.Getter;
 import lombok.ToString;
+import lombok.val;
 import org.eclipse.jdt.annotation.NonNull;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
@@ -56,6 +58,7 @@ import pl.grzeslowski.jsupla.protocol.api.channeltype.encoders.ChannelTypeEncode
 import pl.grzeslowski.jsupla.protocol.api.channeltype.value.*;
 import pl.grzeslowski.jsupla.protocol.api.structs.dcs.SuplaPingServer;
 import pl.grzeslowski.jsupla.protocol.api.structs.dcs.SuplaSetActivityTimeout;
+import pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaDeviceChannelExtendedValue;
 import pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaDeviceChannelValue;
 import pl.grzeslowski.jsupla.protocol.api.structs.sd.SuplaChannelNewValue;
 import pl.grzeslowski.jsupla.protocol.api.structs.sd.SuplaRegisterDeviceResult;
@@ -64,8 +67,10 @@ import pl.grzeslowski.jsupla.protocol.api.structs.sdc.SuplaSetActivityTimeoutRes
 import pl.grzeslowski.supla.openhab.internal.handler.AbstractDeviceHandler;
 import pl.grzeslowski.supla.openhab.internal.server.ChannelCallback;
 import pl.grzeslowski.supla.openhab.internal.server.ChannelValueToState;
-import pl.grzeslowski.supla.openhab.internal.server.traits.*;
+import pl.grzeslowski.supla.openhab.internal.server.traits.DeviceChannelTrait;
+import pl.grzeslowski.supla.openhab.internal.server.traits.RegisterDeviceTrait;
 import pl.grzeslowski.supla.openhab.internal.server.traits.RegisterEmailDeviceTrait;
+import pl.grzeslowski.supla.openhab.internal.server.traits.RegisterLocationDeviceTrait;
 import reactor.core.publisher.Flux;
 
 /**
@@ -78,7 +83,6 @@ import reactor.core.publisher.Flux;
 public class ServerDeviceHandler extends AbstractDeviceHandler {
     private Logger logger = LoggerFactory.getLogger(ServerDeviceHandler.class);
 
-    private final ChannelValueSwitch<State> valueSwitch = new ChannelValueSwitch<>(new ChannelValueToState());
     private final Map<Integer, Integer> channelTypes = synchronizedMap(new HashMap<>());
 
     @ToString.Include
@@ -189,6 +193,13 @@ public class ServerDeviceHandler extends AbstractDeviceHandler {
             pl.grzeslowski.jsupla.server.api.Channel channel, RegisterDeviceTrait registerEntity) {
         this.channel = channel;
         updateStatus(OFFLINE, HANDLER_CONFIGURATION_PENDING, "Device is authorizing...");
+        {
+            var local = pingSchedule;
+            pingSchedule = null;
+            if (local != null) {
+                local.cancel(false);
+            }
+        }
 
         // auth
         logger.debug("Authorizing...");
@@ -232,10 +243,15 @@ public class ServerDeviceHandler extends AbstractDeviceHandler {
         // set the software version
         thing.setProperty(SOFT_VERSION_PROPERTY, registerEntity.getSoftVer());
 
-        sendRegistrationConfirmation().subscribe(date -> {
-            setChannels(registerEntity.getChannels());
-            updateStatus(ONLINE);
-        });
+        sendRegistrationConfirmation()
+                .map(date -> {
+                    setChannels(registerEntity.getChannels());
+                    return date;
+                })
+                .subscribe(__ -> updateStatus(ONLINE), ex -> {
+                    logger.error("Cannot set channels", ex);
+                    updateStatus(OFFLINE, CONFIGURATION_ERROR, "Cannot set channels " + ex.getLocalizedMessage());
+                });
 
         var scheduledPool = ThreadPoolManager.getScheduledPool(BINDING_ID + "." + guid);
         channel.getMessagePipe()
@@ -247,14 +263,20 @@ public class ServerDeviceHandler extends AbstractDeviceHandler {
                                 consumeSuplaSetActivityTimeout(scheduledPool);
                             } else if (entity instanceof SuplaDeviceChannelValue value) {
                                 updateStatus(value.channelNumber, value.value);
-                                updateStatus(ONLINE);
+                            } else if (entity instanceof SuplaDeviceChannelExtendedValue value) {
+                                var extendedValue = value.value;
+                                updateStatus(value.channelNumber, extendedValue.type, extendedValue.value);
                             } else {
                                 logger.debug("Not supporting message:\n{}", entity);
                             }
+                            updateStatus(ONLINE);
                         },
                         ex -> {
                             logger.error("Error in message pipeline pipeline", ex);
-                            updateStatus(OFFLINE, COMMUNICATION_ERROR, "Error: " + ex.getLocalizedMessage());
+                            updateStatus(
+                                    OFFLINE,
+                                    COMMUNICATION_ERROR,
+                                    "Error in message pipeline pipeline. " + ex.getLocalizedMessage());
                         },
                         () -> logger.debug("Closing DeviceChannelValue pipeline"));
         return true;
@@ -477,51 +499,81 @@ public class ServerDeviceHandler extends AbstractDeviceHandler {
     }
 
     private void setChannels(List<DeviceChannelTrait> deviceChannels) {
-        if (logger.isDebugEnabled()) {
-            var channels =
-                    deviceChannels.stream().map(DeviceChannelTrait::toString).collect(Collectors.joining("\n"));
-            logger.debug("Registering channels:\n{}", channels);
+        {
+            var channels = deviceChannels.stream()
+                    .sorted(Comparator.comparingInt(DeviceChannelTrait::getNumber))
+                    .flatMap(this::createChannel)
+                    .toList();
+            if (logger.isDebugEnabled()) {
+                var rawChannels = deviceChannels.stream()
+                        .map(DeviceChannelTrait::toString)
+                        .collect(Collectors.joining("\n"));
+                var string = channels.stream()
+                        .map(channel -> channel.getUID() + " -> " + channel.getChannelTypeUID())
+                        .collect(Collectors.joining("\n"));
+                logger.debug(
+                        """
+                                Registering channels:
+                                 > Raw:
+                                {}
+
+                                 > OpenHABs:
+                                {}""",
+                        rawChannels,
+                        string);
+            }
+            updateChannels(channels);
         }
-        var channels = deviceChannels.stream()
-                .sorted(Comparator.comparingInt(DeviceChannelTrait::getNumber))
-                .map(this::createChannel)
-                .filter(Optional::isPresent)
-                .map(Optional::get)
-                .toList();
-        updateChannels(channels);
         deviceChannels.stream()
-                .map(this::channelForUpdate)
+                .flatMap(this::channelForUpdate)
                 .forEach(pair -> updateState(pair.getValue0(), pair.getValue1()));
     }
 
-    private Pair<ChannelUID, State> channelForUpdate(DeviceChannelTrait deviceChannel) {
-        return Pair.with(
-                createChannelUid(deviceChannel.getNumber()),
-                findState(deviceChannel.getType(), deviceChannel.getValue()));
+    private Stream<Pair<ChannelUID, State>> channelForUpdate(DeviceChannelTrait deviceChannel) {
+        Class<? extends ChannelValue> clazz = ChannelTypeDecoder.INSTANCE.findClass(deviceChannel.getType());
+        if (clazz.isAssignableFrom(ElectricityMeterValue.class)) {
+            return Stream.empty();
+        }
+        return findState(deviceChannel.getType(), deviceChannel.getNumber(), deviceChannel.getValue());
     }
 
     private ChannelUID createChannelUid(int channelNumber) {
         return new ChannelUID(getThing().getUID(), valueOf(channelNumber));
     }
 
-    private State findState(int type, byte[] value) {
+    private Stream<Pair<ChannelUID, State>> findState(int type, int channelNumber, byte[] value) {
+        val valueSwitch =
+                new ChannelValueSwitch<>(new ChannelValueToState(getThing().getUID(), channelNumber));
         return valueSwitch.doSwitch(ChannelTypeDecoder.INSTANCE.decode(type, value));
     }
 
     private void updateStatus(int channelNumber, byte[] channelValue) {
-        var channelUid = createChannelUid(channelNumber);
         var type = channelTypes.get(channelNumber);
-        var state = findState(type, channelValue);
-        updateState(channelUid, state);
+        updateStatus(channelNumber, type, channelValue);
     }
 
-    private Optional<Channel> createChannel(DeviceChannelTrait deviceChannel) {
+    private void updateStatus(int channelNumber, int type, byte[] channelValue) {
+        logger.debug("Updating status for channel {}", channelNumber);
+        findState(type, channelNumber, channelValue).forEach(pair -> {
+            var channelUID = pair.getValue0();
+            var state = pair.getValue1();
+            logger.debug(
+                    "Updating state for channel {}, channelNumber {}, type {}, state={}",
+                    channelUID,
+                    channelNumber,
+                    type,
+                    state);
+            updateState(channelUID, state);
+        });
+    }
+
+    private Stream<Channel> createChannel(DeviceChannelTrait deviceChannel) {
         var channelCallback = new ChannelCallback(getThing().getUID(), deviceChannel.getNumber());
-        var channelValueSwitch = new ChannelValueSwitch<>(channelCallback);
-        var value = ChannelTypeDecoder.INSTANCE.decode(deviceChannel.getType(), deviceChannel.getValue());
-        var channel = channelValueSwitch.doSwitch(value);
-        channelTypes.put((int) deviceChannel.getNumber(), deviceChannel.getType());
-        return Optional.ofNullable(channel);
+        var channelValueSwitch = new ChannelClassSwitch<>(channelCallback);
+        var clazz = ChannelTypeDecoder.INSTANCE.findClass(deviceChannel.getType());
+        var channels = channelValueSwitch.doSwitch(clazz);
+        channelTypes.put(deviceChannel.getNumber(), deviceChannel.getType());
+        return channels;
     }
 
     private void updateChannels(List<Channel> channels) {
