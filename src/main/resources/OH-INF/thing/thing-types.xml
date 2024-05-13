@@ -215,7 +215,7 @@
 		<label>Unknown channel</label>
 		<description>This version of Supla binding does not know how to handle this channel. Try updating your binding
 			or visit
-			&lt;a href="forum.supla.org"&gt;forum.supla.org&lt;/a&gt; for more info.
+			&lt;a href="https://github.com/magx2/openhab-supla"&gt;openhab-supla&lt;/a&gt; for more info.
 		</description>
 	</channel-type>
 </thing:thing-descriptions>
