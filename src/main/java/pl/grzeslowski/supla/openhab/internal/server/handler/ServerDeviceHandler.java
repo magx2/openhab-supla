@@ -147,14 +147,16 @@ public class ServerDeviceHandler extends AbstractDeviceHandler {
 
         {
             // timeouts
-            var bridgeHandlerTimeoutConfiguration = requireNonNull(bridgeHandler.getTimeoutConfiguration());
+            var bridgeHandlerTimeoutConfiguration =
+                    requireNonNullElse(bridgeHandler.getTimeoutConfiguration(), new TimeoutConfiguration(10, 8, 12));
+
             var timeoutConfiguration = new TimeoutConfiguration(
                     requireNonNullElse(config.getTimeout(), bridgeHandlerTimeoutConfiguration.timeout()),
                     requireNonNullElse(config.getTimeoutMin(), bridgeHandlerTimeoutConfiguration.min()),
                     requireNonNullElse(config.getTimeoutMax(), bridgeHandlerTimeoutConfiguration.max()));
 
             // auth data
-            var bridgeAuthData = requireNonNull(bridgeHandler.getAuthData());
+            var bridgeAuthData = requireNonNull(bridgeHandler.getAuthData(), "No auth data in bridge!");
             AuthData.@Nullable LocationAuthData locationAuthData;
             if (config.getServerAccessId() != null && config.getServerAccessIdPassword() != null) {
                 locationAuthData = new AuthData.LocationAuthData(
