@@ -77,11 +77,11 @@ approval.
 2. **Install via Karaf's `bundle:install`:**
 If you prefer a manual installation method, you can install the plugin using Karaf's `bundle:install` command. This
 method allows you to directly add the plugin bundle to your OpenHAB installation.
-   1. [Log in to Karaf console](https://www.openhab.org/docs/administration/console.html)
-   2. Check is a Supla bundle is not installed: `bundle:list`
-      1. (Optional) Uninstall previous bundle: `bundle:uninstall <pid>`
-   3. Install: `bundle:install -s url:https://github.com/magx2/openhab-supla/releases/download/openhab-supla-X.Y.Z/openhab-supla-X.Y.Z.jar`
-   4. Check if installation was successful: `bundle:list`
+1. [Log in to Karaf console](https://www.openhab.org/docs/administration/console.html)
+2. Check is a Supla bundle is not installed: `bundle:list`
+	1. (Optional) Uninstall previous bundle: `bundle:uninstall <pid>`
+3. Install: `bundle:install -s url:https://github.com/magx2/openhab-supla/releases/download/openhab-supla-X.Y.Z/openhab-supla-X.Y.Z.jar`
+4. Check if installation was successful: `bundle:list`
 
 3. **Download JAR File from Releases Page:**
 Alternatively, you can download the JAR file from the official GitHub releases page
