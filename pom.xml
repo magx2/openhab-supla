@@ -382,6 +382,7 @@ org.openhab.*
                                 <exclude>src/test/java/**/*.java</exclude>
                                 <exclude>.github/workflows/*.yml</exclude>
                                 <exclude>*.http</exclude>
+                                <exclude>imgs/**</exclude>
                             </excludes>
                             <trimTrailingWhitespace/>
                             <endWithNewline/>
