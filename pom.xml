@@ -4,12 +4,12 @@
 
     <groupId>pl.grzeslowski.supla</groupId>
     <artifactId>openhab-supla</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.0.0</version>
 
     <scm>
         <connection>scm:git:${project.scm.url}</connection>
         <developerConnection>scm:git:https://x-access-token:${GITHUB_TOKEN}@github.com/magx2/openhab-supla.git</developerConnection>
-        <tag>HEAD</tag>
+        <tag>openhab-supla-1.0.0</tag>
         <url>git@github.com:magx2/openhab-supla.git</url>
     </scm>
 
@@ -356,10 +356,10 @@ org.openhab.*
                         </includes>
                         <sortPom>
                             <predefinedSortOrder>recommended_2008_06</predefinedSortOrder>
-                            <sortDependencies/>
-                            <sortDependencyManagement/>
-                            <sortDependencyExclusions/>
-                            <sortPlugins/>
+                            <sortDependencies />
+                            <sortDependencyManagement />
+                            <sortDependencyExclusions />
+                            <sortPlugins />
                             <sortProperties>true</sortProperties>
                             <sortExecutions>true</sortExecutions>
                             <nrOfIndentSpace>4</nrOfIndentSpace>
@@ -384,8 +384,8 @@ org.openhab.*
                                 <exclude>*.http</exclude>
                                 <exclude>imgs/**</exclude>
                             </excludes>
-                            <trimTrailingWhitespace/>
-                            <endWithNewline/>
+                            <trimTrailingWhitespace />
+                            <endWithNewline />
                             <indent>
                                 <tabs>true</tabs>
                                 <spacesPerTab>4</spacesPerTab>
@@ -393,9 +393,9 @@ org.openhab.*
                         </format>
                     </formats>
                     <java>
-                        <importOrder/>
-                        <removeUnusedImports/>
-                        <formatAnnotations/>
+                        <importOrder />
+                        <removeUnusedImports />
+                        <formatAnnotations />
                         <palantirJavaFormat>
                             <version>2.43.0</version>
                             <style>PALANTIR</style>
