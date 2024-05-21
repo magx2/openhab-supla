@@ -143,6 +143,45 @@ standard procedure for restarting your OpenHAB instance.
 **Note:** Always ensure to backup any files or settings before making changes. This will help you to restore the
 original settings if something goes wrong.
 
+### How to Enable Logging
+
+To enable logging for the Supla plugin in OpenHAB, follow these steps:
+
+1. Open the `log4j2.xml` file located in the `userdata/etc/` directory
+2. Add the following configuration in the appenders section:
+```xml
+<!-- supla -->
+<RollingFile fileName="${sys:openhab.logdir}/supla.log" filePattern="${sys:openhab.logdir}/supla.log.%i.gz" name="SUPLA">
+    <Policies>
+        <OnStartupTriggeringPolicy/>
+        <SizeBasedTriggeringPolicy size="1 MB"/>
+    </Policies>
+    <DefaultRolloverStrategy max="7"/>
+    <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} [%-5.5p] [%-36.36c] - %m%n"/>
+</RollingFile>
+```
+3. Add the following configuration in the loggers section:
+```xml
+<!-- supla -->
+<Logger name="pl.grzeslowski.jsupla.server" level="debug" additivity="false">
+    <AppenderRef ref="SUPLA"/>
+</Logger>
+<Logger name="pl.grzeslowski.jsupla.protocol" level="debug" additivity="false">
+    <AppenderRef ref="SUPLA"/>
+</Logger>
+<Logger name="pl.grzeslowski.supla.openhab" level="debug" additivity="false">
+    <AppenderRef ref="SUPLA"/>
+</Logger>
+<Logger name="io.netty" level="debug" additivity="false">
+    <AppenderRef ref="SUPLA"/>
+</Logger>
+<Logger name="org.openhab.binding.supla.internal.server" level="debug" additivity="false">
+    <AppenderRef ref="SUPLA"/>
+</Logger>
+```
+
+By following these steps, you will enable detailed logging for the Supla plugin, which can help with debugging and monitoring the plugin's activity within OpenHAB.
+
 ## Support ❤️
 
 If you want to support the author of this binding, buy him a coffee:
