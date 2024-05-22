@@ -152,31 +152,31 @@ To enable logging for the Supla plugin in OpenHAB, follow these steps:
 ```xml
 <!-- supla -->
 <RollingFile fileName="${sys:openhab.logdir}/supla.log" filePattern="${sys:openhab.logdir}/supla.log.%i.gz" name="SUPLA">
-    <Policies>
-        <OnStartupTriggeringPolicy/>
-        <SizeBasedTriggeringPolicy size="1 MB"/>
-    </Policies>
-    <DefaultRolloverStrategy max="7"/>
-    <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} [%-5.5p] [%-36.36c] - %m%n"/>
+	<Policies>
+		<OnStartupTriggeringPolicy/>
+		<SizeBasedTriggeringPolicy size="1 MB"/>
+	</Policies>
+	<DefaultRolloverStrategy max="7"/>
+	<PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} [%-5.5p] [%-36.36c] - %m%n"/>
 </RollingFile>
 ```
 3. Add the following configuration in the loggers section:
 ```xml
 <!-- supla -->
 <Logger name="pl.grzeslowski.jsupla.server" level="debug" additivity="false">
-    <AppenderRef ref="SUPLA"/>
+	<AppenderRef ref="SUPLA"/>
 </Logger>
 <Logger name="pl.grzeslowski.jsupla.protocol" level="debug" additivity="false">
-    <AppenderRef ref="SUPLA"/>
+	<AppenderRef ref="SUPLA"/>
 </Logger>
 <Logger name="pl.grzeslowski.supla.openhab" level="debug" additivity="false">
-    <AppenderRef ref="SUPLA"/>
+	<AppenderRef ref="SUPLA"/>
 </Logger>
 <Logger name="io.netty" level="debug" additivity="false">
-    <AppenderRef ref="SUPLA"/>
+	<AppenderRef ref="SUPLA"/>
 </Logger>
 <Logger name="org.openhab.binding.supla.internal.server" level="debug" additivity="false">
-    <AppenderRef ref="SUPLA"/>
+	<AppenderRef ref="SUPLA"/>
 </Logger>
 ```
 
