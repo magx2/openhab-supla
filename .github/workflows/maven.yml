@@ -7,10 +7,37 @@ on:
     branches: [ "master" ]
 
 jobs:
-  build:
-
+  spotless:
     runs-on: ubuntu-latest
-
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.PAT }}
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+      - name: Spotless
+        run: |
+          mvn -B spotless:apply
+          
+          if [[ `git status --porcelain -uno` ]]; then
+            echo "❌ Code was not formatted properly"
+          else
+            echo "👍 Code is formatted properly"
+            exit 0
+          fi
+          
+          git status -uno
+          git add -u
+          git status -uno
+          git commit -m "spotless:apply"
+          git push origin master
+          exit 13
+  build:
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - name: Set up JDK 17
