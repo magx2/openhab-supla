@@ -4,6 +4,6 @@
 
 	<feature name="openhab-binding-supla" description="Supla Binding" version="${project.version}">
 		<feature>openhab-runtime-base</feature>
-		<bundle start-level="80">mvn:org.openhab.addons.bundles/org.openhab.binding.supla/${project.version}</bundle>
+		<bundle start-level="80">url:https://github.com/magx2/openhab-supla/releases/download/openhab-supla-${project.version}/openhab-supla-${project.version}.jar</bundle>
 	</feature>
 </features>
