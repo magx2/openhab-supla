@@ -80,7 +80,7 @@ method allows you to directly add the plugin bundle to your OpenHAB installation
 	1. [Log in to Karaf console](https://www.openhab.org/docs/administration/console.html)
 	2. Check is a Supla bundle is not installed: `bundle:list`
 		1. (Optional) Uninstall previous bundle: `bundle:uninstall <pid>`
-	3. Install: `bundle:install -s url:https://github.com/magx2/openhab-supla/releases/download/openhab-supla-X.Y.Z/openhab-supla-X.Y.Z.jar`
+	3. Install: `bundle:install -s url:https://github.com/magx2/openhab-supla/releases/download/supla-X.Y.Z/supla-X.Y.Z.jar`
 	4. Check if installation was successful: `bundle:list`
 
 3. **Download JAR File from Releases Page:**
