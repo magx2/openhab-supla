@@ -358,10 +358,10 @@ org.openhab.*
                         </includes>
                         <sortPom>
                             <predefinedSortOrder>recommended_2008_06</predefinedSortOrder>
-                            <sortDependencies />
-                            <sortDependencyManagement />
-                            <sortDependencyExclusions />
-                            <sortPlugins />
+                            <sortDependencies/>
+                            <sortDependencyManagement/>
+                            <sortDependencyExclusions/>
+                            <sortPlugins/>
                             <sortProperties>true</sortProperties>
                             <sortExecutions>true</sortExecutions>
                             <nrOfIndentSpace>4</nrOfIndentSpace>
@@ -386,8 +386,8 @@ org.openhab.*
                                 <exclude>*.http</exclude>
                                 <exclude>imgs/**</exclude>
                             </excludes>
-                            <trimTrailingWhitespace />
-                            <endWithNewline />
+                            <trimTrailingWhitespace/>
+                            <endWithNewline/>
                             <indent>
                                 <tabs>true</tabs>
                                 <spacesPerTab>4</spacesPerTab>
@@ -395,9 +395,9 @@ org.openhab.*
                         </format>
                     </formats>
                     <java>
-                        <importOrder />
-                        <removeUnusedImports />
-                        <formatAnnotations />
+                        <importOrder/>
+                        <removeUnusedImports/>
+                        <formatAnnotations/>
                         <palantirJavaFormat>
                             <version>2.43.0</version>
                             <style>PALANTIR</style>
