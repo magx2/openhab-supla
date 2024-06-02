@@ -2,8 +2,8 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>pl.grzeslowski.supla</groupId>
-    <artifactId>openhab-supla</artifactId>
+    <groupId>pl.grzeslowski.openhab</groupId>
+    <artifactId>supla</artifactId>
     <version>1.0.3-SNAPSHOT</version>
 
     <scm>
@@ -293,33 +293,35 @@ Import-Package: !com.aayushatharva.*, \
 	!org.checkerframework.*, \
 	!org.vesalainen.*, \
 	*
-Include-Resource: caffeine-*.jar;lib:=true,\
-okhttp-*.jar;lib:=true,\
-error_prone_annotations-*.jar;lib:=true,\
-netty-*.jar;lib:=true,\
-logging-interceptor-*.jar;lib:=true,\
-swagger-*.jar;lib:=true,\
-jsupla-*.jar;lib:=true,\
-com.google.gson-*.jar;lib:=true,\
-javax*.jar;lib:=true,\
-jakarta.validation-api-*.jar;lib:=true,\
-okio-*.jar;lib:=true,\
-javatuples-*.jar;lib:=true,\
-reactive-streams-*.jar;lib:=true,\
-protocol-*.jar;lib:=true,\
-server-*.jar;lib:=true,\
-reactor-*.jar;lib:=true,\
-threetenbp-*.jar;lib:=true,\
-gson-*.jar;lib:=true,\
-bcpkix-jdk15on-*.jar;lib:=true,\
-bcprov-jdk15on-*.jar;lib:=true,\
-bcutil-jdk15on-*.jar;lib:=true
+Include-Resource: \
+    caffeine-*.jar;lib:=true,\
+    okhttp-*.jar;lib:=true,\
+    error_prone_annotations-*.jar;lib:=true,\
+    netty-*.jar;lib:=true,\
+    logging-interceptor-*.jar;lib:=true,\
+    swagger-*.jar;lib:=true,\
+    jsupla-*.jar;lib:=true,\
+    com.google.gson-*.jar;lib:=true,\
+    javax*.jar;lib:=true,\
+    jakarta.validation-api-*.jar;lib:=true,\
+    okio-*.jar;lib:=true,\
+    javatuples-*.jar;lib:=true,\
+    reactive-streams-*.jar;lib:=true,\
+    protocol-*.jar;lib:=true,\
+    server-*.jar;lib:=true,\
+    reactor-*.jar;lib:=true,\
+    threetenbp-*.jar;lib:=true,\
+    gson-*.jar;lib:=true,\
+    bcpkix-jdk15on-*.jar;lib:=true,\
+    bcprov-jdk15on-*.jar;lib:=true,\
+    bcutil-jdk15on-*.jar;lib:=true
 Require-Capability: osgi.service;filter:="(objectClass=org.openhab.core.io.net.http.HttpClientFactory)";effective:=active,osgi.extender;filter:="(&(osgi.extender=osgi.component)(version>=1.5.0)(!(version>=2.0.0)))",osgi.ee;filter:="(&(osgi.ee=JavaSE)(version=17))"
 Provide-Capability: osgi.service;objectClass:List<String>="org.openhab.core.thing.binding.ThingHandlerFactory";uses:="org.openhab.core.thing.binding"
+-requirements: \
+osgi.service;filter:="(objectClass=org.openhab.core.io.net.http.HttpClientFactory)";effective:=active,osgi.extender;filter:="(&(osgi.extender=osgi.component)(version>=1.5.0)(!(version>=2.0.0)))"\
+osgi.ee;filter:="(&(osgi.ee=JavaSE)(version=17))"
 -exportcontents: \
-!*.internal.*,\
-!*.impl.*, \
-org.openhab.*
+!pl.grzeslowski.supla.openhab.internal.*
 -noimportjava: true
 -sources: false
 -removeheaders: Require-Capability
