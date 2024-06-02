@@ -3,6 +3,7 @@ package pl.grzeslowski.supla.openhab.internal;
 import static java.util.Collections.synchronizedMap;
 import static pl.grzeslowski.supla.openhab.internal.SuplaBindingConstants.*;
 
+import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Map;
 import org.eclipse.jdt.annotation.NonNull;
@@ -30,14 +31,12 @@ import pl.grzeslowski.supla.openhab.internal.server.handler.ServerDeviceHandler;
 
 /**
  * The {@link SuplaHandlerFactory} is responsible for creating things and thing handlers.
- *
- * @author Grzeslowski - Initial contribution
  */
 @Component(service = ThingHandlerFactory.class, immediate = true, configurationPid = "binding.supla")
 @NonNullByDefault
 public class SuplaHandlerFactory extends BaseThingHandlerFactory {
     private final Logger logger = LoggerFactory.getLogger(SuplaHandlerFactory.class);
-    private final Map<BridgeHandler, ServiceReference<?>> servicesToDispose = synchronizedMap(new Hashtable<>());
+    private final Map<BridgeHandler, ServiceReference<?>> servicesToDispose = synchronizedMap(new HashMap<>());
 
     @Override
     public boolean supportsThingType(ThingTypeUID thingTypeUID) {

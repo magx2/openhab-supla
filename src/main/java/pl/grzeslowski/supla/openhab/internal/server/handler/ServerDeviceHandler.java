@@ -65,8 +65,6 @@ import reactor.core.publisher.Flux;
 
 /**
  * The {@link ServerDeviceHandler} is responsible for handling commands, which are sent to one of the channels.
- *
- * @author Grzeslowski - Initial contribution
  */
 @NonNullByDefault
 @ToString(onlyExplicitlyIncluded = true)
