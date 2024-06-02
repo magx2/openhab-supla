@@ -29,9 +29,7 @@ import pl.grzeslowski.supla.openhab.internal.server.discovery.ServerDiscoverySer
 import pl.grzeslowski.supla.openhab.internal.server.handler.ServerBridgeHandler;
 import pl.grzeslowski.supla.openhab.internal.server.handler.ServerDeviceHandler;
 
-/**
- * The {@link SuplaHandlerFactory} is responsible for creating things and thing handlers.
- */
+/** The {@link SuplaHandlerFactory} is responsible for creating things and thing handlers. */
 @Component(service = ThingHandlerFactory.class, immediate = true, configurationPid = "binding.supla")
 @NonNullByDefault
 public class SuplaHandlerFactory extends BaseThingHandlerFactory {

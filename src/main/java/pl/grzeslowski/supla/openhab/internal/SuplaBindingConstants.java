@@ -6,9 +6,7 @@ import java.util.Set;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.openhab.core.thing.ThingTypeUID;
 
-/**
- * The {@link SuplaBindingConstants} class defines common constants, which are used across the whole binding.
- */
+/** The {@link SuplaBindingConstants} class defines common constants, which are used across the whole binding. */
 @NonNullByDefault
 public class SuplaBindingConstants {
 

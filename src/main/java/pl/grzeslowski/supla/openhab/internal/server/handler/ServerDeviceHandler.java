@@ -63,9 +63,7 @@ import pl.grzeslowski.supla.openhab.internal.server.traits.RegisterEmailDeviceTr
 import pl.grzeslowski.supla.openhab.internal.server.traits.RegisterLocationDeviceTrait;
 import reactor.core.publisher.Flux;
 
-/**
- * The {@link ServerDeviceHandler} is responsible for handling commands, which are sent to one of the channels.
- */
+/** The {@link ServerDeviceHandler} is responsible for handling commands, which are sent to one of the channels. */
 @NonNullByDefault
 @ToString(onlyExplicitlyIncluded = true)
 public class ServerDeviceHandler extends AbstractDeviceHandler {
