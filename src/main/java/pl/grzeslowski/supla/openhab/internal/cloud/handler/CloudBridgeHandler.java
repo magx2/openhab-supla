@@ -1,13 +1,3 @@
-/**
- * Copyright (c) 2010-2024 Contributors to the openHAB project
- *
- * <p>See the NOTICE file(s) distributed with this work for additional information.
- *
- * <p>This program and the accompanying materials are made available under the terms of the Eclipse Public License 2.0
- * which is available at http://www.eclipse.org/legal/epl-2.0
- *
- * <p>SPDX-License-Identifier: EPL-2.0
- */
 package pl.grzeslowski.supla.openhab.internal.cloud.handler;
 
 import static java.math.BigDecimal.ZERO;
@@ -50,7 +40,6 @@ import pl.grzeslowski.jsupla.api.internal.ApiClientFactory;
 import pl.grzeslowski.supla.openhab.internal.ReadWriteMonad;
 import pl.grzeslowski.supla.openhab.internal.cloud.api.*;
 
-/** @author Grzeslowski - Initial contribution */
 @NonNullByDefault
 public class CloudBridgeHandler extends BaseBridgeHandler implements IoDevicesCloudApi, ChannelsCloudApi {
     private final Logger logger = LoggerFactory.getLogger(CloudBridgeHandler.class);

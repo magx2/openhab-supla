@@ -18,7 +18,6 @@ import lombok.ToString;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
 
-/** @author Grzeslowski - Initial contribution */
 @NonNullByDefault
 @Data
 public class ServerBridgeHandlerConfig {

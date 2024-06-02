@@ -19,7 +19,6 @@ import org.openhab.core.thing.ThingUID;
 import org.openhab.core.types.State;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.value.*;
 
-/** @author Grzeslowski - Initial contribution */
 @NonNullByDefault
 @RequiredArgsConstructor
 public class ChannelValueToState implements ChannelValueSwitch.Callback<Stream<Pair<ChannelUID, State>>> {
