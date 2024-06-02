@@ -28,7 +28,7 @@ jobs:
         id: config
         run: |
           mkdir tmp
-          mvn dependency:copy -q -Dartifact=pl.grzeslowski.supla:openhab-supla:LATEST -DoutputDirectory=./tmp
+          mvn dependency:copy -q -Dartifact=pl.grzeslowski.openhab:supla:LATEST -DoutputDirectory=./tmp
           version=$(ls tmp)
           if [ -z ${version+x} ]; then
             echo "version was not set!"
