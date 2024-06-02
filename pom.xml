@@ -314,13 +314,15 @@ gson-*.jar;lib:=true,\
 bcpkix-jdk15on-*.jar;lib:=true,\
 bcprov-jdk15on-*.jar;lib:=true,\
 bcutil-jdk15on-*.jar;lib:=true
+Require-Capability: osgi.service;filter:="(objectClass=org.openhab.core.io.net.http.HttpClientFactory)";effective:=active,osgi.extender;filter:="(&(osgi.extender=osgi.component)(version>=1.5.0)(!(version>=2.0.0)))",osgi.ee;filter:="(&(osgi.ee=JavaSE)(version=17))"
+Provide-Capability: osgi.service;objectClass:List<String>="org.openhab.core.thing.binding.ThingHandlerFactory";uses:="org.openhab.core.thing.binding"
 -exportcontents: \
 !*.internal.*,\
 !*.impl.*, \
 org.openhab.*
 -noimportjava: true
 -sources: false
--removeheaders: Require-Capability,Provide-Capability
+-removeheaders: Require-Capability
 -contract: *
 			]]></bnd>
                         </configuration>
@@ -356,10 +358,10 @@ org.openhab.*
                         </includes>
                         <sortPom>
                             <predefinedSortOrder>recommended_2008_06</predefinedSortOrder>
-                            <sortDependencies />
-                            <sortDependencyManagement />
-                            <sortDependencyExclusions />
-                            <sortPlugins />
+                            <sortDependencies/>
+                            <sortDependencyManagement/>
+                            <sortDependencyExclusions/>
+                            <sortPlugins/>
                             <sortProperties>true</sortProperties>
                             <sortExecutions>true</sortExecutions>
                             <nrOfIndentSpace>4</nrOfIndentSpace>
@@ -384,8 +386,8 @@ org.openhab.*
                                 <exclude>*.http</exclude>
                                 <exclude>imgs/**</exclude>
                             </excludes>
-                            <trimTrailingWhitespace />
-                            <endWithNewline />
+                            <trimTrailingWhitespace/>
+                            <endWithNewline/>
                             <indent>
                                 <tabs>true</tabs>
                                 <spacesPerTab>4</spacesPerTab>
@@ -393,9 +395,9 @@ org.openhab.*
                         </format>
                     </formats>
                     <java>
-                        <importOrder />
-                        <removeUnusedImports />
-                        <formatAnnotations />
+                        <importOrder/>
+                        <removeUnusedImports/>
+                        <formatAnnotations/>
                         <palantirJavaFormat>
                             <version>2.43.0</version>
                             <style>PALANTIR</style>
