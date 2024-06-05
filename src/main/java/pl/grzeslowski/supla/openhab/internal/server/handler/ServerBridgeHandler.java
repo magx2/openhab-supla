@@ -8,6 +8,7 @@ import static org.openhab.core.thing.ThingStatus.OFFLINE;
 import static org.openhab.core.thing.ThingStatus.ONLINE;
 import static org.openhab.core.thing.ThingStatusDetail.COMMUNICATION_ERROR;
 import static org.openhab.core.thing.ThingStatusDetail.CONFIGURATION_ERROR;
+import static org.openhab.core.types.RefreshType.REFRESH;
 import static pl.grzeslowski.jsupla.server.api.ServerProperties.fromList;
 import static pl.grzeslowski.jsupla.server.netty.NettyServerFactory.PORT;
 import static pl.grzeslowski.jsupla.server.netty.NettyServerFactory.SSL_CTX;
@@ -175,6 +176,7 @@ public class ServerBridgeHandler extends BaseBridgeHandler {
 
         logger.debug("jSuplaServer running on port {}", port);
         updateStatus(ONLINE);
+        numberOfConnectedDevices.set(0);
         updateConnectedDevices(0);
     }
 
@@ -241,6 +243,7 @@ public class ServerBridgeHandler extends BaseBridgeHandler {
 
     private void changeNumberOfConnectedDevices(int delta) {
         var number = numberOfConnectedDevices.addAndGet(delta);
+        logger.debug("Number of connected devices: {} (delta: {})", number, delta);
         updateConnectedDevices(number);
     }
 
@@ -299,7 +302,10 @@ public class ServerBridgeHandler extends BaseBridgeHandler {
 
     @Override
     public void handleCommand(final ChannelUID channelUID, final Command command) {
-        // no commands in this bridge
+        if (command != REFRESH) {
+            return;
+        }
+        updateConnectedDevices(numberOfConnectedDevices.get());
     }
 
     @Override
