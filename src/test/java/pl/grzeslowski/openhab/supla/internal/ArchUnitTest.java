@@ -8,30 +8,30 @@ import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.lang.ArchRule;
 
 @AnalyzeClasses(
-        packages = {"pl.grzeslowski.supla.openhab.."},
+        packages = {"pl.grzeslowski.openhab.supla.."},
         importOptions = {ImportOption.DoNotIncludeTests.class})
 public class ArchUnitTest {
 
     @ArchTest
     public static final ArchRule serverDoesNotAccessCloud = noClasses()
             .that()
-            .resideInAPackage("pl.grzeslowski.supla.openhab.internal.server..")
+            .resideInAPackage("pl.grzeslowski.openhab.supla.internal.server..")
             .should()
             .accessClassesThat()
-            .resideInAPackage("pl.grzeslowski.supla.openhab.internal.cloud..");
+            .resideInAPackage("pl.grzeslowski.openhab.supla.internal.cloud..");
 
     @ArchTest
     public static final ArchRule cloudDoesNotAccessServer = noClasses()
             .that()
-            .resideInAPackage("pl.grzeslowski.supla.openhab.internal.cloud..")
+            .resideInAPackage("pl.grzeslowski.openhab.supla.internal.cloud..")
             .should()
             .accessClassesThat()
-            .resideInAPackage("pl.grzeslowski.supla.openhab.internal.server..");
+            .resideInAPackage("pl.grzeslowski.openhab.supla.internal.server..");
 
     @ArchTest
     public static final ArchRule cloudDoNotUseProtocolJava = noClasses()
             .that()
-            .resideInAPackage("pl.grzeslowski.supla.openhab.internal.cloud..")
+            .resideInAPackage("pl.grzeslowski.openhab.supla.internal.cloud..")
             .should()
             .dependOnClassesThat()
             .resideInAnyPackage("pl.grzeslowski.jsupla.protocoljava..");
@@ -39,7 +39,7 @@ public class ArchUnitTest {
     @ArchTest
     public static final ArchRule cloudDoNotUseServer = noClasses()
             .that()
-            .resideInAPackage("pl.grzeslowski.supla.openhab.internal.cloud..")
+            .resideInAPackage("pl.grzeslowski.openhab.supla.internal.cloud..")
             .should()
             .dependOnClassesThat()
             .resideInAnyPackage("pl.grzeslowski.jsupla.server..");
@@ -47,7 +47,7 @@ public class ArchUnitTest {
     @ArchTest
     public static final ArchRule cloudDoNotUseNetty = noClasses()
             .that()
-            .resideInAPackage("pl.grzeslowski.supla.openhab.internal.cloud..")
+            .resideInAPackage("pl.grzeslowski.openhab.supla.internal.cloud..")
             .should()
             .dependOnClassesThat()
             .resideInAnyPackage("pl.grzeslowski.jsupla.netty..");
@@ -55,7 +55,7 @@ public class ArchUnitTest {
     @ArchTest
     public static final ArchRule serverDoNotUseApi = noClasses()
             .that()
-            .resideInAPackage("pl.grzeslowski.supla.openhab.internal.server..")
+            .resideInAPackage("pl.grzeslowski.openhab.supla.internal.server..")
             .should()
             .dependOnClassesThat()
             .resideInAnyPackage("pl.grzeslowski.jsupla.api..");
@@ -63,7 +63,7 @@ public class ArchUnitTest {
     @ArchTest
     public static final ArchRule serverDoNotUseSwagger = noClasses()
             .that()
-            .resideInAPackage("pl.grzeslowski.supla.openhab.internal.server..")
+            .resideInAPackage("pl.grzeslowski.openhab.supla.internal.server..")
             .should()
             .dependOnClassesThat()
             .resideInAnyPackage("io.swagger..");
