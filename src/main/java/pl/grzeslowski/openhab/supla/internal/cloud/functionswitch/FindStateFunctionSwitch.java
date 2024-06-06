@@ -22,7 +22,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import pl.grzeslowski.openhab.supla.internal.cloud.*;
 import pl.grzeslowski.openhab.supla.internal.cloud.executors.LedCommandExecutor;
-import pl.grzeslowski.supla.openhab.internal.cloud.*;
 
 @NonNullByDefault
 @SuppressWarnings("PackageAccessibility")

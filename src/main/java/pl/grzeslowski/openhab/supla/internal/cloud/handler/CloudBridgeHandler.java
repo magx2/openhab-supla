@@ -39,7 +39,6 @@ import org.slf4j.LoggerFactory;
 import pl.grzeslowski.jsupla.api.internal.ApiClientFactory;
 import pl.grzeslowski.openhab.supla.internal.ReadWriteMonad;
 import pl.grzeslowski.openhab.supla.internal.cloud.api.*;
-import pl.grzeslowski.supla.openhab.internal.cloud.api.*;
 
 @NonNullByDefault
 public class CloudBridgeHandler extends BaseBridgeHandler implements IoDevicesCloudApi, ChannelsCloudApi {
