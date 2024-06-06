@@ -31,6 +31,7 @@ import org.openhab.core.thing.binding.builder.ThingBuilder;
 import org.openhab.core.types.State;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import pl.grzeslowski.openhab.supla.internal.cloud.AdditionalChannelType;
 import pl.grzeslowski.openhab.supla.internal.cloud.ChannelFunctionDispatcher;
 import pl.grzeslowski.openhab.supla.internal.cloud.ChannelInfo;
 import pl.grzeslowski.openhab.supla.internal.cloud.ChannelInfoParser;
@@ -39,10 +40,9 @@ import pl.grzeslowski.openhab.supla.internal.cloud.api.IoDevicesCloudApi;
 import pl.grzeslowski.openhab.supla.internal.cloud.executors.LedCommandExecutor;
 import pl.grzeslowski.openhab.supla.internal.cloud.executors.LedCommandExecutorFactory;
 import pl.grzeslowski.openhab.supla.internal.cloud.executors.SuplaLedCommandExecutorFactory;
-import pl.grzeslowski.openhab.supla.internal.handler.AbstractDeviceHandler;
-import pl.grzeslowski.openhab.supla.internal.cloud.AdditionalChannelType;
 import pl.grzeslowski.openhab.supla.internal.cloud.functionswitch.CreateChannelFunctionSwitch;
 import pl.grzeslowski.openhab.supla.internal.cloud.functionswitch.FindStateFunctionSwitch;
+import pl.grzeslowski.openhab.supla.internal.handler.AbstractDeviceHandler;
 
 /**
  * This is handler for all Supla devices.
@@ -174,7 +174,8 @@ public final class CloudDeviceHandler extends AbstractDeviceHandler {
                     .getChannels() //
                     .stream() //
                     .filter(channel -> !channel.isHidden()) //
-                    .map(channel -> ChannelFunctionDispatcher.DISPATCHER.dispatch(channel, new CreateChannelFunctionSwitch(thing.getUID()))) //
+                    .map(channel -> ChannelFunctionDispatcher.DISPATCHER.dispatch(
+                            channel, new CreateChannelFunctionSwitch(thing.getUID()))) //
                     .flatMap(List::stream) //
                     .collect(Collectors.toList());
             updateChannels(channels);

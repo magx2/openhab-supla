@@ -91,7 +91,8 @@ public class ServerBridgeHandler extends BaseBridgeHandler {
             updateStatus(
                     OFFLINE,
                     CONFIGURATION_ERROR,
-                    "Problem with generating certificates! " + ex.getLocalizedMessage() + ". See: " + Documentation.SSL_PROBLEM);
+                    "Problem with generating certificates! " + ex.getLocalizedMessage() + ". See: "
+                            + Documentation.SSL_PROBLEM);
         } catch (Exception ex) {
             logger.debug("Cannot start server! ", ex);
             updateStatus(OFFLINE, CONFIGURATION_ERROR, "Cannot start server! " + ex.getLocalizedMessage());

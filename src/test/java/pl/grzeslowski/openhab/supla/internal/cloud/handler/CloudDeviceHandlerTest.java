@@ -61,10 +61,10 @@ import org.openhab.core.thing.ThingStatusInfo;
 import org.openhab.core.thing.ThingUID;
 import org.openhab.core.thing.binding.ThingHandlerCallback;
 import org.openhab.core.types.State;
+import pl.grzeslowski.openhab.supla.internal.cloud.AdditionalChannelType;
 import pl.grzeslowski.openhab.supla.internal.cloud.api.IoDevicesCloudApi;
 import pl.grzeslowski.openhab.supla.internal.cloud.executors.LedCommandExecutor;
 import pl.grzeslowski.openhab.supla.internal.cloud.executors.LedCommandExecutorFactory;
-import pl.grzeslowski.openhab.supla.internal.cloud.AdditionalChannelType;
 
 @SuppressWarnings({"WeakerAccess", "unused"})
 @ExtendWith(MockitoExtension.class)

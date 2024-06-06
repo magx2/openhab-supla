@@ -55,12 +55,12 @@ import pl.grzeslowski.jsupla.protocol.api.structs.sd.SuplaRegisterDeviceResult;
 import pl.grzeslowski.jsupla.protocol.api.structs.sdc.SuplaPingServerResult;
 import pl.grzeslowski.jsupla.protocol.api.structs.sdc.SuplaSetActivityTimeoutResult;
 import pl.grzeslowski.openhab.supla.internal.handler.AbstractDeviceHandler;
-import pl.grzeslowski.openhab.supla.internal.server.traits.RegisterDeviceTrait;
-import pl.grzeslowski.openhab.supla.internal.server.traits.RegisterEmailDeviceTrait;
-import pl.grzeslowski.openhab.supla.internal.server.traits.RegisterLocationDeviceTrait;
 import pl.grzeslowski.openhab.supla.internal.server.ChannelCallback;
 import pl.grzeslowski.openhab.supla.internal.server.ChannelValueToState;
 import pl.grzeslowski.openhab.supla.internal.server.traits.DeviceChannelTrait;
+import pl.grzeslowski.openhab.supla.internal.server.traits.RegisterDeviceTrait;
+import pl.grzeslowski.openhab.supla.internal.server.traits.RegisterEmailDeviceTrait;
+import pl.grzeslowski.openhab.supla.internal.server.traits.RegisterLocationDeviceTrait;
 import reactor.core.publisher.Flux;
 
 /** The {@link ServerDeviceHandler} is responsible for handling commands, which are sent to one of the channels. */

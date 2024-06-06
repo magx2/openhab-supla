@@ -18,8 +18,8 @@ import org.openhab.core.thing.binding.builder.ChannelBuilder;
 import org.openhab.core.thing.type.ChannelTypeUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import pl.grzeslowski.openhab.supla.internal.cloud.ChannelFunctionDispatcher;
 import pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants;
+import pl.grzeslowski.openhab.supla.internal.cloud.ChannelFunctionDispatcher;
 
 @NonNullByDefault
 @SuppressWarnings("PackageAccessibility")

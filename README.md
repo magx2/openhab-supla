@@ -71,7 +71,7 @@ There are three ways to install the OpenHAB plugin for Supla:
 
 1. **From Marketplace (Recommended):**
 Install the plugin directly from [OpenHAB's Marketplace](https://community.openhab.org/t/supla-integration/156114). Simply search for "Supla" in the Marketplace and follow the
-installation instructions. 
+installation instructions.
 
 2. **Install via Karaf's `bundle:install`:**
 If you prefer a manual installation method, you can install the plugin using Karaf's `bundle:install` command. This
