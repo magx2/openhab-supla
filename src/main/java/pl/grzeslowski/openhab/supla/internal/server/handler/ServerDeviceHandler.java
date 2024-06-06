@@ -266,7 +266,16 @@ public class ServerDeviceHandler extends AbstractDeviceHandler {
                                     COMMUNICATION_ERROR,
                                     "Error in message pipeline pipeline. " + ex.getLocalizedMessage());
                         },
-                        () -> logger.debug("Closing DeviceChannelValue pipeline"));
+                        () -> {
+                            logger.debug("Closing DeviceChannelValue pipeline");
+
+                            if (authorized) {
+                                var local = bridgeHandler;
+                                if (local != null) {
+                                    local.deviceDisconnected();
+                                }
+                            }
+                        });
         return true;
     }
 
@@ -584,12 +593,6 @@ public class ServerDeviceHandler extends AbstractDeviceHandler {
             channel = null;
             if (local != null) {
                 local.close();
-            }
-        }
-        if (authorized) {
-            var local = bridgeHandler;
-            if (local != null) {
-                local.deviceDisconnected();
             }
         }
         logger = LoggerFactory.getLogger(ServerDeviceHandler.class);
