@@ -272,13 +272,7 @@ public class ServerDeviceHandler extends AbstractDeviceHandler {
                         },
                         () -> {
                             logger.debug("Closing DeviceChannelValue pipeline");
-
-                            if (authorized) {
-                                var local = bridgeHandler;
-                                if (local != null) {
-                                    local.deviceDisconnected();
-                                }
-                            }
+                            dispose();
                         });
         return true;
     }
@@ -601,6 +595,14 @@ public class ServerDeviceHandler extends AbstractDeviceHandler {
             }
         }
         logger = LoggerFactory.getLogger(ServerDeviceHandler.class);
-        authorized = false;
+        {
+            if (authorized) {
+                var local = bridgeHandler;
+                if (local != null) {
+                    local.deviceDisconnected();
+                }
+            }
+            authorized = false;
+        }
     }
 }
