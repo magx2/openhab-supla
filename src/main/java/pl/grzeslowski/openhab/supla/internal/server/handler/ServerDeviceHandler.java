@@ -261,10 +261,14 @@ public class ServerDeviceHandler extends AbstractDeviceHandler {
                         },
                         ex -> {
                             logger.error("Error in message pipeline pipeline", ex);
+                            var message = ex.getLocalizedMessage();
+                            if(message == null || message.isBlank()) {
+                                message = ex.toString();
+                            }
                             updateStatus(
                                     OFFLINE,
                                     COMMUNICATION_ERROR,
-                                    "Error in message pipeline pipeline. " + ex.getLocalizedMessage());
+                                    "Error in message pipeline pipeline. " + message);
                         },
                         () -> {
                             logger.debug("Closing DeviceChannelValue pipeline");
