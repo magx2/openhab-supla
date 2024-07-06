@@ -27,6 +27,9 @@ public class RegisterDeviceTraitParser {
         if (proto instanceof SuplaRegisterDeviceF register) {
             return Optional.of(new RegisterEmailDeviceTrait(register));
         }
+        if (proto instanceof SuplaRegisterDeviceG register) {
+            return Optional.of(new RegisterEmailDeviceTrait(register));
+        }
 
         return Optional.empty();
     }

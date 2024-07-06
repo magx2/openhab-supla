@@ -9,6 +9,7 @@ import lombok.ToString;
 import pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaRegisterDeviceD;
 import pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaRegisterDeviceE;
 import pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaRegisterDeviceF;
+import pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaRegisterDeviceG;
 
 @Getter
 @ToString(callSuper = true)
@@ -41,6 +42,17 @@ public class RegisterEmailDeviceTrait extends RegisterDeviceTrait {
     }
 
     public RegisterEmailDeviceTrait(SuplaRegisterDeviceF register) {
+        super(
+                register.guid,
+                register.name,
+                register.softVer,
+                stream(register.channels).map(DeviceChannelTrait::new).toList());
+        this.email = parseString(register.email);
+        this.authKey = parseString(register.authKey);
+        this.serverName = parseString(register.serverName);
+    }
+
+    public RegisterEmailDeviceTrait(SuplaRegisterDeviceG register) {
         super(
                 register.guid,
                 register.name,

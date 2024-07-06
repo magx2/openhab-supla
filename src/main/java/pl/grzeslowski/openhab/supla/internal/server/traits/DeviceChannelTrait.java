@@ -26,4 +26,8 @@ public class DeviceChannelTrait {
     public DeviceChannelTrait(SuplaDeviceChannelD channel) {
         this(channel.number, channel.type, channel.value);
     }
+
+    public DeviceChannelTrait(SuplaDeviceChannelE channel) {
+        this(channel.number, channel.type, channel.value);
+    }
 }
