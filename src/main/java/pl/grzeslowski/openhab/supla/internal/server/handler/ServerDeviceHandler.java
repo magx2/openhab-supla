@@ -363,6 +363,7 @@ public class ServerDeviceHandler extends AbstractDeviceHandler {
 
     private Flux<LocalDateTime> sendRegistrationConfirmation() {
         var result = new SuplaRegisterDeviceResult(SUPLA_RESULTCODE_TRUE.getValue(), (byte) 100, (byte) 6, (byte) 1);
+        // todo when to send `SuplaRegisterDeviceResult` and when to send `SuplaRegisterDeviceResultB`?
         return requireNonNull(channel).write(just(result));
     }
 
