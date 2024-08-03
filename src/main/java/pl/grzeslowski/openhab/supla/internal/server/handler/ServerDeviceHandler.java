@@ -3,7 +3,6 @@ package pl.grzeslowski.openhab.supla.internal.server.handler;
 import static java.lang.Short.parseShort;
 import static java.lang.String.valueOf;
 import static java.time.Instant.now;
-import static java.time.format.DateTimeFormatter.ISO_DATE_TIME;
 import static java.util.Collections.synchronizedMap;
 import static java.util.Objects.requireNonNull;
 import static java.util.Objects.requireNonNullElse;
@@ -16,11 +15,8 @@ import static pl.grzeslowski.jsupla.protocol.api.ResultCode.SUPLA_RESULTCODE_TRU
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.BINDING_ID;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ServerDevicesProperties.CONFIG_AUTH_PROPERTY;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ServerDevicesProperties.SOFT_VERSION_PROPERTY;
-import static reactor.core.publisher.Flux.just;
 
-import java.time.LocalDateTime;
 import java.util.*;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
@@ -54,6 +50,8 @@ import pl.grzeslowski.jsupla.protocol.api.structs.sd.SuplaChannelNewValue;
 import pl.grzeslowski.jsupla.protocol.api.structs.sd.SuplaRegisterDeviceResult;
 import pl.grzeslowski.jsupla.protocol.api.structs.sdc.SuplaPingServerResult;
 import pl.grzeslowski.jsupla.protocol.api.structs.sdc.SuplaSetActivityTimeoutResult;
+import pl.grzeslowski.jsupla.protocol.api.types.ToServerProto;
+import pl.grzeslowski.jsupla.server.api.Writer;
 import pl.grzeslowski.openhab.supla.internal.handler.AbstractDeviceHandler;
 import pl.grzeslowski.openhab.supla.internal.server.ChannelCallback;
 import pl.grzeslowski.openhab.supla.internal.server.ChannelValueToState;
@@ -61,12 +59,14 @@ import pl.grzeslowski.openhab.supla.internal.server.traits.DeviceChannelTrait;
 import pl.grzeslowski.openhab.supla.internal.server.traits.RegisterDeviceTrait;
 import pl.grzeslowski.openhab.supla.internal.server.traits.RegisterEmailDeviceTrait;
 import pl.grzeslowski.openhab.supla.internal.server.traits.RegisterLocationDeviceTrait;
-import reactor.core.publisher.Flux;
 
 /** The {@link ServerDeviceHandler} is responsible for handling commands, which are sent to one of the channels. */
 @NonNullByDefault
 @ToString(onlyExplicitlyIncluded = true)
-public class ServerDeviceHandler extends AbstractDeviceHandler {
+public class ServerDeviceHandler extends AbstractDeviceHandler implements SuplaThing {
+    public static final byte ACTIVITY_TIMEOUT = (byte) 100;
+    public static final byte VERSION = (byte) 6;
+    public static final byte VERSION_MIN = (byte) 1;
     private Logger logger = LoggerFactory.getLogger(ServerDeviceHandler.class);
 
     private final Map<Integer, Integer> channelTypes = synchronizedMap(new HashMap<>());
@@ -88,10 +88,11 @@ public class ServerDeviceHandler extends AbstractDeviceHandler {
     @Nullable
     private ScheduledFuture<?> pingSchedule;
 
-    private pl.grzeslowski.jsupla.server.api.@Nullable Channel channel;
-
     @Nullable
     private ServerBridgeHandler bridgeHandler;
+
+    @Nullable
+    private Writer writer;
 
     public ServerDeviceHandler(Thing thing) {
         super(thing);
@@ -177,9 +178,41 @@ public class ServerDeviceHandler extends AbstractDeviceHandler {
                 "Waiting for Supla device to connect with the server");
     }
 
-    public boolean joinDeviceWithHandler(
-            pl.grzeslowski.jsupla.server.api.Channel channel, RegisterDeviceTrait registerEntity) {
-        this.channel = channel;
+    @Override
+    public void handle(ToServerProto entity) {
+        try {
+            if (entity instanceof SuplaPingServer ping) {
+                consumeSuplaPingServer(ping);
+            } else if (entity instanceof SuplaSetActivityTimeout) {
+                consumeSuplaSetActivityTimeout();
+            } else if (entity instanceof SuplaDeviceChannelValue value) {
+                updateStatus(value.channelNumber, value.value);
+            } else if (entity instanceof SuplaDeviceChannelExtendedValue value) {
+                var extendedValue = value.value;
+                updateStatus(value.channelNumber, extendedValue.type, extendedValue.value);
+            } else {
+                logger.debug("Not supporting message:\n{}", entity);
+            }
+            updateStatus(ONLINE);
+        } catch (Exception ex) {
+            logger.error("Error in message pipeline pipeline", ex);
+            var message = ex.getLocalizedMessage();
+            updateStatus(OFFLINE, COMMUNICATION_ERROR, "Error in message pipeline pipeline. " + message);
+        }
+    }
+
+    @Override
+    public void active(Writer writer) {
+        this.writer = writer;
+    }
+
+    @Override
+    public void inactive() {
+        this.writer = null;
+    }
+
+    @Override
+    public boolean register(RegisterDeviceTrait registerEntity) {
         updateStatus(OFFLINE, HANDLER_CONFIGURATION_PENDING, "Device is authorizing...");
         {
             var local = pingSchedule;
@@ -231,73 +264,29 @@ public class ServerDeviceHandler extends AbstractDeviceHandler {
         // set the software version
         thing.setProperty(SOFT_VERSION_PROPERTY, registerEntity.getSoftVer());
 
-        sendRegistrationConfirmation()
-                .map(date -> {
-                    setChannels(registerEntity.getChannels());
-                    return date;
-                })
-                .subscribe(__ -> updateStatus(ONLINE), ex -> {
-                    logger.error("Cannot set channels", ex);
-                    updateStatus(OFFLINE, CONFIGURATION_ERROR, "Cannot set channels " + ex.getLocalizedMessage());
-                });
+        setChannels(registerEntity.getChannels());
+        requireNonNull(writer)
+                .write(new SuplaRegisterDeviceResult(
+                        SUPLA_RESULTCODE_TRUE.getValue(), ACTIVITY_TIMEOUT, VERSION, VERSION_MIN));
 
-        var scheduledPool = ThreadPoolManager.getScheduledPool(BINDING_ID + "." + guid);
-        channel.getMessagePipe()
-                .subscribe(
-                        entity -> {
-                            if (entity instanceof SuplaPingServer ping) {
-                                consumeSuplaPingServer(ping);
-                            } else if (entity instanceof SuplaSetActivityTimeout) {
-                                consumeSuplaSetActivityTimeout(scheduledPool);
-                            } else if (entity instanceof SuplaDeviceChannelValue value) {
-                                updateStatus(value.channelNumber, value.value);
-                            } else if (entity instanceof SuplaDeviceChannelExtendedValue value) {
-                                var extendedValue = value.value;
-                                updateStatus(value.channelNumber, extendedValue.type, extendedValue.value);
-                            } else {
-                                logger.debug("Not supporting message:\n{}", entity);
-                            }
-                            updateStatus(ONLINE);
-                        },
-                        ex -> {
-                            logger.error("Error in message pipeline pipeline", ex);
-                            var message = ex.getLocalizedMessage();
-                            if (message == null || message.isBlank()) {
-                                message = ex.toString();
-                            }
-                            updateStatus(
-                                    OFFLINE, COMMUNICATION_ERROR, "Error in message pipeline pipeline. " + message);
-                        },
-                        () -> {
-                            logger.debug("Closing DeviceChannelValue pipeline");
-                            dispose();
-                        });
         return true;
     }
 
-    private void consumeSuplaSetActivityTimeout(ScheduledExecutorService scheduledPool) {
-        var localChannel = channel;
-        if (localChannel == null) {
-            return;
-        }
+    private void consumeSuplaSetActivityTimeout() {
         var timeout = requireNonNull(deviceConfiguration).timeoutConfiguration();
         var data = new SuplaSetActivityTimeoutResult(
                 (short) timeout.timeout(), (short) timeout.min(), (short) timeout.max());
-        localChannel.write(just(data)).subscribe(date -> logger.trace("setActivityTimeout {}", data));
-        pingSchedule = scheduledPool.scheduleWithFixedDelay(
-                this::checkIfDeviceIsUp, timeout.timeout() * 2L, timeout.timeout(), SECONDS);
+        requireNonNull(writer).write(data).addCompleteListener(() -> logger.trace("setActivityTimeout {}", data));
+        pingSchedule = ThreadPoolManager.getScheduledPool(BINDING_ID)
+                .scheduleWithFixedDelay(this::checkIfDeviceIsUp, timeout.timeout() * 2L, timeout.timeout(), SECONDS);
     }
 
     private void consumeSuplaPingServer(SuplaPingServer ping) {
-        var localChannel = channel;
-        if (localChannel == null) {
-            return;
-        }
-        lastMessageFromDevice.set(now().getEpochSecond());
         var response = new SuplaPingServerResult(ping.now);
-        localChannel
-                .write(just(response))
-                .subscribe(date -> logger.trace("pingServer {}s {}ms", response.now.tvSec, response.now.tvUsec));
+        requireNonNull(writer).write(response).addCompleteListener(() -> {
+            logger.trace("pingServer {}s {}ms", response.now.tvSec, response.now.tvUsec);
+            lastMessageFromDevice.set(now().getEpochSecond());
+        });
     }
 
     private boolean authorizeForLocation(int accessId, byte[] accessIdPassword) {
@@ -357,15 +346,10 @@ public class ServerDeviceHandler extends AbstractDeviceHandler {
         return true;
     }
 
-    private Flux<LocalDateTime> sendRegistrationConfirmation() {
-        var result = new SuplaRegisterDeviceResult(SUPLA_RESULTCODE_TRUE.getValue(), (byte) 100, (byte) 6, (byte) 1);
-        // todo when to send `SuplaRegisterDeviceResult` and when to send `SuplaRegisterDeviceResultB`?
-        return requireNonNull(channel).write(just(result));
-    }
-
     private void sendCommandToSuplaServer(ChannelUID channelUID, ChannelValue channelValue, Command command) {
-        if (channel == null) {
-            logger.debug("There is no channel for channelUID={}", channelUID);
+        val localWriter = writer;
+        if (localWriter == null) {
+            logger.debug("There is no writer for channelUID={}", channelUID);
             return;
         }
         var id = channelUID.getId();
@@ -378,22 +362,16 @@ public class ServerDeviceHandler extends AbstractDeviceHandler {
         }
         var encode = ChannelTypeEncoderImpl.INSTANCE.encode(channelValue);
         var channelNewValue = new SuplaChannelNewValue(1, channelNumber, 100L, null, encode);
-        channel.write(just(channelNewValue))
-                .subscribe(
-                        date -> {
-                            logger.debug(
-                                    "Changed value of channel for {} command {}, {}",
-                                    channelUID,
-                                    command,
-                                    date.format(ISO_DATE_TIME));
-                            updateStatus(ONLINE);
-                        },
-                        ex -> {
-                            var msg = "Couldn't Change value of channel for %s command %s."
-                                    .formatted(channelUID, command);
-                            logger.debug(msg, ex);
-                            updateStatus(OFFLINE, COMMUNICATION_ERROR, msg + ex.getLocalizedMessage());
-                        });
+        try {
+            localWriter.write(channelNewValue).addCompleteListener(() -> {
+                logger.debug("Changed value of channel for {} command {}", channelUID, command);
+                updateStatus(ONLINE);
+            });
+        } catch (Exception ex) {
+            var msg = "Couldn't Change value of channel for %s command %s.".formatted(channelUID, command);
+            logger.debug(msg, ex);
+            updateStatus(OFFLINE, COMMUNICATION_ERROR, msg + ex.getLocalizedMessage());
+        }
     }
 
     private void checkIfDeviceIsUp() {
@@ -583,13 +561,6 @@ public class ServerDeviceHandler extends AbstractDeviceHandler {
             pingSchedule = null;
             if (local != null) {
                 local.cancel(true);
-            }
-        }
-        {
-            var local = channel;
-            channel = null;
-            if (local != null) {
-                local.close();
             }
         }
         logger = LoggerFactory.getLogger(ServerDeviceHandler.class);

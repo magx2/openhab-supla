@@ -23,12 +23,10 @@ import java.security.Security;
 import java.security.cert.CertificateException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.logging.Level;
 import javax.net.ssl.SSLException;
 import lombok.Getter;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
-import org.javatuples.Pair;
 import org.openhab.core.common.ThreadPoolManager;
 import org.openhab.core.library.types.DecimalType;
 import org.openhab.core.thing.Bridge;
@@ -42,18 +40,16 @@ import org.slf4j.LoggerFactory;
 import pl.grzeslowski.jsupla.protocol.api.calltypes.CallTypeParser;
 import pl.grzeslowski.jsupla.protocol.api.decoders.DecoderFactoryImpl;
 import pl.grzeslowski.jsupla.protocol.api.encoders.EncoderFactoryImpl;
-import pl.grzeslowski.jsupla.server.api.Channel;
+import pl.grzeslowski.jsupla.server.api.MessageHandler;
 import pl.grzeslowski.jsupla.server.api.Server;
 import pl.grzeslowski.jsupla.server.api.ServerFactory;
 import pl.grzeslowski.jsupla.server.api.ServerProperties;
 import pl.grzeslowski.jsupla.server.netty.NettyServerFactory;
 import pl.grzeslowski.openhab.supla.internal.Documentation;
 import pl.grzeslowski.openhab.supla.internal.server.discovery.ServerDiscoveryService;
-import pl.grzeslowski.openhab.supla.internal.server.traits.RegisterDeviceTraitParser;
-import reactor.core.Disposable;
 
 @NonNullByDefault
-public class ServerBridgeHandler extends BaseBridgeHandler {
+public class ServerBridgeHandler extends BaseBridgeHandler implements SuplaThingRegistry {
     private static final int PROPER_AES_KEY_SIZE = 2147483647;
     private Logger logger = LoggerFactory.getLogger(ServerBridgeHandler.class);
 
@@ -65,9 +61,6 @@ public class ServerBridgeHandler extends BaseBridgeHandler {
     private final AtomicInteger numberOfConnectedDevices = new AtomicInteger();
 
     private final Collection<ServerDeviceHandler> childHandlers = Collections.synchronizedList(new ArrayList<>());
-
-    @Nullable
-    private Disposable newChannelsSubscription;
 
     @Getter(PACKAGE)
     @Nullable
@@ -169,10 +162,7 @@ public class ServerBridgeHandler extends BaseBridgeHandler {
                 config.getTimeoutMax().intValue());
 
         var factory = buildServerFactory();
-        var localServer = server = factory.createNewServer(buildServerProperties(port, protocols));
-        var newChannelsPipe = localServer.getNewChannelsPipe();
-        newChannelsSubscription = newChannelsPipe.subscribe(this::channelConsumer, this::errorOccurredInChannel);
-        serverDiscoveryService.setNewDeviceFlux(newChannelsPipe);
+        server = factory.createNewServer(buildServerProperties(port, protocols), this::messageHandlerFactory);
 
         logger.debug("jSuplaServer running on port {}", port);
         updateStatus(ONLINE);
@@ -197,32 +187,18 @@ public class ServerBridgeHandler extends BaseBridgeHandler {
         return new AuthData(locationAuthData, emailAuthData);
     }
 
-    private void channelConsumer(Channel channel) {
+    private MessageHandler messageHandlerFactory() {
         logger.debug("Device connected");
-        channel.getMessagePipe()
-                .map(RegisterDeviceTraitParser::parse)
-                .filter(Optional::isPresent)
-                .map(Optional::get)
-                .log(ServerBridgeHandler.class.getName() + ".auth", Level.FINE)
-                .map(entity -> {
-                    var guid = entity.getGuid();
-                    var pair = childHandlers.stream()
-                            .filter(handler -> guid.equals(handler.getGuid()))
-                            .findAny()
-                            .map(handler -> new Pair<>(entity, handler));
-                    if (pair.isEmpty()) {
-                        logger.debug("There is no handler for device with GUID={}", guid);
-                    }
-                    return pair;
-                })
-                .filter(Optional::isPresent)
-                .map(Optional::get)
-                .takeUntil(pair -> {
-                    var registerDevice = pair.getValue0();
-                    var handler = pair.getValue1();
-                    return handler.joinDeviceWithHandler(channel, registerDevice);
-                })
-                .subscribe(__ -> {}, ex -> logger.debug("Error occurred in auth pipeline", ex));
+        // todo serverDiscoveryService.setNewDeviceFlux(newChannelsPipe);
+        return new OpenHabMessageHandler(this, serverDiscoveryService);
+    }
+
+    @Override
+    public Optional<SuplaThing> findSuplaThing(String guid) {
+        return childHandlers.stream()
+                .filter(handler -> Objects.equals(handler.getGuid(), guid))
+                .map(SuplaThing.class::cast)
+                .findAny();
     }
 
     private void errorOccurredInChannel(Throwable ex) {
@@ -272,20 +248,9 @@ public class ServerBridgeHandler extends BaseBridgeHandler {
     @Override
     public void dispose() {
         logger.debug("Disposing ServerBridgeHandler");
-        disposeNewChannelsPipeline();
         disposeServer();
-        serverDiscoveryService.setNewDeviceFlux(null);
         logger = LoggerFactory.getLogger(ServerBridgeHandler.class);
         super.dispose();
-    }
-
-    private void disposeNewChannelsPipeline() {
-        logger.debug("Disposing newChannelsPipeline");
-        var local = newChannelsSubscription;
-        newChannelsSubscription = null;
-        if (local != null) {
-            local.dispose();
-        }
     }
 
     private void disposeServer() {

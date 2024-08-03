@@ -4,10 +4,11 @@ import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.*;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ServerDevicesProperties.CONFIG_AUTH_PROPERTY;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ServerDevicesProperties.SERVER_NAME_PROPERTY;
 
-import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
-import java.util.Optional;
-import java.util.logging.Level;
+import lombok.val;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
 import org.openhab.core.config.discovery.AbstractDiscoveryService;
@@ -16,23 +17,14 @@ import org.openhab.core.config.discovery.DiscoveryResultBuilder;
 import org.openhab.core.thing.ThingUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import pl.grzeslowski.jsupla.server.api.Channel;
 import pl.grzeslowski.openhab.supla.internal.server.traits.RegisterDeviceTrait;
-import pl.grzeslowski.openhab.supla.internal.server.traits.RegisterDeviceTraitParser;
 import pl.grzeslowski.openhab.supla.internal.server.traits.RegisterEmailDeviceTrait;
-import reactor.core.Disposable;
-import reactor.core.publisher.Flux;
 
 @NonNullByDefault
 public class ServerDiscoveryService extends AbstractDiscoveryService {
     private final Logger logger;
     private final ThingUID bridgeThingUID;
-
-    @Nullable
-    Flux<? extends Channel> newDeviceFlux;
-
-    @Nullable
-    private Disposable subscription;
+    private final List<DiscoveryResult> discoveryResults = Collections.synchronizedList(new ArrayList<>());
 
     public ServerDiscoveryService(org.openhab.core.thing.ThingUID bridgeThingUID) {
         super(SUPPORTED_THING_TYPES_UIDS, DEVICE_REGISTER_MAX_DELAY * 2, false);
@@ -41,44 +33,21 @@ public class ServerDiscoveryService extends AbstractDiscoveryService {
     }
 
     @Override
-    protected void startScan() {
-        var channel = newDeviceFlux;
-        if (channel == null) {
-            logger.debug("No channel, canceling scan");
-            stopScan();
-            return;
-        }
-        logger.info("Starting scan...");
-        cancelSubscription();
-        subscription = newDeviceFlux
-                .flatMap(Channel::getMessagePipe)
-                .map(RegisterDeviceTraitParser::parse)
-                .filter(Optional::isPresent)
-                .map(Optional::get)
-                .take(Duration.ofSeconds(getScanTimeout()))
-                .map(this::buildDiscoveryResult)
-                .log(logger.getName(), Level.FINE)
-                .subscribe(
-                        this::thingDiscovered,
-                        ex -> {
-                            logger.error("Error occurred during discovery", ex);
-                            stopScan();
-                        },
-                        this::stopScan);
+    protected void startScan() {}
+
+    public void addDevice(RegisterDeviceTrait registerDeviceTrait) {
+        logger.info("Registering device: {}", registerDeviceTrait);
+        var discoveryResult = buildDiscoveryResult(registerDeviceTrait);
+        discoveryResults.add(discoveryResult);
     }
 
-    @Override
-    protected synchronized void stopScan() {
-        cancelSubscription();
-        super.stopScan();
-    }
-
-    private synchronized void cancelSubscription() {
-        var local = subscription;
-        subscription = null;
-        if (local != null) {
-            logger.debug("Cancelling current subscription");
-            local.dispose();
+    public void removeDevice(String guid) {
+        val result = discoveryResults.removeIf(
+                discoveryResult -> discoveryResult.getThingUID().getId().equals(guid));
+        if (result) {
+            logger.info("Removing device: {}", guid);
+        } else {
+            logger.warn("Failed to remove device: {}", guid);
         }
     }
 
@@ -110,10 +79,5 @@ public class ServerDiscoveryService extends AbstractDiscoveryService {
             return guid;
         }
         return name;
-    }
-
-    public void setNewDeviceFlux(@Nullable Flux<? extends Channel> newDeviceFlux) {
-        cancelSubscription();
-        this.newDeviceFlux = newDeviceFlux;
     }
 }

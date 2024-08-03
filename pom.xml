@@ -4,7 +4,7 @@
 
     <groupId>pl.grzeslowski.openhab</groupId>
     <artifactId>supla</artifactId>
-    <version>1.1.1-SNAPSHOT</version>
+    <version>2.0.0-SNAPSHOT</version>
 
     <scm>
         <connection>scm:git:${project.scm.url}</connection>
@@ -36,7 +36,7 @@
         <dependency>
             <groupId>pl.grzeslowski.jSupla</groupId>
             <artifactId>server</artifactId>
-            <version>1.4.0</version>
+            <version>2.0.0</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
@@ -191,6 +191,14 @@
 
     <repositories>
         <repository>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+            <id>central</id>
+            <name>Maven Repository Switchboard</name>
+            <url>https://repo1.maven.org/maven2</url>
+        </repository>
+        <repository>
             <releases>
                 <enabled>true</enabled>
                 <updatePolicy>never</updatePolicy>
@@ -305,10 +313,9 @@ javax*.jar;lib:=true,\
 jakarta.validation-api-*.jar;lib:=true,\
 okio-*.jar;lib:=true,\
 javatuples-*.jar;lib:=true,\
-reactive-streams-*.jar;lib:=true,\
 protocol-*.jar;lib:=true,\
 server-*.jar;lib:=true,\
-reactor-*.jar;lib:=true,\
+jakarta.annotation*.jar;lib:=true,\
 threetenbp-*.jar;lib:=true,\
 gson-*.jar;lib:=true,\
 bcpkix-jdk15on-*.jar;lib:=true,\
@@ -354,10 +361,10 @@ bcutil-jdk15on-*.jar;lib:=true
                         </includes>
                         <sortPom>
                             <predefinedSortOrder>recommended_2008_06</predefinedSortOrder>
-                            <sortDependencies />
-                            <sortDependencyManagement />
-                            <sortDependencyExclusions />
-                            <sortPlugins />
+                            <sortDependencies/>
+                            <sortDependencyManagement/>
+                            <sortDependencyExclusions/>
+                            <sortPlugins/>
                             <sortProperties>true</sortProperties>
                             <sortExecutions>true</sortExecutions>
                             <nrOfIndentSpace>4</nrOfIndentSpace>
@@ -382,8 +389,8 @@ bcutil-jdk15on-*.jar;lib:=true
                                 <exclude>*.http</exclude>
                                 <exclude>imgs/**</exclude>
                             </excludes>
-                            <trimTrailingWhitespace />
-                            <endWithNewline />
+                            <trimTrailingWhitespace/>
+                            <endWithNewline/>
                             <indent>
                                 <tabs>true</tabs>
                                 <spacesPerTab>4</spacesPerTab>
@@ -391,9 +398,9 @@ bcutil-jdk15on-*.jar;lib:=true
                         </format>
                     </formats>
                     <java>
-                        <importOrder />
-                        <removeUnusedImports />
-                        <formatAnnotations />
+                        <importOrder/>
+                        <removeUnusedImports/>
+                        <formatAnnotations/>
                         <palantirJavaFormat>
                             <version>2.43.0</version>
                             <style>PALANTIR</style>
