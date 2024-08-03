@@ -209,6 +209,10 @@ public class ServerDeviceHandler extends AbstractDeviceHandler implements SuplaT
     @Override
     public void inactive() {
         this.writer = null;
+        var local = bridgeHandler;
+        if (local != null) {
+            local.deviceDisconnected();
+        }
     }
 
     @Override
@@ -564,14 +568,6 @@ public class ServerDeviceHandler extends AbstractDeviceHandler implements SuplaT
             }
         }
         logger = LoggerFactory.getLogger(ServerDeviceHandler.class);
-        {
-            if (authorized) {
-                var local = bridgeHandler;
-                if (local != null) {
-                    local.deviceDisconnected();
-                }
-            }
-            authorized = false;
-        }
+        authorized = false;
     }
 }
