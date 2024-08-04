@@ -195,9 +195,9 @@ public class ServerDeviceHandler extends AbstractDeviceHandler implements SuplaT
             }
             updateStatus(ONLINE);
         } catch (Exception ex) {
-            logger.error("Error in message pipeline pipeline", ex);
+            logger.error("Error in message pipeline", ex);
             var message = ex.getLocalizedMessage();
-            updateStatus(OFFLINE, COMMUNICATION_ERROR, "Error in message pipeline pipeline. " + message);
+            updateStatus(OFFLINE, COMMUNICATION_ERROR, "Error in message pipeline. " + message);
         }
     }
 
