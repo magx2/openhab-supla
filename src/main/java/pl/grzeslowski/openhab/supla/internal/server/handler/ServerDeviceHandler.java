@@ -208,6 +208,7 @@ public class ServerDeviceHandler extends AbstractDeviceHandler implements SuplaT
 
     @Override
     public void inactive() {
+        updateStatus(OFFLINE, COMMUNICATION_ERROR, "Channel disconnected");
         this.writer = null;
         var local = bridgeHandler;
         if (local != null) {
