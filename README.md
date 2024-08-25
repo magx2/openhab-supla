@@ -7,6 +7,16 @@ Cloud-based devices leverage Supla's robust cloud infrastructure for seamless co
 native devices operate directly within your local network, ensuring rapid response times and offline capabilities.
 Together, these options provide flexibility and reliability for all your smart home needs.
 
+## Certified Devices 
+
+This binding has been tested and certified to work with a variety of Supla devices, ensuring reliable performance and seamless integration with your OpenHAB setup. The following devices are officially certified, listed in alphabetical order: 
+
+- [Zamel MEW-01](https://supla.zamel.com/product/monitor-energii-elektrycznej-wi-fi-3fn-mew-01/) The highest standard of accuracy in electricity consumption monitoring available with tools for advanced data analysis. MEW-01 is designed for DIN-rail (TH35) mounting, occupies a width of two modules and offers the possibility of attaching an external antenna for use also outside the switchgear.
+- [Zamel ROW-01](https://supla.zamel.com/product/odbiornik-wi-fi-dopuszkowy-1-kanalowy-dwukierunkowy-row-01/) belongs to a family of smart home control products via wi-fi. The device uses SUPLA cloud technology. The ROW-01 module allows you to control lighting, turn on and off sockets and electrical appliances using a smartphone or tablet. The ROW-01 extension modules are used both as elements for mounting in under- and surface-mounted installation boxes, and as actuators built directly into the housings of lighting fixtures.
+- [Zamel ROW-02](https://supla.zamel.com/product/odbiornik-wi-fi-dopuszkowy-2-kanalowy-dwukierunkowy-row-02/) controller allows you to control lighting with buttons or switches in bistable mode. In addition, thanks to the built-in wi-fi module, it is possible to remotely manage lighting using a smartphone application. The device informs about the status of the lighting. The user can control the lighting from anywhere in the world. Thanks to the cloud application, it is also possible to automatically start or stop the lighting according to the schedule stored on the cloud. 
+
+These devices have been confirmed to work optimally with both the native and cloud-based approaches supported by this binding, providing a smooth and efficient smart home experience. For any additional devices or updates, please refer to the official documentation or the device compatibility section within the binding's settings.
+
 ## Native Server
 
 This binding supports Supla native devices using the native protocol, allowing the binding to act as a server and
