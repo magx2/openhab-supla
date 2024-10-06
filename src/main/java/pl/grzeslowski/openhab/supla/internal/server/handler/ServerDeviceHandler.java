@@ -1,5 +1,27 @@
 package pl.grzeslowski.openhab.supla.internal.server.handler;
 
+import static java.lang.Short.parseShort;
+import static java.lang.String.valueOf;
+import static java.time.Instant.now;
+import static java.util.Collections.synchronizedMap;
+import static java.util.Objects.requireNonNull;
+import static java.util.Objects.requireNonNullElse;
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.openhab.core.thing.ThingStatus.OFFLINE;
+import static org.openhab.core.thing.ThingStatus.ONLINE;
+import static org.openhab.core.thing.ThingStatusDetail.*;
+import static pl.grzeslowski.jsupla.protocol.api.ProtocolHelpers.parseString;
+import static pl.grzeslowski.jsupla.protocol.api.ResultCode.SUPLA_RESULTCODE_TRUE;
+import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.BINDING_ID;
+import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ServerDevicesProperties.CONFIG_AUTH_PROPERTY;
+import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ServerDevicesProperties.SOFT_VERSION_PROPERTY;
+
+import java.util.*;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import lombok.Getter;
 import lombok.ToString;
 import lombok.val;
@@ -39,32 +61,7 @@ import pl.grzeslowski.openhab.supla.internal.server.traits.RegisterDeviceTrait;
 import pl.grzeslowski.openhab.supla.internal.server.traits.RegisterEmailDeviceTrait;
 import pl.grzeslowski.openhab.supla.internal.server.traits.RegisterLocationDeviceTrait;
 
-import java.util.*;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import static java.lang.Short.parseShort;
-import static java.lang.String.valueOf;
-import static java.time.Instant.now;
-import static java.util.Collections.synchronizedMap;
-import static java.util.Objects.requireNonNull;
-import static java.util.Objects.requireNonNullElse;
-import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.openhab.core.thing.ThingStatus.OFFLINE;
-import static org.openhab.core.thing.ThingStatus.ONLINE;
-import static org.openhab.core.thing.ThingStatusDetail.*;
-import static pl.grzeslowski.jsupla.protocol.api.ProtocolHelpers.parseString;
-import static pl.grzeslowski.jsupla.protocol.api.ResultCode.SUPLA_RESULTCODE_TRUE;
-import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.BINDING_ID;
-import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ServerDevicesProperties.CONFIG_AUTH_PROPERTY;
-import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ServerDevicesProperties.SOFT_VERSION_PROPERTY;
-
-/**
- * The {@link ServerDeviceHandler} is responsible for handling commands, which are sent to one of the channels.
- */
+/** The {@link ServerDeviceHandler} is responsible for handling commands, which are sent to one of the channels. */
 @NonNullByDefault
 @ToString(onlyExplicitlyIncluded = true)
 public class ServerDeviceHandler extends AbstractDeviceHandler implements SuplaThing {
@@ -501,7 +498,7 @@ public class ServerDeviceHandler extends AbstractDeviceHandler implements SuplaT
                                 Registering channels:
                                  > Raw:
                                 {}
-                                
+
                                  > OpenHABs:
                                 {}""",
                         rawChannels,
