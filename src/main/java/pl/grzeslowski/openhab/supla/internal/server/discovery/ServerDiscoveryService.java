@@ -8,6 +8,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import lombok.val;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
@@ -25,6 +27,7 @@ public class ServerDiscoveryService extends AbstractDiscoveryService {
     private final Logger logger;
     private final ThingUID bridgeThingUID;
     private final List<DiscoveryResult> discoveryResults = Collections.synchronizedList(new ArrayList<>());
+    private final AtomicBoolean scanning = new AtomicBoolean();
 
     public ServerDiscoveryService(org.openhab.core.thing.ThingUID bridgeThingUID) {
         super(SUPPORTED_THING_TYPES_UIDS, DEVICE_REGISTER_MAX_DELAY * 2, false);
@@ -33,19 +36,23 @@ public class ServerDiscoveryService extends AbstractDiscoveryService {
     }
 
     @Override
-    protected void startScan() {}
+    protected void startScan() {
+    }
 
     public void addDevice(RegisterDeviceTrait registerDeviceTrait) {
         logger.info("Registering device: {}", registerDeviceTrait);
         var discoveryResult = buildDiscoveryResult(registerDeviceTrait);
         discoveryResults.add(discoveryResult);
+        thingDiscovered(discoveryResult);
     }
 
     public void removeDevice(String guid) {
-        val result = discoveryResults.removeIf(
-                discoveryResult -> discoveryResult.getThingUID().getId().equals(guid));
-        if (result) {
+        val result = discoveryResults.stream()
+                .filter(r -> r.getThingUID().getId().equals(guid))
+                .findAny();
+        if (result.isPresent()) {
             logger.info("Removing device: {}", guid);
+            thingRemoved(result.get().getThingUID());
         } else {
             logger.warn("Failed to remove device: {}", guid);
         }
