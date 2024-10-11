@@ -1,27 +1,5 @@
 package pl.grzeslowski.openhab.supla.internal.server.handler;
 
-import static java.lang.Short.parseShort;
-import static java.lang.String.valueOf;
-import static java.time.Instant.now;
-import static java.util.Collections.synchronizedMap;
-import static java.util.Objects.requireNonNull;
-import static java.util.Objects.requireNonNullElse;
-import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.openhab.core.thing.ThingStatus.OFFLINE;
-import static org.openhab.core.thing.ThingStatus.ONLINE;
-import static org.openhab.core.thing.ThingStatusDetail.*;
-import static pl.grzeslowski.jsupla.protocol.api.ProtocolHelpers.parseString;
-import static pl.grzeslowski.jsupla.protocol.api.ResultCode.SUPLA_RESULTCODE_TRUE;
-import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.BINDING_ID;
-import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ServerDevicesProperties.CONFIG_AUTH_PROPERTY;
-import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ServerDevicesProperties.SOFT_VERSION_PROPERTY;
-
-import java.util.*;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import lombok.Getter;
 import lombok.ToString;
 import lombok.val;
@@ -43,6 +21,7 @@ import org.slf4j.LoggerFactory;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.decoders.ChannelTypeDecoder;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.encoders.ChannelTypeEncoderImpl;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.value.*;
+import pl.grzeslowski.jsupla.protocol.api.structs.dcs.LocalTimeRequest;
 import pl.grzeslowski.jsupla.protocol.api.structs.dcs.SuplaPingServer;
 import pl.grzeslowski.jsupla.protocol.api.structs.dcs.SuplaSetActivityTimeout;
 import pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaDeviceChannelExtendedValue;
@@ -51,6 +30,7 @@ import pl.grzeslowski.jsupla.protocol.api.structs.sd.SuplaChannelNewValue;
 import pl.grzeslowski.jsupla.protocol.api.structs.sd.SuplaRegisterDeviceResult;
 import pl.grzeslowski.jsupla.protocol.api.structs.sdc.SuplaPingServerResult;
 import pl.grzeslowski.jsupla.protocol.api.structs.sdc.SuplaSetActivityTimeoutResult;
+import pl.grzeslowski.jsupla.protocol.api.structs.sdc.UserLocalTimeResult;
 import pl.grzeslowski.jsupla.protocol.api.types.ToServerProto;
 import pl.grzeslowski.jsupla.server.api.Writer;
 import pl.grzeslowski.openhab.supla.internal.handler.AbstractDeviceHandler;
@@ -61,7 +41,35 @@ import pl.grzeslowski.openhab.supla.internal.server.traits.RegisterDeviceTrait;
 import pl.grzeslowski.openhab.supla.internal.server.traits.RegisterEmailDeviceTrait;
 import pl.grzeslowski.openhab.supla.internal.server.traits.RegisterLocationDeviceTrait;
 
-/** The {@link ServerDeviceHandler} is responsible for handling commands, which are sent to one of the channels. */
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.TextStyle;
+import java.util.*;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static java.lang.Short.parseShort;
+import static java.lang.String.valueOf;
+import static java.time.Instant.now;
+import static java.util.Collections.synchronizedMap;
+import static java.util.Objects.requireNonNull;
+import static java.util.Objects.requireNonNullElse;
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.openhab.core.thing.ThingStatus.OFFLINE;
+import static org.openhab.core.thing.ThingStatus.ONLINE;
+import static org.openhab.core.thing.ThingStatusDetail.*;
+import static pl.grzeslowski.jsupla.protocol.api.ProtocolHelpers.parseString;
+import static pl.grzeslowski.jsupla.protocol.api.ResultCode.SUPLA_RESULTCODE_TRUE;
+import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.BINDING_ID;
+import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ServerDevicesProperties.CONFIG_AUTH_PROPERTY;
+import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ServerDevicesProperties.SOFT_VERSION_PROPERTY;
+
+/**
+ * The {@link ServerDeviceHandler} is responsible for handling commands, which are sent to one of the channels.
+ */
 @NonNullByDefault
 @ToString(onlyExplicitlyIncluded = true)
 public class ServerDeviceHandler extends AbstractDeviceHandler implements SuplaThing {
@@ -195,6 +203,8 @@ public class ServerDeviceHandler extends AbstractDeviceHandler implements SuplaT
             } else if (entity instanceof SuplaDeviceChannelExtendedValue value) {
                 var extendedValue = value.value;
                 updateStatus(value.channelNumber, extendedValue.type, extendedValue.value);
+            } else if (entity instanceof LocalTimeRequest value) {
+                consumeLocalTimeRequest(writer);
             } else {
                 logger.debug("Not supporting message:\n{}", entity);
             }
@@ -297,6 +307,31 @@ public class ServerDeviceHandler extends AbstractDeviceHandler implements SuplaT
             logger.trace("pingServer {}s {}ms", response.now.tvSec, response.now.tvUsec);
             lastMessageFromDevice.set(now().getEpochSecond());
         });
+    }
+
+    private void consumeLocalTimeRequest(Writer writer) {
+        // Get current local date and time
+        var now = LocalDateTime.now();
+
+        // Extract year, month, day, etc.
+        var year = now.getYear();
+        var month = (short) now.getMonthValue();
+        var day = (short) now.getDayOfMonth();
+        // 1 = Sunday, 2 = Monday, …, 7 = Saturday
+        var dayOfWeek = (short)( (now.getDayOfWeek().getValue() + 1) % 7);
+        var hour = (short) now.getHour();
+        var minute = (short) now.getMinute();
+        var seconds = (short) now.getSecond();
+
+        // Get the system's default time zone
+        var zoneId = ZoneId.systemDefault();
+        var timeZoneName = zoneId.getDisplayName(TextStyle.SHORT, Locale.getDefault());
+        var timeZone = timeZoneName.getBytes();  // Convert to byte array
+        var timeZoneSize = timeZone.length;
+
+        writer.write(new UserLocalTimeResult(
+                year, month, day, dayOfWeek, hour, minute, seconds, timeZoneSize, timeZone
+        ));
     }
 
     private boolean authorizeForLocation(int accessId, byte[] accessIdPassword) {
@@ -498,7 +533,7 @@ public class ServerDeviceHandler extends AbstractDeviceHandler implements SuplaT
                                 Registering channels:
                                  > Raw:
                                 {}
-
+                                
                                  > OpenHABs:
                                 {}""",
                         rawChannels,
