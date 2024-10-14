@@ -1,12 +1,5 @@
 package pl.grzeslowski.openhab.supla.internal.server;
 
-import static java.lang.String.valueOf;
-import static java.util.Optional.ofNullable;
-import static org.openhab.core.types.UnDefType.NULL;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.eclipse.jdt.annotation.NonNullByDefault;
@@ -19,9 +12,25 @@ import org.openhab.core.thing.ThingUID;
 import org.openhab.core.types.State;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.value.*;
 
+import static java.math.BigDecimal.ZERO;
+import static org.openhab.core.library.unit.MetricPrefix.*;
+import static org.openhab.core.library.unit.SIUnits.*;
+import static org.openhab.core.library.unit.Units.*;
+import static org.openhab.core.types.UnDefType.UNDEF;
+
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Stream;
+
+import static java.lang.String.valueOf;
+import static java.util.Optional.ofNullable;
+import static org.openhab.core.types.UnDefType.NULL;
+
 @NonNullByDefault
 @RequiredArgsConstructor
 public class ChannelValueToState implements ChannelValueSwitch.Callback<Stream<Pair<ChannelUID, State>>> {
+    public static final BigDecimal ONE_HUNDRED = BigDecimal.valueOf(100);
     private final ThingUID thingUID;
     private final int channelNumber;
 
@@ -94,7 +103,7 @@ public class ChannelValueToState implements ChannelValueSwitch.Callback<Stream<P
         if (temperatureValue == null) {
             return Stream.of(Pair.with(id, NULL));
         }
-        return Stream.of(Pair.with(id, new DecimalType(temperatureValue.getTemperature())));
+        return Stream.of(Pair.with(id, new QuantityType<>(temperatureValue.getTemperature(), CELSIUS)));
     }
 
     @Override
@@ -107,8 +116,11 @@ public class ChannelValueToState implements ChannelValueSwitch.Callback<Stream<P
             return Stream.of(Pair.with(tempId, NULL), Pair.with(humidityId, NULL));
         }
         return Stream.of(
-                Pair.with(tempId, new DecimalType(temperatureAndHumidityValue.getTemperature())),
-                Pair.with(humidityId, new DecimalType(temperatureAndHumidityValue.getHumidity())));
+                Pair.with(tempId, new QuantityType<>(temperatureAndHumidityValue.getTemperature(), CELSIUS)),
+                Pair.with(humidityId, new PercentType(temperatureAndHumidityValue.getHumidity()
+                        .multiply(ONE_HUNDRED)
+                        .max(ZERO)
+                        .min(ONE_HUNDRED))));
     }
 
     @Override
@@ -253,6 +265,105 @@ public class ChannelValueToState implements ChannelValueSwitch.Callback<Stream<P
             pairs.add(Pair.with(channelUid, stateValue));
         }
         return pairs;
+    }
+
+    @Override
+    public Stream<Pair<ChannelUID, State>> onHvacValue(HvacValue channelValue) {
+        val groupUid = new ChannelGroupUID(thingUID, valueOf(channelNumber));
+        val pairs = new ArrayList<Pair<ChannelUID, State>>();
+        {
+            val id = new ChannelUID(groupUid, "on");
+            val stateValue = OnOffType.from(channelValue.isOn());
+            pairs.add(Pair.with(id, stateValue));
+        } // on
+        {
+            val id = new ChannelUID(groupUid, "mode");
+            val stateValue = StringType.valueOf(channelValue.getMode().name());
+            pairs.add(Pair.with(id, stateValue));
+        } // mode
+        {
+            val id = new ChannelUID(groupUid, "setPointTemperatureHeat");
+            val stateValue = ofNullable(channelValue.getSetPointTemperatureHeat())
+                    .<State>map(temp->new QuantityType<>(temp, CELSIUS) )
+                    .orElse(NULL);
+            pairs.add(Pair.with(id, stateValue));
+        } // setPointTemperatureHeat
+        {
+            val id = new ChannelUID(groupUid, "setPointTemperatureCool");
+            val stateValue = ofNullable(channelValue.getSetPointTemperatureCool())
+                    .<State>map(temp->new QuantityType<>(temp, CELSIUS) )
+                    .orElse(NULL);
+            pairs.add(Pair.with(id, stateValue));
+        } // setPointTemperatureCool
+        {
+            val flags = channelValue.getFlags();
+            {
+                val id = new ChannelUID(groupUid, "flags-setPointTempHeatSet");
+                val stateValue = OnOffType.from(flags.isSetPointTempHeatSet());
+                pairs.add(Pair.with(id, stateValue));
+            } // setPointTempHeatSet
+            {
+                val id = new ChannelUID(groupUid, "flags-setPointTempCoolSet");
+                val stateValue = OnOffType.from(flags.isSetPointTempCoolSet());
+                pairs.add(Pair.with(id, stateValue));
+            } // setPointTempCoolSet
+            {
+                val id = new ChannelUID(groupUid, "flags-heating");
+                val stateValue = OnOffType.from(flags.isHeating());
+                pairs.add(Pair.with(id, stateValue));
+            } // heating
+            {
+                val id = new ChannelUID(groupUid, "flags-cooling");
+                val stateValue = OnOffType.from(flags.isCooling());
+                pairs.add(Pair.with(id, stateValue));
+            } // cooling
+            {
+                val id = new ChannelUID(groupUid, "flags-weeklySchedule");
+                val stateValue = OnOffType.from(flags.isWeeklySchedule());
+                pairs.add(Pair.with(id, stateValue));
+            } // weeklySchedule
+            {
+                val id = new ChannelUID(groupUid, "flags-countdownTimer");
+                val stateValue = OnOffType.from(flags.isCountdownTimer());
+                pairs.add(Pair.with(id, stateValue));
+            } // countdownTimer
+            {
+                val id = new ChannelUID(groupUid, "flags-fanEnabled");
+                val stateValue = OnOffType.from(flags.isFanEnabled());
+                pairs.add(Pair.with(id, stateValue));
+            } // fanEnabled
+            {
+                val id = new ChannelUID(groupUid, "flags-thermometerError");
+                val stateValue = OnOffType.from(flags.isThermometerError());
+                pairs.add(Pair.with(id, stateValue));
+            } // thermometerError
+            {
+                val id = new ChannelUID(groupUid, "flags-clockError");
+                val stateValue = OnOffType.from(flags.isClockError());
+                pairs.add(Pair.with(id, stateValue));
+            } // clockError
+            {
+                val id = new ChannelUID(groupUid, "flags-forcedOffBySensor");
+                val stateValue = OnOffType.from(flags.isForcedOffBySensor());
+                pairs.add(Pair.with(id, stateValue));
+            } // forcedOffBySensor
+            {
+                val id = new ChannelUID(groupUid, "flags-cool");
+                val stateValue = OnOffType.from(flags.isCooling());
+                pairs.add(Pair.with(id, stateValue));
+            } // cool
+            {
+                val id = new ChannelUID(groupUid, "flags-weeklyScheduleTemporalOverride");
+                val stateValue = OnOffType.from(flags.isWeeklyScheduleTemporalOverride());
+                pairs.add(Pair.with(id, stateValue));
+            } // weeklyScheduleTemporalOverride
+            {
+                val id = new ChannelUID(groupUid, "flags-batteryCoverOpen");
+                val stateValue = OnOffType.from(flags.isBatteryCoverOpen());
+                pairs.add(Pair.with(id, stateValue));
+            } // batteryCoverOpen
+        } //flags
+        return pairs.stream();
     }
 
     @Override

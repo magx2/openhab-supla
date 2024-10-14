@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<thing:thing-descriptions bindingId="supla"
+						xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+						xmlns:thing="https://openhab.org/schemas/thing-description/v1.0.0"
+						xsi:schemaLocation="https://openhab.org/schemas/thing-description/v1.0.0 https://openhab.org/schemas/thing-description-1.0.0.xsd">
+
+	<bridge-type id="thing-bridge">
+		<supported-bridge-type-refs>
+			<bridge-type-ref id="server-bridge"/>
+		</supported-bridge-type-refs>
+		<label>Supla Thing Bridge</label>
+		<description>
+			This is Supla Thing Gateway
+		</description>
+
+		<channels>
+			<channel id="thing-devices" typeId="connected-devices">
+				<description>Indicates how many devices are connected to this gateway.</description>
+			</channel>
+		</channels>
+
+		<representation-property>guid</representation-property>
+		<config-description>
+			<parameter name="guid" type="text" required="true">
+				<label>GUID</label>
+				<description>This is GUID of device. It can be found on website during device configuration.
+				</description>
+			</parameter>
+
+			<parameter-group name="accessIdLogin">
+				<label>Access ID Login</label>
+				<description>
+					If you want to authenticate your devices with access ID flow fill
+					&lt;strong&gt;both&lt;/strong&gt;
+					&lt;em&gt;Server Access ID&lt;/em&gt; and
+					&lt;em&gt;Server Access ID Password&lt;/em&gt;
+				</description>
+			</parameter-group>
+			<parameter name="serverAccessId" type="integer" min="1" groupName="accessIdLogin">
+				<label>Server Access ID</label>
+				<description>
+					This is ID that devices will use to register to your server.
+				</description>
+				<advanced>true</advanced>
+			</parameter>
+			<parameter name="serverAccessIdPassword" type="text" groupName="accessIdLogin">
+				<label>Server Access ID Password</label>
+				<description>
+					This is password required to register to your server.
+				</description>
+				<advanced>true</advanced>
+			</parameter>
+
+			<parameter-group name="emailIdLogin">
+				<label>Email Login</label>
+				<context>email</context>
+				<description>
+					If you want to authenticate your devices with email/password flow fill
+					&lt;strong&gt;both&lt;/strong&gt; &lt;em&gt;Email&lt;/em&gt; and
+					&lt;em&gt;Email Password&lt;/em&gt;
+				</description>
+			</parameter-group>
+			<parameter name="email" type="text" min="1" groupName="emailIdLogin">
+				<label>Email</label>
+				<description>
+					This is email that devices will use to register to your server.&lt;br/&gt;
+					&lt;em&gt;This email address
+					does not need to be reachable. It won't be used in any way, i.e. to
+					send email to.&lt;/em&gt;
+				</description>
+				<context>email</context>
+				<advanced>true</advanced>
+			</parameter>
+
+			<parameter name="timeout" type="integer">
+				<label>Timeout</label>
+				<description/>
+				<advanced>true</advanced>
+			</parameter>
+			<parameter name="timeoutMin" type="integer">
+				<label>Timeout Min</label>
+				<description/>
+				<advanced>true</advanced>
+			</parameter>
+			<parameter name="timeoutMax" type="integer">
+				<label>Timeout Max</label>
+				<description/>
+				<advanced>true</advanced>
+			</parameter>
+		</config-description>
+
+	</bridge-type>
+
+	<channel-type id="connected-devices">
+		<item-type>Number</item-type>
+		<label>Connected devices</label>
+		<description>Indicates how many devices are connected to this server.</description>
+		<state readOnly="true" min="0"/>
+	</channel-type>
+</thing:thing-descriptions>

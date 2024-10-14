@@ -18,6 +18,7 @@ public class SuplaBindingConstants {
     public static final ThingTypeUID SUPLA_SERVER_TYPE = new ThingTypeUID(BINDING_ID, "server-bridge");
     public static final ThingTypeUID SUPLA_CLOUD_DEVICE_TYPE = new ThingTypeUID(BINDING_ID, "cloud-device");
     public static final ThingTypeUID SUPLA_CLOUD_SERVER_TYPE = new ThingTypeUID(BINDING_ID, "cloud-bridge");
+    public static final ThingTypeUID SUPLA_THING_BRIDGE_TYPE = new ThingTypeUID(BINDING_ID, "thing-bridge");
 
     public static final Set<ThingTypeUID> SUPPORTED_THING_TYPES_UIDS =
             Set.of(SUPLA_SERVER_DEVICE_TYPE, SUPLA_CLOUD_DEVICE_TYPE, SUPLA_SERVER_TYPE, SUPLA_CLOUD_SERVER_TYPE);
@@ -35,8 +36,13 @@ public class SuplaBindingConstants {
     public static final String CONFIG_PORT = "port";
     public static final String CONNECTED_DEVICES_CHANNEL_ID = "server-devices";
 
+    // Thing Bridge constants
+    public static final String GATEWAY_CONNECTED_DEVICES_CHANNEL_ID = "thing-devices";
+
     public static class ServerDevicesProperties {
         public static final String SOFT_VERSION_PROPERTY = "softVersion";
+        public static final String MANUFACTURER_ID_PROPERTY = "manufacturerId";
+        public static final String PRODUCT_ID_PROPERTY = "productId";
         public static final String CONFIG_AUTH_PROPERTY = "authKey";
         public static final String SERVER_NAME_PROPERTY = "serverName";
     }
@@ -61,6 +67,7 @@ public class SuplaBindingConstants {
         public static final String LIGHT_CHANNEL_ID = "light-channel";
         public static final String SWITCH_CHANNEL_ID = "switch-channel";
         public static final String SWITCH_CHANNEL_RO_ID = "switch-channel-ro";
+        public static final String FLAG_CHANNEL_ID = "flag-channel";
         public static final String DECIMAL_CHANNEL_ID = "decimal-channel";
         public static final String ENERGY_CHANNEL_ID = "energy-channel";
         public static final String POWER_CHANNEL_ID = "power-channel";

@@ -1,15 +1,24 @@
 package pl.grzeslowski.openhab.supla.internal.cloud;
 
 import io.swagger.client.model.Channel;
+import io.swagger.client.model.ChannelFunction;
 import org.eclipse.jdt.annotation.NonNullByDefault;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @NonNullByDefault
 @SuppressWarnings("PackageAccessibility")
 public class ChannelFunctionDispatcher {
     public static final ChannelFunctionDispatcher DISPATCHER = new ChannelFunctionDispatcher();
+    private final Logger logger = LoggerFactory.getLogger(ChannelFunctionDispatcher.class);
 
     public <T> T dispatch(Channel channel, FunctionSwitch<T> functionSwitch) {
-        return switch (channel.getFunction().getName()) {
+        var function = channel.getFunction();
+        if(function == null) {
+            logger.debug("Function for channel {}/{} is null!", channel.getId(), channel.getCaption());
+            return functionSwitch.onNone(channel);
+        }
+        return switch (function.getName()) {
             case NONE -> functionSwitch.onNone(channel);
             case CONTROLLINGTHEGATEWAYLOCK -> functionSwitch.onControllingTheGatewayLock(channel);
             case CONTROLLINGTHEGATE -> functionSwitch.onControllingTheGate(channel);

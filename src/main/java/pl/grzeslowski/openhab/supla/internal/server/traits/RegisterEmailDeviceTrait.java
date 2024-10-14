@@ -24,6 +24,9 @@ public class RegisterEmailDeviceTrait extends RegisterDeviceTrait {
                 register.guid,
                 register.name,
                 register.softVer,
+                null,
+                null,
+                0,
                 stream(register.channels).map(DeviceChannelTrait::new).toList());
         this.email = parseString(register.email);
         this.authKey = parseString(register.authKey);
@@ -35,6 +38,9 @@ public class RegisterEmailDeviceTrait extends RegisterDeviceTrait {
                 register.guid,
                 register.name,
                 register.softVer,
+                (int) register.manufacturerId,
+                (int) register.productId,
+                register.flags,
                 stream(register.channels).map(DeviceChannelTrait::new).toList());
         this.email = parseString(register.email);
         this.authKey = parseString(register.authKey);
@@ -46,6 +52,9 @@ public class RegisterEmailDeviceTrait extends RegisterDeviceTrait {
                 register.guid,
                 register.name,
                 register.softVer,
+                (int) register.manufacturerId,
+                (int) register.productId,
+                register.flags,
                 stream(register.channels).map(DeviceChannelTrait::new).toList());
         this.email = parseString(register.email);
         this.authKey = parseString(register.authKey);
@@ -57,6 +66,9 @@ public class RegisterEmailDeviceTrait extends RegisterDeviceTrait {
                 register.guid,
                 register.name,
                 register.softVer,
+                (int) register.manufacturerId,
+                (int) register.productId,
+                register.flags,
                 stream(register.channels).map(DeviceChannelTrait::new).toList());
         this.email = parseString(register.email);
         this.authKey = parseString(register.authKey);
