@@ -37,6 +37,7 @@ import pl.grzeslowski.jsupla.protocol.api.structs.sdc.UserLocalTimeResult;
 import pl.grzeslowski.jsupla.protocol.api.types.ToServerProto;
 import pl.grzeslowski.jsupla.server.api.Writer;
 import pl.grzeslowski.openhab.supla.internal.handler.AbstractDeviceHandler;
+import pl.grzeslowski.openhab.supla.internal.server.ByteArrayToHex;
 import pl.grzeslowski.openhab.supla.internal.server.ChannelCallback;
 import pl.grzeslowski.openhab.supla.internal.server.ChannelValueToState;
 import pl.grzeslowski.openhab.supla.internal.server.traits.*;
@@ -68,6 +69,8 @@ import static pl.grzeslowski.jsupla.protocol.api.ProtocolHelpers.parseString;
 import static pl.grzeslowski.jsupla.protocol.api.ResultCode.SUPLA_RESULTCODE_TRUE;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.BINDING_ID;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ServerDevicesProperties.*;
+import static pl.grzeslowski.openhab.supla.internal.server.ByteArrayToHex.bytesToHex;
+import static pl.grzeslowski.openhab.supla.internal.server.ByteArrayToHex.hexToBytes;
 
 /**
  * The {@link ServerDeviceHandler} is responsible for handling commands, which are sent to one of the channels.
@@ -482,7 +485,7 @@ public class ServerDeviceHandler extends AbstractDeviceHandler implements SuplaT
         return true;
     }
 
-    private boolean authorizeForEmail(String email, String authKey) {
+    private boolean authorizeForEmail(String email, byte[] authKey) {
         if (deviceConfiguration == null) {
             return false;
         }
@@ -500,8 +503,9 @@ public class ServerDeviceHandler extends AbstractDeviceHandler implements SuplaT
             logger.debug("Device is missing {} property", CONFIG_AUTH_PROPERTY);
             return false;
         }
-        if (!key.equals(authKey)) {
-            logger.debug("Wrong auth key; {} != {}", authKey, key);
+        var byteKey = hexToBytes(key);
+        if (!Arrays.equals(byteKey, authKey)) {
+            logger.debug("Wrong auth key; {} != {}", bytesToHex(authKey), key);
             return false;
         }
         return true;

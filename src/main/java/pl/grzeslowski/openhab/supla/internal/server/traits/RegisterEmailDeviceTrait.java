@@ -16,7 +16,7 @@ import pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaRegisterDeviceG;
 @EqualsAndHashCode(callSuper = true)
 public class RegisterEmailDeviceTrait extends RegisterDeviceTrait {
     private final String email;
-    private final String authKey;
+    private final byte[] authKey;
     private final String serverName;
 
     public RegisterEmailDeviceTrait(SuplaRegisterDeviceD register) {
@@ -29,7 +29,7 @@ public class RegisterEmailDeviceTrait extends RegisterDeviceTrait {
                 0,
                 stream(register.channels).map(DeviceChannelTrait::new).toList());
         this.email = parseString(register.email);
-        this.authKey = parseString(register.authKey);
+        this.authKey =register.authKey;
         this.serverName = parseString(register.serverName);
     }
 
@@ -43,7 +43,7 @@ public class RegisterEmailDeviceTrait extends RegisterDeviceTrait {
                 register.flags,
                 stream(register.channels).map(DeviceChannelTrait::new).toList());
         this.email = parseString(register.email);
-        this.authKey = parseString(register.authKey);
+        this.authKey =register.authKey;
         this.serverName = parseString(register.serverName);
     }
 
@@ -57,7 +57,7 @@ public class RegisterEmailDeviceTrait extends RegisterDeviceTrait {
                 register.flags,
                 stream(register.channels).map(DeviceChannelTrait::new).toList());
         this.email = parseString(register.email);
-        this.authKey = parseString(register.authKey);
+        this.authKey =register.authKey;
         this.serverName = parseString(register.serverName);
     }
 
@@ -71,7 +71,7 @@ public class RegisterEmailDeviceTrait extends RegisterDeviceTrait {
                 register.flags,
                 stream(register.channels).map(DeviceChannelTrait::new).toList());
         this.email = parseString(register.email);
-        this.authKey = parseString(register.authKey);
+        this.authKey =register.authKey;
         this.serverName = parseString(register.serverName);
     }
 }

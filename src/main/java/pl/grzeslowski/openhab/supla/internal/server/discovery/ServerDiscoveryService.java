@@ -3,6 +3,7 @@ package pl.grzeslowski.openhab.supla.internal.server.discovery;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.*;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ServerDevicesProperties.CONFIG_AUTH_PROPERTY;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ServerDevicesProperties.SERVER_NAME_PROPERTY;
+import static pl.grzeslowski.openhab.supla.internal.server.ByteArrayToHex.bytesToHex;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -18,6 +19,7 @@ import org.openhab.core.config.discovery.DiscoveryResultBuilder;
 import org.openhab.core.thing.ThingUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import pl.grzeslowski.openhab.supla.internal.server.ByteArrayToHex;
 import pl.grzeslowski.openhab.supla.internal.server.traits.RegisterDeviceTrait;
 import pl.grzeslowski.openhab.supla.internal.server.traits.RegisterEmailDeviceTrait;
 
@@ -63,7 +65,7 @@ public class ServerDiscoveryService extends AbstractDiscoveryService {
         if (registerDeviceTrait instanceof RegisterEmailDeviceTrait registerDevice) {
             var authKey = registerDevice.getAuthKey();
             var serverName = registerDevice.getServerName();
-            builder.withProperties(Map.of(CONFIG_AUTH_PROPERTY, authKey));
+            builder.withProperties(Map.of(CONFIG_AUTH_PROPERTY, bytesToHex(authKey)));
             builder.withProperties(Map.of(SERVER_NAME_PROPERTY, serverName));
         }
         return builder.build();
