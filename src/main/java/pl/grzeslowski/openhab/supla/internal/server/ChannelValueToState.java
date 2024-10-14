@@ -1,5 +1,16 @@
 package pl.grzeslowski.openhab.supla.internal.server;
 
+import static java.lang.String.valueOf;
+import static java.math.BigDecimal.ZERO;
+import static java.util.Optional.ofNullable;
+import static org.openhab.core.library.unit.SIUnits.CELSIUS;
+import static org.openhab.core.types.UnDefType.NULL;
+import static org.openhab.core.types.UnDefType.UNDEF;
+
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.eclipse.jdt.annotation.NonNullByDefault;
@@ -11,18 +22,6 @@ import org.openhab.core.thing.ChannelUID;
 import org.openhab.core.thing.ThingUID;
 import org.openhab.core.types.State;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.value.*;
-
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Stream;
-
-import static java.lang.String.valueOf;
-import static java.math.BigDecimal.ZERO;
-import static java.util.Optional.ofNullable;
-import static org.openhab.core.library.unit.SIUnits.CELSIUS;
-import static org.openhab.core.types.UnDefType.NULL;
-import static org.openhab.core.types.UnDefType.UNDEF;
 
 @NonNullByDefault
 @RequiredArgsConstructor
@@ -124,15 +123,15 @@ public class ChannelValueToState implements ChannelValueSwitch.Callback<Stream<P
                 buildHumidityPair(temperatureAndHumidityValue, humidityId));
     }
 
-    private static Pair<ChannelUID, State> buildHumidityPair(TemperatureAndHumidityValue temperatureAndHumidityValue, ChannelUID humidityId) {
+    private static Pair<ChannelUID, State> buildHumidityPair(
+            TemperatureAndHumidityValue temperatureAndHumidityValue, ChannelUID humidityId) {
         var humidity = temperatureAndHumidityValue.getHumidity();
         if (humidity.compareTo(BigDecimal.valueOf(-1)) <= 0) {
             return Pair.with(humidityId, UNDEF);
         }
-        return Pair.with(humidityId, new PercentType(humidity
-                .multiply(ONE_HUNDRED)
-                .max(ZERO)
-                .min(ONE_HUNDRED)));
+        return Pair.with(
+                humidityId,
+                new PercentType(humidity.multiply(ONE_HUNDRED).max(ZERO).min(ONE_HUNDRED)));
     }
 
     @Override
@@ -374,7 +373,7 @@ public class ChannelValueToState implements ChannelValueSwitch.Callback<Stream<P
                 val stateValue = OnOffType.from(flags.isBatteryCoverOpen());
                 pairs.add(Pair.with(id, stateValue));
             } // batteryCoverOpen
-        } //flags
+        } // flags
         return pairs.stream();
     }
 

@@ -9,8 +9,10 @@ import pl.grzeslowski.jsupla.protocol.api.structs.ds.*;
 public class DeviceChannelTrait {
     int number;
     int type;
+
     @Nullable
     byte[] value;
+
     @Nullable
     pl.grzeslowski.jsupla.protocol.api.structs.HVACValue hvacValue;
 

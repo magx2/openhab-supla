@@ -1,5 +1,11 @@
 package pl.grzeslowski.openhab.supla.internal.server;
 
+import static java.lang.String.valueOf;
+import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.Channels.*;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -13,13 +19,6 @@ import org.openhab.core.thing.binding.builder.ChannelBuilder;
 import org.openhab.core.thing.type.ChannelTypeUID;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.value.ChannelClassSwitch;
 import pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Stream;
-
-import static java.lang.String.valueOf;
-import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.Channels.*;
 
 @NonNullByDefault
 @RequiredArgsConstructor
@@ -326,47 +325,54 @@ public class ChannelCallback implements ChannelClassSwitch.Callback<Stream<Chann
         {
             val channelUid = new ChannelUID(groupUid, "on");
             final ChannelTypeUID channelTypeUID = createChannelTypeUID(SWITCH_CHANNEL_RO_ID);
-            channels.add(
-                    ChannelBuilder.create(channelUid, "Switch")
-                            .withLabel("Working")
-                            .withType(channelTypeUID)
-                            .build());
+            channels.add(ChannelBuilder.create(channelUid, "Switch")
+                    .withLabel("Working")
+                    .withType(channelTypeUID)
+                    .build());
         } // on
         {
             val channelUid = new ChannelUID(groupUid, "mode");
             final ChannelTypeUID channelTypeUID = createChannelTypeUID(STRING_CHANNEL_ID);
-            channels.add(
-                    ChannelBuilder.create(channelUid, "String")
-                            .withLabel("Mode")
-                            .withType(channelTypeUID)
-                            .build());
+            channels.add(ChannelBuilder.create(channelUid, "String")
+                    .withLabel("Mode")
+                    .withType(channelTypeUID)
+                    .build());
         } // mode
         {
             val channelUid = new ChannelUID(groupUid, "setPointTemperatureHeat");
             final ChannelTypeUID channelTypeUID = createChannelTypeUID(TEMPERATURE_CHANNEL_ID);
-            channels.add(
-                    ChannelBuilder.create(channelUid, "Number:Temperature")
-                            .withLabel("Set Point Temperature Heat")
-                            .withType(channelTypeUID)
-                            .build());
+            channels.add(ChannelBuilder.create(channelUid, "Number:Temperature")
+                    .withLabel("Set Point Temperature Heat")
+                    .withType(channelTypeUID)
+                    .build());
         } // setPointTemperatureHeat
         {
             val channelUid = new ChannelUID(groupUid, "setPointTemperatureCool");
             final ChannelTypeUID channelTypeUID = createChannelTypeUID(TEMPERATURE_CHANNEL_ID);
-            channels.add(
-                    ChannelBuilder.create(channelUid, "Number:Temperature")
-                            .withLabel("Set Point Temperature Cool")
-                            .withType(channelTypeUID)
-                            .build());
+            channels.add(ChannelBuilder.create(channelUid, "Number:Temperature")
+                    .withLabel("Set Point Temperature Cool")
+                    .withType(channelTypeUID)
+                    .build());
         } // setPointTemperatureCool
         {
-            val flags = Stream.of("setPointTempHeatSet", "setPointTempCoolSet", "heating", "cooling",
-                            "weeklySchedule", "countdownTimer", "fanEnabled", "thermometerError", "clockError",
-                            "forcedOffBySensor", "cool", "weeklyScheduleTemporalOverride", "batteryCoverOpen")
+            val flags = Stream.of(
+                            "setPointTempHeatSet",
+                            "setPointTempCoolSet",
+                            "heating",
+                            "cooling",
+                            "weeklySchedule",
+                            "countdownTimer",
+                            "fanEnabled",
+                            "thermometerError",
+                            "clockError",
+                            "forcedOffBySensor",
+                            "cool",
+                            "weeklyScheduleTemporalOverride",
+                            "batteryCoverOpen")
                     .map(name -> buildHvacFlag(groupUid, name))
                     .toList();
             channels.addAll(flags);
-        }  // flags
+        } // flags
         return channels.stream();
     }
 
