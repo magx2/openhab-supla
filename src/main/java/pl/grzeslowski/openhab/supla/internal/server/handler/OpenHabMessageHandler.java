@@ -16,7 +16,7 @@ import pl.grzeslowski.openhab.supla.internal.server.traits.RegisterDeviceTraitPa
 
 @Slf4j
 @RequiredArgsConstructor
-class OpenHabMessageHandler implements MessageHandler {
+public class OpenHabMessageHandler implements MessageHandler {
     private final Object lock = new Object();
     private final AtomicReference<SuplaThing> currentThing = new AtomicReference<>();
     private final AtomicReference<Writer> writer = new AtomicReference<>();
@@ -65,7 +65,7 @@ class OpenHabMessageHandler implements MessageHandler {
                 }
                 var suplaThing = suplaThingOptional.get();
                 suplaThing.active(requireNonNull(writer.get(), "writer is null"));
-                var registerResult = suplaThing.register(entity);
+                var registerResult = suplaThing.register(entity, this);
                 if (registerResult) {
                     // correctly registered
                     currentThing.set(suplaThing);
@@ -76,5 +76,9 @@ class OpenHabMessageHandler implements MessageHandler {
             // fallback
             log.debug("There is no Supla thing and the device did not send register message, but {}", proto);
         }
+    }
+
+    public void clear() {
+        currentThing.set(null);
     }
 }

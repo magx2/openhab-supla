@@ -49,7 +49,7 @@ import pl.grzeslowski.openhab.supla.internal.Documentation;
 import pl.grzeslowski.openhab.supla.internal.server.discovery.ServerDiscoveryService;
 
 @NonNullByDefault
-public class ServerBridgeHandler extends BaseBridgeHandler implements SuplaThingRegistry {
+public class ServerBridgeHandler extends BaseBridgeHandler implements SuplaThingRegistry,  SuplaBridge{
     private static final int PROPER_AES_KEY_SIZE = 2147483647;
     private Logger logger = LoggerFactory.getLogger(ServerBridgeHandler.class);
 
@@ -62,11 +62,11 @@ public class ServerBridgeHandler extends BaseBridgeHandler implements SuplaThing
 
     private final Collection<ServerDeviceHandler> childHandlers = Collections.synchronizedList(new ArrayList<>());
 
-    @Getter(PACKAGE)
+    @Getter
     @Nullable
     private TimeoutConfiguration timeoutConfiguration;
 
-    @Getter(PACKAGE)
+    @Getter
     @Nullable
     private AuthData authData;
 
@@ -102,7 +102,7 @@ public class ServerBridgeHandler extends BaseBridgeHandler implements SuplaThing
             updateStatus(OFFLINE, CONFIGURATION_ERROR, "You need to pass port!");
             return;
         }
-        authData = buildAuthData(config);
+        authData = SuplaBridge.buildAuthData(config);
         var port = config.getPort().intValue();
         var protocols =
                 stream(config.getProtocols().split(",")).map(String::trim).collect(toSet());
@@ -156,10 +156,7 @@ public class ServerBridgeHandler extends BaseBridgeHandler implements SuplaThing
             logger.warn("Cannot get disabled algorithms! {}", ex.getLocalizedMessage());
         }
 
-        timeoutConfiguration = new TimeoutConfiguration(
-                config.getTimeout().intValue(),
-                config.getTimeoutMin().intValue(),
-                config.getTimeoutMax().intValue());
+        timeoutConfiguration = SuplaBridge.buildTimeoutConfiguration(config);
 
         var factory = buildServerFactory();
         server = factory.createNewServer(buildServerProperties(port, protocols), this::messageHandlerFactory);
@@ -168,23 +165,6 @@ public class ServerBridgeHandler extends BaseBridgeHandler implements SuplaThing
         updateStatus(ONLINE);
         numberOfConnectedDevices.set(0);
         updateConnectedDevices(0);
-    }
-
-    private static AuthData buildAuthData(ServerBridgeHandlerConfig config) {
-        AuthData.@Nullable LocationAuthData locationAuthData;
-        if (config.getServerAccessId() != null && config.getServerAccessIdPassword() != null) {
-            locationAuthData = new AuthData.LocationAuthData(
-                    config.getServerAccessId().intValue(), config.getServerAccessIdPassword());
-        } else {
-            locationAuthData = null;
-        }
-        AuthData.@Nullable EmailAuthData emailAuthData;
-        if (config.getEmail() != null) {
-            emailAuthData = new AuthData.EmailAuthData(config.getEmail());
-        } else {
-            emailAuthData = null;
-        }
-        return new AuthData(locationAuthData, emailAuthData);
     }
 
     private MessageHandler messageHandlerFactory() {
@@ -207,11 +187,13 @@ public class ServerBridgeHandler extends BaseBridgeHandler implements SuplaThing
                 OFFLINE, COMMUNICATION_ERROR, "Error occurred in server pipe. Message: " + ex.getLocalizedMessage());
     }
 
+    @Override
     public void deviceConnected() {
         logger.debug("Device connected to Server");
         changeNumberOfConnectedDevices(1);
     }
 
+    @Override
     public void deviceDisconnected() {
         logger.debug("Device disconnected from Server");
         changeNumberOfConnectedDevices(-1);

@@ -13,19 +13,22 @@ import org.openhab.core.thing.Channel;
 import org.openhab.core.thing.ChannelUID;
 import org.openhab.core.thing.Thing;
 import org.openhab.core.thing.ThingStatus;
-import org.openhab.core.thing.binding.builder.ThingBuilder;
+import org.openhab.core.thing.binding.builder.ChannelBuilder;
 import org.openhab.core.types.Command;
 import org.openhab.core.types.State;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.decoders.ChannelTypeDecoder;
+import pl.grzeslowski.jsupla.protocol.api.channeltype.decoders.HVACValueDecoderImpl;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.encoders.ChannelTypeEncoderImpl;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.value.*;
+import pl.grzeslowski.jsupla.protocol.api.structs.HVACValue;
 import pl.grzeslowski.jsupla.protocol.api.structs.dcs.LocalTimeRequest;
+import pl.grzeslowski.jsupla.protocol.api.structs.dcs.SetCaption;
 import pl.grzeslowski.jsupla.protocol.api.structs.dcs.SuplaPingServer;
 import pl.grzeslowski.jsupla.protocol.api.structs.dcs.SuplaSetActivityTimeout;
-import pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaDeviceChannelExtendedValue;
-import pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaDeviceChannelValue;
+import pl.grzeslowski.jsupla.protocol.api.structs.ds.*;
+import pl.grzeslowski.jsupla.protocol.api.structs.dsc.ChannelState;
 import pl.grzeslowski.jsupla.protocol.api.structs.sd.SuplaChannelNewValue;
 import pl.grzeslowski.jsupla.protocol.api.structs.sd.SuplaRegisterDeviceResult;
 import pl.grzeslowski.jsupla.protocol.api.structs.sdc.SuplaPingServerResult;
@@ -36,16 +39,14 @@ import pl.grzeslowski.jsupla.server.api.Writer;
 import pl.grzeslowski.openhab.supla.internal.handler.AbstractDeviceHandler;
 import pl.grzeslowski.openhab.supla.internal.server.ChannelCallback;
 import pl.grzeslowski.openhab.supla.internal.server.ChannelValueToState;
-import pl.grzeslowski.openhab.supla.internal.server.traits.DeviceChannelTrait;
-import pl.grzeslowski.openhab.supla.internal.server.traits.RegisterDeviceTrait;
-import pl.grzeslowski.openhab.supla.internal.server.traits.RegisterEmailDeviceTrait;
-import pl.grzeslowski.openhab.supla.internal.server.traits.RegisterLocationDeviceTrait;
+import pl.grzeslowski.openhab.supla.internal.server.traits.*;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.TextStyle;
 import java.util.*;
 import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
@@ -55,17 +56,18 @@ import static java.lang.Short.parseShort;
 import static java.lang.String.valueOf;
 import static java.time.Instant.now;
 import static java.util.Collections.synchronizedMap;
+import static java.util.Comparator.comparing;
 import static java.util.Objects.requireNonNull;
 import static java.util.Objects.requireNonNullElse;
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.openhab.core.thing.ChannelUID.CHANNEL_GROUP_SEPARATOR;
 import static org.openhab.core.thing.ThingStatus.OFFLINE;
 import static org.openhab.core.thing.ThingStatus.ONLINE;
 import static org.openhab.core.thing.ThingStatusDetail.*;
 import static pl.grzeslowski.jsupla.protocol.api.ProtocolHelpers.parseString;
 import static pl.grzeslowski.jsupla.protocol.api.ResultCode.SUPLA_RESULTCODE_TRUE;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.BINDING_ID;
-import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ServerDevicesProperties.CONFIG_AUTH_PROPERTY;
-import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ServerDevicesProperties.SOFT_VERSION_PROPERTY;
+import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ServerDevicesProperties.*;
 
 /**
  * The {@link ServerDeviceHandler} is responsible for handling commands, which are sent to one of the channels.
@@ -76,9 +78,10 @@ public class ServerDeviceHandler extends AbstractDeviceHandler implements SuplaT
     public static final byte ACTIVITY_TIMEOUT = (byte) 100;
     public static final byte VERSION = (byte) 6;
     public static final byte VERSION_MIN = (byte) 1;
-    private Logger logger = LoggerFactory.getLogger(ServerDeviceHandler.class);
+    protected Logger logger = LoggerFactory.getLogger(this.getClass());
 
     private final Map<Integer, Integer> channelTypes = synchronizedMap(new HashMap<>());
+    private final Object editThingLock = new Object();
 
     @ToString.Include
     @Nullable
@@ -98,9 +101,11 @@ public class ServerDeviceHandler extends AbstractDeviceHandler implements SuplaT
     private ScheduledFuture<?> pingSchedule;
 
     @Nullable
-    private ServerBridgeHandler bridgeHandler;
+    private SuplaBridge bridgeHandler;
 
     private final AtomicReference<@Nullable Writer> writer = new AtomicReference<>();
+    @Nullable
+    private OpenHabMessageHandler handler;
 
     public ServerDeviceHandler(Thing thing) {
         super(thing);
@@ -115,7 +120,9 @@ public class ServerDeviceHandler extends AbstractDeviceHandler implements SuplaT
             return;
         }
         var rawBridgeHandler = bridge.getHandler();
-        if (!(rawBridgeHandler instanceof ServerBridgeHandler bridgeHandler)) {
+        var bridgeClasses = findAllowedBridgeClasses();
+        var bridgeHasCorrectClass = rawBridgeHandler != null && bridgeClasses.stream().anyMatch(clazz -> clazz.isInstance(rawBridgeHandler));
+        if (!bridgeHasCorrectClass) {
             String simpleName;
             if (rawBridgeHandler != null) {
                 simpleName = rawBridgeHandler.getClass().getSimpleName();
@@ -129,7 +136,7 @@ public class ServerDeviceHandler extends AbstractDeviceHandler implements SuplaT
                             + simpleName);
             return;
         }
-        this.bridgeHandler = bridgeHandler;
+        var localBridgeHandler = this.bridgeHandler = (SuplaBridge) rawBridgeHandler;
 
         var config = getConfigAs(ServerDeviceHandlerConfiguration.class);
         guid = config.getGuid();
@@ -138,12 +145,12 @@ public class ServerDeviceHandler extends AbstractDeviceHandler implements SuplaT
             updateStatus(OFFLINE, CONFIGURATION_ERROR, "There is no guid for this thing.");
             return;
         }
-        logger = LoggerFactory.getLogger(ServerDeviceHandler.class.getName() + "." + guid);
+        logger = LoggerFactory.getLogger(this.getClass().getName() + "." + guid);
 
         {
             // timeouts
             var bridgeHandlerTimeoutConfiguration =
-                    requireNonNullElse(bridgeHandler.getTimeoutConfiguration(), new TimeoutConfiguration(10, 8, 12));
+                    requireNonNullElse(localBridgeHandler.getTimeoutConfiguration(), new TimeoutConfiguration(10, 8, 12));
 
             var timeoutConfiguration = new TimeoutConfiguration(
                     requireNonNullElse(config.getTimeout(), bridgeHandlerTimeoutConfiguration.timeout()),
@@ -151,7 +158,7 @@ public class ServerDeviceHandler extends AbstractDeviceHandler implements SuplaT
                     requireNonNullElse(config.getTimeoutMax(), bridgeHandlerTimeoutConfiguration.max()));
 
             // auth data
-            var bridgeAuthData = requireNonNull(bridgeHandler.getAuthData(), "No auth data in bridge!");
+            var bridgeAuthData = requireNonNull(localBridgeHandler.getAuthData(), "No auth data in bridge!");
             AuthData.@Nullable LocationAuthData locationAuthData;
             if (config.getServerAccessId() != null && config.getServerAccessIdPassword() != null) {
                 locationAuthData = new AuthData.LocationAuthData(
@@ -186,6 +193,10 @@ public class ServerDeviceHandler extends AbstractDeviceHandler implements SuplaT
                 "Waiting for Supla device to connect with the server");
     }
 
+    protected List<Class<? extends SuplaBridge>> findAllowedBridgeClasses() {
+        return List.of(ServerBridgeHandler.class, ServerGatewayHandler.class);
+    }
+
     @Override
     public void handle(ToServerProto entity) {
         var writer = this.writer.get();
@@ -199,12 +210,22 @@ public class ServerDeviceHandler extends AbstractDeviceHandler implements SuplaT
             } else if (entity instanceof SuplaSetActivityTimeout) {
                 consumeSuplaSetActivityTimeout(writer);
             } else if (entity instanceof SuplaDeviceChannelValue value) {
-                updateStatus(value.channelNumber, value.value);
+                updateStatus(new DeviceChannelValueTrait(value));
+            } else if (entity instanceof SuplaDeviceChannelValueB value) {
+                updateStatus(new DeviceChannelValueTrait(value));
+            } else if (entity instanceof SuplaDeviceChannelValueC value) {
+                updateStatus(new DeviceChannelValueTrait(value));
             } else if (entity instanceof SuplaDeviceChannelExtendedValue value) {
                 var extendedValue = value.value;
                 updateStatus(value.channelNumber, extendedValue.type, extendedValue.value);
             } else if (entity instanceof LocalTimeRequest value) {
                 consumeLocalTimeRequest(writer);
+            } else if (entity instanceof SetCaption value) {
+                consumeSetCaption(value);
+            } else if (entity instanceof ChannelState value) {
+                consumeChannelState(value);
+            } else if (entity instanceof SubdeviceDetails value) {
+                consumeSubDeviceDetails(value);
             } else {
                 logger.debug("Not supporting message:\n{}", entity);
             }
@@ -232,8 +253,9 @@ public class ServerDeviceHandler extends AbstractDeviceHandler implements SuplaT
     }
 
     @Override
-    public boolean register(RegisterDeviceTrait registerEntity) {
+    public boolean register(RegisterDeviceTrait registerEntity, OpenHabMessageHandler handler) {
         updateStatus(OFFLINE, HANDLER_CONFIGURATION_PENDING, "Device is authorizing...");
+        this.handler = handler;
         {
             var local = pingSchedule;
             pingSchedule = null;
@@ -281,8 +303,26 @@ public class ServerDeviceHandler extends AbstractDeviceHandler implements SuplaT
             }
         }
 
-        // set the software version
+        // set properties
         thing.setProperty(SOFT_VERSION_PROPERTY, registerEntity.getSoftVer());
+        if (registerEntity.getManufacturerId() != null) {
+            thing.setProperty(MANUFACTURER_ID_PROPERTY, valueOf(registerEntity.getManufacturerId()));
+        }
+        if (registerEntity.getProductId() != null) {
+            thing.setProperty(PRODUCT_ID_PROPERTY, valueOf(registerEntity.getProductId()));
+        }
+
+        return afterRegister(registerEntity);
+    }
+
+    protected boolean afterRegister(RegisterDeviceTrait registerEntity) {
+        var flags = registerEntity.getFlags();
+//        if (flags.isCalcfgSubdevicePairing()) {
+//            updateStatus(OFFLINE, CONFIGURATION_ERROR,
+//                    "Device should be created as %s. See %s for more information."
+//                            .formatted(SUPLA_THING_BRIDGE_TYPE.getId(), THING_BRIDGE));
+//            return false;
+//        }
 
         setChannels(registerEntity.getChannels());
         requireNonNull(writer.get())
@@ -318,7 +358,7 @@ public class ServerDeviceHandler extends AbstractDeviceHandler implements SuplaT
         var month = (short) now.getMonthValue();
         var day = (short) now.getDayOfMonth();
         // 1 = Sunday, 2 = Monday, …, 7 = Saturday
-        var dayOfWeek = (short)( (now.getDayOfWeek().getValue() + 1) % 7);
+        var dayOfWeek = (short) ((now.getDayOfWeek().getValue() + 1) % 7);
         var hour = (short) now.getHour();
         var minute = (short) now.getMinute();
         var seconds = (short) now.getSecond();
@@ -326,12 +366,88 @@ public class ServerDeviceHandler extends AbstractDeviceHandler implements SuplaT
         // Get the system's default time zone
         var zoneId = ZoneId.systemDefault();
         var timeZoneName = zoneId.getDisplayName(TextStyle.SHORT, Locale.getDefault());
-        var timeZone = timeZoneName.getBytes();  // Convert to byte array
+        var timeZone = timeZoneName.getBytes(); // Convert to byte array
         var timeZoneSize = timeZone.length;
 
-        writer.write(new UserLocalTimeResult(
-                year, month, day, dayOfWeek, hour, minute, seconds, timeZoneSize, timeZone
-        ));
+        writer.write(
+                new UserLocalTimeResult(year, month, day, dayOfWeek, hour, minute, seconds, timeZoneSize, timeZone));
+    }
+
+    private void consumeSetCaption(SetCaption value) {
+        var id = findId(value);
+        if (id == null) {
+            return;
+        }
+        var channelUID = new ChannelUID(thing.getUID(), valueOf(id));
+        var channel = thing.getChannel(channelUID);
+        var channels = new ArrayList<Channel>(1);
+        if (channel == null) {
+            // look for group channels
+            channels.addAll(thing.getChannels()
+                    .stream()
+                    .filter(c -> {
+                        var uid = c.getUID();
+                        if (!uid.isInGroup()) return false;
+                        var guid = uid.getGroupId();
+                        if (guid == null) return false;
+                        return guid.equals(valueOf(id));
+                    })
+                    .toList());
+            if (channels.isEmpty()) {
+                logger.warn("There is no channel with ID {} that I can set value to. value={}, caption={}",
+                        id, value, parseString(value.caption));
+                return;
+            }
+        } else {
+            channels.add(channel);
+        }
+        var channelsWithCaption = channels.stream()
+                .map(c -> ChannelBuilder.create(c)
+                        .withLabel(parseString(value.caption) + " > " + c.getLabel())
+                        .build())
+                .toList();
+        var updatedChannelsIds = channelsWithCaption.stream()
+                .map(Channel::getUID)
+                .collect(Collectors.toSet());
+        synchronized (editThingLock) {
+            var newChannels = new ArrayList<>(thing.getChannels()
+                    .stream()
+                    .filter(c-> !updatedChannelsIds.contains(c.getUID()))
+                    .toList());
+            newChannels.addAll(channelsWithCaption);
+            updateChannels(newChannels);
+        }
+    }
+
+    @Nullable
+    private Integer findId(SetCaption value) {
+        if (value.id != null) {
+            return value.id;
+        }
+
+        if (value.channelNumber != null) {
+            return Integer.valueOf(value.channelNumber);
+        }
+
+        logger.debug("Cannot set caption, because ID is null. value={}", value);
+        return null;
+    }
+
+    private void consumeChannelState(ChannelState value) {
+        // there is nothing interesting that I can do with it, ignore
+        logger.debug("value={}", value);
+    }
+
+    private void consumeSubDeviceDetails(SubdeviceDetails value) {
+        // there is nothing interesting that I can do with it, ignore
+        if (logger.isDebugEnabled()) {
+            logger.debug("SubdeviceDetails(subDeviceId={}, name={}, softVer={}, productCode={}, serialNumber={})",
+                    value.subDeviceId,
+                    parseString(value.name),
+                    parseString(value.softVer),
+                    parseString(value.productCode),
+                    parseString(value.serialNumber));
+        }
     }
 
     private boolean authorizeForLocation(int accessId, byte[] accessIdPassword) {
@@ -517,9 +633,11 @@ public class ServerDeviceHandler extends AbstractDeviceHandler implements SuplaT
 
     private void setChannels(List<DeviceChannelTrait> deviceChannels) {
         {
+            var adjustLabel = deviceChannels.size() > 1;
+            var digits = deviceChannels.isEmpty() ? 1 : ((int) Math.log10(deviceChannels.size()) + 1);
+            var idx = new AtomicInteger(1);
             var channels = deviceChannels.stream()
-                    .sorted(Comparator.comparingInt(DeviceChannelTrait::getNumber))
-                    .flatMap(this::createChannel)
+                    .flatMap(deviceChannel -> createChannel(deviceChannel, adjustLabel, idx.getAndIncrement(), digits))
                     .toList();
             if (logger.isDebugEnabled()) {
                 var rawChannels = deviceChannels.stream()
@@ -551,27 +669,39 @@ public class ServerDeviceHandler extends AbstractDeviceHandler implements SuplaT
         if (clazz.isAssignableFrom(ElectricityMeterValue.class)) {
             return Stream.empty();
         }
-        return findState(deviceChannel.getType(), deviceChannel.getNumber(), deviceChannel.getValue());
+        return findState(deviceChannel.getType(), deviceChannel.getNumber(), deviceChannel.getValue(), deviceChannel.getHvacValue());
     }
 
     private ChannelUID createChannelUid(int channelNumber) {
         return new ChannelUID(getThing().getUID(), valueOf(channelNumber));
     }
 
-    private Stream<Pair<ChannelUID, State>> findState(int type, int channelNumber, byte[] value) {
+    private Stream<Pair<ChannelUID, State>> findState(int type, int channelNumber, @Nullable @jakarta.annotation.Nullable byte[] value, @jakarta.annotation.Nullable @Nullable HVACValue hvacValue) {
         val valueSwitch =
                 new ChannelValueSwitch<>(new ChannelValueToState(getThing().getUID(), channelNumber));
-        return valueSwitch.doSwitch(ChannelTypeDecoder.INSTANCE.decode(type, value));
+        ChannelValue channelValue;
+        if (value != null) {
+            channelValue = ChannelTypeDecoder.INSTANCE.decode(type, value);
+        } else if (hvacValue != null) {
+            channelValue = HVACValueDecoderImpl.INSTANCE.decode(hvacValue);
+        } else {
+            throw new IllegalArgumentException("value and hvacValue cannot be null!");
+        }
+        return valueSwitch.doSwitch(channelValue);
     }
 
-    private void updateStatus(int channelNumber, byte[] channelValue) {
-        var type = channelTypes.get(channelNumber);
-        updateStatus(channelNumber, type, channelValue);
+    private void updateStatus(DeviceChannelValueTrait trait) {
+        if (trait.isOffline()) {
+            logger.debug("Channel Value is offline, ignoring it. trait={}", trait);
+            return;
+        }
+        var type = channelTypes.get(trait.getChannelNumber());
+        updateStatus(trait.getChannelNumber(), type, trait.getValue());
     }
 
     private void updateStatus(int channelNumber, int type, byte[] channelValue) {
         logger.debug("Updating status for channel {}", channelNumber);
-        findState(type, channelNumber, channelValue).forEach(pair -> {
+        findState(type, channelNumber, channelValue, null).forEach(pair -> {
             var channelUID = pair.getValue0();
             var state = pair.getValue1();
             logger.debug(
@@ -584,19 +714,39 @@ public class ServerDeviceHandler extends AbstractDeviceHandler implements SuplaT
         });
     }
 
-    private Stream<Channel> createChannel(DeviceChannelTrait deviceChannel) {
+    private Stream<Channel> createChannel(DeviceChannelTrait deviceChannel, boolean adjustLabel, int idx, int digits) {
         var channelCallback = new ChannelCallback(getThing().getUID(), deviceChannel.getNumber());
         var channelValueSwitch = new ChannelClassSwitch<>(channelCallback);
         var clazz = ChannelTypeDecoder.INSTANCE.findClass(deviceChannel.getType());
         var channels = channelValueSwitch.doSwitch(clazz);
         channelTypes.put(deviceChannel.getNumber(), deviceChannel.getType());
+        if (adjustLabel) {
+            return channels.map(channel -> new Pair<>(ChannelBuilder.create(channel), channel.getLabel()))
+                    .map(pair -> pair.getValue0().withLabel(pair.getValue1() + (" (#%0" + digits + "d)").formatted(idx)))
+                    .map(ChannelBuilder::build);
+        }
         return channels;
     }
 
     private void updateChannels(List<Channel> channels) {
-        ThingBuilder thingBuilder = editThing();
-        thingBuilder.withChannels(channels);
-        updateThing(thingBuilder.build());
+        synchronized (editThingLock) {
+            new ArrayList<>(channels).sort((o1, o2) -> comparing((Channel id) -> {
+                try {
+                    var stringId = id.getUID().getId();
+                    if (stringId.contains(CHANNEL_GROUP_SEPARATOR)) {
+                        stringId = stringId.split(CHANNEL_GROUP_SEPARATOR)[0];
+                    }
+                    return Integer.parseInt(stringId);
+                } catch (NumberFormatException e) {
+                    return Integer.MAX_VALUE;
+                }
+            })
+                    .compare(o1, o2));
+
+            var thingBuilder = editThing();
+            thingBuilder.withChannels(channels);
+            updateThing(thingBuilder.build());
+        }
     }
 
     @Override
@@ -608,7 +758,15 @@ public class ServerDeviceHandler extends AbstractDeviceHandler implements SuplaT
                 local.cancel(true);
             }
         }
-        logger = LoggerFactory.getLogger(ServerDeviceHandler.class);
+        {
+            var localHandler = handler;
+            handler = null;
+            if (localHandler != null) {
+                localHandler.clear();
+            }
+        }
+        writer.set(null);
+        logger = LoggerFactory.getLogger(this.getClass());
         authorized = false;
     }
 }

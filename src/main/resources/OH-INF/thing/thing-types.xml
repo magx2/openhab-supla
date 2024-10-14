@@ -8,6 +8,7 @@
 	<thing-type id="server-device">
 		<supported-bridge-type-refs>
 			<bridge-type-ref id="server-bridge"/>
+			<bridge-type-ref id="thing-bridge"/>
 		</supported-bridge-type-refs>
 		<label>Supla Native Server Device</label>
 		<description>Generic type for all Supla devices. Channels will be provided by device at runtime</description>
@@ -120,6 +121,14 @@
 		<state readOnly="true"/>
 	</channel-type>
 
+	<channel-type id="flag-channel" advanced="true">
+		<item-type>Switch</item-type>
+		<label>Flag</label>
+		<description>Gives you information if flag is enabled</description>
+		<category>Switch</category>
+		<state readOnly="true"/>
+	</channel-type>
+
 	<channel-type id="decimal-channel">
 		<item-type>Number</item-type>
 		<label>Decimal value</label>
@@ -182,16 +191,20 @@
 	</channel-type>
 
 	<channel-type id="temperature-channel">
-		<item-type>Number</item-type>
+		<item-type>Number:Temperature</item-type>
 		<label>Temperature</label>
 		<category>Temperature</category>
-		<state readOnly="true" pattern="%s°C"/>
+		<state readOnly="true" pattern="%.1f %unit%"/>
 	</channel-type>
 
 	<channel-type id="humidity-channel">
-		<item-type>Number</item-type>
+		<item-type unitHint="%">Number:Dimensionless</item-type>
 		<label>Humidity</label>
-		<state readOnly="true" pattern="%s%%"/>
+		<tags>
+			<tag>Humidity</tag>
+			<tag>Measurment</tag>
+		</tags>
+		<state readOnly="true" pattern="%.1f %unit%"/>
 	</channel-type>
 
 	<channel-type id="dimmer-channel">

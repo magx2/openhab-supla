@@ -21,6 +21,9 @@ public class RegisterLocationDeviceTrait extends RegisterDeviceTrait {
                 register.guid,
                 register.name,
                 register.softVer,
+                null,
+                null,
+                0,
                 stream(register.channels).map(DeviceChannelTrait::new).toList());
         this.locationId = register.locationId;
         this.locationPwd = register.locationPwd;
@@ -31,6 +34,9 @@ public class RegisterLocationDeviceTrait extends RegisterDeviceTrait {
                 register.guid,
                 register.name,
                 register.softVer,
+                null,
+                null,
+                0,
                 stream(register.channels).map(DeviceChannelTrait::new).toList());
         this.locationId = register.locationId;
         this.locationPwd = register.locationPwd;
@@ -41,6 +47,9 @@ public class RegisterLocationDeviceTrait extends RegisterDeviceTrait {
                 register.guid,
                 register.name,
                 register.softVer,
+                null,
+                null,
+                0,
                 stream(register.channels).map(DeviceChannelTrait::new).toList());
         this.locationId = register.locationId;
         this.locationPwd = register.locationPwd;

@@ -9,7 +9,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
-
 import lombok.val;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
@@ -36,8 +35,7 @@ public class ServerDiscoveryService extends AbstractDiscoveryService {
     }
 
     @Override
-    protected void startScan() {
-    }
+    protected void startScan() {}
 
     public void addDevice(RegisterDeviceTrait registerDeviceTrait) {
         logger.info("Registering device: {}", registerDeviceTrait);

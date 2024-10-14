@@ -38,7 +38,7 @@ public abstract class AbstractDeviceHandler extends BaseThingHandler {
     protected abstract void internalInitialize() throws Exception;
 
     @Override
-    public final void handleCommand(final ChannelUID channelUID, final Command command) {
+    public void handleCommand(final ChannelUID channelUID, final Command command) {
         try {
             if (command instanceof RefreshType) {
                 handleRefreshCommand(channelUID);
