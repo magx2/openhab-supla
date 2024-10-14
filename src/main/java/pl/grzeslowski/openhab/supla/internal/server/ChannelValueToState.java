@@ -12,20 +12,17 @@ import org.openhab.core.thing.ThingUID;
 import org.openhab.core.types.State;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.value.*;
 
-import static java.math.BigDecimal.ZERO;
-import static org.openhab.core.library.unit.MetricPrefix.*;
-import static org.openhab.core.library.unit.SIUnits.*;
-import static org.openhab.core.library.unit.Units.*;
-import static org.openhab.core.types.UnDefType.UNDEF;
-
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
 import static java.lang.String.valueOf;
+import static java.math.BigDecimal.ZERO;
 import static java.util.Optional.ofNullable;
+import static org.openhab.core.library.unit.SIUnits.CELSIUS;
 import static org.openhab.core.types.UnDefType.NULL;
+import static org.openhab.core.types.UnDefType.UNDEF;
 
 @NonNullByDefault
 @RequiredArgsConstructor
@@ -103,7 +100,14 @@ public class ChannelValueToState implements ChannelValueSwitch.Callback<Stream<P
         if (temperatureValue == null) {
             return Stream.of(Pair.with(id, NULL));
         }
-        return Stream.of(Pair.with(id, new QuantityType<>(temperatureValue.getTemperature(), CELSIUS)));
+        return Stream.of(buildTempPair(temperatureValue.getTemperature(), id));
+    }
+
+    private static Pair<ChannelUID, State> buildTempPair(BigDecimal temperature, ChannelUID id) {
+        if (temperature.equals(BigDecimal.valueOf(-275))) {
+            return Pair.with(id, UNDEF);
+        }
+        return Pair.with(id, new QuantityType<>(temperature, CELSIUS));
     }
 
     @Override
@@ -116,11 +120,19 @@ public class ChannelValueToState implements ChannelValueSwitch.Callback<Stream<P
             return Stream.of(Pair.with(tempId, NULL), Pair.with(humidityId, NULL));
         }
         return Stream.of(
-                Pair.with(tempId, new QuantityType<>(temperatureAndHumidityValue.getTemperature(), CELSIUS)),
-                Pair.with(humidityId, new PercentType(temperatureAndHumidityValue.getHumidity()
-                        .multiply(ONE_HUNDRED)
-                        .max(ZERO)
-                        .min(ONE_HUNDRED))));
+                buildTempPair(temperatureAndHumidityValue.getTemperature(), tempId),
+                buildHumidityPair(temperatureAndHumidityValue, humidityId));
+    }
+
+    private static Pair<ChannelUID, State> buildHumidityPair(TemperatureAndHumidityValue temperatureAndHumidityValue, ChannelUID humidityId) {
+        var humidity = temperatureAndHumidityValue.getHumidity();
+        if (humidity.compareTo(BigDecimal.valueOf(-1)) <= 0) {
+            return Pair.with(humidityId, UNDEF);
+        }
+        return Pair.with(humidityId, new PercentType(humidity
+                .multiply(ONE_HUNDRED)
+                .max(ZERO)
+                .min(ONE_HUNDRED)));
     }
 
     @Override
@@ -284,14 +296,14 @@ public class ChannelValueToState implements ChannelValueSwitch.Callback<Stream<P
         {
             val id = new ChannelUID(groupUid, "setPointTemperatureHeat");
             val stateValue = ofNullable(channelValue.getSetPointTemperatureHeat())
-                    .<State>map(temp->new QuantityType<>(temp, CELSIUS) )
+                    .<State>map(temp -> new QuantityType<>(temp, CELSIUS))
                     .orElse(NULL);
             pairs.add(Pair.with(id, stateValue));
         } // setPointTemperatureHeat
         {
             val id = new ChannelUID(groupUid, "setPointTemperatureCool");
             val stateValue = ofNullable(channelValue.getSetPointTemperatureCool())
-                    .<State>map(temp->new QuantityType<>(temp, CELSIUS) )
+                    .<State>map(temp -> new QuantityType<>(temp, CELSIUS))
                     .orElse(NULL);
             pairs.add(Pair.with(id, stateValue));
         } // setPointTemperatureCool
