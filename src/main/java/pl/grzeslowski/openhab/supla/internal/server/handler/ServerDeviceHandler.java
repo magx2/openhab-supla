@@ -415,7 +415,7 @@ public class ServerDeviceHandler extends AbstractDeviceHandler implements SuplaT
         synchronized (editThingLock) {
             var newChannels = new ArrayList<>(thing.getChannels()
                     .stream()
-                    .filter(c-> !updatedChannelsIds.contains(c.getUID()))
+                    .filter(c -> !updatedChannelsIds.contains(c.getUID()))
                     .toList());
             newChannels.addAll(channelsWithCaption);
             updateChannels(newChannels);
@@ -680,9 +680,12 @@ public class ServerDeviceHandler extends AbstractDeviceHandler implements SuplaT
         return new ChannelUID(getThing().getUID(), valueOf(channelNumber));
     }
 
-    private Stream<Pair<ChannelUID, State>> findState(int type, int channelNumber, @Nullable @jakarta.annotation.Nullable byte[] value, @jakarta.annotation.Nullable @Nullable HVACValue hvacValue) {
-        val valueSwitch =
-                new ChannelValueSwitch<>(new ChannelValueToState(getThing().getUID(), channelNumber));
+    private Stream<Pair<ChannelUID, State>> findState(int type, int channelNumber,
+                                                      @Nullable @jakarta.annotation.Nullable byte[] value,
+                                                      @jakarta.annotation.Nullable @Nullable HVACValue hvacValue) {
+        val valueSwitch = new ChannelValueSwitch<>(
+                new ChannelValueToState(
+                        getThing().getUID(), channelNumber));
         ChannelValue channelValue;
         if (value != null) {
             channelValue = ChannelTypeDecoder.INSTANCE.decode(type, value);
@@ -704,18 +707,19 @@ public class ServerDeviceHandler extends AbstractDeviceHandler implements SuplaT
     }
 
     private void updateStatus(int channelNumber, int type, byte[] channelValue) {
-        logger.debug("Updating status for channel {}", channelNumber);
-        findState(type, channelNumber, channelValue, null).forEach(pair -> {
-            var channelUID = pair.getValue0();
-            var state = pair.getValue1();
-            logger.debug(
-                    "Updating state for channel {}, channelNumber {}, type {}, state={}",
-                    channelUID,
-                    channelNumber,
-                    type,
-                    state);
-            updateState(channelUID, state);
-        });
+        logger.debug("Updating status for channelNumber={}, type={}", channelNumber, type);
+        findState(type, channelNumber, channelValue, null)
+                .forEach(pair -> {
+                    var channelUID = pair.getValue0();
+                    var state = pair.getValue1();
+                    logger.debug(
+                            "Updating state for channel {}, channelNumber {}, type {}, state={}",
+                            channelUID,
+                            channelNumber,
+                            type,
+                            state);
+                    updateState(channelUID, state);
+                });
     }
 
     private Stream<Channel> createChannel(DeviceChannelTrait deviceChannel, boolean adjustLabel, int idx, int digits) {
