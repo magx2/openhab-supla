@@ -13,14 +13,10 @@ public class DeviceChannelValueTrait {
     int channelNumber;
     byte[] value;
     // B
-    /**
-     * If true then value is ignored
-     */
+    /** If true then value is ignored */
     boolean offline;
     // C
-    /**
-     * uint
-     */
+    /** uint */
     @Nullable
     Long validityTimeSec;
 

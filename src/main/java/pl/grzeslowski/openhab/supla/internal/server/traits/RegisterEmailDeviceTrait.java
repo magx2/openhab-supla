@@ -29,7 +29,7 @@ public class RegisterEmailDeviceTrait extends RegisterDeviceTrait {
                 0,
                 stream(register.channels).map(DeviceChannelTrait::new).toList());
         this.email = parseString(register.email);
-        this.authKey =register.authKey;
+        this.authKey = register.authKey;
         this.serverName = parseString(register.serverName);
     }
 
@@ -43,7 +43,7 @@ public class RegisterEmailDeviceTrait extends RegisterDeviceTrait {
                 register.flags,
                 stream(register.channels).map(DeviceChannelTrait::new).toList());
         this.email = parseString(register.email);
-        this.authKey =register.authKey;
+        this.authKey = register.authKey;
         this.serverName = parseString(register.serverName);
     }
 
@@ -57,7 +57,7 @@ public class RegisterEmailDeviceTrait extends RegisterDeviceTrait {
                 register.flags,
                 stream(register.channels).map(DeviceChannelTrait::new).toList());
         this.email = parseString(register.email);
-        this.authKey =register.authKey;
+        this.authKey = register.authKey;
         this.serverName = parseString(register.serverName);
     }
 
@@ -71,7 +71,7 @@ public class RegisterEmailDeviceTrait extends RegisterDeviceTrait {
                 register.flags,
                 stream(register.channels).map(DeviceChannelTrait::new).toList());
         this.email = parseString(register.email);
-        this.authKey =register.authKey;
+        this.authKey = register.authKey;
         this.serverName = parseString(register.serverName);
     }
 }

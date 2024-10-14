@@ -1,5 +1,34 @@
 package pl.grzeslowski.openhab.supla.internal.server.handler;
 
+import static java.lang.Short.parseShort;
+import static java.lang.String.valueOf;
+import static java.time.Instant.now;
+import static java.util.Collections.synchronizedMap;
+import static java.util.Comparator.comparing;
+import static java.util.Objects.requireNonNull;
+import static java.util.Objects.requireNonNullElse;
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.openhab.core.thing.ChannelUID.CHANNEL_GROUP_SEPARATOR;
+import static org.openhab.core.thing.ThingStatus.OFFLINE;
+import static org.openhab.core.thing.ThingStatus.ONLINE;
+import static org.openhab.core.thing.ThingStatusDetail.*;
+import static pl.grzeslowski.jsupla.protocol.api.ProtocolHelpers.parseString;
+import static pl.grzeslowski.jsupla.protocol.api.ResultCode.SUPLA_RESULTCODE_TRUE;
+import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.BINDING_ID;
+import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ServerDevicesProperties.*;
+import static pl.grzeslowski.openhab.supla.internal.server.ByteArrayToHex.bytesToHex;
+import static pl.grzeslowski.openhab.supla.internal.server.ByteArrayToHex.hexToBytes;
+
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.TextStyle;
+import java.util.*;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import lombok.Getter;
 import lombok.ToString;
 import lombok.val;
@@ -37,44 +66,11 @@ import pl.grzeslowski.jsupla.protocol.api.structs.sdc.UserLocalTimeResult;
 import pl.grzeslowski.jsupla.protocol.api.types.ToServerProto;
 import pl.grzeslowski.jsupla.server.api.Writer;
 import pl.grzeslowski.openhab.supla.internal.handler.AbstractDeviceHandler;
-import pl.grzeslowski.openhab.supla.internal.server.ByteArrayToHex;
 import pl.grzeslowski.openhab.supla.internal.server.ChannelCallback;
 import pl.grzeslowski.openhab.supla.internal.server.ChannelValueToState;
 import pl.grzeslowski.openhab.supla.internal.server.traits.*;
 
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.format.TextStyle;
-import java.util.*;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import static java.lang.Short.parseShort;
-import static java.lang.String.valueOf;
-import static java.time.Instant.now;
-import static java.util.Collections.synchronizedMap;
-import static java.util.Comparator.comparing;
-import static java.util.Objects.requireNonNull;
-import static java.util.Objects.requireNonNullElse;
-import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.openhab.core.thing.ChannelUID.CHANNEL_GROUP_SEPARATOR;
-import static org.openhab.core.thing.ThingStatus.OFFLINE;
-import static org.openhab.core.thing.ThingStatus.ONLINE;
-import static org.openhab.core.thing.ThingStatusDetail.*;
-import static pl.grzeslowski.jsupla.protocol.api.ProtocolHelpers.parseString;
-import static pl.grzeslowski.jsupla.protocol.api.ResultCode.SUPLA_RESULTCODE_TRUE;
-import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.BINDING_ID;
-import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ServerDevicesProperties.*;
-import static pl.grzeslowski.openhab.supla.internal.server.ByteArrayToHex.bytesToHex;
-import static pl.grzeslowski.openhab.supla.internal.server.ByteArrayToHex.hexToBytes;
-
-/**
- * The {@link ServerDeviceHandler} is responsible for handling commands, which are sent to one of the channels.
- */
+/** The {@link ServerDeviceHandler} is responsible for handling commands, which are sent to one of the channels. */
 @NonNullByDefault
 @ToString(onlyExplicitlyIncluded = true)
 public class ServerDeviceHandler extends AbstractDeviceHandler implements SuplaThing {
@@ -107,6 +103,7 @@ public class ServerDeviceHandler extends AbstractDeviceHandler implements SuplaT
     private SuplaBridge bridgeHandler;
 
     private final AtomicReference<@Nullable Writer> writer = new AtomicReference<>();
+
     @Nullable
     private OpenHabMessageHandler handler;
 
@@ -124,7 +121,8 @@ public class ServerDeviceHandler extends AbstractDeviceHandler implements SuplaT
         }
         var rawBridgeHandler = bridge.getHandler();
         var bridgeClasses = findAllowedBridgeClasses();
-        var bridgeHasCorrectClass = rawBridgeHandler != null && bridgeClasses.stream().anyMatch(clazz -> clazz.isInstance(rawBridgeHandler));
+        var bridgeHasCorrectClass = rawBridgeHandler != null
+                && bridgeClasses.stream().anyMatch(clazz -> clazz.isInstance(rawBridgeHandler));
         if (!bridgeHasCorrectClass) {
             String simpleName;
             if (rawBridgeHandler != null) {
@@ -152,8 +150,8 @@ public class ServerDeviceHandler extends AbstractDeviceHandler implements SuplaT
 
         {
             // timeouts
-            var bridgeHandlerTimeoutConfiguration =
-                    requireNonNullElse(localBridgeHandler.getTimeoutConfiguration(), new TimeoutConfiguration(10, 8, 12));
+            var bridgeHandlerTimeoutConfiguration = requireNonNullElse(
+                    localBridgeHandler.getTimeoutConfiguration(), new TimeoutConfiguration(10, 8, 12));
 
             var timeoutConfiguration = new TimeoutConfiguration(
                     requireNonNullElse(config.getTimeout(), bridgeHandlerTimeoutConfiguration.timeout()),
@@ -320,12 +318,12 @@ public class ServerDeviceHandler extends AbstractDeviceHandler implements SuplaT
 
     protected boolean afterRegister(RegisterDeviceTrait registerEntity) {
         var flags = registerEntity.getFlags();
-//        if (flags.isCalcfgSubdevicePairing()) {
-//            updateStatus(OFFLINE, CONFIGURATION_ERROR,
-//                    "Device should be created as %s. See %s for more information."
-//                            .formatted(SUPLA_THING_BRIDGE_TYPE.getId(), THING_BRIDGE));
-//            return false;
-//        }
+        //        if (flags.isCalcfgSubdevicePairing()) {
+        //            updateStatus(OFFLINE, CONFIGURATION_ERROR,
+        //                    "Device should be created as %s. See %s for more information."
+        //                            .formatted(SUPLA_THING_BRIDGE_TYPE.getId(), THING_BRIDGE));
+        //            return false;
+        //        }
 
         setChannels(registerEntity.getChannels());
         requireNonNull(writer.get())
@@ -386,8 +384,7 @@ public class ServerDeviceHandler extends AbstractDeviceHandler implements SuplaT
         var channels = new ArrayList<Channel>(1);
         if (channel == null) {
             // look for group channels
-            channels.addAll(thing.getChannels()
-                    .stream()
+            channels.addAll(thing.getChannels().stream()
                     .filter(c -> {
                         var uid = c.getUID();
                         if (!uid.isInGroup()) return false;
@@ -397,8 +394,11 @@ public class ServerDeviceHandler extends AbstractDeviceHandler implements SuplaT
                     })
                     .toList());
             if (channels.isEmpty()) {
-                logger.warn("There is no channel with ID {} that I can set value to. value={}, caption={}",
-                        id, value, parseString(value.caption));
+                logger.warn(
+                        "There is no channel with ID {} that I can set value to. value={}, caption={}",
+                        id,
+                        value,
+                        parseString(value.caption));
                 return;
             }
         } else {
@@ -409,12 +409,10 @@ public class ServerDeviceHandler extends AbstractDeviceHandler implements SuplaT
                         .withLabel(parseString(value.caption) + " > " + c.getLabel())
                         .build())
                 .toList();
-        var updatedChannelsIds = channelsWithCaption.stream()
-                .map(Channel::getUID)
-                .collect(Collectors.toSet());
+        var updatedChannelsIds =
+                channelsWithCaption.stream().map(Channel::getUID).collect(Collectors.toSet());
         synchronized (editThingLock) {
-            var newChannels = new ArrayList<>(thing.getChannels()
-                    .stream()
+            var newChannels = new ArrayList<>(thing.getChannels().stream()
                     .filter(c -> !updatedChannelsIds.contains(c.getUID()))
                     .toList());
             newChannels.addAll(channelsWithCaption);
@@ -444,7 +442,8 @@ public class ServerDeviceHandler extends AbstractDeviceHandler implements SuplaT
     private void consumeSubDeviceDetails(SubdeviceDetails value) {
         // there is nothing interesting that I can do with it, ignore
         if (logger.isDebugEnabled()) {
-            logger.debug("SubdeviceDetails(subDeviceId={}, name={}, softVer={}, productCode={}, serialNumber={})",
+            logger.debug(
+                    "SubdeviceDetails(subDeviceId={}, name={}, softVer={}, productCode={}, serialNumber={})",
                     value.subDeviceId,
                     parseString(value.name),
                     parseString(value.softVer),
@@ -655,7 +654,7 @@ public class ServerDeviceHandler extends AbstractDeviceHandler implements SuplaT
                                 Registering channels:
                                  > Raw:
                                 {}
-                                
+
                                  > OpenHABs:
                                 {}""",
                         rawChannels,
@@ -673,19 +672,24 @@ public class ServerDeviceHandler extends AbstractDeviceHandler implements SuplaT
         if (clazz.isAssignableFrom(ElectricityMeterValue.class)) {
             return Stream.empty();
         }
-        return findState(deviceChannel.getType(), deviceChannel.getNumber(), deviceChannel.getValue(), deviceChannel.getHvacValue());
+        return findState(
+                deviceChannel.getType(),
+                deviceChannel.getNumber(),
+                deviceChannel.getValue(),
+                deviceChannel.getHvacValue());
     }
 
     private ChannelUID createChannelUid(int channelNumber) {
         return new ChannelUID(getThing().getUID(), valueOf(channelNumber));
     }
 
-    private Stream<Pair<ChannelUID, State>> findState(int type, int channelNumber,
-                                                      @Nullable @jakarta.annotation.Nullable byte[] value,
-                                                      @jakarta.annotation.Nullable @Nullable HVACValue hvacValue) {
-        val valueSwitch = new ChannelValueSwitch<>(
-                new ChannelValueToState(
-                        getThing().getUID(), channelNumber));
+    private Stream<Pair<ChannelUID, State>> findState(
+            int type,
+            int channelNumber,
+            @Nullable @jakarta.annotation.Nullable byte[] value,
+            @jakarta.annotation.Nullable @Nullable HVACValue hvacValue) {
+        val valueSwitch =
+                new ChannelValueSwitch<>(new ChannelValueToState(getThing().getUID(), channelNumber));
         ChannelValue channelValue;
         if (value != null) {
             channelValue = ChannelTypeDecoder.INSTANCE.decode(type, value);
@@ -708,18 +712,17 @@ public class ServerDeviceHandler extends AbstractDeviceHandler implements SuplaT
 
     private void updateStatus(int channelNumber, int type, byte[] channelValue) {
         logger.debug("Updating status for channelNumber={}, type={}", channelNumber, type);
-        findState(type, channelNumber, channelValue, null)
-                .forEach(pair -> {
-                    var channelUID = pair.getValue0();
-                    var state = pair.getValue1();
-                    logger.debug(
-                            "Updating state for channel {}, channelNumber {}, type {}, state={}",
-                            channelUID,
-                            channelNumber,
-                            type,
-                            state);
-                    updateState(channelUID, state);
-                });
+        findState(type, channelNumber, channelValue, null).forEach(pair -> {
+            var channelUID = pair.getValue0();
+            var state = pair.getValue1();
+            logger.debug(
+                    "Updating state for channel {}, channelNumber {}, type {}, state={}",
+                    channelUID,
+                    channelNumber,
+                    type,
+                    state);
+            updateState(channelUID, state);
+        });
     }
 
     private Stream<Channel> createChannel(DeviceChannelTrait deviceChannel, boolean adjustLabel, int idx, int digits) {
@@ -730,7 +733,8 @@ public class ServerDeviceHandler extends AbstractDeviceHandler implements SuplaT
         channelTypes.put(deviceChannel.getNumber(), deviceChannel.getType());
         if (adjustLabel) {
             return channels.map(channel -> new Pair<>(ChannelBuilder.create(channel), channel.getLabel()))
-                    .map(pair -> pair.getValue0().withLabel(pair.getValue1() + (" (#%0" + digits + "d)").formatted(idx)))
+                    .map(pair ->
+                            pair.getValue0().withLabel(pair.getValue1() + (" (#%0" + digits + "d)").formatted(idx)))
                     .map(ChannelBuilder::build);
         }
         return channels;
@@ -739,16 +743,16 @@ public class ServerDeviceHandler extends AbstractDeviceHandler implements SuplaT
     private void updateChannels(List<Channel> channels) {
         synchronized (editThingLock) {
             new ArrayList<>(channels).sort((o1, o2) -> comparing((Channel id) -> {
-                try {
-                    var stringId = id.getUID().getId();
-                    if (stringId.contains(CHANNEL_GROUP_SEPARATOR)) {
-                        stringId = stringId.split(CHANNEL_GROUP_SEPARATOR)[0];
-                    }
-                    return Integer.parseInt(stringId);
-                } catch (NumberFormatException e) {
-                    return Integer.MAX_VALUE;
-                }
-            })
+                        try {
+                            var stringId = id.getUID().getId();
+                            if (stringId.contains(CHANNEL_GROUP_SEPARATOR)) {
+                                stringId = stringId.split(CHANNEL_GROUP_SEPARATOR)[0];
+                            }
+                            return Integer.parseInt(stringId);
+                        } catch (NumberFormatException e) {
+                            return Integer.MAX_VALUE;
+                        }
+                    })
                     .compare(o1, o2));
 
             var thingBuilder = editThing();

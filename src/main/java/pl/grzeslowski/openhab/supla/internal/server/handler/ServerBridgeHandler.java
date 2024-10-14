@@ -3,7 +3,6 @@ package pl.grzeslowski.openhab.supla.internal.server.handler;
 import static java.util.Arrays.stream;
 import static java.util.stream.Collectors.toCollection;
 import static java.util.stream.Collectors.toSet;
-import static lombok.AccessLevel.PACKAGE;
 import static org.openhab.core.thing.ThingStatus.OFFLINE;
 import static org.openhab.core.thing.ThingStatus.ONLINE;
 import static org.openhab.core.thing.ThingStatusDetail.COMMUNICATION_ERROR;
@@ -50,7 +49,7 @@ import pl.grzeslowski.openhab.supla.internal.Documentation;
 import pl.grzeslowski.openhab.supla.internal.server.discovery.ServerDiscoveryService;
 
 @NonNullByDefault
-public class ServerBridgeHandler extends BaseBridgeHandler implements SuplaThingRegistry,  SuplaBridge{
+public class ServerBridgeHandler extends BaseBridgeHandler implements SuplaThingRegistry, SuplaBridge {
     private static final int PROPER_AES_KEY_SIZE = 2147483647;
     private Logger logger = LoggerFactory.getLogger(ServerBridgeHandler.class);
 

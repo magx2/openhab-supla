@@ -1,6 +1,12 @@
 package pl.grzeslowski.openhab.supla.internal.server.handler;
 
+import static java.util.Objects.requireNonNull;
+
 import io.netty.channel.socket.SocketChannel;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import pl.grzeslowski.jsupla.protocol.api.types.ToServerProto;
@@ -8,13 +14,6 @@ import pl.grzeslowski.jsupla.server.api.MessageHandler;
 import pl.grzeslowski.jsupla.server.api.Writer;
 import pl.grzeslowski.openhab.supla.internal.server.discovery.ServerDiscoveryService;
 import pl.grzeslowski.openhab.supla.internal.server.traits.RegisterDeviceTraitParser;
-
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicReference;
-
-import static java.util.Objects.requireNonNull;
 
 @Slf4j
 @RequiredArgsConstructor

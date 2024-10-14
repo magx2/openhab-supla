@@ -15,7 +15,7 @@ public interface SuplaBridge {
 
     void childHandlerInitialized(ThingHandler childHandler, Thing childThing);
 
-    void childHandlerDisposed(ThingHandler childHandler, Thing childThing) ;
+    void childHandlerDisposed(ThingHandler childHandler, Thing childThing);
 
     static AuthData buildAuthData(ServerBridgeHandlerConfig config) {
         AuthData.@Nullable LocationAuthData locationAuthData;
