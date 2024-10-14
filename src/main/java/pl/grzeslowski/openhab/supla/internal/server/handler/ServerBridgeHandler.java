@@ -15,6 +15,7 @@ import static pl.grzeslowski.jsupla.server.netty.NettyServerFactory.SSL_CTX;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.BINDING_ID;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.CONNECTED_DEVICES_CHANNEL_ID;
 
+import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.SslProvider;
@@ -167,10 +168,10 @@ public class ServerBridgeHandler extends BaseBridgeHandler implements SuplaThing
         updateConnectedDevices(0);
     }
 
-    private MessageHandler messageHandlerFactory() {
+    private MessageHandler messageHandlerFactory(SocketChannel ch) {
         logger.debug("Device connected");
         // todo serverDiscoveryService.setNewDeviceFlux(newChannelsPipe);
-        return new OpenHabMessageHandler(this, serverDiscoveryService);
+        return new OpenHabMessageHandler(this, serverDiscoveryService, ch);
     }
 
     @Override
