@@ -27,11 +27,6 @@ import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.Channe
 public class ChannelCallback implements ChannelClassSwitch.Callback<Stream<Channel>> {
     private final ThingUID thingUID;
     private final int number;
-    private final int idx;
-
-    public ChannelCallback(ThingUID thingUID, int number) {
-        this(thingUID, number, number + 1);
-    }
 
     private ChannelUID createChannelUid() {
         return new ChannelUID(thingUID, valueOf(number));
