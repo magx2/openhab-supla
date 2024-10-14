@@ -64,8 +64,8 @@ public class ServerDiscoveryService extends AbstractDiscoveryService {
         if (registerDeviceTrait instanceof RegisterEmailDeviceTrait registerDevice) {
             var authKey = registerDevice.getAuthKey();
             var serverName = registerDevice.getServerName();
-            builder.withProperties(Map.of(CONFIG_AUTH_PROPERTY, bytesToHex(authKey)));
-            builder.withProperties(Map.of(SERVER_NAME_PROPERTY, serverName));
+            builder.withProperty(CONFIG_AUTH_PROPERTY, bytesToHex(authKey));
+            builder.withProperty(SERVER_NAME_PROPERTY, serverName);
         }
         return builder.build();
     }
