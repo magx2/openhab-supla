@@ -27,7 +27,7 @@ public interface SuplaBridge {
         }
         AuthData.@Nullable EmailAuthData emailAuthData;
         if (config.getEmail() != null) {
-            emailAuthData = new AuthData.EmailAuthData(config.getEmail());
+            emailAuthData = new AuthData.EmailAuthData(config.getEmail(), config.getAuthKey());
         } else {
             emailAuthData = null;
         }

@@ -13,5 +13,5 @@ public record AuthData(@Nullable LocationAuthData locationAuthData, @Nullable Em
 
     public static record LocationAuthData(int serverAccessId, @NonNull String serverAccessIdPassword) {}
 
-    public static record EmailAuthData(@NonNull String email) {}
+    public static record EmailAuthData(@NonNull String email, @Nullable String authKey) {}
 }
