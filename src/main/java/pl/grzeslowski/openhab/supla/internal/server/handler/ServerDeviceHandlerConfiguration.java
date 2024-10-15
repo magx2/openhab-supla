@@ -21,6 +21,9 @@ public class ServerDeviceHandlerConfiguration {
     private String email;
 
     @Nullable
+    private String authKey;
+
+    @Nullable
     private BigDecimal timeout;
 
     @Nullable

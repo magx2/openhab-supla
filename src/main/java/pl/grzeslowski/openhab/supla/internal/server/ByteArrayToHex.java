@@ -10,6 +10,7 @@ public interface ByteArrayToHex {
         return hexString.toString();
     }
 
+    @SuppressWarnings("StaticMethodOnlyUsedInOneClass")
     static byte[] hexToBytes(String hex) {
         int len = hex.length();
         byte[] data = new byte[len / 2];

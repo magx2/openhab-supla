@@ -53,6 +53,13 @@
 					send email to.&lt;/em&gt; </description>
 				<context>email</context>
 			</parameter>
+			<parameter name="authKey" type="text" min="1" groupName="emailIdLogin">
+				<label>Auth Key</label>
+				<description>
+					Authentication key that device sends to authenticate.
+				</description>
+				<advanced>true</advanced>
+			</parameter>
 
 			<parameter name="port" type="integer" required="true" min="1">
 				<label>Server port</label>

@@ -30,6 +30,8 @@ public class ServerBridgeHandlerConfig {
 
     @Nullable
     private String email;
+    @Nullable
+    private String authKey;
 
     private BigDecimal port = new BigDecimal(DEFAULT_PORT);
     private boolean ssl = true;

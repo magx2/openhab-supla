@@ -1,34 +1,5 @@
 package pl.grzeslowski.openhab.supla.internal.server.handler;
 
-import static java.lang.Short.parseShort;
-import static java.lang.String.valueOf;
-import static java.time.Instant.now;
-import static java.util.Collections.synchronizedMap;
-import static java.util.Comparator.comparing;
-import static java.util.Objects.requireNonNull;
-import static java.util.Objects.requireNonNullElse;
-import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.openhab.core.thing.ChannelUID.CHANNEL_GROUP_SEPARATOR;
-import static org.openhab.core.thing.ThingStatus.OFFLINE;
-import static org.openhab.core.thing.ThingStatus.ONLINE;
-import static org.openhab.core.thing.ThingStatusDetail.*;
-import static pl.grzeslowski.jsupla.protocol.api.ProtocolHelpers.parseString;
-import static pl.grzeslowski.jsupla.protocol.api.ResultCode.SUPLA_RESULTCODE_TRUE;
-import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.BINDING_ID;
-import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ServerDevicesProperties.*;
-import static pl.grzeslowski.openhab.supla.internal.server.ByteArrayToHex.bytesToHex;
-import static pl.grzeslowski.openhab.supla.internal.server.ByteArrayToHex.hexToBytes;
-
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.format.TextStyle;
-import java.util.*;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import lombok.Getter;
 import lombok.ToString;
 import lombok.val;
@@ -70,7 +41,39 @@ import pl.grzeslowski.openhab.supla.internal.server.ChannelCallback;
 import pl.grzeslowski.openhab.supla.internal.server.ChannelValueToState;
 import pl.grzeslowski.openhab.supla.internal.server.traits.*;
 
-/** The {@link ServerDeviceHandler} is responsible for handling commands, which are sent to one of the channels. */
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.TextStyle;
+import java.util.*;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static java.lang.Short.parseShort;
+import static java.lang.String.valueOf;
+import static java.time.Instant.now;
+import static java.util.Collections.synchronizedMap;
+import static java.util.Comparator.comparing;
+import static java.util.Objects.requireNonNull;
+import static java.util.Objects.requireNonNullElse;
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.openhab.core.thing.ChannelUID.CHANNEL_GROUP_SEPARATOR;
+import static org.openhab.core.thing.ThingStatus.OFFLINE;
+import static org.openhab.core.thing.ThingStatus.ONLINE;
+import static org.openhab.core.thing.ThingStatusDetail.*;
+import static pl.grzeslowski.jsupla.protocol.api.ProtocolHelpers.parseString;
+import static pl.grzeslowski.jsupla.protocol.api.ResultCode.SUPLA_RESULTCODE_TRUE;
+import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.BINDING_ID;
+import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ServerDevicesProperties.*;
+import static pl.grzeslowski.openhab.supla.internal.server.ByteArrayToHex.bytesToHex;
+import static pl.grzeslowski.openhab.supla.internal.server.ByteArrayToHex.hexToBytes;
+
+/**
+ * The {@link ServerDeviceHandler} is responsible for handling commands, which are sent to one of the channels.
+ */
 @NonNullByDefault
 @ToString(onlyExplicitlyIncluded = true)
 public class ServerDeviceHandler extends AbstractDeviceHandler implements SuplaThing {
@@ -169,9 +172,10 @@ public class ServerDeviceHandler extends AbstractDeviceHandler implements SuplaT
             }
             AuthData.@Nullable EmailAuthData emailAuthData;
             var configEmail = config.getEmail();
+            var configAuthKey = config.getAuthKey();
             var bridgeEmailAuthData = bridgeAuthData.emailAuthData();
 
-            if (configEmail == null && bridgeEmailAuthData == null) {
+            if ((configEmail == null || configAuthKey == null) && bridgeEmailAuthData == null) {
                 emailAuthData = null;
             } else {
                 String email;
@@ -181,7 +185,13 @@ public class ServerDeviceHandler extends AbstractDeviceHandler implements SuplaT
                 } else {
                     email = bridgeEmailAuthData.email();
                 }
-                emailAuthData = new AuthData.EmailAuthData(email);
+                String authKey;
+                if (configAuthKey != null) {
+                    authKey = configAuthKey;
+                } else {
+                    authKey = bridgeEmailAuthData.authKey();
+                }
+                emailAuthData = new AuthData.EmailAuthData(email, authKey);
             }
             var authData = new AuthData(locationAuthData, emailAuthData);
 
@@ -285,7 +295,7 @@ public class ServerDeviceHandler extends AbstractDeviceHandler implements SuplaT
                         OFFLINE,
                         CONFIGURATION_ERROR,
                         "Device authorization failed. Device tried to log in with email=%s and authKey=%s"
-                                .formatted(registerDevice.getEmail(), registerDevice.getAuthKey()));
+                                .formatted(registerDevice.getEmail(), bytesToHex(registerDevice.getAuthKey())));
             }
         } else {
             updateStatus(
@@ -497,7 +507,7 @@ public class ServerDeviceHandler extends AbstractDeviceHandler implements SuplaT
             logger.debug("Wrong email; {} != {}", email, emailAuthData.email());
             return false;
         }
-        var key = thing.getProperties().get(CONFIG_AUTH_PROPERTY);
+        var key = emailAuthData.authKey();
         if (key == null) {
             logger.debug("Device is missing {} property", CONFIG_AUTH_PROPERTY);
             return false;
@@ -626,7 +636,7 @@ public class ServerDeviceHandler extends AbstractDeviceHandler implements SuplaT
     }
 
     @Override
-    protected void handleStringCommand(ChannelUID channelUID, StringType command) throws Exception {
+    protected void handleStringCommand(ChannelUID channelUID, StringType command) {
         logger.warn(
                 "Not handling `{}` ({}) on channel `{}`",
                 command,
@@ -654,7 +664,7 @@ public class ServerDeviceHandler extends AbstractDeviceHandler implements SuplaT
                                 Registering channels:
                                  > Raw:
                                 {}
-
+                                
                                  > OpenHABs:
                                 {}""",
                         rawChannels,
@@ -743,16 +753,16 @@ public class ServerDeviceHandler extends AbstractDeviceHandler implements SuplaT
     private void updateChannels(List<Channel> channels) {
         synchronized (editThingLock) {
             new ArrayList<>(channels).sort((o1, o2) -> comparing((Channel id) -> {
-                        try {
-                            var stringId = id.getUID().getId();
-                            if (stringId.contains(CHANNEL_GROUP_SEPARATOR)) {
-                                stringId = stringId.split(CHANNEL_GROUP_SEPARATOR)[0];
-                            }
-                            return Integer.parseInt(stringId);
-                        } catch (NumberFormatException e) {
-                            return Integer.MAX_VALUE;
-                        }
-                    })
+                try {
+                    var stringId = id.getUID().getId();
+                    if (stringId.contains(CHANNEL_GROUP_SEPARATOR)) {
+                        stringId = stringId.split(CHANNEL_GROUP_SEPARATOR)[0];
+                    }
+                    return Integer.parseInt(stringId);
+                } catch (NumberFormatException e) {
+                    return Integer.MAX_VALUE;
+                }
+            })
                     .compare(o1, o2));
 
             var thingBuilder = editThing();
