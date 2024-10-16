@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<thing:thing-descriptions bindingId="supla"
+						  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+						  xmlns:thing="https://openhab.org/schemas/thing-description/v1.0.0"
+						  xsi:schemaLocation="https://openhab.org/schemas/thing-description/v1.0.0 https://openhab.org/schemas/thing-description-1.0.0.xsd">
+
+	<channel-type id="hvac-working">
+		<item-type>Switch</item-type>
+		<label>Working</label>
+		<description>Gives you information if HVAC is working</description>
+		<category>Switch</category>
+		<state readOnly="true"/>
+	</channel-type>
+
+	<channel-type id="hvac-mode">
+		<item-type>String</item-type>
+		<label>Mode</label>
+		<command>
+			<options>
+				<option value="NOT_SET">Not Set</option>
+				<option value="OFF">OFF</option>
+				<option value="HEAT">Heat</option>
+				<option value="COOL">Cool</option>
+				<option value="HEAT_COOL">Heat &amp; Cool</option>
+				<option value="FAN_ONLY">Fan Only</option>
+				<option value="DRY">Dry</option>
+			</options>
+		</command>
+	</channel-type>
+
+	<channel-type id="hvac-temperature-heat">
+		<item-type>Number:Temperature</item-type>
+		<label>Set Point Temperature Heat</label>
+		<description>The temperature that is set when heating</description>
+		<category>Temperature</category>
+		<state readOnly="true" pattern="%.1f %unit%"/>
+	</channel-type>
+
+	<channel-type id="hvac-temperature-cool">
+		<item-type>Number:Temperature</item-type>
+		<label>Set Point Temperature Heat</label>
+		<description>The temperature that is set when cooling</description>
+		<category>Temperature</category>
+		<state readOnly="true" pattern="%.1f %unit%"/>
+	</channel-type>
+</thing:thing-descriptions>

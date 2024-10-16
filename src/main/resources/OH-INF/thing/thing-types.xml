@@ -122,7 +122,7 @@
 	<channel-type id="switch-channel-ro">
 		<item-type>Switch</item-type>
 		<label>Read only ON/OFF switch</label>
-		<description>Gives you information if channel is ON or OFF</description>
+		<description>Gives you information if the channel is ON or OFF</description>
 		<category>Switch</category>
 		<state readOnly="true"/>
 	</channel-type>

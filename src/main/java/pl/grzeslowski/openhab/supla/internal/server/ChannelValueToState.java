@@ -27,6 +27,7 @@ import pl.grzeslowski.jsupla.protocol.api.channeltype.value.*;
 @RequiredArgsConstructor
 public class ChannelValueToState implements ChannelValueSwitch.Callback<Stream<Pair<ChannelUID, State>>> {
     public static final BigDecimal ONE_HUNDRED = BigDecimal.valueOf(100);
+    private static final BigDecimal UNDEF_TEMPERATURE_VALUE= BigDecimal.valueOf(-275);
     private final ThingUID thingUID;
     private final int channelNumber;
 
@@ -103,7 +104,7 @@ public class ChannelValueToState implements ChannelValueSwitch.Callback<Stream<P
     }
 
     private static Pair<ChannelUID, State> buildTempPair(BigDecimal temperature, ChannelUID id) {
-        if (temperature.equals(BigDecimal.valueOf(-275))) {
+        if (temperature.equals(UNDEF_TEMPERATURE_VALUE)) {
             return Pair.with(id, UNDEF);
         }
         return Pair.with(id, new QuantityType<>(temperature, CELSIUS));

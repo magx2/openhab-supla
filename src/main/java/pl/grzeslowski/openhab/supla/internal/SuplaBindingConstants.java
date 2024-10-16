@@ -93,5 +93,10 @@ public class SuplaBindingConstants {
         public static final String TOGGLE_GAT_CHANNEL_ID = "toggle-gate-channel";
         public static final String STRING_CHANNEL_ID = "string-channel";
         public static final String UNKNOWN_CHANNEL_ID = "unknown-channel";
+        // hvac
+        public static final String HVAC_WORKING_CHANNEL_ID = "hvac-working";
+        public static final String HVAC_MODE_CHANNEL_ID = "hvac-mode";
+        public static final String HVAC_TEMPERATURE_HEAT_CHANNEL_ID = "hvac-temperature-heat";
+        public static final String HVAC_TEMPERATURE_COOL_CHANNEL_ID = "hvac-temperature-cool";
     }
 }

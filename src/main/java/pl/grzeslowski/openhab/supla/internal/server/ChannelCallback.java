@@ -324,7 +324,7 @@ public class ChannelCallback implements ChannelClassSwitch.Callback<Stream<Chann
         val channels = new ArrayList<Channel>();
         {
             val channelUid = new ChannelUID(groupUid, "on");
-            final ChannelTypeUID channelTypeUID = createChannelTypeUID(SWITCH_CHANNEL_RO_ID);
+            final ChannelTypeUID channelTypeUID = createChannelTypeUID(HVAC_WORKING_CHANNEL_ID);
             channels.add(ChannelBuilder.create(channelUid, "Switch")
                     .withLabel("Working")
                     .withType(channelTypeUID)
@@ -332,7 +332,7 @@ public class ChannelCallback implements ChannelClassSwitch.Callback<Stream<Chann
         } // on
         {
             val channelUid = new ChannelUID(groupUid, "mode");
-            final ChannelTypeUID channelTypeUID = createChannelTypeUID(STRING_CHANNEL_ID);
+            final ChannelTypeUID channelTypeUID = createChannelTypeUID(HVAC_MODE_CHANNEL_ID);
             channels.add(ChannelBuilder.create(channelUid, "String")
                     .withLabel("Mode")
                     .withType(channelTypeUID)
@@ -340,7 +340,7 @@ public class ChannelCallback implements ChannelClassSwitch.Callback<Stream<Chann
         } // mode
         {
             val channelUid = new ChannelUID(groupUid, "setPointTemperatureHeat");
-            final ChannelTypeUID channelTypeUID = createChannelTypeUID(TEMPERATURE_CHANNEL_ID);
+            final ChannelTypeUID channelTypeUID = createChannelTypeUID(HVAC_TEMPERATURE_HEAT_CHANNEL_ID);
             channels.add(ChannelBuilder.create(channelUid, "Number:Temperature")
                     .withLabel("Set Point Temperature Heat")
                     .withType(channelTypeUID)
@@ -348,7 +348,7 @@ public class ChannelCallback implements ChannelClassSwitch.Callback<Stream<Chann
         } // setPointTemperatureHeat
         {
             val channelUid = new ChannelUID(groupUid, "setPointTemperatureCool");
-            final ChannelTypeUID channelTypeUID = createChannelTypeUID(TEMPERATURE_CHANNEL_ID);
+            final ChannelTypeUID channelTypeUID = createChannelTypeUID(HVAC_TEMPERATURE_COOL_CHANNEL_ID);
             channels.add(ChannelBuilder.create(channelUid, "Number:Temperature")
                     .withLabel("Set Point Temperature Cool")
                     .withType(channelTypeUID)
