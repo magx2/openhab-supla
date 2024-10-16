@@ -26,8 +26,7 @@ import pl.grzeslowski.openhab.supla.internal.cloud.discovery.CloudDiscovery;
 import pl.grzeslowski.openhab.supla.internal.cloud.handler.CloudBridgeHandler;
 import pl.grzeslowski.openhab.supla.internal.cloud.handler.CloudDeviceHandler;
 import pl.grzeslowski.openhab.supla.internal.server.discovery.ServerDiscoveryService;
-import pl.grzeslowski.openhab.supla.internal.server.handler.ServerBridgeHandler;
-import pl.grzeslowski.openhab.supla.internal.server.handler.ServerDeviceHandler;
+import pl.grzeslowski.openhab.supla.internal.server.handler.*;
 
 /** The {@link SuplaHandlerFactory} is responsible for creating things and thing handlers. */
 @Component(service = ThingHandlerFactory.class, immediate = true, configurationPid = "binding.supla")
@@ -61,6 +60,14 @@ public class SuplaHandlerFactory extends BaseThingHandlerFactory {
             return newCloudBridgeHandler(thing);
         }
 
+        if (SUPLA_GATEWAY_DEVICE_TYPE.equals(thingTypeUID)) {
+            return newGatewayDeviceHandler(thing);
+        }
+
+        if (SUPLA_SUB_DEVICE_TYPE.equals(thingTypeUID)) {
+            return newSubDeviceHandler(thing);
+        }
+
         return null;
     }
 
@@ -78,7 +85,7 @@ public class SuplaHandlerFactory extends BaseThingHandlerFactory {
 
     @NonNull
     private ThingHandler newServerDeviceHandler(final Thing thing) {
-        return new ServerDeviceHandler(thing);
+        return new ServerSingleDeviceHandler(thing);
     }
 
     @NonNull
@@ -118,5 +125,17 @@ public class SuplaHandlerFactory extends BaseThingHandlerFactory {
                 bundleContext.getBundle().getBundleId(),
                 DiscoveryService.class.getName());
         bundleContext.ungetService(serviceReference);
+    }
+
+    private ThingHandler newGatewayDeviceHandler(Thing thing) {
+        var discovery = new ServerDiscoveryService(thing.getUID());
+        var bridgeHandler = new ServerGatewayDeviceHandler(thing, discovery);
+        var serviceRegistration = registerThingDiscovery(discovery);
+        servicesToDispose.put(bridgeHandler, serviceRegistration.getReference());
+        return bridgeHandler;
+    }
+
+    private ThingHandler newSubDeviceHandler(Thing thing) {
+        return new ServerSubDeviceHandler(thing);
     }
 }

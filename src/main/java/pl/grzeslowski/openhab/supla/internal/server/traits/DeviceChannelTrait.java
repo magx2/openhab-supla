@@ -16,7 +16,15 @@ public class DeviceChannelTrait {
     @Nullable
     pl.grzeslowski.jsupla.protocol.api.structs.HVACValue hvacValue;
 
-    public DeviceChannelTrait(int number, int type, @Nullable byte[] value, @Nullable HVACValue hvacValue) {
+    @Nullable
+    Integer subDeviceId;
+
+    public DeviceChannelTrait(
+            int number,
+            int type,
+            @Nullable byte[] value,
+            @Nullable HVACValue hvacValue,
+            @Nullable Integer subDeviceId) {
         this.number = number;
         this.type = type;
         this.value = value;
@@ -24,25 +32,26 @@ public class DeviceChannelTrait {
         if (value == null && hvacValue == null) {
             throw new IllegalArgumentException("value and hvacValue must not be null!");
         }
+        this.subDeviceId = subDeviceId;
     }
 
     public DeviceChannelTrait(SuplaDeviceChannel channel) {
-        this(channel.number, channel.type, channel.value, null);
+        this(channel.number, channel.type, channel.value, null, null);
     }
 
     public DeviceChannelTrait(SuplaDeviceChannelB channel) {
-        this(channel.number, channel.type, channel.value, null);
+        this(channel.number, channel.type, channel.value, null, null);
     }
 
     public DeviceChannelTrait(SuplaDeviceChannelC channel) {
-        this(channel.number, channel.type, channel.value, channel.hvacValue);
+        this(channel.number, channel.type, channel.value, channel.hvacValue, null);
     }
 
     public DeviceChannelTrait(SuplaDeviceChannelD channel) {
-        this(channel.number, channel.type, channel.value, channel.hvacValue);
+        this(channel.number, channel.type, channel.value, channel.hvacValue, null);
     }
 
     public DeviceChannelTrait(SuplaDeviceChannelE channel) {
-        this(channel.number, channel.type, channel.value, channel.hvacValue);
+        this(channel.number, channel.type, channel.value, channel.hvacValue, (int) channel.subDeviceId);
     }
 }
