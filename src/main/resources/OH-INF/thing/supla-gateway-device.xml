@@ -4,17 +4,17 @@
 						xmlns:thing="https://openhab.org/schemas/thing-description/v1.0.0"
 						xsi:schemaLocation="https://openhab.org/schemas/thing-description/v1.0.0 https://openhab.org/schemas/thing-description-1.0.0.xsd">
 
-	<bridge-type id="thing-bridge">
+	<bridge-type id="gateway-device">
 		<supported-bridge-type-refs>
 			<bridge-type-ref id="server-bridge"/>
 		</supported-bridge-type-refs>
-		<label>Supla Thing Bridge</label>
+		<label>Supla Gateway Bridge</label>
 		<description>
-			This is Supla Thing Gateway
+			This is Supla Gateway
 		</description>
 
 		<channels>
-			<channel id="thing-devices" typeId="connected-devices">
+			<channel id="gateway-connected-devices" typeId="connected-devices">
 				<description>Indicates how many devices are connected to this gateway.</description>
 			</channel>
 		</channels>
@@ -69,6 +69,13 @@
 					send email to.&lt;/em&gt;
 				</description>
 				<context>email</context>
+				<advanced>true</advanced>
+			</parameter>
+			<parameter name="authKey" type="text" min="1" groupName="emailIdLogin">
+				<label>Auth Key</label>
+				<description>
+					Authentication key that device sends to authenticate.
+				</description>
 				<advanced>true</advanced>
 			</parameter>
 

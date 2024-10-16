@@ -1,10 +1,9 @@
 package pl.grzeslowski.openhab.supla.internal.server.handler;
 
 import org.eclipse.jdt.annotation.Nullable;
-import org.openhab.core.thing.Thing;
-import org.openhab.core.thing.binding.ThingHandler;
+import org.openhab.core.thing.binding.BridgeHandler;
 
-public interface SuplaBridge {
+public interface SuplaBridge extends BridgeHandler {
     TimeoutConfiguration getTimeoutConfiguration();
 
     AuthData getAuthData();
@@ -12,10 +11,6 @@ public interface SuplaBridge {
     void deviceDisconnected();
 
     void deviceConnected();
-
-    void childHandlerInitialized(ThingHandler childHandler, Thing childThing);
-
-    void childHandlerDisposed(ThingHandler childHandler, Thing childThing);
 
     static AuthData buildAuthData(ServerBridgeHandlerConfig config) {
         AuthData.@Nullable LocationAuthData locationAuthData;

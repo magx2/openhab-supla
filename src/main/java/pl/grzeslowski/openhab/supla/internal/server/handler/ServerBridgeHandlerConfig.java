@@ -30,6 +30,7 @@ public class ServerBridgeHandlerConfig {
 
     @Nullable
     private String email;
+
     @Nullable
     private String authKey;
 

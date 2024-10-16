@@ -11,11 +11,9 @@ import org.openhab.core.thing.binding.BaseThingHandler;
 import org.openhab.core.types.Command;
 import org.openhab.core.types.RefreshType;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 @NonNullByDefault
 public abstract class AbstractDeviceHandler extends BaseThingHandler {
-    private final Logger logger = LoggerFactory.getLogger(AbstractDeviceHandler.class);
 
     public AbstractDeviceHandler(final Thing thing) {
         super(thing);
@@ -27,7 +25,7 @@ public abstract class AbstractDeviceHandler extends BaseThingHandler {
         try {
             internalInitialize();
         } catch (Exception e) {
-            logger.error("Error occurred while initializing Supla device!", e);
+            getLogger().error("Error occurred while initializing Supla device!", e);
             updateStatus(
                     OFFLINE,
                     CONFIGURATION_ERROR,
@@ -39,6 +37,7 @@ public abstract class AbstractDeviceHandler extends BaseThingHandler {
 
     @Override
     public void handleCommand(final ChannelUID channelUID, final Command command) {
+        getLogger().debug("handleCommand({}, {})", channelUID, command);
         try {
             if (command instanceof RefreshType) {
                 handleRefreshCommand(channelUID);
@@ -59,14 +58,14 @@ public abstract class AbstractDeviceHandler extends BaseThingHandler {
             } else if (command instanceof StringType stringValue) {
                 handleStringCommand(channelUID, stringValue);
             } else {
-                logger.warn(
+                getLogger().warn(
                         "Does not know how to handle command `{}` ({}) on channel `{}`!",
                         command,
                         command.getClass().getSimpleName(),
                         channelUID);
             }
         } catch (Exception ex) {
-            logger.error(
+            getLogger().error(
                     "Error occurred while handling command `{}` ({}) on channel `{}`!",
                     command,
                     command.getClass().getSimpleName(),
@@ -96,4 +95,6 @@ public abstract class AbstractDeviceHandler extends BaseThingHandler {
             throws Exception;
 
     protected abstract void handleStringCommand(final ChannelUID channelUID, final StringType command) throws Exception;
+    
+    protected abstract Logger getLogger();
 }

@@ -4,11 +4,10 @@
 						xmlns:thing="https://openhab.org/schemas/thing-description/v1.0.0"
 						xsi:schemaLocation="https://openhab.org/schemas/thing-description/v1.0.0 https://openhab.org/schemas/thing-description-1.0.0.xsd">
 
-	<!-- Sample Thing Type -->
 	<thing-type id="server-device">
 		<supported-bridge-type-refs>
 			<bridge-type-ref id="server-bridge"/>
-			<bridge-type-ref id="thing-bridge"/>
+			<bridge-type-ref id="gateway-device"/>
 		</supported-bridge-type-refs>
 		<label>Supla Native Server Device</label>
 		<description>Generic type for all Supla devices. Channels will be provided by device at runtime</description>

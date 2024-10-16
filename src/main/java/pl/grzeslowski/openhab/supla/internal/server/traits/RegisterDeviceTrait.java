@@ -10,12 +10,14 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
+import org.eclipse.jdt.annotation.NonNullByDefault;
 import pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaRegisterDevice;
 
 @RequiredArgsConstructor
 @Getter
 @ToString
 @EqualsAndHashCode
+@NonNullByDefault
 public class RegisterDeviceTrait {
     private final String guid;
     private final String name;

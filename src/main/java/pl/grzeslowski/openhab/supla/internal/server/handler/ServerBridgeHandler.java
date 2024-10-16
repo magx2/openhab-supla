@@ -60,7 +60,8 @@ public class ServerBridgeHandler extends BaseBridgeHandler implements SuplaThing
 
     private final AtomicInteger numberOfConnectedDevices = new AtomicInteger();
 
-    private final Collection<ServerDeviceHandler> childHandlers = Collections.synchronizedList(new ArrayList<>());
+    private final Collection<ServerAbstractDeviceHandler> childHandlers =
+            Collections.synchronizedList(new ArrayList<>());
 
     @Getter
     @Nullable
@@ -257,7 +258,7 @@ public class ServerBridgeHandler extends BaseBridgeHandler implements SuplaThing
 
     @Override
     public void childHandlerInitialized(ThingHandler childHandler, Thing childThing) {
-        if (!(childHandler instanceof ServerDeviceHandler serverDevice)) {
+        if (!(childHandler instanceof ServerAbstractDeviceHandler serverDevice)) {
             return;
         }
         logger.debug("Add Handler {}", serverDevice.getGuid());
@@ -266,7 +267,7 @@ public class ServerBridgeHandler extends BaseBridgeHandler implements SuplaThing
 
     @Override
     public void childHandlerDisposed(ThingHandler childHandler, Thing childThing) {
-        if (!(childHandler instanceof ServerDeviceHandler serverDevice)) {
+        if (!(childHandler instanceof ServerAbstractDeviceHandler serverDevice)) {
             return;
         }
         logger.debug("Remove Handler {}", serverDevice.getGuid());

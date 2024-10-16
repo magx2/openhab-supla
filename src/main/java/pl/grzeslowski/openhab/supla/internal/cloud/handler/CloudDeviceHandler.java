@@ -18,6 +18,8 @@ import io.swagger.client.model.ChannelFunctionActionEnum;
 import io.swagger.client.model.Device;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import lombok.Getter;
 import org.eclipse.jdt.annotation.NonNull;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
@@ -53,7 +55,8 @@ import pl.grzeslowski.openhab.supla.internal.handler.AbstractDeviceHandler;
  */
 @NonNullByDefault
 public final class CloudDeviceHandler extends AbstractDeviceHandler {
-    private final Logger logger = LoggerFactory.getLogger(CloudDeviceHandler.class);
+    @Getter
+    private Logger logger = LoggerFactory.getLogger(CloudDeviceHandler.class);
     private final LedCommandExecutorFactory ledCommandExecutorFactory;
 
     @Nullable
@@ -98,7 +101,9 @@ public final class CloudDeviceHandler extends AbstractDeviceHandler {
         }
         initApi(handler);
 
-        if (!initCloudApi()) {
+       var cloudIdString = String.valueOf(getConfig().get(SUPLA_DEVICE_CLOUD_ID));
+        logger = LoggerFactory.getLogger(CloudDeviceHandler.class.getName() +"." + cloudIdString);
+        if (!initCloudApi(cloudIdString)) {
             return;
         }
 
@@ -117,8 +122,7 @@ public final class CloudDeviceHandler extends AbstractDeviceHandler {
         updateStatus(ONLINE);
     }
 
-    private boolean initCloudApi() {
-        final String cloudIdString = String.valueOf(getConfig().get(SUPLA_DEVICE_CLOUD_ID));
+    private boolean initCloudApi( String cloudIdString ) {
         try {
             this.cloudId = parseInt(cloudIdString);
             return true;
@@ -426,5 +430,11 @@ public final class CloudDeviceHandler extends AbstractDeviceHandler {
 
     private io.swagger.client.model.Channel queryForChannel(final int channelId) throws Exception {
         return requireNonNull(channelsApi).getChannel(channelId, List.of("state"));
+    }
+
+    @Override
+    public void dispose() {
+        logger = LoggerFactory.getLogger(CloudDeviceHandler.class);
+        super.dispose();
     }
 }
