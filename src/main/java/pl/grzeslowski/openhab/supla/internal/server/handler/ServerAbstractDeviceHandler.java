@@ -60,6 +60,7 @@ public abstract class ServerAbstractDeviceHandler extends AbstractDeviceHandler 
     public static final byte ACTIVITY_TIMEOUT = (byte) 100;
     public static final byte VERSION = (byte) 6;
     public static final byte VERSION_MIN = (byte) 1;
+
     @Getter
     protected Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -81,6 +82,7 @@ public abstract class ServerAbstractDeviceHandler extends AbstractDeviceHandler 
     private ScheduledFuture<?> pingSchedule;
 
     @Nullable
+    @Getter
     private SuplaBridge bridgeHandler;
 
     @Getter(PROTECTED)
@@ -221,6 +223,8 @@ public abstract class ServerAbstractDeviceHandler extends AbstractDeviceHandler 
                 consumeChannelState(value);
             } else if (entity instanceof SubdeviceDetails value) {
                 consumeSubDeviceDetails(value);
+            } else if (entity instanceof SuplaChannelNewValueResult value) {
+                consumeSuplaChannelNewValueResult(value);
             } else {
                 logger.debug("Not supporting message:\n{}", entity);
             }
@@ -330,7 +334,7 @@ public abstract class ServerAbstractDeviceHandler extends AbstractDeviceHandler 
     }
 
     @Override
-    public final  void consumeLocalTimeRequest(Writer writer) {
+    public final void consumeLocalTimeRequest(Writer writer) {
         // Get current local date and time
         var now = LocalDateTime.now();
 
@@ -355,7 +359,7 @@ public abstract class ServerAbstractDeviceHandler extends AbstractDeviceHandler 
     }
 
     @Override
-    public final  void consumeSuplaPingServer(SuplaPingServer ping, Writer writer) {
+    public final void consumeSuplaPingServer(SuplaPingServer ping, Writer writer) {
         var response = new SuplaPingServerResult(ping.now);
         writer.write(response).addCompleteListener(() -> {
             logger.trace("pingServer {}s {}ms", response.now.tvSec, response.now.tvUsec);

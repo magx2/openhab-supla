@@ -1,5 +1,6 @@
 package pl.grzeslowski.openhab.supla.internal.server;
 
+import static java.lang.Short.parseShort;
 import static java.lang.String.valueOf;
 import static java.util.Comparator.comparing;
 import static org.openhab.core.thing.ChannelUID.CHANNEL_GROUP_SEPARATOR;
@@ -7,7 +8,6 @@ import static pl.grzeslowski.jsupla.protocol.api.ProtocolHelpers.parseString;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -19,11 +19,10 @@ import org.eclipse.jdt.annotation.Nullable;
 import org.javatuples.Pair;
 import org.openhab.core.thing.Channel;
 import org.openhab.core.thing.ChannelUID;
-import org.openhab.core.thing.Thing;
 import org.openhab.core.thing.binding.builder.ChannelBuilder;
-import org.openhab.core.thing.binding.builder.ThingBuilder;
 import org.openhab.core.types.State;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.decoders.ChannelTypeDecoder;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.decoders.HVACValueDecoderImpl;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.value.ChannelClassSwitch;
@@ -32,27 +31,16 @@ import pl.grzeslowski.jsupla.protocol.api.channeltype.value.ChannelValueSwitch;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.value.ElectricityMeterValue;
 import pl.grzeslowski.jsupla.protocol.api.structs.HVACValue;
 import pl.grzeslowski.jsupla.protocol.api.structs.dcs.SetCaption;
+import pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaChannelNewValueResult;
+import pl.grzeslowski.openhab.supla.internal.server.handler.SuplaDevice;
 import pl.grzeslowski.openhab.supla.internal.server.traits.DeviceChannelTrait;
 import pl.grzeslowski.openhab.supla.internal.server.traits.DeviceChannelValueTrait;
 
 @NonNullByDefault
 @RequiredArgsConstructor
 public class ChannelUtil {
-    private final Invoker invoker;
-
-    public interface Invoker {
-        Logger getLogger();
-
-        Thing getThing();
-
-        Map<Integer, Integer> getChannelTypes();
-
-        void updateState(ChannelUID uid, State state);
-
-        ThingBuilder editThing();
-
-        void updateThing(Thing thing);
-    }
+    private static final Logger LOGGER = LoggerFactory.getLogger(ChannelUtil.class);
+    private final SuplaDevice invoker;
 
     public void buildChannels(List<DeviceChannelTrait> deviceChannels) {
         {
@@ -72,12 +60,12 @@ public class ChannelUtil {
                 invoker.getLogger()
                         .debug(
                                 """
-                                Registering channels:
-                                 > Raw:
-                                {}
+                                        Registering channels:
+                                         > Raw:
+                                        {}
 
-                                 > OpenHABs:
-                                {}""",
+                                         > OpenHABs:
+                                        {}""",
                                 rawChannels,
                                 string);
             }
@@ -96,8 +84,7 @@ public class ChannelUtil {
         invoker.getChannelTypes().put(deviceChannel.getNumber(), deviceChannel.getType());
         if (adjustLabel) {
             return channels.map(channel -> new Pair<>(ChannelBuilder.create(channel), channel.getLabel()))
-                    .map(pair ->
-                            pair.getValue0().withLabel(("#%0" + digits + "d ").formatted(idx) + pair.getValue1()))
+                    .map(pair -> pair.getValue0().withLabel(("#%0" + digits + "d ").formatted(idx) + pair.getValue1()))
                     .map(ChannelBuilder::build);
         }
         return channels;
@@ -223,10 +210,61 @@ public class ChannelUtil {
         updateChannels(newChannels);
     }
 
-    public static Optional<Integer> findId(@Nullable Integer id, @Nullable  Short channelNumber) {
+    public static Optional<Integer> findId(@Nullable Integer id, @Nullable Short channelNumber) {
         return Optional.ofNullable(id)
-                .or(()->
-                        Optional.ofNullable(channelNumber)
-                                .map(Integer::valueOf));
+                .or(() -> Optional.ofNullable(channelNumber).map(Integer::valueOf));
+    }
+
+    public void consumeSuplaChannelNewValueResult(SuplaChannelNewValueResult value) {
+        var channelAndPreviousState = invoker.getSenderIdToChannelUID().remove(value.senderId);
+        if (value.success != 0) {
+            // operation was successful; can terminate
+            return;
+        }
+        if (channelAndPreviousState == null) {
+            invoker.getLogger()
+                    .info(
+                            "Some previous new value result failed. " + "Refreshing channel nr {}. value={}",
+                            value.channelNumber,
+                            value);
+            invoker.getThing().getChannels().stream()
+                    .map(Channel::getUID)
+                    .filter(uid -> correctChannelNumber(uid, value.channelNumber))
+                    .forEach(invoker::handleRefreshCommand);
+            return;
+        }
+
+        var channelUID = channelAndPreviousState.channelUID();
+        var previousState = channelAndPreviousState.previousState();
+        if (previousState != null) {
+            invoker.updateState(channelUID, previousState);
+        }
+        invoker.getLogger()
+                .info(
+                        "Some previous new value result failed. "
+                                + "Refreshing channel ID {}. value={}, previousState={}",
+                        channelUID,
+                        value,
+                        previousState);
+        invoker.handleRefreshCommand(channelUID);
+    }
+
+    private boolean correctChannelNumber(ChannelUID channel, short channelNumber) {
+        return findSuplaChannelNumber(channel)
+                .filter(number -> number == channelNumber)
+                .isPresent();
+    }
+
+    @SuppressWarnings("StaticMethodOnlyUsedInOneClass")
+    public static Optional<Short> findSuplaChannelNumber(ChannelUID channelUID) {
+        return Optional.ofNullable(channelUID.getGroupId())
+                .or(() -> Optional.of(channelUID.getId()))
+                .map(groupId -> {
+                    try {
+                        return parseShort(groupId);
+                    } catch (NumberFormatException e) {
+                        return null;
+                    }
+                });
     }
 }
