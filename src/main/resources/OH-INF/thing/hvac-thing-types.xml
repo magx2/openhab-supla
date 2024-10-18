@@ -32,15 +32,21 @@
 		<item-type>Number:Temperature</item-type>
 		<label>Set Point Temperature Heat</label>
 		<description>The temperature that is set when heating</description>
-		<category>Temperature</category>
-		<state readOnly="true" pattern="%.1f %unit%"/>
+		<category>temperature_hot</category>
+		<tags>
+			<tag>Setpoint</tag>
+		</tags>
+		<state pattern="%.1f %unit%"/>
 	</channel-type>
 
 	<channel-type id="hvac-temperature-cool">
 		<item-type>Number:Temperature</item-type>
-		<label>Set Point Temperature Heat</label>
+		<label>Set Point Temperature Cooling</label>
 		<description>The temperature that is set when cooling</description>
-		<category>Temperature</category>
-		<state readOnly="true" pattern="%.1f %unit%"/>
+		<category>temperature_cold</category>
+		<tags>
+			<tag>Setpoint</tag>
+		</tags>
+		<state pattern="%.1f %unit%"/>
 	</channel-type>
 </thing:thing-descriptions>

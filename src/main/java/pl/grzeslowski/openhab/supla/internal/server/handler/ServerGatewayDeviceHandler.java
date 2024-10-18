@@ -156,6 +156,11 @@ public class ServerGatewayDeviceHandler extends ServerAbstractDeviceHandler impl
     public void handleStringCommand(ChannelUID channelUID, StringType command) {}
 
     @Override
+    public void handleQuantityType(ChannelUID channelUID, QuantityType<?> command) {
+
+    }
+
+    @Override
     public void childHandlerInitialized(ThingHandler childHandler, Thing childThing) {
         if (!(childHandler instanceof ServerSubDeviceHandler subDevice)) {
             return;

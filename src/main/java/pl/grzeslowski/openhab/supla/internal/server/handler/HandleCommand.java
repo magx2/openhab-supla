@@ -21,4 +21,6 @@ public interface HandleCommand {
     void handleStopMoveTypeCommand(final ChannelUID channelUID, final StopMoveType command);
 
     void handleStringCommand(final ChannelUID channelUID, final StringType command);
+
+    void handleQuantityType(final ChannelUID channelUID, final QuantityType<?> command);
 }

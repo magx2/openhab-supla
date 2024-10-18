@@ -1,6 +1,7 @@
 package pl.grzeslowski.openhab.supla.internal.server;
 
 import static java.lang.String.valueOf;
+import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ChannelIds.Hvac.*;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.Channels.*;
 
 import java.util.ArrayList;
@@ -323,7 +324,7 @@ public class ChannelCallback implements ChannelClassSwitch.Callback<Stream<Chann
         val groupUid = new ChannelGroupUID(thingUID, valueOf(number));
         val channels = new ArrayList<Channel>();
         {
-            val channelUid = new ChannelUID(groupUid, "on");
+            val channelUid = new ChannelUID(groupUid, HVAC_ON);
             final ChannelTypeUID channelTypeUID = createChannelTypeUID(HVAC_WORKING_CHANNEL_ID);
             channels.add(ChannelBuilder.create(channelUid, "Switch")
                     .withLabel("Working")
@@ -331,7 +332,7 @@ public class ChannelCallback implements ChannelClassSwitch.Callback<Stream<Chann
                     .build());
         } // on
         {
-            val channelUid = new ChannelUID(groupUid, "mode");
+            val channelUid = new ChannelUID(groupUid, HVAC_MODE);
             final ChannelTypeUID channelTypeUID = createChannelTypeUID(HVAC_MODE_CHANNEL_ID);
             channels.add(ChannelBuilder.create(channelUid, "String")
                     .withLabel("Mode")
@@ -339,7 +340,7 @@ public class ChannelCallback implements ChannelClassSwitch.Callback<Stream<Chann
                     .build());
         } // mode
         {
-            val channelUid = new ChannelUID(groupUid, "setPointTemperatureHeat");
+            val channelUid = new ChannelUID(groupUid, HVAC_SET_POINT_TEMPERATURE_HEAT);
             final ChannelTypeUID channelTypeUID = createChannelTypeUID(HVAC_TEMPERATURE_HEAT_CHANNEL_ID);
             channels.add(ChannelBuilder.create(channelUid, "Number:Temperature")
                     .withLabel("Set Point Temperature Heat")
@@ -347,7 +348,7 @@ public class ChannelCallback implements ChannelClassSwitch.Callback<Stream<Chann
                     .build());
         } // setPointTemperatureHeat
         {
-            val channelUid = new ChannelUID(groupUid, "setPointTemperatureCool");
+            val channelUid = new ChannelUID(groupUid, HVAC_SET_POINT_TEMPERATURE_COOL);
             final ChannelTypeUID channelTypeUID = createChannelTypeUID(HVAC_TEMPERATURE_COOL_CHANNEL_ID);
             channels.add(ChannelBuilder.create(channelUid, "Number:Temperature")
                     .withLabel("Set Point Temperature Cool")
