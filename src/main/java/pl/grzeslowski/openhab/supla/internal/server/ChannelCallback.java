@@ -380,7 +380,7 @@ public class ChannelCallback implements ChannelClassSwitch.Callback<Stream<Chann
         val channelUid = new ChannelUID(groupUid, "flags-" + flag);
         val channelTypeUID = createChannelTypeUID(FLAG_CHANNEL_ID);
         return ChannelBuilder.create(channelUid, "Switch")
-                .withLabel("Flag \"%s\"")
+                .withLabel("Flag \"%s\"".formatted(flag))
                 .withType(channelTypeUID)
                 .build();
     }
