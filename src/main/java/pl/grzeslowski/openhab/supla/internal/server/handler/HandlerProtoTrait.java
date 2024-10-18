@@ -32,14 +32,9 @@ class HandlerProtoTrait implements HandleCommand {
 
     @Override
     public void handleRefreshCommand(ChannelUID channelUID) {
-        var maybeChannelNumber = findSuplaChannelNumber(channelUID);
-        if (maybeChannelNumber.isEmpty()) {
-            suplaDevice.getLogger().warn("Cannot parse channelNumber from {}", channelUID);
-            return;
-        }
-        var channelNumber = maybeChannelNumber.get();
-        var request = new ChannelStateRequest(suplaDevice.getSenderId().getAndIncrement(), null, channelNumber);
-        suplaDevice.write(request);
+        findSuplaChannelNumber(channelUID)
+                .map(channelNumber -> new ChannelStateRequest(suplaDevice.getSenderId().getAndIncrement(), null, channelNumber))
+                .ifPresent(suplaDevice::write);
     }
 
     @Override
