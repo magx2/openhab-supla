@@ -58,7 +58,7 @@ public abstract class AbstractDeviceHandler extends BaseThingHandler implements 
                 handleStopMoveTypeCommand(channelUID, stopMoveValue);
             } else if (command instanceof StringType stringValue) {
                 handleStringCommand(channelUID, stringValue);
-            } else if(command instanceof QuantityType<?> quantityType) {
+            } else if (command instanceof QuantityType<?> quantityType) {
                 handleQuantityType(channelUID, quantityType);
             } else {
                 getLogger()

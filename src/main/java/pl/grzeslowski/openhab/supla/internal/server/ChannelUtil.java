@@ -237,8 +237,8 @@ public class ChannelUtil {
 
         var channelUID = channelAndPreviousState.channelUID();
         var previousState = channelAndPreviousState.previousState();
-        if(previousState==null) {
-            previousState=UNDEF;
+        if (previousState == null) {
+            previousState = UNDEF;
         }
         invoker.updateState(channelUID, previousState);
         invoker.getLogger()
