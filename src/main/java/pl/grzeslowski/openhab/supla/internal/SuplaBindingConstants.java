@@ -99,4 +99,12 @@ public class SuplaBindingConstants {
         public static final String HVAC_TEMPERATURE_HEAT_CHANNEL_ID = "hvac-temperature-heat";
         public static final String HVAC_TEMPERATURE_COOL_CHANNEL_ID = "hvac-temperature-cool";
     }
+    public static class ChannelIds {
+        public static class Hvac {
+            public static final String HVAC_ON = "on";
+            public static final String HVAC_MODE = "mode";
+            public static final String HVAC_SET_POINT_TEMPERATURE_HEAT = "setPointTemperatureHeat";
+            public static final String HVAC_SET_POINT_TEMPERATURE_COOL = "setPointTemperatureCool";
+        }
+    }
 }

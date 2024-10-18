@@ -1,10 +1,5 @@
 package pl.grzeslowski.openhab.supla.internal.server.handler;
 
-import static org.openhab.core.thing.ThingStatus.OFFLINE;
-import static org.openhab.core.thing.ThingStatus.ONLINE;
-import static org.openhab.core.thing.ThingStatusDetail.COMMUNICATION_ERROR;
-import static pl.grzeslowski.openhab.supla.internal.server.ChannelUtil.findSuplaChannelNumber;
-
 import jakarta.annotation.Nullable;
 import lombok.RequiredArgsConstructor;
 import org.eclipse.jdt.annotation.NonNullByDefault;
@@ -17,6 +12,15 @@ import pl.grzeslowski.jsupla.protocol.api.channeltype.encoders.ChannelTypeEncode
 import pl.grzeslowski.jsupla.protocol.api.channeltype.value.*;
 import pl.grzeslowski.jsupla.protocol.api.structs.csd.ChannelStateRequest;
 import pl.grzeslowski.jsupla.protocol.api.structs.sd.SuplaChannelNewValue;
+
+import static java.util.Objects.requireNonNull;
+import static org.openhab.core.thing.ThingStatus.OFFLINE;
+import static org.openhab.core.thing.ThingStatus.ONLINE;
+import static org.openhab.core.thing.ThingStatusDetail.COMMUNICATION_ERROR;
+import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ChannelIds.Hvac.HVAC_SET_POINT_TEMPERATURE_COOL;
+import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ChannelIds.Hvac.HVAC_SET_POINT_TEMPERATURE_HEAT;
+import static pl.grzeslowski.openhab.supla.internal.server.ChannelUtil.findSuplaChannelNumber;
+import static tech.units.indriya.unit.Units.CELSIUS;
 
 @NonNullByDefault
 @RequiredArgsConstructor
@@ -106,6 +110,46 @@ class HandlerProtoTrait implements HandleCommand {
                 .warn(
                         "Not handling `{}` ({}) on channel `{}`",
                         command,
+                        command.getClass().getSimpleName(),
+                        channelUID);
+    }
+
+    @Override
+    public void handleQuantityType(ChannelUID channelUID, QuantityType<?> command) {
+        var unit = command.getUnit();
+        var id = channelUID.getIdWithoutGroup();
+        if ((id.equals(HVAC_SET_POINT_TEMPERATURE_HEAT)
+                || id.equals(HVAC_SET_POINT_TEMPERATURE_COOL))
+                && unit.isCompatible(CELSIUS)) {
+            var celsiusQuantity = requireNonNull(command.toUnit(CELSIUS));
+            var celsiusValue = celsiusQuantity.doubleValue();
+
+            var on = true;
+           var mode = HvacValue.Mode.NOT_SET;
+            Double setPointHeat;
+            Double setPointCool;
+            HvacValue.Flags flags;
+            if (id.equals(HVAC_SET_POINT_TEMPERATURE_HEAT)) {
+                setPointHeat = celsiusValue;
+                setPointCool = null;
+                flags = new HvacValue.Flags(true, false, false, false, false, false, false, false, false, false, false, false, false);
+            } else {
+                setPointHeat = null;
+                setPointCool = celsiusValue;
+                flags = new HvacValue.Flags(false, true, false, false, false, false, false, false, false, false, false, false, false);
+            }
+
+            var value = new HvacValue(on, mode, setPointHeat, setPointCool, flags);
+            sendCommandToSuplaServer(channelUID, value, command, null);
+            return;
+        }
+
+        suplaDevice
+                .getLogger()
+                .warn(
+                        "Not handling `{}` (unit={}, class={}) on channel `{}`",
+                        command,
+                        unit,
                         command.getClass().getSimpleName(),
                         channelUID);
     }

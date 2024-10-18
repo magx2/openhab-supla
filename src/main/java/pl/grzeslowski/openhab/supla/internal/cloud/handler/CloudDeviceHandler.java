@@ -414,6 +414,15 @@ public final class CloudDeviceHandler extends AbstractDeviceHandler {
                 channelUID);
     }
 
+    @Override
+    public void handleQuantityType(ChannelUID channelUID, QuantityType<?> command) {
+        logger.warn(
+                "Not handling `{}` ({}) on channel `{}`",
+                command,
+                command.getClass().getSimpleName(),
+                channelUID);
+    }
+
     private void changeColorOfRgb(
             final io.swagger.client.model.Channel channel, final HSBType hsbType, final ChannelUID rgbChannelUid)
             throws Exception {
