@@ -31,10 +31,6 @@ class HandlerCommandTrait implements HandleCommand {
 
     @Override
     public void handleRefreshCommand(ChannelUID channelUID) {
-        findSuplaChannelNumber(channelUID)
-                .map(channelNumber ->
-                        new ChannelStateRequest(suplaDevice.getSenderId().getAndIncrement(), null, channelNumber))
-                .ifPresent(suplaDevice::write);
     }
 
     @Override
