@@ -137,7 +137,7 @@ class HandlerCommandTrait implements HandleCommand {
             }
 
             var value = new HvacValue(on, mode, setPointHeat, setPointCool, flags);
-            var future = sendCommandToSuplaServer(channelUID, value, command, UNDEF);
+            var future = sendCommandToSuplaServer(channelUID, value, command, null);
             future.addCompleteListener(() -> {
                 var groupId = channelUID.getGroupId();
                 if (groupId == null) {
