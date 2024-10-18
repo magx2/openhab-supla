@@ -9,7 +9,6 @@ import org.openhab.core.thing.ChannelGroupUID;
 import org.openhab.core.thing.ChannelUID;
 import org.openhab.core.types.Command;
 import org.openhab.core.types.State;
-import org.openhab.core.types.UnDefType;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.encoders.ChannelTypeEncoderImpl;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.value.*;
 import pl.grzeslowski.jsupla.protocol.api.structs.csd.ChannelStateRequest;
@@ -27,7 +26,7 @@ import static tech.units.indriya.unit.Units.CELSIUS;
 
 @NonNullByDefault
 @RequiredArgsConstructor
-class HandlerProtoTrait implements HandleCommand {
+class HandlerCommandTrait implements HandleCommand {
     private final SuplaDevice suplaDevice;
 
     @Override

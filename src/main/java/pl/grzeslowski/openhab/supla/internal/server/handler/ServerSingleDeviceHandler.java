@@ -44,7 +44,7 @@ public class ServerSingleDeviceHandler extends ServerAbstractDeviceHandler imple
     private final ChannelUtil channelUtil = new ChannelUtil(this);
 
     @Delegate(types = HandleCommand.class)
-    private final HandlerProtoTrait handlerProtoTrait = new HandlerProtoTrait(this);
+    private final HandlerCommandTrait handlerCommandTrait = new HandlerCommandTrait(this);
 
     public ServerSingleDeviceHandler(Thing thing) {
         super(thing);
