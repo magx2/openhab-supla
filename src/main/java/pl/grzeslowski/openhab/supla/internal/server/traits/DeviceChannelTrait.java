@@ -1,13 +1,13 @@
 package pl.grzeslowski.openhab.supla.internal.server.traits;
 
+import static java.util.Arrays.stream;
+import static pl.grzeslowski.jsupla.protocol.api.ChannelFunction.SUPLA_CHANNELFNC_NONE;
+
 import jakarta.annotation.Nullable;
 import lombok.Value;
 import pl.grzeslowski.jsupla.protocol.api.ChannelFunction;
 import pl.grzeslowski.jsupla.protocol.api.structs.HVACValue;
 import pl.grzeslowski.jsupla.protocol.api.structs.ds.*;
-
-import static java.util.Arrays.stream;
-import static pl.grzeslowski.jsupla.protocol.api.ChannelFunction.SUPLA_CHANNELFNC_NONE;
 
 @Value
 public class DeviceChannelTrait {
@@ -50,22 +50,23 @@ public class DeviceChannelTrait {
     }
 
     public DeviceChannelTrait(SuplaDeviceChannel channel) {
-        this(channel.number, channel.type,null, channel.value, null, null);
+        this(channel.number, channel.type, null, channel.value, null, null);
     }
 
     public DeviceChannelTrait(SuplaDeviceChannelB channel) {
-        this(channel.number, channel.type,channel.funcList, channel.value, null, null);
+        this(channel.number, channel.type, channel.funcList, channel.value, null, null);
     }
 
     public DeviceChannelTrait(SuplaDeviceChannelC channel) {
-        this(channel.number, channel.type, channel.funcList,channel.value, channel.hvacValue, null);
+        this(channel.number, channel.type, channel.funcList, channel.value, channel.hvacValue, null);
     }
 
     public DeviceChannelTrait(SuplaDeviceChannelD channel) {
-        this(channel.number, channel.type, channel.funcList,channel.value, channel.hvacValue, null);
+        this(channel.number, channel.type, channel.funcList, channel.value, channel.hvacValue, null);
     }
 
     public DeviceChannelTrait(SuplaDeviceChannelE channel) {
-        this(channel.number, channel.type, channel.funcList,channel.value, channel.hvacValue, (int) channel.subDeviceId);
+        this(channel.number, channel.type, channel.funcList, channel.value, channel.hvacValue, (int)
+                channel.subDeviceId);
     }
 }

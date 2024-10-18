@@ -1,5 +1,14 @@
 package pl.grzeslowski.openhab.supla.internal.server.handler;
 
+import static java.util.Objects.requireNonNull;
+import static org.openhab.core.thing.ThingStatus.OFFLINE;
+import static org.openhab.core.thing.ThingStatus.ONLINE;
+import static org.openhab.core.thing.ThingStatusDetail.COMMUNICATION_ERROR;
+import static org.openhab.core.types.UnDefType.UNDEF;
+import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ChannelIds.Hvac.*;
+import static pl.grzeslowski.openhab.supla.internal.server.ChannelUtil.findSuplaChannelNumber;
+import static tech.units.indriya.unit.Units.CELSIUS;
+
 import jakarta.annotation.Nullable;
 import lombok.RequiredArgsConstructor;
 import org.eclipse.jdt.annotation.NonNullByDefault;
@@ -15,15 +24,6 @@ import pl.grzeslowski.jsupla.protocol.api.structs.csd.ChannelStateRequest;
 import pl.grzeslowski.jsupla.protocol.api.structs.sd.SuplaChannelNewValue;
 import pl.grzeslowski.jsupla.server.api.Writer;
 
-import static java.util.Objects.requireNonNull;
-import static org.openhab.core.thing.ThingStatus.OFFLINE;
-import static org.openhab.core.thing.ThingStatus.ONLINE;
-import static org.openhab.core.thing.ThingStatusDetail.COMMUNICATION_ERROR;
-import static org.openhab.core.types.UnDefType.UNDEF;
-import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ChannelIds.Hvac.*;
-import static pl.grzeslowski.openhab.supla.internal.server.ChannelUtil.findSuplaChannelNumber;
-import static tech.units.indriya.unit.Units.CELSIUS;
-
 @NonNullByDefault
 @RequiredArgsConstructor
 class HandlerCommandTrait implements HandleCommand {
@@ -32,7 +32,8 @@ class HandlerCommandTrait implements HandleCommand {
     @Override
     public void handleRefreshCommand(ChannelUID channelUID) {
         findSuplaChannelNumber(channelUID)
-                .map(channelNumber -> new ChannelStateRequest(suplaDevice.getSenderId().getAndIncrement(), null, channelNumber))
+                .map(channelNumber ->
+                        new ChannelStateRequest(suplaDevice.getSenderId().getAndIncrement(), null, channelNumber))
                 .ifPresent(suplaDevice::write);
     }
 
@@ -115,8 +116,7 @@ class HandlerCommandTrait implements HandleCommand {
     public void handleQuantityType(ChannelUID channelUID, QuantityType<?> command) {
         var unit = command.getUnit();
         var id = channelUID.getIdWithoutGroup();
-        if ((id.equals(HVAC_SET_POINT_TEMPERATURE_HEAT)
-                || id.equals(HVAC_SET_POINT_TEMPERATURE_COOL))
+        if ((id.equals(HVAC_SET_POINT_TEMPERATURE_HEAT) || id.equals(HVAC_SET_POINT_TEMPERATURE_COOL))
                 && unit.isCompatible(CELSIUS)) {
             var celsiusQuantity = requireNonNull(command.toUnit(CELSIUS));
             var celsiusValue = celsiusQuantity.doubleValue();
@@ -130,12 +130,14 @@ class HandlerCommandTrait implements HandleCommand {
                 setPointHeat = celsiusValue;
                 setPointCool = null;
                 mode = HvacValue.Mode.HEAT;
-                flags = new HvacValue.Flags(true, false, false, false, false, false, false, false, false, false, false, false, false);
+                flags = new HvacValue.Flags(
+                        true, false, false, false, false, false, false, false, false, false, false, false, false);
             } else {
                 setPointHeat = null;
                 setPointCool = celsiusValue;
                 mode = HvacValue.Mode.HEAT_COOL;
-                flags = new HvacValue.Flags(false, true, false, false, false, false, false, false, false, false, false, false, false);
+                flags = new HvacValue.Flags(
+                        false, true, false, false, false, false, false, false, false, false, false, false, false);
             }
 
             var value = new HvacValue(on, mode, setPointHeat, setPointCool, flags);
@@ -167,8 +169,7 @@ class HandlerCommandTrait implements HandleCommand {
         var maybeChannelNumber = findSuplaChannelNumber(channelUID);
         if (maybeChannelNumber.isEmpty()) {
             suplaDevice.getLogger().warn("Cannot parse channelNumber from {}", channelUID);
-            return __ -> {
-            };
+            return __ -> {};
         }
         var channelNumber = maybeChannelNumber.get();
 
@@ -189,8 +190,7 @@ class HandlerCommandTrait implements HandleCommand {
             var msg = "Couldn't Change value of channel for %s command %s.".formatted(channelUID, command);
             suplaDevice.getLogger().debug(msg, ex);
             suplaDevice.updateStatus(OFFLINE, COMMUNICATION_ERROR, msg + ex.getLocalizedMessage());
-            return __ -> {
-            };
+            return __ -> {};
         }
     }
 }
