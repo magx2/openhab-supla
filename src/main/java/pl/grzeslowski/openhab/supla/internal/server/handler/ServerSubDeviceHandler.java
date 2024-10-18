@@ -45,7 +45,7 @@ public class ServerSubDeviceHandler extends AbstractDeviceHandler implements Sup
     private final ChannelUtil channelUtil = new ChannelUtil(this);
 
     @Delegate(types = HandleCommand.class)
-    private final HandlerProtoTrait handlerProtoTrait = new HandlerProtoTrait(this);
+    private final HandlerCommandTrait handlerCommandTrait = new HandlerCommandTrait(this);
 
     @Getter
     private Logger logger = LoggerFactory.getLogger(this.getClass());
