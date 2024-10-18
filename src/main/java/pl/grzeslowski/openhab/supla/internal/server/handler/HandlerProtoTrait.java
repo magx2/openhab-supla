@@ -5,20 +5,23 @@ import lombok.RequiredArgsConstructor;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.javatuples.Pair;
 import org.openhab.core.library.types.*;
+import org.openhab.core.thing.ChannelGroupUID;
 import org.openhab.core.thing.ChannelUID;
 import org.openhab.core.types.Command;
 import org.openhab.core.types.State;
+import org.openhab.core.types.UnDefType;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.encoders.ChannelTypeEncoderImpl;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.value.*;
 import pl.grzeslowski.jsupla.protocol.api.structs.csd.ChannelStateRequest;
 import pl.grzeslowski.jsupla.protocol.api.structs.sd.SuplaChannelNewValue;
+import pl.grzeslowski.jsupla.server.api.Writer;
 
 import static java.util.Objects.requireNonNull;
 import static org.openhab.core.thing.ThingStatus.OFFLINE;
 import static org.openhab.core.thing.ThingStatus.ONLINE;
 import static org.openhab.core.thing.ThingStatusDetail.COMMUNICATION_ERROR;
-import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ChannelIds.Hvac.HVAC_SET_POINT_TEMPERATURE_COOL;
-import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ChannelIds.Hvac.HVAC_SET_POINT_TEMPERATURE_HEAT;
+import static org.openhab.core.types.UnDefType.UNDEF;
+import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ChannelIds.Hvac.*;
 import static pl.grzeslowski.openhab.supla.internal.server.ChannelUtil.findSuplaChannelNumber;
 import static tech.units.indriya.unit.Units.CELSIUS;
 
@@ -125,22 +128,33 @@ class HandlerProtoTrait implements HandleCommand {
             var celsiusValue = celsiusQuantity.doubleValue();
 
             var on = true;
-           var mode = HvacValue.Mode.NOT_SET;
+            HvacValue.Mode mode;
             Double setPointHeat;
             Double setPointCool;
             HvacValue.Flags flags;
             if (id.equals(HVAC_SET_POINT_TEMPERATURE_HEAT)) {
                 setPointHeat = celsiusValue;
                 setPointCool = null;
+                mode = HvacValue.Mode.HEAT;
                 flags = new HvacValue.Flags(true, false, false, false, false, false, false, false, false, false, false, false, false);
             } else {
                 setPointHeat = null;
                 setPointCool = celsiusValue;
+                mode = HvacValue.Mode.HEAT_COOL;
                 flags = new HvacValue.Flags(false, true, false, false, false, false, false, false, false, false, false, false, false);
             }
 
             var value = new HvacValue(on, mode, setPointHeat, setPointCool, flags);
-            sendCommandToSuplaServer(channelUID, value, command, null);
+            var future = sendCommandToSuplaServer(channelUID, value, command, UNDEF);
+            future.addCompleteListener(() -> {
+                var groupId = channelUID.getGroupId();
+                if (groupId == null) {
+                    return;
+                }
+                var group = new ChannelGroupUID(channelUID.getThingUID(), groupId);
+                var modeUid = new ChannelUID(group, HVAC_MODE);
+                handleRefreshCommand(modeUid);
+            });
             return;
         }
 
@@ -154,12 +168,13 @@ class HandlerProtoTrait implements HandleCommand {
                         channelUID);
     }
 
-    private void sendCommandToSuplaServer(
+    private Writer.Future sendCommandToSuplaServer(
             ChannelUID channelUID, ChannelValue channelValue, Command command, @Nullable State previousState) {
         var maybeChannelNumber = findSuplaChannelNumber(channelUID);
         if (maybeChannelNumber.isEmpty()) {
             suplaDevice.getLogger().warn("Cannot parse channelNumber from {}", channelUID);
-            return;
+            return __ -> {
+            };
         }
         var channelNumber = maybeChannelNumber.get();
 
@@ -170,14 +185,18 @@ class HandlerProtoTrait implements HandleCommand {
                 .put(senderId, new SuplaDevice.ChannelAndPreviousState(channelUID, previousState));
         var channelNewValue = new SuplaChannelNewValue(senderId, channelNumber, 100L, null, encode);
         try {
-            suplaDevice.write(channelNewValue).addCompleteListener(() -> {
+            var future = suplaDevice.write(channelNewValue);
+            future.addCompleteListener(() -> {
                 suplaDevice.getLogger().debug("Changed value of channel for {} command {}", channelUID, command);
                 suplaDevice.updateStatus(ONLINE);
             });
+            return future;
         } catch (Exception ex) {
             var msg = "Couldn't Change value of channel for %s command %s.".formatted(channelUID, command);
             suplaDevice.getLogger().debug(msg, ex);
             suplaDevice.updateStatus(OFFLINE, COMMUNICATION_ERROR, msg + ex.getLocalizedMessage());
+            return __ -> {
+            };
         }
     }
 }
