@@ -4,6 +4,7 @@ import static java.lang.Short.parseShort;
 import static java.lang.String.valueOf;
 import static java.util.Comparator.comparing;
 import static org.openhab.core.thing.ChannelUID.CHANNEL_GROUP_SEPARATOR;
+import static org.openhab.core.types.UnDefType.UNDEF;
 import static pl.grzeslowski.jsupla.protocol.api.ProtocolHelpers.parseString;
 
 import java.util.ArrayList;
@@ -236,9 +237,10 @@ public class ChannelUtil {
 
         var channelUID = channelAndPreviousState.channelUID();
         var previousState = channelAndPreviousState.previousState();
-        if (previousState != null) {
-            invoker.updateState(channelUID, previousState);
+        if(previousState==null) {
+            previousState=UNDEF;
         }
+        invoker.updateState(channelUID, previousState);
         invoker.getLogger()
                 .info(
                         "Some previous new value result failed. "
