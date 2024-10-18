@@ -10,13 +10,16 @@ import static org.openhab.core.thing.ThingStatusDetail.CONFIGURATION_ERROR;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import lombok.Getter;
 import lombok.ToString;
+import lombok.experimental.Delegate;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
-import org.openhab.core.library.types.*;
 import org.openhab.core.thing.ChannelUID;
 import org.openhab.core.thing.Thing;
+import org.openhab.core.thing.ThingStatus;
+import org.openhab.core.thing.ThingStatusDetail;
 import org.openhab.core.thing.binding.builder.ThingBuilder;
 import org.openhab.core.types.State;
 import org.slf4j.Logger;
@@ -24,7 +27,9 @@ import org.slf4j.LoggerFactory;
 import pl.grzeslowski.jsupla.protocol.api.structs.dcs.SetCaption;
 import pl.grzeslowski.jsupla.protocol.api.structs.dcs.SuplaPingServer;
 import pl.grzeslowski.jsupla.protocol.api.structs.ds.SubdeviceDetails;
+import pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaChannelNewValueResult;
 import pl.grzeslowski.jsupla.protocol.api.structs.dsc.ChannelState;
+import pl.grzeslowski.jsupla.protocol.api.types.FromServerProto;
 import pl.grzeslowski.jsupla.server.api.Writer;
 import pl.grzeslowski.openhab.supla.internal.handler.AbstractDeviceHandler;
 import pl.grzeslowski.openhab.supla.internal.server.ChannelUtil;
@@ -33,11 +38,14 @@ import pl.grzeslowski.openhab.supla.internal.server.traits.DeviceChannelValueTra
 
 @NonNullByDefault
 @ToString(onlyExplicitlyIncluded = true)
-public class ServerSubDeviceHandler extends AbstractDeviceHandler implements ChannelUtil.Invoker, HandleProto {
+public class ServerSubDeviceHandler extends AbstractDeviceHandler implements SuplaDevice {
     @Getter
     private final Map<Integer, Integer> channelTypes = synchronizedMap(new HashMap<>());
 
     private final ChannelUtil channelUtil = new ChannelUtil(this);
+
+    @Delegate(types = HandleCommand.class)
+    private final HandlerProtoTrait handlerProtoTrait = new HandlerProtoTrait(this);
 
     @Getter
     private Logger logger = LoggerFactory.getLogger(this.getClass());
@@ -47,7 +55,14 @@ public class ServerSubDeviceHandler extends AbstractDeviceHandler implements Cha
     private int subDeviceId;
 
     @Nullable
+    @Getter
     private ServerGatewayDeviceHandler bridgeHandler;
+
+    @Getter
+    private final AtomicInteger senderId = new AtomicInteger(1);
+
+    @Getter
+    private final Map<Integer, ChannelAndPreviousState> senderIdToChannelUID = synchronizedMap(new HashMap<>());
 
     @Getter
     private List<DeviceChannelTrait> channels = List.of();
@@ -110,35 +125,6 @@ public class ServerSubDeviceHandler extends AbstractDeviceHandler implements Cha
     }
 
     @Override
-    protected void handleRefreshCommand(ChannelUID channelUID) {
-        // ignored
-    }
-
-    @Override
-    protected void handleOnOffCommand(ChannelUID channelUID, OnOffType command) {}
-
-    @Override
-    protected void handleUpDownCommand(ChannelUID channelUID, UpDownType command) {}
-
-    @Override
-    protected void handleHsbCommand(ChannelUID channelUID, HSBType command) {}
-
-    @Override
-    protected void handleOpenClosedCommand(ChannelUID channelUID, OpenClosedType command) {}
-
-    @Override
-    protected void handlePercentCommand(ChannelUID channelUID, PercentType command) {}
-
-    @Override
-    protected void handleDecimalCommand(ChannelUID channelUID, DecimalType command) {}
-
-    @Override
-    protected void handleStopMoveTypeCommand(ChannelUID channelUID, StopMoveType command) {}
-
-    @Override
-    protected void handleStringCommand(ChannelUID channelUID, StringType command) {}
-
-    @Override
     public void dispose() {
         var localBridgeHandler = bridgeHandler;
         bridgeHandler = null;
@@ -166,12 +152,12 @@ public class ServerSubDeviceHandler extends AbstractDeviceHandler implements Cha
 
     @Override
     public void consumeSuplaPingServer(SuplaPingServer ping, Writer writer) {
-        throw new UnsupportedOperationException("I should not support this method!");
+        logger.warn("Not supporting `consumeSuplaPingServer()`");
     }
 
     @Override
     public void consumeSuplaSetActivityTimeout(Writer writer) {
-        throw new UnsupportedOperationException("I should not support this method!");
+        logger.warn("Not supporting `consumeSuplaSetActivityTimeout()`");
     }
 
     @Override
@@ -184,7 +170,7 @@ public class ServerSubDeviceHandler extends AbstractDeviceHandler implements Cha
 
     @Override
     public void consumeLocalTimeRequest(Writer writer) {
-        throw new UnsupportedOperationException("I should not support this method!");
+        logger.warn("Not supporting `consumeLocalTimeRequest()`");
     }
 
     @Override
@@ -193,10 +179,43 @@ public class ServerSubDeviceHandler extends AbstractDeviceHandler implements Cha
     }
 
     @Override
-    public void consumeChannelState(ChannelState value) {}
+    public void consumeChannelState(ChannelState value) {
+        logger.warn("Not supporting `consumeChannelState({})`", value);
+    }
 
     @Override
     public void consumeSubDeviceDetails(SubdeviceDetails value) {
-        throw new UnsupportedOperationException("I should not support this method!");
+        logger.warn("Not supporting `consumeSubDeviceDetails({})`", value);
+    }
+
+    @Override
+    public void consumeSuplaChannelNewValueResult(SuplaChannelNewValueResult value) {
+        channelUtil.consumeSuplaChannelNewValueResult(value);
+    }
+
+    @Override
+    public void updateStatus(ThingStatus thingStatus, ThingStatusDetail thingStatusDetail, String message) {
+        super.updateStatus(thingStatus, thingStatusDetail, message);
+    }
+
+    @Override
+    public void updateStatus(ThingStatus thingStatus) {
+        super.updateStatus(thingStatus);
+    }
+
+    @Override
+    public Writer.Future write(FromServerProto proto) {
+        var local = bridgeHandler;
+        if (local == null) {
+            logger.warn("There is not bridge!");
+            return __ -> {};
+        }
+        var writer = local.getWriter().get();
+        if (writer == null) {
+            logger.warn("There is not writer!");
+            return __ -> {};
+        }
+        logger.debug("Writing proto {}", proto);
+        return writer.write(proto);
     }
 }

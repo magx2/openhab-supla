@@ -1,5 +1,20 @@
 package pl.grzeslowski.openhab.supla.internal.server.handler;
 
+import static java.util.Collections.unmodifiableList;
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static java.util.stream.Collectors.toUnmodifiableSet;
+import static org.openhab.core.thing.ThingStatus.OFFLINE;
+import static org.openhab.core.thing.ThingStatusDetail.CONFIGURATION_ERROR;
+import static pl.grzeslowski.jsupla.protocol.api.ProtocolHelpers.parseString;
+import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.GATEWAY_CONNECTED_DEVICES_CHANNEL_ID;
+import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ServerDevicesProperties.*;
+import static pl.grzeslowski.openhab.supla.internal.server.ChannelUtil.findId;
+
+import java.util.*;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 import lombok.Getter;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
@@ -11,27 +26,12 @@ import org.openhab.core.thing.Thing;
 import org.openhab.core.thing.binding.ThingHandler;
 import pl.grzeslowski.jsupla.protocol.api.structs.dcs.SetCaption;
 import pl.grzeslowski.jsupla.protocol.api.structs.ds.SubdeviceDetails;
+import pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaChannelNewValueResult;
 import pl.grzeslowski.jsupla.protocol.api.structs.dsc.ChannelState;
 import pl.grzeslowski.openhab.supla.internal.server.discovery.ServerDiscoveryService;
 import pl.grzeslowski.openhab.supla.internal.server.traits.DeviceChannelTrait;
 import pl.grzeslowski.openhab.supla.internal.server.traits.DeviceChannelValueTrait;
 import pl.grzeslowski.openhab.supla.internal.server.traits.RegisterDeviceTrait;
-
-import java.util.*;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
-
-import static java.util.Collections.unmodifiableList;
-import static java.util.concurrent.TimeUnit.SECONDS;
-import static java.util.stream.Collectors.toUnmodifiableSet;
-import static org.openhab.core.thing.ThingStatus.OFFLINE;
-import static org.openhab.core.thing.ThingStatusDetail.CONFIGURATION_ERROR;
-import static pl.grzeslowski.jsupla.protocol.api.ProtocolHelpers.parseString;
-import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.GATEWAY_CONNECTED_DEVICES_CHANNEL_ID;
-import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ServerDevicesProperties.*;
-import static pl.grzeslowski.openhab.supla.internal.server.ChannelUtil.findId;
 
 @NonNullByDefault
 public class ServerGatewayDeviceHandler extends ServerAbstractDeviceHandler implements SuplaBridge {
@@ -97,9 +97,8 @@ public class ServerGatewayDeviceHandler extends ServerAbstractDeviceHandler impl
                     scheduledPool.schedule(() -> initServiceDiscovery(registerEntity.getName()), 30, SECONDS));
         }
 
-        var notSubDeviceChannels = channels.stream()
-                .filter(c -> c.getSubDeviceId() == null)
-                .toList();
+        var notSubDeviceChannels =
+                channels.stream().filter(c -> c.getSubDeviceId() == null).toList();
         if (!notSubDeviceChannels.isEmpty()) {
             logger.warn("Gateway has channels, but it is not supported by addon! channels={}", notSubDeviceChannels);
         }
@@ -128,41 +127,33 @@ public class ServerGatewayDeviceHandler extends ServerAbstractDeviceHandler impl
     }
 
     @Override
-    protected void handleRefreshCommand(ChannelUID channelUID) {
+    public void handleRefreshCommand(ChannelUID channelUID) {
         updateConnectedDevices(numberOfConnectedDevices.get());
     }
 
     @Override
-    protected void handleOnOffCommand(ChannelUID channelUID, OnOffType command) {
-    }
+    public void handleOnOffCommand(ChannelUID channelUID, OnOffType command) {}
 
     @Override
-    protected void handleUpDownCommand(ChannelUID channelUID, UpDownType command) {
-    }
+    public void handleUpDownCommand(ChannelUID channelUID, UpDownType command) {}
 
     @Override
-    protected void handleHsbCommand(ChannelUID channelUID, HSBType command) {
-    }
+    public void handleHsbCommand(ChannelUID channelUID, HSBType command) {}
 
     @Override
-    protected void handleOpenClosedCommand(ChannelUID channelUID, OpenClosedType command) {
-    }
+    public void handleOpenClosedCommand(ChannelUID channelUID, OpenClosedType command) {}
 
     @Override
-    protected void handlePercentCommand(ChannelUID channelUID, PercentType command) {
-    }
+    public void handlePercentCommand(ChannelUID channelUID, PercentType command) {}
 
     @Override
-    protected void handleDecimalCommand(ChannelUID channelUID, DecimalType command) {
-    }
+    public void handleDecimalCommand(ChannelUID channelUID, DecimalType command) {}
 
     @Override
-    protected void handleStopMoveTypeCommand(ChannelUID channelUID, StopMoveType command) {
-    }
+    public void handleStopMoveTypeCommand(ChannelUID channelUID, StopMoveType command) {}
 
     @Override
-    protected void handleStringCommand(ChannelUID channelUID, StringType command) {
-    }
+    public void handleStringCommand(ChannelUID channelUID, StringType command) {}
 
     @Override
     public void childHandlerInitialized(ThingHandler childHandler, Thing childThing) {
@@ -237,8 +228,7 @@ public class ServerGatewayDeviceHandler extends ServerAbstractDeviceHandler impl
 
     @Override
     public void consumeSuplaDeviceChannelExtendedValue(int channelNumber, int type, byte[] value) {
-        var optional = findId(channelNumber, null)
-                .flatMap(this::findSubDevice);
+        var optional = findId(channelNumber, null).flatMap(this::findSubDevice);
         if (optional.isEmpty()) {
             logger.warn("There is no channel number for ExtendedValue! value={}", value);
             return;
@@ -248,8 +238,7 @@ public class ServerGatewayDeviceHandler extends ServerAbstractDeviceHandler impl
 
     @Override
     public void consumeSetCaption(SetCaption value) {
-        var optional = findId(value.id, value.channelNumber)
-                .flatMap(this::findSubDevice);
+        var optional = findId(value.id, value.channelNumber).flatMap(this::findSubDevice);
         if (optional.isEmpty()) {
             logger.warn("There is no channel number for SetCaption! value={}", value);
             return;
@@ -259,8 +248,7 @@ public class ServerGatewayDeviceHandler extends ServerAbstractDeviceHandler impl
 
     @Override
     public void consumeChannelState(ChannelState value) {
-        var optional = findId(value.channelId, value.channelNumber)
-                .flatMap(this::findSubDevice);
+        var optional = findId(value.channelId, value.channelNumber).flatMap(this::findSubDevice);
         if (optional.isEmpty()) {
             logger.warn("There is no channel number for ChannelState! value={}", value);
             return;
@@ -270,8 +258,7 @@ public class ServerGatewayDeviceHandler extends ServerAbstractDeviceHandler impl
 
     @Override
     public void consumeDeviceChannelValueTrait(DeviceChannelValueTrait trait) {
-        var optional = findId(trait.getChannelNumber(), null)
-                .flatMap(this::findSubDevice);
+        var optional = findId(trait.getChannelNumber(), null).flatMap(this::findSubDevice);
         if (optional.isEmpty()) {
             logger.warn("There is no channel number for ChannelState! value={}", trait);
             return;
@@ -306,5 +293,20 @@ public class ServerGatewayDeviceHandler extends ServerAbstractDeviceHandler impl
             return Optional.empty();
         }
         return Optional.of(childHandlers.get(handlerId));
+    }
+
+    @Override
+    public void consumeSuplaChannelNewValueResult(SuplaChannelNewValueResult value) {
+        var handlerId = channelNumberToHandlerId.get((int) value.channelNumber);
+        if (handlerId == null) {
+            // todo
+            return;
+        }
+        var handler = childHandlers.get(handlerId);
+        if (handler == null) {
+            // todo log
+            return;
+        }
+        handler.consumeSuplaChannelNewValueResult(value);
     }
 }
