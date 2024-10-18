@@ -354,8 +354,9 @@ public abstract class ServerAbstractDeviceHandler extends AbstractDeviceHandler 
         var timeZone = timeZoneName.getBytes(); // Convert to byte array
         var timeZoneSize = timeZone.length;
 
-        writer.write(
-                new UserLocalTimeResult(year, month, day, dayOfWeek, hour, minute, seconds, timeZoneSize, timeZone));
+        var proto = new UserLocalTimeResult(year, month, day, dayOfWeek, hour, minute, seconds, timeZoneSize, timeZone);
+        logger.debug("Setting local time to {}", proto);
+        writer.write(proto);
     }
 
     @Override
