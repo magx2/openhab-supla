@@ -191,6 +191,19 @@ To enable logging for the Supla plugin in OpenHAB, follow these steps:
 
 By following these steps, you will enable detailed logging for the Supla plugin, which can help with debugging and monitoring the plugin's activity within OpenHAB.
 
+### Thing with Sub Devices
+
+If you create a `Supla Native Server Device` thing (either manually or through service discovery) and your Supla device
+is actually a gateway device, you need to follow these steps to correct the setup. 
+
+First, open the configuration of the current thing, enable advanced options, and copy the `GUID` and `Auth Key`.
+![GUID and Auth Key](imgs/guid-auth-key.png) 
+Once you've saved this
+information, remove the thing. Next, add a new gateway bridge thing, and during the configuration, paste the `GUID` 
+and `Auth Key` copied from the previous thing. 
+![Add Gateway Bridge](imgs/add-gateway-bridge.png) 
+Once the Supla device connects, any sub-devices linked to the gateway should appear automatically in the inbox.
+
 ## Support ❤️
 
 If you want to support the author of this binding, buy him a coffee:
