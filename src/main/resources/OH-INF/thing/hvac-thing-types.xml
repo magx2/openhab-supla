@@ -15,6 +15,7 @@
 	<channel-type id="hvac-mode">
 		<item-type>String</item-type>
 		<label>Mode</label>
+		<state readOnly="true"/>
 		<command>
 			<options>
 				<option value="NOT_SET">Not Set</option>
