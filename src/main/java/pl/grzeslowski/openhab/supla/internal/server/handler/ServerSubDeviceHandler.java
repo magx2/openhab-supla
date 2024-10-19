@@ -179,7 +179,7 @@ public class ServerSubDeviceHandler extends AbstractDeviceHandler implements Sup
 
     @Override
     public void consumeChannelState(ChannelState value) {
-        logger.warn("Not supporting `consumeChannelState({})`", value);
+        throw new UnsupportedOperationException("ServerSubDeviceHandler.consumeChannelState(value)");
     }
 
     @Override
@@ -216,5 +216,11 @@ public class ServerSubDeviceHandler extends AbstractDeviceHandler implements Sup
         }
         logger.debug("Writing proto {}", proto);
         return writer.write(proto);
+    }
+
+    @Nullable
+    @Override
+    public String setProperty(String name, @Nullable String value) {
+        return thing.setProperty(name, value);
     }
 }

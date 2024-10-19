@@ -5,8 +5,10 @@ import static java.lang.String.valueOf;
 import static java.util.Comparator.comparing;
 import static org.openhab.core.thing.ChannelUID.CHANNEL_GROUP_SEPARATOR;
 import static org.openhab.core.types.UnDefType.UNDEF;
-import static pl.grzeslowski.jsupla.protocol.api.ProtocolHelpers.parseString;
+import static pl.grzeslowski.jsupla.protocol.api.ProtocolHelpers.*;
+import static pl.grzeslowski.jsupla.protocol.api.consts.ProtoConsts.*;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -33,6 +35,7 @@ import pl.grzeslowski.jsupla.protocol.api.channeltype.value.ElectricityMeterValu
 import pl.grzeslowski.jsupla.protocol.api.structs.HVACValue;
 import pl.grzeslowski.jsupla.protocol.api.structs.dcs.SetCaption;
 import pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaChannelNewValueResult;
+import pl.grzeslowski.jsupla.protocol.api.structs.dsc.ChannelState;
 import pl.grzeslowski.openhab.supla.internal.server.handler.SuplaDevice;
 import pl.grzeslowski.openhab.supla.internal.server.traits.DeviceChannelTrait;
 import pl.grzeslowski.openhab.supla.internal.server.traits.DeviceChannelValueTrait;
@@ -268,5 +271,71 @@ public class ChannelUtil {
                         return null;
                     }
                 });
+    }
+
+    public void consumeChannelState(ChannelState value) {
+        var fields = value.fields;
+        setField(fields, SUPLA_CHANNELSTATE_FIELD_IPV4, "IPV4", parseIpv4(value.iPv4));
+        setField(fields, SUPLA_CHANNELSTATE_FIELD_MAC, "MAC", parseMac(value.mAC));
+        setField(fields, SUPLA_CHANNELSTATE_FIELD_BATTERYLEVEL, "Battery Level", value.batteryLevel + "%");
+        setField(fields, SUPLA_CHANNELSTATE_FIELD_BATTERYPOWERED, "Battery Powered", value.batteryPowered != 1);
+        setField(fields, SUPLA_CHANNELSTATE_FIELD_WIFIRSSI, "WI-FI RSSI", value.wiFiRSSI);
+        setField(
+                fields,
+                SUPLA_CHANNELSTATE_FIELD_WIFISIGNALSTRENGTH,
+                "WI-FI Signal Strength",
+                value.wiFiSignalStrength + "%");
+        setField(
+                fields,
+                SUPLA_CHANNELSTATE_FIELD_BRIDGENODESIGNALSTRENGTH,
+                "Bridge Node Signal Strength",
+                value.bridgeNodeSignalStrength + "%");
+        setField(fields, SUPLA_CHANNELSTATE_FIELD_UPTIME, "Up Time", Duration.ofSeconds(value.uptime));
+        setField(
+                fields,
+                SUPLA_CHANNELSTATE_FIELD_CONNECTIONUPTIME,
+                "Connection Up Time",
+                Duration.ofSeconds(value.connectionUptime));
+        setField(fields, SUPLA_CHANNELSTATE_FIELD_BATTERYHEALTH, "Battery Health", value.batteryHealth);
+        setField(fields, SUPLA_CHANNELSTATE_FIELD_BRIDGENODEONLINE, "Bridge Node Online", value.bridgeNodeOnline);
+
+        var lastConnectionResetCause =
+                switch (value.lastConnectionResetCause) {
+                    case 0 -> "UNKNOWN";
+                    case 1 -> "ACTIVITY_TIMEOUT";
+                    case 2 -> "WIFI_CONNECTION_LOST";
+                    case 3 -> "SERVER_CONNECTION_LOST";
+                    default -> "UNKNOWN(%s)".formatted(value.lastConnectionResetCause);
+                };
+        setField(
+                fields,
+                SUPLA_CHANNELSTATE_FIELD_LASTCONNECTIONRESETCAUSE,
+                "Last Connection Reset Cause",
+                lastConnectionResetCause);
+
+        invoker.setProperty(
+                "Light Source Lifespan",
+                Duration.ofHours(value.lightSourceLifespan).toString());
+        if (value.lightSourceLifespanLeft != null) {
+            var string =
+                    value.lightSourceLifespanLeft == -32767 ? "100%" : (value.lightSourceLifespanLeft * 0.01) + "%";
+            invoker.setProperty("Light Source Lifespan", string);
+        }
+        if (value.lightSourceOperatingTime != null) {
+            invoker.setProperty(
+                    "Light Source Operating Time",
+                    Duration.ofSeconds(value.lightSourceOperatingTime).toString());
+        }
+        if (value.operatingTime != null) {
+            invoker.setProperty(
+                    "Operating Time", Duration.ofSeconds(value.operatingTime).toString());
+        }
+    }
+
+    private void setField(int fields, int mask, String key, Object value) {
+        if ((fields & mask) == 0) {
+            return;
+        }
+        invoker.setProperty(key, valueOf(value));
     }
 }

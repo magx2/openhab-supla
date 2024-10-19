@@ -41,5 +41,7 @@ public interface SuplaDevice extends HandleCommand, HandleProto {
 
     Writer.Future write(FromServerProto proto);
 
+    String setProperty(String name, @Nullable String value);
+
     public static record ChannelAndPreviousState(ChannelUID channelUID, @Nullable State previousState) {}
 }

@@ -13,6 +13,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import lombok.Getter;
 import lombok.experimental.Delegate;
 import org.eclipse.jdt.annotation.NonNullByDefault;
+import org.eclipse.jdt.annotation.Nullable;
 import org.openhab.core.thing.ChannelUID;
 import org.openhab.core.thing.Thing;
 import org.openhab.core.thing.ThingStatus;
@@ -86,7 +87,7 @@ public class ServerSingleDeviceHandler extends ServerAbstractDeviceHandler imple
 
     @Override
     public void consumeChannelState(ChannelState value) {
-        logger.warn("Not supporting `consumeChannelState({})`", value);
+        channelUtil.consumeChannelState(value);
     }
 
     @Override
@@ -138,5 +139,11 @@ public class ServerSingleDeviceHandler extends ServerAbstractDeviceHandler imple
         }
         logger.debug("Writing proto {}", proto);
         return writer.write(proto);
+    }
+
+    @Nullable
+    @Override
+    public String setProperty(String name, @Nullable String value) {
+        return thing.setProperty(name, value);
     }
 }

@@ -23,18 +23,25 @@ import org.openhab.core.common.ThreadPoolManager;
 import org.openhab.core.library.types.*;
 import org.openhab.core.thing.ChannelUID;
 import org.openhab.core.thing.Thing;
+import org.openhab.core.thing.ThingStatus;
+import org.openhab.core.thing.ThingStatusDetail;
 import org.openhab.core.thing.binding.ThingHandler;
+import org.openhab.core.thing.binding.builder.ThingBuilder;
+import org.openhab.core.types.State;
 import pl.grzeslowski.jsupla.protocol.api.structs.dcs.SetCaption;
 import pl.grzeslowski.jsupla.protocol.api.structs.ds.SubdeviceDetails;
 import pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaChannelNewValueResult;
 import pl.grzeslowski.jsupla.protocol.api.structs.dsc.ChannelState;
+import pl.grzeslowski.jsupla.protocol.api.types.FromServerProto;
+import pl.grzeslowski.jsupla.server.api.Writer;
+import pl.grzeslowski.openhab.supla.internal.server.ChannelUtil;
 import pl.grzeslowski.openhab.supla.internal.server.discovery.ServerDiscoveryService;
 import pl.grzeslowski.openhab.supla.internal.server.traits.DeviceChannelTrait;
 import pl.grzeslowski.openhab.supla.internal.server.traits.DeviceChannelValueTrait;
 import pl.grzeslowski.openhab.supla.internal.server.traits.RegisterDeviceTrait;
 
 @NonNullByDefault
-public class ServerGatewayDeviceHandler extends ServerAbstractDeviceHandler implements SuplaBridge {
+public class ServerGatewayDeviceHandler extends ServerAbstractDeviceHandler implements SuplaBridge, SuplaDevice {
     private final AtomicInteger numberOfConnectedDevices = new AtomicInteger();
     private final Map<Integer, ServerSubDeviceHandler> childHandlers = Collections.synchronizedMap(new HashMap<>());
     private Map<Integer, Integer> channelNumberToHandlerId = Map.of();
@@ -42,6 +49,8 @@ public class ServerGatewayDeviceHandler extends ServerAbstractDeviceHandler impl
     @Getter
     @Nullable
     private TimeoutConfiguration timeoutConfiguration;
+
+    private final ChannelUtil channelUtil = new ChannelUtil(this);
 
     @Getter
     @Nullable
@@ -251,12 +260,7 @@ public class ServerGatewayDeviceHandler extends ServerAbstractDeviceHandler impl
 
     @Override
     public void consumeChannelState(ChannelState value) {
-        var optional = findId(value.channelId, value.channelNumber).flatMap(this::findSubDevice);
-        if (optional.isEmpty()) {
-            logger.warn("There is no channel number for ChannelState! value={}", value);
-            return;
-        }
-        optional.ifPresent(sd -> sd.consumeChannelState(value));
+        channelUtil.consumeChannelState(value);
     }
 
     @Override
@@ -311,5 +315,56 @@ public class ServerGatewayDeviceHandler extends ServerAbstractDeviceHandler impl
             return;
         }
         handler.consumeSuplaChannelNewValueResult(value);
+    }
+
+    @Override
+    public Map<Integer, Integer> getChannelTypes() {
+        throw new UnsupportedOperationException("ServerGatewayDeviceHandler.getChannelTypes()");
+    }
+
+    @Override
+    public ThingBuilder editThing() {
+        return super.editThing();
+    }
+
+    @Override
+    public void updateThing(Thing thing) {
+        super.updateThing(thing);
+    }
+
+    @Override
+    public AtomicInteger getSenderId() {
+        throw new UnsupportedOperationException("ServerGatewayDeviceHandler.getSenderId()");
+    }
+
+    @Override
+    public Map<Integer, ChannelAndPreviousState> getSenderIdToChannelUID() {
+        throw new UnsupportedOperationException("ServerGatewayDeviceHandler.getSenderIdToChannelUID()");
+    }
+
+    @Override
+    public void updateState(ChannelUID uid, State state) {
+        super.updateState(uid, state);
+    }
+
+    @Override
+    public void updateStatus(ThingStatus thingStatus, ThingStatusDetail thingStatusDetail, String message) {
+        super.updateStatus(thingStatus, thingStatusDetail, message);
+    }
+
+    @Override
+    public void updateStatus(ThingStatus thingStatus) {
+        super.updateStatus(thingStatus);
+    }
+
+    @Override
+    public Writer.Future write(FromServerProto proto) {
+        throw new UnsupportedOperationException("ServerGatewayDeviceHandler.write(proto)");
+    }
+
+    @Nullable
+    @Override
+    public String setProperty(String name, @Nullable String value) {
+        return thing.setProperty(name, value);
     }
 }
