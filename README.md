@@ -11,6 +11,8 @@ Together, these options provide flexibility and reliability for all your smart h
 
 This binding has been tested and certified to work with a variety of Supla devices, ensuring reliable performance and seamless integration with your OpenHAB setup. The following devices are officially certified, listed in alphabetical order:
 
+- [AURATON Aries](https://www.auraton.pl/oferta/ogrzewanie-podlogowe/auraton-aries) (successor to AURATON RTH 8D PRO) is an advanced wireless control strip, for managing underfloor heating actuators. Designed for installation in electrical boxes, it provides a versatile and reliable solution for modern heating systems. With its ability to integrate with other devices, the AURATON Aries is the ideal solution for homes concerned with thermal comfort and energy efficiency. By installing it with AURATON Vela actuators, you ensure a 10-year warranty on the strip!
+- [Auraton Heat Monitor](https://www.auraton.pl/oferta/inteligentny-dom-smart/ogrzewanie/auraton-heat-monitor)  brings comfort in your home to a new level. The device will ensure that your desired temperature is exactly where you are. This minimalist thermostat was created to be close to you and your loved ones. Available in two versatile colours: white and black.
 - [Zamel MEW-01](https://supla.zamel.com/product/monitor-energii-elektrycznej-wi-fi-3fn-mew-01/) The highest standard of accuracy in electricity consumption monitoring available with tools for advanced data analysis. MEW-01 is designed for DIN-rail (TH35) mounting, occupies a width of two modules and offers the possibility of attaching an external antenna for use also outside the switchgear.
 - [Zamel ROW-01](https://supla.zamel.com/product/odbiornik-wi-fi-dopuszkowy-1-kanalowy-dwukierunkowy-row-01/) belongs to a family of smart home control products via wi-fi. The device uses SUPLA cloud technology. The ROW-01 module allows you to control lighting, turn on and off sockets and electrical appliances using a smartphone or tablet. The ROW-01 extension modules are used both as elements for mounting in under- and surface-mounted installation boxes, and as actuators built directly into the housings of lighting fixtures.
 - [Zamel ROW-02](https://supla.zamel.com/product/odbiornik-wi-fi-dopuszkowy-2-kanalowy-dwukierunkowy-row-02/) controller allows you to control lighting with buttons or switches in bistable mode. In addition, thanks to the built-in wi-fi module, it is possible to remotely manage lighting using a smartphone application. The device informs about the status of the lighting. The user can control the lighting from anywhere in the world. Thanks to the cloud application, it is also possible to automatically start or stop the lighting according to the schedule stored on the cloud.
@@ -194,14 +196,14 @@ By following these steps, you will enable detailed logging for the Supla plugin,
 ### Thing with Sub Devices
 
 If you create a `Supla Native Server Device` thing (either manually or through service discovery) and your Supla device
-is actually a gateway device, you need to follow these steps to correct the setup. 
+is actually a gateway device, you need to follow these steps to correct the setup.
 
 First, open the configuration of the current thing, enable advanced options, and copy the `GUID` and `Auth Key`.
-![GUID and Auth Key](imgs/guid-auth-key.png) 
+![GUID and Auth Key](imgs/guid-auth-key.png)
 Once you've saved this
-information, remove the thing. Next, add a new gateway bridge thing, and during the configuration, paste the `GUID` 
-and `Auth Key` copied from the previous thing. 
-![Add Gateway Bridge](imgs/add-gateway-bridge.png) 
+information, remove the thing. Next, add a new gateway bridge thing, and during the configuration, paste the `GUID`
+and `Auth Key` copied from the previous thing.
+![Add Gateway Bridge](imgs/add-gateway-bridge.png)
 Once the Supla device connects, any sub-devices linked to the gateway should appear automatically in the inbox.
 
 ## Support ❤️
