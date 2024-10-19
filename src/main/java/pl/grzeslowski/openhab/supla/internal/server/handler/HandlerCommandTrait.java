@@ -4,7 +4,6 @@ import static java.util.Objects.requireNonNull;
 import static org.openhab.core.thing.ThingStatus.OFFLINE;
 import static org.openhab.core.thing.ThingStatus.ONLINE;
 import static org.openhab.core.thing.ThingStatusDetail.COMMUNICATION_ERROR;
-import static org.openhab.core.types.UnDefType.UNDEF;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ChannelIds.Hvac.*;
 import static pl.grzeslowski.openhab.supla.internal.server.ChannelUtil.findSuplaChannelNumber;
 import static tech.units.indriya.unit.Units.CELSIUS;
@@ -20,7 +19,6 @@ import org.openhab.core.types.Command;
 import org.openhab.core.types.State;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.encoders.ChannelTypeEncoderImpl;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.value.*;
-import pl.grzeslowski.jsupla.protocol.api.structs.csd.ChannelStateRequest;
 import pl.grzeslowski.jsupla.protocol.api.structs.sd.SuplaChannelNewValue;
 import pl.grzeslowski.jsupla.server.api.Writer;
 
@@ -30,8 +28,7 @@ class HandlerCommandTrait implements HandleCommand {
     private final SuplaDevice suplaDevice;
 
     @Override
-    public void handleRefreshCommand(ChannelUID channelUID) {
-    }
+    public void handleRefreshCommand(ChannelUID channelUID) {}
 
     @Override
     public void handleOnOffCommand(ChannelUID channelUID, OnOffType command) {
@@ -118,20 +115,18 @@ class HandlerCommandTrait implements HandleCommand {
             var celsiusValue = celsiusQuantity.doubleValue();
 
             var on = true;
-            HvacValue.Mode mode;
+            var mode = HvacValue.Mode.NOT_SET;
             Double setPointHeat;
             Double setPointCool;
             HvacValue.Flags flags;
             if (id.equals(HVAC_SET_POINT_TEMPERATURE_HEAT)) {
                 setPointHeat = celsiusValue;
                 setPointCool = null;
-                mode = HvacValue.Mode.HEAT;
                 flags = new HvacValue.Flags(
                         true, false, false, false, false, false, false, false, false, false, false, false, false);
             } else {
                 setPointHeat = null;
                 setPointCool = celsiusValue;
-                mode = HvacValue.Mode.HEAT_COOL;
                 flags = new HvacValue.Flags(
                         false, true, false, false, false, false, false, false, false, false, false, false, false);
             }
