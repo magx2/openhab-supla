@@ -4,8 +4,7 @@ import static java.util.Collections.synchronizedMap;
 import static java.util.Objects.requireNonNull;
 import static org.openhab.core.thing.ThingStatus.OFFLINE;
 import static org.openhab.core.thing.ThingStatus.ONLINE;
-import static org.openhab.core.thing.ThingStatusDetail.BRIDGE_UNINITIALIZED;
-import static org.openhab.core.thing.ThingStatusDetail.CONFIGURATION_ERROR;
+import static org.openhab.core.thing.ThingStatusDetail.*;
 
 import java.util.HashMap;
 import java.util.List;
@@ -111,7 +110,7 @@ public class ServerSubDeviceHandler extends AbstractDeviceHandler implements Sup
         logger = LoggerFactory.getLogger("%s.%s.%s"
                 .formatted(
                         this.getClass().getName(), requireNonNull(bridgeHandler).getGuid(), subDeviceId));
-        updateStatus(ONLINE);
+        updateStatus(OFFLINE, CONFIGURATION_PENDING, "Waiting for channels");
     }
 
     public void setChannels(List<DeviceChannelTrait> channels) {
