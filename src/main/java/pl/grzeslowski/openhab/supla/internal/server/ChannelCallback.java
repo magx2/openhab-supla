@@ -377,6 +377,12 @@ public class ChannelCallback implements ChannelClassSwitch.Callback<Stream<Chann
         return channels.stream();
     }
 
+    @Override
+    public Stream<Channel> onTimerValue() {
+        // do not know what to do with this
+        return Stream.empty();
+    }
+
     private Channel buildHvacFlag(ChannelGroupUID groupUid, String flag) {
         val channelUid = new ChannelUID(groupUid, "flags-" + flag);
         val channelTypeUID = createChannelTypeUID(FLAG_CHANNEL_ID);

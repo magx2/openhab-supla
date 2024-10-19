@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
@@ -23,6 +24,7 @@ import org.openhab.core.thing.ThingUID;
 import org.openhab.core.types.State;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.value.*;
 
+@Slf4j
 @NonNullByDefault
 @RequiredArgsConstructor
 public class ChannelValueToState implements ChannelValueSwitch.Callback<Stream<Pair<ChannelUID, State>>> {
@@ -376,6 +378,13 @@ public class ChannelValueToState implements ChannelValueSwitch.Callback<Stream<P
             } // batteryCoverOpen
         } // flags
         return pairs.stream();
+    }
+
+    @Override
+    public Stream<Pair<ChannelUID, State>> onTimerValue(TimerValue channelValue) {
+        // do not know what to do with this
+        log.debug("Do not know how to handle timer={}", channelValue);
+        return Stream.empty();
     }
 
     @Override
