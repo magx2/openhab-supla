@@ -1,7 +1,10 @@
 package pl.grzeslowski.openhab.supla.internal.server.handler;
 
 import java.util.Map;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import io.netty.channel.ChannelFuture;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
 import org.openhab.core.thing.ChannelUID;
@@ -12,7 +15,6 @@ import org.openhab.core.thing.binding.builder.ThingBuilder;
 import org.openhab.core.types.State;
 import org.slf4j.Logger;
 import pl.grzeslowski.jsupla.protocol.api.types.FromServerProto;
-import pl.grzeslowski.jsupla.server.api.Writer;
 
 @NonNullByDefault
 public interface SuplaDevice extends HandleCommand, HandleProto {
@@ -39,7 +41,7 @@ public interface SuplaDevice extends HandleCommand, HandleProto {
 
     void updateStatus(ThingStatus thingStatus);
 
-    Writer.Future write(FromServerProto proto);
+    ChannelFuture write(FromServerProto proto);
 
     String setProperty(String name, @Nullable String value);
 

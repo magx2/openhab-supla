@@ -8,6 +8,7 @@ import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.Channe
 import static pl.grzeslowski.openhab.supla.internal.server.ChannelUtil.findSuplaChannelNumber;
 import static tech.units.indriya.unit.Units.CELSIUS;
 
+import io.netty.channel.ChannelFuture;
 import jakarta.annotation.Nullable;
 import lombok.RequiredArgsConstructor;
 import org.eclipse.jdt.annotation.NonNullByDefault;
@@ -21,6 +22,8 @@ import pl.grzeslowski.jsupla.protocol.api.channeltype.encoders.ChannelTypeEncode
 import pl.grzeslowski.jsupla.protocol.api.channeltype.value.*;
 import pl.grzeslowski.jsupla.protocol.api.structs.sd.SuplaChannelNewValue;
 import pl.grzeslowski.jsupla.server.api.Writer;
+
+import java.util.concurrent.CompletableFuture;
 
 @NonNullByDefault
 @RequiredArgsConstructor
@@ -133,7 +136,7 @@ class HandlerCommandTrait implements HandleCommand {
 
             var value = new HvacValue(on, mode, setPointHeat, setPointCool, flags);
             var future = sendCommandToSuplaServer(channelUID, value, command, null);
-            future.addCompleteListener(() -> {
+            future.addListener(__ -> {
                 var groupId = channelUID.getGroupId();
                 if (groupId == null) {
                     return;
@@ -155,12 +158,11 @@ class HandlerCommandTrait implements HandleCommand {
                         channelUID);
     }
 
-    private Writer.Future sendCommandToSuplaServer(
+    private ChannelFuture sendCommandToSuplaServer(
             ChannelUID channelUID, ChannelValue channelValue, Command command, @Nullable State previousState) {
         var maybeChannelNumber = findSuplaChannelNumber(channelUID);
         if (maybeChannelNumber.isEmpty()) {
-            suplaDevice.getLogger().warn("Cannot parse channelNumber from {}", channelUID);
-            return __ -> {};
+            throw new IllegalArgumentException("Cannot find channel number from " + channelUID);
         }
         var channelNumber = maybeChannelNumber.get();
 
@@ -171,17 +173,16 @@ class HandlerCommandTrait implements HandleCommand {
                 .put(senderId, new SuplaDevice.ChannelAndPreviousState(channelUID, previousState));
         var channelNewValue = new SuplaChannelNewValue(senderId, channelNumber, 100L, null, encode);
         try {
-            var future = suplaDevice.write(channelNewValue);
-            future.addCompleteListener(() -> {
+            ChannelFuture future = suplaDevice.write(channelNewValue);
+            future.addListener(__ -> {
                 suplaDevice.getLogger().debug("Changed value of channel for {} command {}", channelUID, command);
                 suplaDevice.updateStatus(ONLINE);
             });
             return future;
         } catch (Exception ex) {
             var msg = "Couldn't Change value of channel for %s command %s.".formatted(channelUID, command);
-            suplaDevice.getLogger().debug(msg, ex);
             suplaDevice.updateStatus(OFFLINE, COMMUNICATION_ERROR, msg + ex.getLocalizedMessage());
-            return __ -> {};
+           throw ex;
         }
     }
 }

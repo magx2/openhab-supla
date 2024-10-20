@@ -11,10 +11,13 @@ import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.Server
 import static pl.grzeslowski.openhab.supla.internal.server.ChannelUtil.findId;
 
 import java.util.*;
+import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
+
+import io.netty.channel.ChannelFuture;
 import lombok.Getter;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
@@ -358,7 +361,7 @@ public class ServerGatewayDeviceHandler extends ServerAbstractDeviceHandler impl
     }
 
     @Override
-    public Writer.Future write(FromServerProto proto) {
+    public ChannelFuture write(FromServerProto proto) {
         throw new UnsupportedOperationException("ServerGatewayDeviceHandler.write(proto)");
     }
 
