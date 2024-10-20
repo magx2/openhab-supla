@@ -12,6 +12,8 @@ import static org.openhab.core.thing.ThingStatus.ONLINE;
 import static org.openhab.core.thing.ThingStatusDetail.*;
 import static pl.grzeslowski.jsupla.protocol.api.ProtocolHelpers.parseString;
 import static pl.grzeslowski.jsupla.protocol.api.ResultCode.SUPLA_RESULTCODE_TRUE;
+import static pl.grzeslowski.jsupla.protocol.api.consts.ProtoConsts.SUPLA_PROTO_VERSION;
+import static pl.grzeslowski.jsupla.protocol.api.consts.ProtoConsts.SUPLA_PROTO_VERSION_MIN;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.BINDING_ID;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ServerDevicesProperties.*;
 import static pl.grzeslowski.openhab.supla.internal.server.ByteArrayToHex.bytesToHex;
@@ -58,8 +60,6 @@ import pl.grzeslowski.openhab.supla.internal.server.traits.*;
 @ToString(onlyExplicitlyIncluded = true)
 public abstract class ServerAbstractDeviceHandler extends AbstractDeviceHandler implements SuplaThing, HandleProto {
     public static final byte ACTIVITY_TIMEOUT = (byte) 100;
-    public static final byte VERSION = (byte) 6;
-    public static final byte VERSION_MIN = (byte) 1;
 
     @Getter
     protected Logger logger = LoggerFactory.getLogger(this.getClass());
@@ -315,7 +315,8 @@ public abstract class ServerAbstractDeviceHandler extends AbstractDeviceHandler 
         if (register) {
             requireNonNull(getWriter().get())
                     .write(new SuplaRegisterDeviceResult(
-                            SUPLA_RESULTCODE_TRUE.getValue(), ACTIVITY_TIMEOUT, VERSION, VERSION_MIN));
+                            SUPLA_RESULTCODE_TRUE.getValue(), ACTIVITY_TIMEOUT, (byte) SUPLA_PROTO_VERSION, (byte)
+                                    SUPLA_PROTO_VERSION_MIN));
             updateStatus(ONLINE);
         }
         return register;
