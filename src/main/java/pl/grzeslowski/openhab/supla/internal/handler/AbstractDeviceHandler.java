@@ -11,11 +11,10 @@ import org.openhab.core.thing.binding.BaseThingHandler;
 import org.openhab.core.types.Command;
 import org.openhab.core.types.RefreshType;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import pl.grzeslowski.openhab.supla.internal.server.handler.HandleCommand;
 
 @NonNullByDefault
-public abstract class AbstractDeviceHandler extends BaseThingHandler {
-    private final Logger logger = LoggerFactory.getLogger(AbstractDeviceHandler.class);
+public abstract class AbstractDeviceHandler extends BaseThingHandler implements HandleCommand {
 
     public AbstractDeviceHandler(final Thing thing) {
         super(thing);
@@ -27,7 +26,7 @@ public abstract class AbstractDeviceHandler extends BaseThingHandler {
         try {
             internalInitialize();
         } catch (Exception e) {
-            logger.error("Error occurred while initializing Supla device!", e);
+            getLogger().error("Error occurred while initializing Supla device!", e);
             updateStatus(
                     OFFLINE,
                     CONFIGURATION_ERROR,
@@ -38,7 +37,8 @@ public abstract class AbstractDeviceHandler extends BaseThingHandler {
     protected abstract void internalInitialize() throws Exception;
 
     @Override
-    public final void handleCommand(final ChannelUID channelUID, final Command command) {
+    public void handleCommand(final ChannelUID channelUID, final Command command) {
+        getLogger().debug("handleCommand({}, {})", channelUID, command);
         try {
             if (command instanceof RefreshType) {
                 handleRefreshCommand(channelUID);
@@ -58,42 +58,26 @@ public abstract class AbstractDeviceHandler extends BaseThingHandler {
                 handleStopMoveTypeCommand(channelUID, stopMoveValue);
             } else if (command instanceof StringType stringValue) {
                 handleStringCommand(channelUID, stringValue);
+            } else if (command instanceof QuantityType<?> quantityType) {
+                handleQuantityType(channelUID, quantityType);
             } else {
-                logger.warn(
-                        "Does not know how to handle command `{}` ({}) on channel `{}`!",
-                        command,
-                        command.getClass().getSimpleName(),
-                        channelUID);
+                getLogger()
+                        .warn(
+                                "Does not know how to handle command `{}` ({}) on channel `{}`!",
+                                command,
+                                command.getClass().getSimpleName(),
+                                channelUID);
             }
         } catch (Exception ex) {
-            logger.error(
-                    "Error occurred while handling command `{}` ({}) on channel `{}`!",
-                    command,
-                    command.getClass().getSimpleName(),
-                    channelUID,
-                    ex);
+            getLogger()
+                    .error(
+                            "Error occurred while handling command `{}` ({}) on channel `{}`!",
+                            command,
+                            command.getClass().getSimpleName(),
+                            channelUID,
+                            ex);
         }
     }
 
-    protected abstract void handleRefreshCommand(final ChannelUID channelUID) throws Exception;
-
-    protected abstract void handleOnOffCommand(final ChannelUID channelUID, final OnOffType command) throws Exception;
-
-    protected abstract void handleUpDownCommand(final ChannelUID channelUID, final UpDownType command) throws Exception;
-
-    protected abstract void handleHsbCommand(final ChannelUID channelUID, final HSBType command) throws Exception;
-
-    protected abstract void handleOpenClosedCommand(final ChannelUID channelUID, final OpenClosedType command)
-            throws Exception;
-
-    protected abstract void handlePercentCommand(final ChannelUID channelUID, final PercentType command)
-            throws Exception;
-
-    protected abstract void handleDecimalCommand(final ChannelUID channelUID, final DecimalType command)
-            throws Exception;
-
-    protected abstract void handleStopMoveTypeCommand(final ChannelUID channelUID, final StopMoveType command)
-            throws Exception;
-
-    protected abstract void handleStringCommand(final ChannelUID channelUID, final StringType command) throws Exception;
+    protected abstract Logger getLogger();
 }

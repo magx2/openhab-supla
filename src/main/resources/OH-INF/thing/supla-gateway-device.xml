@@ -4,45 +4,61 @@
 						xmlns:thing="https://openhab.org/schemas/thing-description/v1.0.0"
 						xsi:schemaLocation="https://openhab.org/schemas/thing-description/v1.0.0 https://openhab.org/schemas/thing-description-1.0.0.xsd">
 
-	<bridge-type id="server-bridge">
-		<label>Supla Server</label>
+	<bridge-type id="gateway-device">
+		<supported-bridge-type-refs>
+			<bridge-type-ref id="server-bridge"/>
+		</supported-bridge-type-refs>
+		<label>Supla Gateway Bridge</label>
 		<description>
-			This is native Supla server that connects with devices.
+			This is Supla Gateway
 		</description>
 
 		<channels>
-			<channel id="server-devices" typeId="connected-devices"/>
+			<channel id="gateway-connected-devices" typeId="connected-devices">
+				<description>Indicates how many devices are connected to this gateway.</description>
+			</channel>
 		</channels>
 
-		<representation-property>port</representation-property>
+		<representation-property>guid</representation-property>
 		<config-description>
+			<parameter name="guid" type="text" required="true">
+				<label>GUID</label>
+				<description>This is GUID of device. It can be found on website during device configuration.
+				</description>
+			</parameter>
+
 			<parameter-group name="accessIdLogin">
 				<label>Access ID Login</label>
 				<description>
 					If you want to authenticate your devices with access ID flow fill
 					&lt;strong&gt;both&lt;/strong&gt;
 					&lt;em&gt;Server Access ID&lt;/em&gt; and
-					&lt;em&gt;Server Access ID Password&lt;/em&gt; </description>
+					&lt;em&gt;Server Access ID Password&lt;/em&gt;
+				</description>
 			</parameter-group>
 			<parameter name="serverAccessId" type="integer" min="1" groupName="accessIdLogin">
 				<label>Server Access ID</label>
 				<description>
 					This is ID that devices will use to register to your server.
 				</description>
+				<advanced>true</advanced>
 			</parameter>
 			<parameter name="serverAccessIdPassword" type="text" groupName="accessIdLogin">
 				<label>Server Access ID Password</label>
 				<description>
 					This is password required to register to your server.
 				</description>
+				<advanced>true</advanced>
 			</parameter>
 
 			<parameter-group name="emailIdLogin">
 				<label>Email Login</label>
+				<context>email</context>
 				<description>
 					If you want to authenticate your devices with email/password flow fill
 					&lt;strong&gt;both&lt;/strong&gt; &lt;em&gt;Email&lt;/em&gt; and
-					&lt;em&gt;Email Password&lt;/em&gt; </description>
+					&lt;em&gt;Email Password&lt;/em&gt;
+				</description>
 			</parameter-group>
 			<parameter name="email" type="text" min="1" groupName="emailIdLogin">
 				<label>Email</label>
@@ -50,8 +66,10 @@
 					This is email that devices will use to register to your server.&lt;br/&gt;
 					&lt;em&gt;This email address
 					does not need to be reachable. It won't be used in any way, i.e. to
-					send email to.&lt;/em&gt; </description>
+					send email to.&lt;/em&gt;
+				</description>
 				<context>email</context>
+				<advanced>true</advanced>
 			</parameter>
 			<parameter name="authKey" type="text" min="1" groupName="emailIdLogin">
 				<label>Auth Key</label>
@@ -61,60 +79,20 @@
 				<advanced>true</advanced>
 			</parameter>
 
-			<parameter name="port" type="integer" required="true" min="1">
-				<label>Server port</label>
-				<description>
-					<![CDATA[
-					Port on which server should listen. Common ports are:
-					<ol>
-					<li>2016 - port with SSL, used by majority of devices,</li>
-					<li>2015 - port without SSL, often used by homemade Arduino/RPi devices.</li>
-					</ol>
-					<strong>Note: Double check that chosen port is free to use.</strong>
-					]]>
-				</description>
-				<default>2016</default>
-			</parameter>
-
-			<parameter name="ssl" type="boolean" >
-				<label>Enable SSL</label>
-				<description><![CDATA[
-					Enable SSL in server. <br>
-					<i>Note: Crypto policy needs to be set to unlimited. Please refer to the documentation for more info</i>
-				]]></description>
-				<default>true</default>
-				<advanced>true</advanced>
-			</parameter>
-			<parameter name="protocols" type="text">
-				<label>Protocols</label>
-				<description>Protocols to support when opening SSL connection.</description>
-				<default>TLSv1.3, TLSv1.2, TLSv1, TLSv1.1</default>
-				<advanced>true</advanced>
-			</parameter>
-
-			<parameter-group name="gTimeout">
-				<label>Timeouts</label>
-				<description>
-					Setup timeouts for all devices
-				</description>
-			</parameter-group>
-			<parameter name="timeout" type="integer" required="true" min="1" groupName="gTimeout">
+			<parameter name="timeout" type="integer">
 				<label>Timeout</label>
 				<description/>
 				<advanced>true</advanced>
-				<default>10</default>
 			</parameter>
-			<parameter name="timeoutMin" type="integer" required="true" min="1" groupName="gTimeout">
+			<parameter name="timeoutMin" type="integer">
 				<label>Timeout Min</label>
 				<description/>
 				<advanced>true</advanced>
-				<default>8</default>
 			</parameter>
-			<parameter name="timeoutMax" type="integer" required="true" min="1" groupName="gTimeout">
+			<parameter name="timeoutMax" type="integer">
 				<label>Timeout Max</label>
 				<description/>
 				<advanced>true</advanced>
-				<default>12</default>
 			</parameter>
 		</config-description>
 

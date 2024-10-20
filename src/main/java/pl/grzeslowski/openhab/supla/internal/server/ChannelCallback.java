@@ -1,6 +1,7 @@
 package pl.grzeslowski.openhab.supla.internal.server;
 
 import static java.lang.String.valueOf;
+import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ChannelIds.Hvac.*;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.Channels.*;
 
 import java.util.ArrayList;
@@ -43,7 +44,7 @@ public class ChannelCallback implements ChannelClassSwitch.Callback<Stream<Chann
         final ChannelTypeUID channelTypeUID = createChannelTypeUID(DECIMAL_CHANNEL_ID);
 
         return Stream.of(ChannelBuilder.create(channelUid, "Number")
-                .withType(channelTypeUID)
+                .withLabel("This channel represents plain decimal value")
                 .build());
     }
 
@@ -67,6 +68,7 @@ public class ChannelCallback implements ChannelClassSwitch.Callback<Stream<Chann
 
         return Stream.of(ChannelBuilder.create(channelUid, "Switch")
                 .withType(channelTypeUID)
+                .withLabel("Allows you to turn thing ON/OFF")
                 .build());
     }
 
@@ -86,6 +88,7 @@ public class ChannelCallback implements ChannelClassSwitch.Callback<Stream<Chann
 
         return Stream.of(ChannelBuilder.create(channelUid, "String") // TODO what type?
                 .withType(channelTypeUID)
+                .withLabel("Pick desired color")
                 .build());
     }
 
@@ -98,6 +101,7 @@ public class ChannelCallback implements ChannelClassSwitch.Callback<Stream<Chann
 
         return Stream.of(ChannelBuilder.create(channelUid, "Rollershutter")
                 .withType(channelTypeUID)
+                .withLabel("Roller shutter")
                 .build());
     }
 
@@ -110,6 +114,7 @@ public class ChannelCallback implements ChannelClassSwitch.Callback<Stream<Chann
 
         return Stream.of(ChannelBuilder.create(channelUid, "Number:Temperature")
                 .withType(channelTypeUID)
+                .withLabel("Temperature")
                 .build());
     }
 
@@ -124,6 +129,7 @@ public class ChannelCallback implements ChannelClassSwitch.Callback<Stream<Chann
             val channelTypeUID = createChannelTypeUID(TEMPERATURE_CHANNEL_ID);
             channels.add(ChannelBuilder.create(channelUid, "Number:Temperature")
                     .withType(channelTypeUID)
+                    .withLabel("Temperature")
                     .build());
         }
         {
@@ -131,6 +137,7 @@ public class ChannelCallback implements ChannelClassSwitch.Callback<Stream<Chann
             val channelTypeUID = createChannelTypeUID(HUMIDITY_CHANNEL_ID);
             channels.add(ChannelBuilder.create(channelUid, "Number:Dimensionless")
                     .withType(channelTypeUID)
+                    .withLabel("Humidity")
                     .build());
         }
         return channels.stream();
@@ -312,14 +319,89 @@ public class ChannelCallback implements ChannelClassSwitch.Callback<Stream<Chann
     }
 
     @Override
+    public Stream<Channel> onHvacValue() {
+        log.debug("{} {} onHvacValue", thingUID, number);
+        val groupUid = new ChannelGroupUID(thingUID, valueOf(number));
+        val channels = new ArrayList<Channel>();
+        {
+            val channelUid = new ChannelUID(groupUid, HVAC_ON);
+            final ChannelTypeUID channelTypeUID = createChannelTypeUID(HVAC_WORKING_CHANNEL_ID);
+            channels.add(ChannelBuilder.create(channelUid, "Switch")
+                    .withLabel("Working")
+                    .withType(channelTypeUID)
+                    .build());
+        } // on
+        {
+            val channelUid = new ChannelUID(groupUid, HVAC_MODE);
+            final ChannelTypeUID channelTypeUID = createChannelTypeUID(HVAC_MODE_CHANNEL_ID);
+            channels.add(ChannelBuilder.create(channelUid, "String")
+                    .withLabel("Mode")
+                    .withType(channelTypeUID)
+                    .build());
+        } // mode
+        {
+            val channelUid = new ChannelUID(groupUid, HVAC_SET_POINT_TEMPERATURE_HEAT);
+            final ChannelTypeUID channelTypeUID = createChannelTypeUID(HVAC_TEMPERATURE_HEAT_CHANNEL_ID);
+            channels.add(ChannelBuilder.create(channelUid, "Number:Temperature")
+                    .withLabel("Set Point Temperature Heat")
+                    .withType(channelTypeUID)
+                    .build());
+        } // setPointTemperatureHeat
+        {
+            val channelUid = new ChannelUID(groupUid, HVAC_SET_POINT_TEMPERATURE_COOL);
+            final ChannelTypeUID channelTypeUID = createChannelTypeUID(HVAC_TEMPERATURE_COOL_CHANNEL_ID);
+            channels.add(ChannelBuilder.create(channelUid, "Number:Temperature")
+                    .withLabel("Set Point Temperature Cool")
+                    .withType(channelTypeUID)
+                    .build());
+        } // setPointTemperatureCool
+        {
+            val flags = Stream.of(
+                            "setPointTempHeatSet",
+                            "setPointTempCoolSet",
+                            "heating",
+                            "cooling",
+                            "weeklySchedule",
+                            "countdownTimer",
+                            "fanEnabled",
+                            "thermometerError",
+                            "clockError",
+                            "forcedOffBySensor",
+                            "cool",
+                            "weeklyScheduleTemporalOverride",
+                            "batteryCoverOpen")
+                    .map(name -> buildHvacFlag(groupUid, name))
+                    .toList();
+            channels.addAll(flags);
+        } // flags
+        return channels.stream();
+    }
+
+    @Override
+    public Stream<Channel> onTimerValue() {
+        // do not know what to do with this
+        return Stream.empty();
+    }
+
+    private Channel buildHvacFlag(ChannelGroupUID groupUid, String flag) {
+        val channelUid = new ChannelUID(groupUid, "flags-" + flag);
+        val channelTypeUID = createChannelTypeUID(FLAG_CHANNEL_ID);
+        return ChannelBuilder.create(channelUid, "Switch")
+                .withLabel("Flag \"%s\"".formatted(flag))
+                .withType(channelTypeUID)
+                .build();
+    }
+
+    @Override
     @Nullable
     public Stream<Channel> onUnknownValue() {
         log.debug("{} {} onUnknownValue", thingUID, number);
-        final ChannelUID channelUid = createChannelUid();
-        final ChannelTypeUID channelTypeUID = createChannelTypeUID(UNKNOWN_CHANNEL_ID);
+        val channelUid = createChannelUid();
+        val channelTypeUID = createChannelTypeUID(UNKNOWN_CHANNEL_ID);
 
         return Stream.of(ChannelBuilder.create(channelUid, "String")
                 .withType(channelTypeUID)
+                .withLabel("Unknown")
                 .build());
     }
 }

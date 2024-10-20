@@ -3,7 +3,6 @@ package pl.grzeslowski.openhab.supla.internal.server.handler;
 import static java.util.Arrays.stream;
 import static java.util.stream.Collectors.toCollection;
 import static java.util.stream.Collectors.toSet;
-import static lombok.AccessLevel.PACKAGE;
 import static org.openhab.core.thing.ThingStatus.OFFLINE;
 import static org.openhab.core.thing.ThingStatus.ONLINE;
 import static org.openhab.core.thing.ThingStatusDetail.COMMUNICATION_ERROR;
@@ -15,6 +14,7 @@ import static pl.grzeslowski.jsupla.server.netty.NettyServerFactory.SSL_CTX;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.BINDING_ID;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.CONNECTED_DEVICES_CHANNEL_ID;
 
+import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.SslProvider;
@@ -40,16 +40,13 @@ import org.slf4j.LoggerFactory;
 import pl.grzeslowski.jsupla.protocol.api.calltypes.CallTypeParser;
 import pl.grzeslowski.jsupla.protocol.api.decoders.DecoderFactoryImpl;
 import pl.grzeslowski.jsupla.protocol.api.encoders.EncoderFactoryImpl;
-import pl.grzeslowski.jsupla.server.api.MessageHandler;
-import pl.grzeslowski.jsupla.server.api.Server;
-import pl.grzeslowski.jsupla.server.api.ServerFactory;
-import pl.grzeslowski.jsupla.server.api.ServerProperties;
+import pl.grzeslowski.jsupla.server.api.*;
 import pl.grzeslowski.jsupla.server.netty.NettyServerFactory;
 import pl.grzeslowski.openhab.supla.internal.Documentation;
 import pl.grzeslowski.openhab.supla.internal.server.discovery.ServerDiscoveryService;
 
 @NonNullByDefault
-public class ServerBridgeHandler extends BaseBridgeHandler implements SuplaThingRegistry {
+public class ServerBridgeHandler extends BaseBridgeHandler implements SuplaThingRegistry, SuplaBridge {
     private static final int PROPER_AES_KEY_SIZE = 2147483647;
     private Logger logger = LoggerFactory.getLogger(ServerBridgeHandler.class);
 
@@ -60,13 +57,14 @@ public class ServerBridgeHandler extends BaseBridgeHandler implements SuplaThing
 
     private final AtomicInteger numberOfConnectedDevices = new AtomicInteger();
 
-    private final Collection<ServerDeviceHandler> childHandlers = Collections.synchronizedList(new ArrayList<>());
+    private final Collection<ServerAbstractDeviceHandler> childHandlers =
+            Collections.synchronizedList(new ArrayList<>());
 
-    @Getter(PACKAGE)
+    @Getter
     @Nullable
     private TimeoutConfiguration timeoutConfiguration;
 
-    @Getter(PACKAGE)
+    @Getter
     @Nullable
     private AuthData authData;
 
@@ -102,7 +100,7 @@ public class ServerBridgeHandler extends BaseBridgeHandler implements SuplaThing
             updateStatus(OFFLINE, CONFIGURATION_ERROR, "You need to pass port!");
             return;
         }
-        authData = buildAuthData(config);
+        authData = SuplaBridge.buildAuthData(config);
         var port = config.getPort().intValue();
         var protocols =
                 stream(config.getProtocols().split(",")).map(String::trim).collect(toSet());
@@ -156,10 +154,7 @@ public class ServerBridgeHandler extends BaseBridgeHandler implements SuplaThing
             logger.warn("Cannot get disabled algorithms! {}", ex.getLocalizedMessage());
         }
 
-        timeoutConfiguration = new TimeoutConfiguration(
-                config.getTimeout().intValue(),
-                config.getTimeoutMin().intValue(),
-                config.getTimeoutMax().intValue());
+        timeoutConfiguration = SuplaBridge.buildTimeoutConfiguration(config);
 
         var factory = buildServerFactory();
         server = factory.createNewServer(buildServerProperties(port, protocols), this::messageHandlerFactory);
@@ -170,27 +165,10 @@ public class ServerBridgeHandler extends BaseBridgeHandler implements SuplaThing
         updateConnectedDevices(0);
     }
 
-    private static AuthData buildAuthData(ServerBridgeHandlerConfig config) {
-        AuthData.@Nullable LocationAuthData locationAuthData;
-        if (config.getServerAccessId() != null && config.getServerAccessIdPassword() != null) {
-            locationAuthData = new AuthData.LocationAuthData(
-                    config.getServerAccessId().intValue(), config.getServerAccessIdPassword());
-        } else {
-            locationAuthData = null;
-        }
-        AuthData.@Nullable EmailAuthData emailAuthData;
-        if (config.getEmail() != null) {
-            emailAuthData = new AuthData.EmailAuthData(config.getEmail());
-        } else {
-            emailAuthData = null;
-        }
-        return new AuthData(locationAuthData, emailAuthData);
-    }
-
-    private MessageHandler messageHandlerFactory() {
+    private MessageHandler messageHandlerFactory(SocketChannel ch) {
         logger.debug("Device connected");
         // todo serverDiscoveryService.setNewDeviceFlux(newChannelsPipe);
-        return new OpenHabMessageHandler(this, serverDiscoveryService);
+        return new OpenHabMessageHandler(this, serverDiscoveryService, ch);
     }
 
     @Override
@@ -207,11 +185,13 @@ public class ServerBridgeHandler extends BaseBridgeHandler implements SuplaThing
                 OFFLINE, COMMUNICATION_ERROR, "Error occurred in server pipe. Message: " + ex.getLocalizedMessage());
     }
 
+    @Override
     public void deviceConnected() {
         logger.debug("Device connected to Server");
         changeNumberOfConnectedDevices(1);
     }
 
+    @Override
     public void deviceDisconnected() {
         logger.debug("Device disconnected from Server");
         changeNumberOfConnectedDevices(-1);
@@ -275,7 +255,7 @@ public class ServerBridgeHandler extends BaseBridgeHandler implements SuplaThing
 
     @Override
     public void childHandlerInitialized(ThingHandler childHandler, Thing childThing) {
-        if (!(childHandler instanceof ServerDeviceHandler serverDevice)) {
+        if (!(childHandler instanceof ServerAbstractDeviceHandler serverDevice)) {
             return;
         }
         logger.debug("Add Handler {}", serverDevice.getGuid());
@@ -284,7 +264,7 @@ public class ServerBridgeHandler extends BaseBridgeHandler implements SuplaThing
 
     @Override
     public void childHandlerDisposed(ThingHandler childHandler, Thing childThing) {
-        if (!(childHandler instanceof ServerDeviceHandler serverDevice)) {
+        if (!(childHandler instanceof ServerAbstractDeviceHandler serverDevice)) {
             return;
         }
         logger.debug("Remove Handler {}", serverDevice.getGuid());
