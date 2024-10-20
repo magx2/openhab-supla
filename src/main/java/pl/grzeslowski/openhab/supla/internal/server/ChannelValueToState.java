@@ -145,14 +145,14 @@ public class ChannelValueToState implements ChannelValueSwitch.Callback<Stream<P
         {
             val id = new ChannelUID(groupUid, "totalForwardActiveEnergyBalanced");
             val stateValue = optionalMeter
-                    .<State>map(value -> new DecimalType(value.getTotalForwardActiveEnergyBalanced()))
+                    .<State>map(value -> new DecimalType(new BigDecimal(value.getTotalForwardActiveEnergyBalanced())))
                     .orElse(NULL);
             pairs.add(Pair.with(id, stateValue));
         }
         {
             val id = new ChannelUID(groupUid, "totalReverseActiveEnergyBalanced");
             val stateValue = optionalMeter
-                    .<State>map(value -> new DecimalType(value.getTotalReverseActiveEnergyBalanced()))
+                    .<State>map(value -> new DecimalType(new BigDecimal(value.getTotalReverseActiveEnergyBalanced())))
                     .orElse(NULL);
             pairs.add(Pair.with(id, stateValue));
         }
