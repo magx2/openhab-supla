@@ -85,7 +85,7 @@ public abstract class ServerAbstractDeviceHandler extends AbstractDeviceHandler 
     @Getter
     private SuplaBridge bridgeHandler;
 
-    @Getter(PROTECTED)
+    @Getter
     private final AtomicReference<@Nullable Writer> writer = new AtomicReference<>();
 
     @Nullable
@@ -329,7 +329,7 @@ public abstract class ServerAbstractDeviceHandler extends AbstractDeviceHandler 
         var timeout = requireNonNull(deviceConfiguration).timeoutConfiguration();
         var data = new SuplaSetActivityTimeoutResult(
                 (short) timeout.timeout(), (short) timeout.min(), (short) timeout.max());
-        writer.write(data).addCompleteListener(() -> logger.trace("setActivityTimeout {}", data));
+        writer.write(data).addListener(f -> logger.trace("setActivityTimeout {}", data));
         pingSchedule = ThreadPoolManager.getScheduledPool(BINDING_ID)
                 .scheduleWithFixedDelay(this::checkIfDeviceIsUp, timeout.timeout() * 2L, timeout.timeout(), SECONDS);
     }
@@ -363,7 +363,7 @@ public abstract class ServerAbstractDeviceHandler extends AbstractDeviceHandler 
     @Override
     public final void consumeSuplaPingServer(SuplaPingServer ping, Writer writer) {
         var response = new SuplaPingServerResult(ping.now);
-        writer.write(response).addCompleteListener(() -> {
+        writer.write(response).addListener(f -> {
             logger.trace("pingServer {}s {}ms", response.now.tvSec, response.now.tvUsec);
             lastMessageFromDevice.set(now().getEpochSecond());
         });

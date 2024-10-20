@@ -1,15 +1,6 @@
 package pl.grzeslowski.openhab.supla.internal.server.handler;
 
-import static java.util.Collections.synchronizedMap;
-import static java.util.Objects.requireNonNull;
-import static org.openhab.core.thing.ThingStatus.OFFLINE;
-import static org.openhab.core.thing.ThingStatus.ONLINE;
-import static org.openhab.core.thing.ThingStatusDetail.*;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
+import io.netty.channel.ChannelFuture;
 import lombok.Getter;
 import lombok.ToString;
 import lombok.experimental.Delegate;
@@ -34,6 +25,21 @@ import pl.grzeslowski.openhab.supla.internal.handler.AbstractDeviceHandler;
 import pl.grzeslowski.openhab.supla.internal.server.ChannelUtil;
 import pl.grzeslowski.openhab.supla.internal.server.traits.DeviceChannelTrait;
 import pl.grzeslowski.openhab.supla.internal.server.traits.DeviceChannelValueTrait;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
+
+import static java.util.Collections.synchronizedMap;
+import static java.util.Objects.requireNonNull;
+import static org.openhab.core.thing.ThingStatus.OFFLINE;
+import static org.openhab.core.thing.ThingStatus.ONLINE;
+import static org.openhab.core.thing.ThingStatusDetail.*;
 
 @NonNullByDefault
 @ToString(onlyExplicitlyIncluded = true)
@@ -165,7 +171,8 @@ public class ServerSubDeviceHandler extends AbstractDeviceHandler implements Sup
     }
 
     @Override
-    public void consumeSuplaDeviceChannelExtendedValue(int channelNumber, int type, byte[] value) {}
+    public void consumeSuplaDeviceChannelExtendedValue(int channelNumber, int type, byte[] value) {
+    }
 
     @Override
     public void consumeLocalTimeRequest(Writer writer) {
@@ -203,17 +210,9 @@ public class ServerSubDeviceHandler extends AbstractDeviceHandler implements Sup
     }
 
     @Override
-    public Writer.Future write(FromServerProto proto) {
-        var local = bridgeHandler;
-        if (local == null) {
-            logger.warn("There is not bridge!");
-            return __ -> {};
-        }
-        var writer = local.getWriter().get();
-        if (writer == null) {
-            logger.warn("There is not writer!");
-            return __ -> {};
-        }
+    public ChannelFuture write(FromServerProto proto) {
+        var local = requireNonNull(bridgeHandler,"There is not bridge!");
+        var writer = requireNonNull(local.getWriter().get(),"There is not writer!");
         logger.debug("Writing proto {}", proto);
         return writer.write(proto);
     }
