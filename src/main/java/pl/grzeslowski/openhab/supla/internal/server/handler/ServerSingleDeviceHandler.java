@@ -7,15 +7,11 @@ import static org.openhab.core.thing.ThingStatusDetail.CONFIGURATION_ERROR;
 import static pl.grzeslowski.openhab.supla.internal.Documentation.THING_BRIDGE;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.SUPLA_GATEWAY_DEVICE_TYPE;
 
+import io.netty.channel.ChannelFuture;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import io.netty.channel.ChannelFuture;
 import lombok.Getter;
 import lombok.experimental.Delegate;
 import org.eclipse.jdt.annotation.NonNullByDefault;
@@ -31,7 +27,6 @@ import pl.grzeslowski.jsupla.protocol.api.structs.ds.SubdeviceDetails;
 import pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaChannelNewValueResult;
 import pl.grzeslowski.jsupla.protocol.api.structs.dsc.ChannelState;
 import pl.grzeslowski.jsupla.protocol.api.types.FromServerProto;
-import pl.grzeslowski.jsupla.server.api.Writer;
 import pl.grzeslowski.openhab.supla.internal.server.ChannelUtil;
 import pl.grzeslowski.openhab.supla.internal.server.traits.DeviceChannelTrait;
 import pl.grzeslowski.openhab.supla.internal.server.traits.DeviceChannelValueTrait;
@@ -138,7 +133,7 @@ public class ServerSingleDeviceHandler extends ServerAbstractDeviceHandler imple
 
     @Override
     public ChannelFuture write(FromServerProto proto) {
-        var writer = requireNonNull(getWriter().get(),"There is no writer!");
+        var writer = requireNonNull(getWriter().get(), "There is no writer!");
         logger.debug("Writing proto {}", proto);
         return writer.write(proto);
     }

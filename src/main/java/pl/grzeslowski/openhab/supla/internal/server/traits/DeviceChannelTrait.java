@@ -6,6 +6,8 @@ import static pl.grzeslowski.jsupla.protocol.api.ChannelFunction.SUPLA_CHANNELFN
 import jakarta.annotation.Nullable;
 import lombok.Value;
 import pl.grzeslowski.jsupla.protocol.api.ChannelFunction;
+import pl.grzeslowski.jsupla.protocol.api.channeltype.decoders.HVACValueDecoderImpl;
+import pl.grzeslowski.jsupla.protocol.api.channeltype.value.HvacValue;
 import pl.grzeslowski.jsupla.protocol.api.structs.HVACValue;
 import pl.grzeslowski.jsupla.protocol.api.structs.ds.*;
 
@@ -19,7 +21,7 @@ public class DeviceChannelTrait {
     byte[] value;
 
     @Nullable
-    pl.grzeslowski.jsupla.protocol.api.structs.HVACValue hvacValue;
+    HvacValue hvacValue;
 
     @Nullable
     Integer subDeviceId;
@@ -29,7 +31,7 @@ public class DeviceChannelTrait {
             int type,
             @Nullable Integer channelFunction,
             @Nullable byte[] value,
-            @Nullable HVACValue hvacValue,
+            @Nullable HvacValue hvacValue,
             @Nullable Integer subDeviceId) {
         this.number = number;
         this.type = type;
@@ -58,15 +60,23 @@ public class DeviceChannelTrait {
     }
 
     public DeviceChannelTrait(SuplaDeviceChannelC channel) {
-        this(channel.number, channel.type, channel.funcList, channel.value, channel.hvacValue, null);
+        this(channel.number, channel.type, channel.funcList, channel.value, mapHvacValue(channel.hvacValue), null);
     }
 
     public DeviceChannelTrait(SuplaDeviceChannelD channel) {
-        this(channel.number, channel.type, channel.funcList, channel.value, channel.hvacValue, null);
+        this(channel.number, channel.type, channel.funcList, channel.value, mapHvacValue(channel.hvacValue), null);
     }
 
     public DeviceChannelTrait(SuplaDeviceChannelE channel) {
-        this(channel.number, channel.type, channel.funcList, channel.value, channel.hvacValue, (int)
+        this(channel.number, channel.type, channel.funcList, channel.value, mapHvacValue(channel.hvacValue), (int)
                 channel.subDeviceId);
+    }
+
+    @Nullable
+    private static HvacValue mapHvacValue(@Nullable HVACValue hvacValue) {
+        if (hvacValue == null) {
+            return null;
+        }
+        return HVACValueDecoderImpl.INSTANCE.decode(hvacValue);
     }
 }
