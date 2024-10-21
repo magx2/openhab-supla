@@ -2,18 +2,17 @@ package pl.grzeslowski.openhab.supla.internal.server.handler;
 
 import static java.lang.String.valueOf;
 import static java.time.Instant.now;
+import static java.util.Arrays.stream;
 import static java.util.Objects.requireNonNull;
 import static java.util.Objects.requireNonNullElse;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static java.util.stream.Collectors.joining;
-import static lombok.AccessLevel.PROTECTED;
 import static org.openhab.core.thing.ThingStatus.OFFLINE;
 import static org.openhab.core.thing.ThingStatus.ONLINE;
 import static org.openhab.core.thing.ThingStatusDetail.*;
 import static pl.grzeslowski.jsupla.protocol.api.ProtocolHelpers.parseString;
 import static pl.grzeslowski.jsupla.protocol.api.ResultCode.SUPLA_RESULTCODE_TRUE;
-import static pl.grzeslowski.jsupla.protocol.api.consts.ProtoConsts.SUPLA_PROTO_VERSION;
-import static pl.grzeslowski.jsupla.protocol.api.consts.ProtoConsts.SUPLA_PROTO_VERSION_MIN;
+import static pl.grzeslowski.jsupla.protocol.api.consts.ProtoConsts.*;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.BINDING_ID;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ServerDevicesProperties.*;
 import static pl.grzeslowski.openhab.supla.internal.server.ByteArrayToHex.bytesToHex;
@@ -26,18 +25,19 @@ import java.util.*;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
 import org.openhab.core.common.ThreadPoolManager;
-import org.openhab.core.library.types.*;
 import org.openhab.core.thing.ChannelUID;
 import org.openhab.core.thing.Thing;
 import org.openhab.core.thing.ThingStatus;
+import org.openhab.core.thing.binding.ThingHandlerService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import pl.grzeslowski.jsupla.protocol.api.channeltype.value.*;
 import pl.grzeslowski.jsupla.protocol.api.structs.dcs.LocalTimeRequest;
 import pl.grzeslowski.jsupla.protocol.api.structs.dcs.SetCaption;
 import pl.grzeslowski.jsupla.protocol.api.structs.dcs.SuplaPingServer;
@@ -51,7 +51,11 @@ import pl.grzeslowski.jsupla.protocol.api.structs.sdc.UserLocalTimeResult;
 import pl.grzeslowski.jsupla.protocol.api.types.ToServerProto;
 import pl.grzeslowski.jsupla.server.api.Writer;
 import pl.grzeslowski.openhab.supla.internal.handler.AbstractDeviceHandler;
-import pl.grzeslowski.openhab.supla.internal.server.traits.*;
+import pl.grzeslowski.openhab.supla.internal.server.SuplaServerDeviceActions;
+import pl.grzeslowski.openhab.supla.internal.server.traits.DeviceChannelValueTrait;
+import pl.grzeslowski.openhab.supla.internal.server.traits.RegisterDeviceTrait;
+import pl.grzeslowski.openhab.supla.internal.server.traits.RegisterEmailDeviceTrait;
+import pl.grzeslowski.openhab.supla.internal.server.traits.RegisterLocationDeviceTrait;
 
 /**
  * The {@link ServerAbstractDeviceHandler} is responsible for handling commands, which are sent to one of the channels.
@@ -225,6 +229,12 @@ public abstract class ServerAbstractDeviceHandler extends AbstractDeviceHandler 
                 consumeSubDeviceDetails(value);
             } else if (entity instanceof SuplaChannelNewValueResult value) {
                 consumeSuplaChannelNewValueResult(value);
+            } else if (entity instanceof SetDeviceConfigResult value) {
+                consumeSetDeviceConfigResult(value);
+            } else if (entity instanceof SetDeviceConfig value) {
+                consumeSetDeviceConfig(value);
+            } else if (entity instanceof SetChannelConfigResult value) {
+                consumeSetChannelConfigResult(value);
             } else {
                 logger.debug("Not supporting message:\n{}", entity);
             }
@@ -475,5 +485,99 @@ public abstract class ServerAbstractDeviceHandler extends AbstractDeviceHandler 
         writer.set(null);
         logger = LoggerFactory.getLogger(this.getClass());
         authorized = false;
+    }
+
+    @Override
+    public Collection<Class<? extends ThingHandlerService>> getServices() {
+        return Set.of(SuplaServerDeviceActions.class);
+    }
+
+    @Override
+    public void consumeSetDeviceConfigResult(SetDeviceConfigResult value) {
+        var result = ConfigResult.findConfigResult(value.result);
+        if (!result.success) {
+            logger.warn("Did not succeed ({}) with setting config for device", result);
+        } else {
+            logger.debug("Set config for device. result={}", value);
+        }
+    }
+
+    @Override
+    public void consumeSetChannelConfigResult(SetChannelConfigResult value) {
+        var result = ConfigResult.findConfigResult(value.result);
+        if (!result.success) {
+            logger.warn("Did not succeed ({}) with setting config for device", result);
+        } else {
+            logger.debug("Set config for channel. result={}", value);
+        }
+    }
+
+    @RequiredArgsConstructor
+    private static enum ConfigResult {
+        FALSE(false),
+        TRUE(true),
+        DATA_ERROR(false),
+        TYPE_NOT_SUPPORTED(false),
+        FUNCTION_NOT_SUPPORTED(false),
+        LOCAL_CONFIG_DISABLED(false),
+        NOT_ALLOWED(false),
+        DEVICE_NOT_FOUND(false),
+        UNKNOWN(false);
+
+        final boolean success;
+
+        public static ConfigResult findConfigResult(int value) {
+            return switch (value) {
+                case SUPLA_CONFIG_RESULT_FALSE -> FALSE;
+                case SUPLA_CONFIG_RESULT_TRUE -> TRUE;
+                case SUPLA_CONFIG_RESULT_DATA_ERROR -> DATA_ERROR;
+                case SUPLA_CONFIG_RESULT_TYPE_NOT_SUPPORTED -> TYPE_NOT_SUPPORTED;
+                case SUPLA_CONFIG_RESULT_FUNCTION_NOT_SUPPORTED -> FUNCTION_NOT_SUPPORTED;
+                case SUPLA_CONFIG_RESULT_LOCAL_CONFIG_DISABLED -> LOCAL_CONFIG_DISABLED;
+                case SUPLA_CONFIG_RESULT_NOT_ALLOWED -> NOT_ALLOWED;
+                case SUPLA_CONFIG_RESULT_DEVICE_NOT_FOUND -> DEVICE_NOT_FOUND;
+                default -> UNKNOWN;
+            };
+        }
+    }
+
+    @Override
+    public void consumeSetDeviceConfig(SetDeviceConfig value) {
+        if (value.endOfDataFlag == 0) {
+            logger.warn("SetDeviceConfig has more data but I'm not supporting it! config={}", value);
+        }
+        var available = DeviceConfigFields.hasFields(value.availableFields.longValue());
+        var fields = DeviceConfigFields.hasFields(value.fields.longValue());
+        logger.debug(
+                "Setting device config: availableFields={}, fields={}, config={}",
+                available,
+                fields,
+                Arrays.toString(value.config));
+    }
+
+    @RequiredArgsConstructor
+    private static enum DeviceConfigFields {
+        STATUS_LED(SUPLA_DEVICE_CONFIG_FIELD_STATUS_LED),
+        SCREEN_BRIGHTNESS(SUPLA_DEVICE_CONFIG_FIELD_SCREEN_BRIGHTNESS),
+        BUTTON_VOLUME(SUPLA_DEVICE_CONFIG_FIELD_BUTTON_VOLUME),
+        DISABLE_USER_INTERFACE(SUPLA_DEVICE_CONFIG_FIELD_DISABLE_USER_INTERFACE),
+        AUTOMATIC_TIME_SYNC(SUPLA_DEVICE_CONFIG_FIELD_AUTOMATIC_TIME_SYNC),
+        HOME_SCREEN_OFF_DELAY(SUPLA_DEVICE_CONFIG_FIELD_HOME_SCREEN_OFF_DELAY),
+        HOME_SCREEN_CONTENT(SUPLA_DEVICE_CONFIG_FIELD_HOME_SCREEN_CONTENT),
+        HOME_SCREEN_OFF_DELAY_TYPE(SUPLA_DEVICE_CONFIG_FIELD_HOME_SCREEN_OFF_DELAY_TYPE),
+        POWER_STATUS_LED(SUPLA_DEVICE_CONFIG_FIELD_POWER_STATUS_LED);
+
+        final long mask;
+
+        public boolean hasField(long field) {
+            return (field & mask) != 0;
+        }
+
+        @SuppressWarnings("StaticMethodOnlyUsedInOneClass")
+        public static SortedSet<DeviceConfigFields> hasFields(long field) {
+            return stream(values())
+                    .filter(value -> value.hasField(field))
+                    .collect(Collectors.toCollection(TreeSet::new));
+        }
     }
 }

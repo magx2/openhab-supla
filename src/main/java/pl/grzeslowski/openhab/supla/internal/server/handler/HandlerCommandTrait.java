@@ -21,9 +21,6 @@ import org.openhab.core.types.State;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.encoders.ChannelTypeEncoderImpl;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.value.*;
 import pl.grzeslowski.jsupla.protocol.api.structs.sd.SuplaChannelNewValue;
-import pl.grzeslowski.jsupla.server.api.Writer;
-
-import java.util.concurrent.CompletableFuture;
 
 @NonNullByDefault
 @RequiredArgsConstructor
@@ -182,7 +179,7 @@ class HandlerCommandTrait implements HandleCommand {
         } catch (Exception ex) {
             var msg = "Couldn't Change value of channel for %s command %s.".formatted(channelUID, command);
             suplaDevice.updateStatus(OFFLINE, COMMUNICATION_ERROR, msg + ex.getLocalizedMessage());
-           throw ex;
+            throw ex;
         }
     }
 }

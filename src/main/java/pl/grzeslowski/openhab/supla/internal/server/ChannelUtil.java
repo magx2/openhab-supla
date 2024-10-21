@@ -27,12 +27,7 @@ import org.openhab.core.types.State;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.decoders.ChannelTypeDecoder;
-import pl.grzeslowski.jsupla.protocol.api.channeltype.decoders.HVACValueDecoderImpl;
-import pl.grzeslowski.jsupla.protocol.api.channeltype.value.ChannelClassSwitch;
-import pl.grzeslowski.jsupla.protocol.api.channeltype.value.ChannelValue;
-import pl.grzeslowski.jsupla.protocol.api.channeltype.value.ChannelValueSwitch;
-import pl.grzeslowski.jsupla.protocol.api.channeltype.value.ElectricityMeterValue;
-import pl.grzeslowski.jsupla.protocol.api.structs.HVACValue;
+import pl.grzeslowski.jsupla.protocol.api.channeltype.value.*;
 import pl.grzeslowski.jsupla.protocol.api.structs.dcs.SetCaption;
 import pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaChannelNewValueResult;
 import pl.grzeslowski.jsupla.protocol.api.structs.dsc.ChannelState;
@@ -57,10 +52,10 @@ public class ChannelUtil {
             if (invoker.getLogger().isDebugEnabled()) {
                 var rawChannels = deviceChannels.stream()
                         .map(DeviceChannelTrait::toString)
-                        .collect(Collectors.joining("\n"));
+                        .collect(Collectors.joining("\n - ", " - ", ""));
                 var string = channels.stream()
                         .map(channel -> channel.getUID() + " -> " + channel.getChannelTypeUID())
-                        .collect(Collectors.joining("\n"));
+                        .collect(Collectors.joining("\n - ", " - ", ""));
                 invoker.getLogger()
                         .debug(
                                 """
@@ -110,14 +105,14 @@ public class ChannelUtil {
             int type,
             int channelNumber,
             @Nullable @jakarta.annotation.Nullable byte[] value,
-            @jakarta.annotation.Nullable @Nullable HVACValue hvacValue) {
+            @jakarta.annotation.Nullable @Nullable HvacValue hvacValue) {
         val valueSwitch = new ChannelValueSwitch<>(
                 new ChannelValueToState(invoker.getThing().getUID(), channelNumber));
         ChannelValue channelValue;
         if (value != null) {
             channelValue = ChannelTypeDecoder.INSTANCE.decode(type, value);
         } else if (hvacValue != null) {
-            channelValue = HVACValueDecoderImpl.INSTANCE.decode(hvacValue);
+            channelValue = hvacValue;
         } else {
             throw new IllegalArgumentException("value and hvacValue cannot be null!");
         }

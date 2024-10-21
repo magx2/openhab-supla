@@ -1,6 +1,16 @@
 package pl.grzeslowski.openhab.supla.internal.server.handler;
 
+import static java.util.Collections.synchronizedMap;
+import static java.util.Objects.requireNonNull;
+import static org.openhab.core.thing.ThingStatus.OFFLINE;
+import static org.openhab.core.thing.ThingStatus.ONLINE;
+import static org.openhab.core.thing.ThingStatusDetail.*;
+
 import io.netty.channel.ChannelFuture;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import lombok.Getter;
 import lombok.ToString;
 import lombok.experimental.Delegate;
@@ -16,8 +26,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import pl.grzeslowski.jsupla.protocol.api.structs.dcs.SetCaption;
 import pl.grzeslowski.jsupla.protocol.api.structs.dcs.SuplaPingServer;
-import pl.grzeslowski.jsupla.protocol.api.structs.ds.SubdeviceDetails;
-import pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaChannelNewValueResult;
+import pl.grzeslowski.jsupla.protocol.api.structs.ds.*;
 import pl.grzeslowski.jsupla.protocol.api.structs.dsc.ChannelState;
 import pl.grzeslowski.jsupla.protocol.api.types.FromServerProto;
 import pl.grzeslowski.jsupla.server.api.Writer;
@@ -25,21 +34,6 @@ import pl.grzeslowski.openhab.supla.internal.handler.AbstractDeviceHandler;
 import pl.grzeslowski.openhab.supla.internal.server.ChannelUtil;
 import pl.grzeslowski.openhab.supla.internal.server.traits.DeviceChannelTrait;
 import pl.grzeslowski.openhab.supla.internal.server.traits.DeviceChannelValueTrait;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
-
-import static java.util.Collections.synchronizedMap;
-import static java.util.Objects.requireNonNull;
-import static org.openhab.core.thing.ThingStatus.OFFLINE;
-import static org.openhab.core.thing.ThingStatus.ONLINE;
-import static org.openhab.core.thing.ThingStatusDetail.*;
 
 @NonNullByDefault
 @ToString(onlyExplicitlyIncluded = true)
@@ -171,8 +165,7 @@ public class ServerSubDeviceHandler extends AbstractDeviceHandler implements Sup
     }
 
     @Override
-    public void consumeSuplaDeviceChannelExtendedValue(int channelNumber, int type, byte[] value) {
-    }
+    public void consumeSuplaDeviceChannelExtendedValue(int channelNumber, int type, byte[] value) {}
 
     @Override
     public void consumeLocalTimeRequest(Writer writer) {
@@ -211,8 +204,8 @@ public class ServerSubDeviceHandler extends AbstractDeviceHandler implements Sup
 
     @Override
     public ChannelFuture write(FromServerProto proto) {
-        var local = requireNonNull(bridgeHandler,"There is not bridge!");
-        var writer = requireNonNull(local.getWriter().get(),"There is not writer!");
+        var local = requireNonNull(bridgeHandler, "There is not bridge!");
+        var writer = requireNonNull(local.getWriter().get(), "There is not writer!");
         logger.debug("Writing proto {}", proto);
         return writer.write(proto);
     }
@@ -221,5 +214,20 @@ public class ServerSubDeviceHandler extends AbstractDeviceHandler implements Sup
     @Override
     public String setProperty(String name, @Nullable String value) {
         return thing.setProperty(name, value);
+    }
+
+    @Override
+    public void consumeSetDeviceConfigResult(SetDeviceConfigResult value) {
+        throw new UnsupportedOperationException("ServerSubDeviceHandler.consumeSetDeviceConfigResult(value)");
+    }
+
+    @Override
+    public void consumeSetDeviceConfig(SetDeviceConfig value) {
+        throw new UnsupportedOperationException("ServerSubDeviceHandler.consumeSetDeviceConfig(value)");
+    }
+
+    @Override
+    public void consumeSetChannelConfigResult(SetChannelConfigResult value) {
+        throw new UnsupportedOperationException("ServerSubDeviceHandler.consumeSetChannelConfigResult(value)");
     }
 }

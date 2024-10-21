@@ -3,8 +3,7 @@ package pl.grzeslowski.openhab.supla.internal.server.handler;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import pl.grzeslowski.jsupla.protocol.api.structs.dcs.SetCaption;
 import pl.grzeslowski.jsupla.protocol.api.structs.dcs.SuplaPingServer;
-import pl.grzeslowski.jsupla.protocol.api.structs.ds.SubdeviceDetails;
-import pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaChannelNewValueResult;
+import pl.grzeslowski.jsupla.protocol.api.structs.ds.*;
 import pl.grzeslowski.jsupla.protocol.api.structs.dsc.ChannelState;
 import pl.grzeslowski.jsupla.server.api.Writer;
 import pl.grzeslowski.openhab.supla.internal.server.traits.DeviceChannelValueTrait;
@@ -28,4 +27,10 @@ public interface HandleProto {
     void consumeSubDeviceDetails(SubdeviceDetails value);
 
     void consumeSuplaChannelNewValueResult(SuplaChannelNewValueResult value);
+
+    void consumeSetDeviceConfigResult(SetDeviceConfigResult value);
+
+    void consumeSetDeviceConfig(SetDeviceConfig value);
+
+    void consumeSetChannelConfigResult(SetChannelConfigResult value);
 }

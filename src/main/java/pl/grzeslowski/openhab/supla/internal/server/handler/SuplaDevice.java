@@ -1,10 +1,8 @@
 package pl.grzeslowski.openhab.supla.internal.server.handler;
 
-import java.util.Map;
-import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicInteger;
-
 import io.netty.channel.ChannelFuture;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
 import org.openhab.core.thing.ChannelUID;
