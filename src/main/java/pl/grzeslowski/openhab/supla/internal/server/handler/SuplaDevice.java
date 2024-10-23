@@ -15,7 +15,7 @@ import org.slf4j.Logger;
 import pl.grzeslowski.jsupla.protocol.api.types.FromServerProto;
 
 @NonNullByDefault
-public interface SuplaDevice extends HandleCommand, HandleProto {
+public interface SuplaDevice extends HandleCommand, HandleProto, StateCache {
     Logger getLogger();
 
     Thing getThing();
