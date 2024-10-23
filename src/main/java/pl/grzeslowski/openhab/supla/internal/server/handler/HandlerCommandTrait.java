@@ -4,12 +4,15 @@ import static java.util.Objects.requireNonNull;
 import static org.openhab.core.thing.ThingStatus.OFFLINE;
 import static org.openhab.core.thing.ThingStatus.ONLINE;
 import static org.openhab.core.thing.ThingStatusDetail.COMMUNICATION_ERROR;
+import static pl.grzeslowski.jsupla.protocol.api.channeltype.value.HvacValue.Mode.*;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ChannelIds.Hvac.*;
+import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.Channels.HVAC_MODE_CHANNEL_ID;
 import static pl.grzeslowski.openhab.supla.internal.server.ChannelUtil.findSuplaChannelNumber;
 import static tech.units.indriya.unit.Units.CELSIUS;
 
 import io.netty.channel.ChannelFuture;
 import jakarta.annotation.Nullable;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.javatuples.Pair;
@@ -28,7 +31,13 @@ class HandlerCommandTrait implements HandleCommand {
     private final SuplaDevice suplaDevice;
 
     @Override
-    public void handleRefreshCommand(ChannelUID channelUID) {}
+    public void handleRefreshCommand(ChannelUID channelUID) {
+        var state = suplaDevice.findState(channelUID);
+        if (state == null) {
+            return;
+        }
+        suplaDevice.updateState(channelUID, state);
+    }
 
     @Override
     public void handleOnOffCommand(ChannelUID channelUID, OnOffType command) {
@@ -96,6 +105,11 @@ class HandlerCommandTrait implements HandleCommand {
 
     @Override
     public void handleStringCommand(ChannelUID channelUID, StringType command) {
+        var id = channelUID.getIdWithoutGroup();
+        if (id.equals(HVAC_MODE_CHANNEL_ID)) {
+            handleHvacModeCommand(channelUID, command);
+            return;
+        }
         suplaDevice
                 .getLogger()
                 .warn(
@@ -103,6 +117,73 @@ class HandlerCommandTrait implements HandleCommand {
                         command,
                         command.getClass().getSimpleName(),
                         channelUID);
+    }
+
+    private void handleHvacModeCommand(ChannelUID channelUID, StringType command) {
+        var mode = valueOf(command.toString());
+        var value =
+                switch (mode) {
+                    case NOT_SET -> throw new IllegalArgumentException(
+                            "Cannot set mode channel to NOT_SET. channelUID=" + channelUID);
+                    case OFF, DRY -> new HvacValue(
+                            true, mode, null, null, HvacValue.Flags.builder().build());
+                    case HEAT -> new HvacValue(
+                            true,
+                            HEAT,
+                            findHeatValue(channelUID),
+                            null,
+                            HvacValue.Flags.builder().setPointTempHeatSet(true).build());
+                    case COOL -> new HvacValue(
+                            true,
+                            COOL,
+                            null,
+                            findCoolValue(channelUID),
+                            HvacValue.Flags.builder().setPointTempCoolSet(true).build());
+                    case HEAT_COOL -> new HvacValue(
+                            true,
+                            HEAT_COOL,
+                            findHeatValue(channelUID),
+                            findCoolValue(channelUID),
+                            HvacValue.Flags.builder()
+                                    .setPointTempHeatSet(true)
+                                    .setPointTempCoolSet(true)
+                                    .build());
+                    case FAN_ONLY -> new HvacValue(
+                            true,
+                            FAN_ONLY,
+                            null,
+                            null,
+                            HvacValue.Flags.builder().fanEnabled(true).build());
+                };
+
+        var previousMode = suplaDevice.findState(channelUID);
+        var future = sendCommandToSuplaServer(channelUID, value, command, previousMode);
+    }
+
+    @Nullable
+    private Double findHeatValue(ChannelUID channelUID) {
+        return findTemperature(channelUID, HVAC_SET_POINT_TEMPERATURE_HEAT);
+    }
+
+    @Nullable
+    private Double findCoolValue(ChannelUID channelUID) {
+        return findTemperature(channelUID, HVAC_SET_POINT_TEMPERATURE_COOL);
+    }
+
+    @Nullable
+    private Double findTemperature(ChannelUID channelUID, String id) {
+        return Optional.of(channelUID)
+                .map(uid -> siblingChannel(uid, id))
+                .map(suplaDevice::findState)
+                .<QuantityType<?>>map(state -> (QuantityType<?>) state)
+                .filter(state -> state.getUnit().isCompatible(CELSIUS))
+                .map(state -> state.toUnit(CELSIUS))
+                .map(QuantityType::doubleValue)
+                .orElse(null);
+    }
+
+    private static ChannelUID siblingChannel(ChannelUID channelUID, String id) {
+        return new ChannelUID(channelUID.getThingUID(), channelUID.getGroupId(), id);
     }
 
     @Override
@@ -115,23 +196,20 @@ class HandlerCommandTrait implements HandleCommand {
             var celsiusValue = celsiusQuantity.doubleValue();
 
             var on = true;
-            var mode = HvacValue.Mode.NOT_SET;
             Double setPointHeat;
             Double setPointCool;
-            HvacValue.Flags flags;
+            var flags = HvacValue.Flags.builder();
             if (id.equals(HVAC_SET_POINT_TEMPERATURE_HEAT)) {
                 setPointHeat = celsiusValue;
                 setPointCool = null;
-                flags = new HvacValue.Flags(
-                        true, false, false, false, false, false, false, false, false, false, false, false, false);
+                flags.setPointTempHeatSet(true);
             } else {
                 setPointHeat = null;
                 setPointCool = celsiusValue;
-                flags = new HvacValue.Flags(
-                        false, true, false, false, false, false, false, false, false, false, false, false, false);
+                flags.setPointTempCoolSet(true);
             }
 
-            var value = new HvacValue(on, mode, setPointHeat, setPointCool, flags);
+            var value = new HvacValue(on, NOT_SET, setPointHeat, setPointCool, flags.build());
             var future = sendCommandToSuplaServer(channelUID, value, command, null);
             future.addListener(__ -> {
                 var groupId = channelUID.getGroupId();

@@ -31,6 +31,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import lombok.Getter;
 import lombok.ToString;
+import lombok.experimental.Delegate;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
 import org.openhab.core.common.ThreadPoolManager;
@@ -98,6 +99,9 @@ public abstract class ServerAbstractDeviceHandler extends AbstractDeviceHandler 
     private final AtomicReference<@Nullable Writer> writer = new AtomicReference<>();
 
     private final AtomicReference<@Nullable SetDeviceConfigResult> setDeviceConfigResult = new AtomicReference<>();
+
+    @Delegate(types = StateCache.class)
+    private final StateCache stateCache = new InMemoryStateCache(logger);
 
     @Nullable
     private OpenHabMessageHandler handler;
@@ -575,14 +579,14 @@ public abstract class ServerAbstractDeviceHandler extends AbstractDeviceHandler 
 
     @Nullable
     public BigInteger getAvailableFields() {
-            var af = thing.getProperties().get(AVAILABLE_FIELDS);
-            if (af != null) {
-                try {
-                    return new BigInteger(af);
-                } catch (NumberFormatException ex) {
-                    logger.debug("Cannot parse BigInteger from " + af, ex);
-                }
+        var af = thing.getProperties().get(AVAILABLE_FIELDS);
+        if (af != null) {
+            try {
+                return new BigInteger(af);
+            } catch (NumberFormatException ex) {
+                logger.debug("Cannot parse BigInteger from " + af, ex);
             }
+        }
         return null;
     }
 

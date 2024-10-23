@@ -66,6 +66,9 @@ public class ServerSubDeviceHandler extends AbstractDeviceHandler implements Sup
     @Getter
     private List<DeviceChannelTrait> channels = List.of();
 
+    @Delegate(types = StateCache.class)
+    private final StateCache stateCache = new InMemoryStateCache(logger);
+
     public ServerSubDeviceHandler(Thing thing) {
         super(thing);
     }

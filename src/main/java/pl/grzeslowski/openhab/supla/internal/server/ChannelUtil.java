@@ -9,9 +9,7 @@ import static pl.grzeslowski.jsupla.protocol.api.ProtocolHelpers.*;
 import static pl.grzeslowski.jsupla.protocol.api.consts.ProtoConsts.*;
 
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -160,6 +158,7 @@ public class ChannelUtil {
                             type,
                             state);
             invoker.updateState(channelUID, state);
+            invoker.saveState(channelUID, state);
         });
     }
 
