@@ -9,15 +9,37 @@ Together, these options provide flexibility and reliability for all your smart h
 
 ## Certified Devices
 
-This binding has been tested and certified to work with a variety of Supla devices, ensuring reliable performance and seamless integration with your OpenHAB setup. The following devices are officially certified, listed in alphabetical order:
+This binding has been tested and certified to work with a variety of Supla devices, ensuring reliable performance and
+seamless integration with your OpenHAB setup. The following devices are officially certified, listed in alphabetical
+order:
 
-- [AURATON Aries](https://www.auraton.pl/oferta/ogrzewanie-podlogowe/auraton-aries) (successor to AURATON RTH 8D PRO) is an advanced wireless control strip, for managing underfloor heating actuators. Designed for installation in electrical boxes, it provides a versatile and reliable solution for modern heating systems. With its ability to integrate with other devices, the AURATON Aries is the ideal solution for homes concerned with thermal comfort and energy efficiency. By installing it with AURATON Vela actuators, you ensure a 10-year warranty on the strip!
-- [Auraton Heat Monitor](https://www.auraton.pl/oferta/inteligentny-dom-smart/ogrzewanie/auraton-heat-monitor)  brings comfort in your home to a new level. The device will ensure that your desired temperature is exactly where you are. This minimalist thermostat was created to be close to you and your loved ones. Available in two versatile colours: white and black.
-- [Zamel MEW-01](https://supla.zamel.com/product/monitor-energii-elektrycznej-wi-fi-3fn-mew-01/) The highest standard of accuracy in electricity consumption monitoring available with tools for advanced data analysis. MEW-01 is designed for DIN-rail (TH35) mounting, occupies a width of two modules and offers the possibility of attaching an external antenna for use also outside the switchgear.
-- [Zamel ROW-01](https://supla.zamel.com/product/odbiornik-wi-fi-dopuszkowy-1-kanalowy-dwukierunkowy-row-01/) belongs to a family of smart home control products via wi-fi. The device uses SUPLA cloud technology. The ROW-01 module allows you to control lighting, turn on and off sockets and electrical appliances using a smartphone or tablet. The ROW-01 extension modules are used both as elements for mounting in under- and surface-mounted installation boxes, and as actuators built directly into the housings of lighting fixtures.
-- [Zamel ROW-02](https://supla.zamel.com/product/odbiornik-wi-fi-dopuszkowy-2-kanalowy-dwukierunkowy-row-02/) controller allows you to control lighting with buttons or switches in bistable mode. In addition, thanks to the built-in wi-fi module, it is possible to remotely manage lighting using a smartphone application. The device informs about the status of the lighting. The user can control the lighting from anywhere in the world. Thanks to the cloud application, it is also possible to automatically start or stop the lighting according to the schedule stored on the cloud.
+- [AURATON Aries](https://www.auraton.pl/oferta/ogrzewanie-podlogowe/auraton-aries) (successor to AURATON RTH 8D PRO) is
+an advanced wireless control strip, for managing underfloor heating actuators. Designed for installation in electrical
+boxes, it provides a versatile and reliable solution for modern heating systems. With its ability to integrate with
+other devices, the AURATON Aries is the ideal solution for homes concerned with thermal comfort and energy efficiency.
+By installing it with AURATON Vela actuators, you ensure a 10-year warranty on the strip!
+- [Auraton Heat Monitor](https://www.auraton.pl/oferta/inteligentny-dom-smart/ogrzewanie/auraton-heat-monitor)  brings
+comfort in your home to a new level. The device will ensure that your desired temperature is exactly where you are.
+This minimalist thermostat was created to be close to you and your loved ones. Available in two versatile colours:
+white and black.
+- [Zamel MEW-01](https://supla.zamel.com/product/monitor-energii-elektrycznej-wi-fi-3fn-mew-01/) The highest standard of
+accuracy in electricity consumption monitoring available with tools for advanced data analysis. MEW-01 is designed for
+DIN-rail (TH35) mounting, occupies a width of two modules and offers the possibility of attaching an external antenna
+for use also outside the switchgear.
+- [Zamel ROW-01](https://supla.zamel.com/product/odbiornik-wi-fi-dopuszkowy-1-kanalowy-dwukierunkowy-row-01/) belongs to
+a family of smart home control products via wi-fi. The device uses SUPLA cloud technology. The ROW-01 module allows
+you to control lighting, turn on and off sockets and electrical appliances using a smartphone or tablet. The ROW-01
+extension modules are used both as elements for mounting in under- and surface-mounted installation boxes, and as
+actuators built directly into the housings of lighting fixtures.
+- [Zamel ROW-02](https://supla.zamel.com/product/odbiornik-wi-fi-dopuszkowy-2-kanalowy-dwukierunkowy-row-02/) controller
+allows you to control lighting with buttons or switches in bistable mode. In addition, thanks to the built-in wi-fi
+module, it is possible to remotely manage lighting using a smartphone application. The device informs about the status
+of the lighting. The user can control the lighting from anywhere in the world. Thanks to the cloud application, it is
+also possible to automatically start or stop the lighting according to the schedule stored on the cloud.
 
-These devices have been confirmed to work optimally with both the native and cloud-based approaches supported by this binding, providing a smooth and efficient smart home experience. For any additional devices or updates, please refer to the official documentation or the device compatibility section within the binding's settings.
+These devices have been confirmed to work optimally with both the native and cloud-based approaches supported by this
+binding, providing a smooth and efficient smart home experience. For any additional devices or updates, please refer to
+the official documentation or the device compatibility section within the binding's settings.
 
 ## Native Server
 
@@ -44,7 +66,8 @@ Follow these steps to generate your OAuth token:
 1. Visit the Supla Cloud security page at https://cloud.supla.org/security/personal-access-tokens.
 2. Create a new personal access token by following the instructions on the page.
 3. An example token might look like
-this: `MzI4YjJiYTdmMjF4MDY3NDZmMmE5NDUyZTEnOTc2ZThwNjc0Yjc0Y1lhMjc0NjViDGM5ZVQwMzBkMTAmMzg1Ng.aHR0cHM6Ly9zdnIxLnN1cGxhLm9yZw==`.
+this:
+`MzI4YjJiYTdmMjF4MDY3NDZmMmE5NDUyZTEnOTc2ZThwNjc0Yjc0Y1lhMjc0NjViDGM5ZVQwMzBkMTAmMzg1Ng.aHR0cHM6Ly9zdnIxLnN1cGxhLm9yZw==`.
 
 ### Cloud API Limits
 
@@ -82,7 +105,8 @@ the need for internet connectivity. Choose the approach that best aligns with yo
 There are three ways to install the OpenHAB plugin for Supla:
 
 1. **From Marketplace (Recommended):**
-Install the plugin directly from [OpenHAB's Marketplace](https://community.openhab.org/t/supla-integration/156114). Simply search for "Supla" in the Marketplace and follow the
+Install the plugin directly from [OpenHAB's Marketplace](https://community.openhab.org/t/supla-integration/156114).
+Simply search for "Supla" in the Marketplace and follow the
 installation instructions.
 
 2. **Install via Karaf's `bundle:install`:**
@@ -91,7 +115,8 @@ method allows you to directly add the plugin bundle to your OpenHAB installation
 	1. [Log in to Karaf console](https://www.openhab.org/docs/administration/console.html)
 	2. Check is a Supla bundle is not installed: `bundle:list`
 		1. (Optional) Uninstall previous bundle: `bundle:uninstall <pid>`
-	3. Install: `bundle:install -s url:https://github.com/magx2/openhab-supla/releases/download/supla-X.Y.Z/supla-X.Y.Z.jar`
+	3. Install:
+	`bundle:install -s url:https://github.com/magx2/openhab-supla/releases/download/supla-X.Y.Z/supla-X.Y.Z.jar`
 	4. Check if installation was successful: `bundle:list`
 
 3. **Download JAR File from Releases Page:**
@@ -102,6 +127,63 @@ documentation [here](https://www.openhab.org/docs/configuration/addons.html#thro
 
 Choose the installation method that best fits your preferences and requirements to get started with integrating Supla
 devices into your OpenHAB environment.
+
+## Actions
+
+### Set Device Config
+
+Set Device Config action allows to send new configuration to the given device.
+
+Methods:
+
+- `setDeviceConfig(String... configs)`
+- `setDeviceConfig(List<String> configs)`
+
+`config` can take one of the values:
+
+1. `StatusLedConfig:statusLed`
+	- `statusLed` (`[ON_WHEN_CONNECTED|OFF_WHEN_CONNECTED|ALWAYS_OFF]`)
+2. `ScreenBrightnessConfig:screenBrightness,automatic,adjustmentForAutomatic`
+	- `screenBrightness` (`int`):
+	- `automatic` (`boolean`):
+	- `adjustmentForAutomatic` (`int`):
+3. `ButtonVolumeConfig:volume`
+	- `volume` (`int`, min: `0`, max `100`)
+4. `DisableUserInterfaceConfig:userInterface` or `DisableUserInterfaceConfig:userInterface,minTemp,maxTemp`
+	- `userInterface` (`[DISABLED|ENABLED|PARTIAL]`)
+	- `minTemp` (`int`)
+	- `maxTemp` (`int`)
+5. `AutomaticTimeSyncConfig:enabled`
+	- `enabled` (`boolean`)
+6. `HomeScreenOffDelayConfig:enabled,duration`
+	- `enabled` (`boolean`)
+	- `duration` (`java.time.Duration`) - [duration](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/Duration.html) format, i.e.
+		- `PT20.345S` - parses as "20.345 seconds"
+		- `PT15M` - parses as "15 minutes" (where a minute is 60 seconds)
+		- `PT10H` - parses as "10 hours" (where an hour is 3600 seconds)
+		- `P2D` - parses as "2 days" (where a day is 24 hours or 86400 seconds)
+		- `P2DT3H4M` - parses as "2 days, 3 hours and 4 minutes"
+		- `PT-6H3M` - parses as "-6 hours and +3 minutes"
+		- `-PT6H3M` - parses as "-6 hours and -3 minutes"
+		- `-PT-6H+3M` - parses as "+6 hours and -3 minutes"
+7. `HomeScreenContentConfig:contents`
+	- `contents` (`List<[NONE|TEMPERATURE|TEMPERATURE_AND_HUMIDITY|TIME|TIME_DATE|TEMPERATURE_TIME|MAIN_AND_AUX_TEMPERATURE|MODE_OR_TEMPERATURE]>`)
+8. `PowerStatusLedConfig:disabled`
+	- `disabled` (`boolean`)
+
+#### Example
+
+```
+rule "Set Device Config"
+when
+	<TRIGGER>
+then
+val actions = getActions("supla", "supla:gateway-device:8e6baab333")
+									// or server-bridge
+									// or server-device
+actions.setDeviceConfig("PowerStatusLedConfig:false", "StatusLedConfig:OFF_WHEN_CONNECTED")
+end
+```
 
 ## FAQ 🤔
 
@@ -142,7 +224,8 @@ the following paths:
 3. Do a backup: `cp java.security java.security.bak`
 4. Check current settings: `cat java.security | grep jdk.tls.disabledAlgorithms`
 5. Replace
-it: `sed -i 's/jdk.tls.disabledAlgorithms=SSLv3, TLSv1, TLSv1.1, RC4, DES, MD5withRSA, \\/jdk.tls.disabledAlgorithms=RC4, DES, MD5withRSA, \\/g' java.security`
+it:
+`sed -i 's/jdk.tls.disabledAlgorithms=SSLv3, TLSv1, TLSv1.1, RC4, DES, MD5withRSA, \\/jdk.tls.disabledAlgorithms=RC4, DES, MD5withRSA, \\/g' java.security`
 6. Check changed settings: `cat java.security | grep jdk.tls.disabledAlgorithms`
 7. Exit and restart docker container
 
@@ -160,9 +243,11 @@ To enable logging for the Supla plugin in OpenHAB, follow these steps:
 
 1. Open the `log4j2.xml` file located in the `userdata/etc/` directory
 2. Add the following configuration in the appenders section:
+
 ```xml
 <!-- supla -->
-<RollingFile fileName="${sys:openhab.logdir}/supla.log" filePattern="${sys:openhab.logdir}/supla.log.%i.gz" name="SUPLA">
+<RollingFile fileName="${sys:openhab.logdir}/supla.log" filePattern="${sys:openhab.logdir}/supla.log.%i.gz"
+			name="SUPLA">
 	<Policies>
 		<OnStartupTriggeringPolicy/>
 		<SizeBasedTriggeringPolicy size="1 MB"/>
@@ -171,27 +256,30 @@ To enable logging for the Supla plugin in OpenHAB, follow these steps:
 	<PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} [%-5.5p] [%-36.36c] - %m%n"/>
 </RollingFile>
 ```
+
 3. Add the following configuration in the loggers section:
+
 ```xml
 <!-- supla -->
 <Logger name="pl.grzeslowski.jsupla.server" level="debug" additivity="false">
 	<AppenderRef ref="SUPLA"/>
 </Logger>
 <Logger name="pl.grzeslowski.jsupla.protocol" level="debug" additivity="false">
-	<AppenderRef ref="SUPLA"/>
+<AppenderRef ref="SUPLA"/>
 </Logger>
 <Logger name="pl.grzeslowski.openhab.supla" level="debug" additivity="false">
-	<AppenderRef ref="SUPLA"/>
+<AppenderRef ref="SUPLA"/>
 </Logger>
 <Logger name="io.netty" level="debug" additivity="false">
-	<AppenderRef ref="SUPLA"/>
+<AppenderRef ref="SUPLA"/>
 </Logger>
 <Logger name="org.openhab.binding.supla.internal.server" level="debug" additivity="false">
-	<AppenderRef ref="SUPLA"/>
+<AppenderRef ref="SUPLA"/>
 </Logger>
 ```
 
-By following these steps, you will enable detailed logging for the Supla plugin, which can help with debugging and monitoring the plugin's activity within OpenHAB.
+By following these steps, you will enable detailed logging for the Supla plugin, which can help with debugging and
+monitoring the plugin's activity within OpenHAB.
 
 ### Thing with Sub Devices
 

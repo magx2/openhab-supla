@@ -2,7 +2,6 @@ package pl.grzeslowski.openhab.supla.internal.server.handler;
 
 import static java.lang.String.valueOf;
 import static java.time.Instant.now;
-import static java.util.Arrays.stream;
 import static java.util.Objects.requireNonNull;
 import static java.util.Objects.requireNonNullElse;
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -12,22 +11,25 @@ import static org.openhab.core.thing.ThingStatus.ONLINE;
 import static org.openhab.core.thing.ThingStatusDetail.*;
 import static pl.grzeslowski.jsupla.protocol.api.ProtocolHelpers.parseString;
 import static pl.grzeslowski.jsupla.protocol.api.ResultCode.SUPLA_RESULTCODE_TRUE;
-import static pl.grzeslowski.jsupla.protocol.api.consts.ProtoConsts.*;
+import static pl.grzeslowski.jsupla.protocol.api.consts.ProtoConsts.SUPLA_PROTO_VERSION;
+import static pl.grzeslowski.jsupla.protocol.api.consts.ProtoConsts.SUPLA_PROTO_VERSION_MIN;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.BINDING_ID;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ServerDevicesProperties.*;
 import static pl.grzeslowski.openhab.supla.internal.server.ByteArrayToHex.bytesToHex;
 import static pl.grzeslowski.openhab.supla.internal.server.ByteArrayToHex.hexToBytes;
 
+import java.math.BigInteger;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.TextStyle;
 import java.util.*;
 import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
@@ -52,6 +54,8 @@ import pl.grzeslowski.jsupla.protocol.api.types.ToServerProto;
 import pl.grzeslowski.jsupla.server.api.Writer;
 import pl.grzeslowski.openhab.supla.internal.handler.AbstractDeviceHandler;
 import pl.grzeslowski.openhab.supla.internal.server.SuplaServerDeviceActions;
+import pl.grzeslowski.openhab.supla.internal.server.handler.device_config.DeviceConfigResult;
+import pl.grzeslowski.openhab.supla.internal.server.handler.device_config.DeviceConfigUtil;
 import pl.grzeslowski.openhab.supla.internal.server.traits.DeviceChannelValueTrait;
 import pl.grzeslowski.openhab.supla.internal.server.traits.RegisterDeviceTrait;
 import pl.grzeslowski.openhab.supla.internal.server.traits.RegisterEmailDeviceTrait;
@@ -64,6 +68,7 @@ import pl.grzeslowski.openhab.supla.internal.server.traits.RegisterLocationDevic
 @ToString(onlyExplicitlyIncluded = true)
 public abstract class ServerAbstractDeviceHandler extends AbstractDeviceHandler implements SuplaThing, HandleProto {
     public static final byte ACTIVITY_TIMEOUT = (byte) 100;
+    public static final String AVAILABLE_FIELDS = "AVAILABLE_FIELDS";
 
     @Getter
     protected Logger logger = LoggerFactory.getLogger(this.getClass());
@@ -91,6 +96,8 @@ public abstract class ServerAbstractDeviceHandler extends AbstractDeviceHandler 
 
     @Getter
     private final AtomicReference<@Nullable Writer> writer = new AtomicReference<>();
+
+    private final AtomicReference<@Nullable SetDeviceConfigResult> setDeviceConfigResult = new AtomicReference<>();
 
     @Nullable
     private OpenHabMessageHandler handler;
@@ -143,6 +150,8 @@ public abstract class ServerAbstractDeviceHandler extends AbstractDeviceHandler 
 
             deviceConfiguration = new DeviceConfiguration(timeoutConfiguration, authData);
         }
+
+        clearDeviceConfig();
 
         updateStatus(
                 ThingStatus.UNKNOWN,
@@ -494,50 +503,50 @@ public abstract class ServerAbstractDeviceHandler extends AbstractDeviceHandler 
 
     @Override
     public void consumeSetDeviceConfigResult(SetDeviceConfigResult value) {
-        var result = ConfigResult.findConfigResult(value.result);
-        if (!result.success) {
+        var result = DeviceConfigResult.findConfigResult(value.result);
+        if (!result.isSuccess()) {
             logger.warn("Did not succeed ({}) with setting config for device", result);
         } else {
             logger.debug("Set config for device. result={}", value);
         }
+        var previous = setDeviceConfigResult.getAndSet(value);
+        if (previous != null) {
+            logger.warn(
+                    "Previous setDeviceConfigResult was not null. Wierd thing might happen! " + "previous={}",
+                    previous);
+        }
+    }
+
+    public synchronized SetDeviceConfigResult listenForSetDeviceConfigResult(long maxTime, TimeUnit timeUnit)
+            throws InterruptedException, TimeoutException {
+        var maxMillis = timeUnit.toMillis(maxTime);
+        var started = System.currentTimeMillis();
+        var sleep = Duration.ofSeconds(1L);
+        SetDeviceConfigResult result;
+        do {
+            result = setDeviceConfigResult.get();
+            if (result == null) {
+                var now = System.currentTimeMillis();
+                if (now > started + maxMillis) {
+                    break;
+                }
+                Thread.sleep(sleep.toMillis());
+            }
+        } while (result == null);
+        if (result == null) {
+            throw new TimeoutException("Did not get SetDeviceConfigResult in " + Duration.ofMillis(maxMillis));
+        }
+        setDeviceConfigResult.set(null);
+        return result;
     }
 
     @Override
     public void consumeSetChannelConfigResult(SetChannelConfigResult value) {
-        var result = ConfigResult.findConfigResult(value.result);
-        if (!result.success) {
+        var result = DeviceConfigResult.findConfigResult(value.result);
+        if (!result.isSuccess()) {
             logger.warn("Did not succeed ({}) with setting config for device", result);
         } else {
             logger.debug("Set config for channel. result={}", value);
-        }
-    }
-
-    @RequiredArgsConstructor
-    private static enum ConfigResult {
-        FALSE(false),
-        TRUE(true),
-        DATA_ERROR(false),
-        TYPE_NOT_SUPPORTED(false),
-        FUNCTION_NOT_SUPPORTED(false),
-        LOCAL_CONFIG_DISABLED(false),
-        NOT_ALLOWED(false),
-        DEVICE_NOT_FOUND(false),
-        UNKNOWN(false);
-
-        final boolean success;
-
-        public static ConfigResult findConfigResult(int value) {
-            return switch (value) {
-                case SUPLA_CONFIG_RESULT_FALSE -> FALSE;
-                case SUPLA_CONFIG_RESULT_TRUE -> TRUE;
-                case SUPLA_CONFIG_RESULT_DATA_ERROR -> DATA_ERROR;
-                case SUPLA_CONFIG_RESULT_TYPE_NOT_SUPPORTED -> TYPE_NOT_SUPPORTED;
-                case SUPLA_CONFIG_RESULT_FUNCTION_NOT_SUPPORTED -> FUNCTION_NOT_SUPPORTED;
-                case SUPLA_CONFIG_RESULT_LOCAL_CONFIG_DISABLED -> LOCAL_CONFIG_DISABLED;
-                case SUPLA_CONFIG_RESULT_NOT_ALLOWED -> NOT_ALLOWED;
-                case SUPLA_CONFIG_RESULT_DEVICE_NOT_FOUND -> DEVICE_NOT_FOUND;
-                default -> UNKNOWN;
-            };
         }
     }
 
@@ -545,39 +554,44 @@ public abstract class ServerAbstractDeviceHandler extends AbstractDeviceHandler 
     public void consumeSetDeviceConfig(SetDeviceConfig value) {
         if (value.endOfDataFlag == 0) {
             logger.warn("SetDeviceConfig has more data but I'm not supporting it! config={}", value);
+            return;
         }
-        var available = DeviceConfigFields.hasFields(value.availableFields.longValue());
-        var fields = DeviceConfigFields.hasFields(value.fields.longValue());
-        logger.debug(
-                "Setting device config: availableFields={}, fields={}, config={}",
-                available,
-                fields,
-                Arrays.toString(value.config));
+        setAvailableFields(value.availableFields);
+        consumeSetDeviceConfig(value.fields.longValue(), value.config);
     }
 
-    @RequiredArgsConstructor
-    private static enum DeviceConfigFields {
-        STATUS_LED(SUPLA_DEVICE_CONFIG_FIELD_STATUS_LED),
-        SCREEN_BRIGHTNESS(SUPLA_DEVICE_CONFIG_FIELD_SCREEN_BRIGHTNESS),
-        BUTTON_VOLUME(SUPLA_DEVICE_CONFIG_FIELD_BUTTON_VOLUME),
-        DISABLE_USER_INTERFACE(SUPLA_DEVICE_CONFIG_FIELD_DISABLE_USER_INTERFACE),
-        AUTOMATIC_TIME_SYNC(SUPLA_DEVICE_CONFIG_FIELD_AUTOMATIC_TIME_SYNC),
-        HOME_SCREEN_OFF_DELAY(SUPLA_DEVICE_CONFIG_FIELD_HOME_SCREEN_OFF_DELAY),
-        HOME_SCREEN_CONTENT(SUPLA_DEVICE_CONFIG_FIELD_HOME_SCREEN_CONTENT),
-        HOME_SCREEN_OFF_DELAY_TYPE(SUPLA_DEVICE_CONFIG_FIELD_HOME_SCREEN_OFF_DELAY_TYPE),
-        POWER_STATUS_LED(SUPLA_DEVICE_CONFIG_FIELD_POWER_STATUS_LED);
+    public void consumeSetDeviceConfig(long fields, byte[] config) {
+        var map = DeviceConfigUtil.buildDeviceConfig(fields, config);
+        logger.debug("Setting device config to: {}", map);
+        map.forEach((k, v) -> thing.setProperty(k, v));
+    }
 
-        final long mask;
+    private void clearDeviceConfig() {
+        // remove all properties with prefix `DEVICE_CONFIG_`
+        thing.getProperties().keySet().stream()
+                .filter(key -> key.startsWith(DeviceConfigUtil.PREFIX))
+                .forEach(key -> thing.setProperty(key, null));
+    }
 
-        public boolean hasField(long field) {
-            return (field & mask) != 0;
-        }
+    @Nullable
+    public BigInteger getAvailableFields() {
+            var af = thing.getProperties().get(AVAILABLE_FIELDS);
+            if (af != null) {
+                try {
+                    return new BigInteger(af);
+                } catch (NumberFormatException ex) {
+                    logger.debug("Cannot parse BigInteger from " + af, ex);
+                }
+            }
+        return null;
+    }
 
-        @SuppressWarnings("StaticMethodOnlyUsedInOneClass")
-        public static SortedSet<DeviceConfigFields> hasFields(long field) {
-            return stream(values())
-                    .filter(value -> value.hasField(field))
-                    .collect(Collectors.toCollection(TreeSet::new));
-        }
+    public void setAvailableFields(@Nullable BigInteger availableFields) {
+        thing.setProperty(
+                AVAILABLE_FIELDS,
+                Optional.ofNullable(availableFields)
+                        .map(BigInteger::longValue)
+                        .map(Objects::toString)
+                        .orElse(null));
     }
 }
