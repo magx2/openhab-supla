@@ -35,14 +35,6 @@ public class DeviceConfigUtil {
                         },
                         (a, b) -> Pair.with(a.getValue0() + b.getValue0(), mergeMaps(a.getValue1(), b.getValue1())))
                 .getValue1();
-
-        //        var offset = 0;
-        //        var supportedFields = hasFields(fields);
-        //        for (var field : supportedFields) {
-        //            var result = decode(field, config, offset);
-        //            offset += result.usedBytes;
-        //            configMap.putAll(result.configMap);
-        //        }
         return configMap.entrySet().stream()
                 .map(entry -> entry(PREFIX + entry.getKey(), entry.getValue()))
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
