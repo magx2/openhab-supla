@@ -18,9 +18,16 @@ public class SuplaBindingConstants {
     public static final ThingTypeUID SUPLA_SERVER_TYPE = new ThingTypeUID(BINDING_ID, "server-bridge");
     public static final ThingTypeUID SUPLA_CLOUD_DEVICE_TYPE = new ThingTypeUID(BINDING_ID, "cloud-device");
     public static final ThingTypeUID SUPLA_CLOUD_SERVER_TYPE = new ThingTypeUID(BINDING_ID, "cloud-bridge");
+    public static final ThingTypeUID SUPLA_GATEWAY_DEVICE_TYPE = new ThingTypeUID(BINDING_ID, "gateway-device");
+    public static final ThingTypeUID SUPLA_SUB_DEVICE_TYPE = new ThingTypeUID(BINDING_ID, "sub-device-device");
 
-    public static final Set<ThingTypeUID> SUPPORTED_THING_TYPES_UIDS =
-            Set.of(SUPLA_SERVER_DEVICE_TYPE, SUPLA_CLOUD_DEVICE_TYPE, SUPLA_SERVER_TYPE, SUPLA_CLOUD_SERVER_TYPE);
+    public static final Set<ThingTypeUID> SUPPORTED_THING_TYPES_UIDS = Set.of(
+            SUPLA_SERVER_DEVICE_TYPE,
+            SUPLA_SERVER_TYPE,
+            SUPLA_CLOUD_DEVICE_TYPE,
+            SUPLA_CLOUD_SERVER_TYPE,
+            SUPLA_GATEWAY_DEVICE_TYPE,
+            SUPLA_SUB_DEVICE_TYPE);
 
     // supla device and cloud-device
     public static final String SUPLA_DEVICE_GUID = "guid";
@@ -35,10 +42,20 @@ public class SuplaBindingConstants {
     public static final String CONFIG_PORT = "port";
     public static final String CONNECTED_DEVICES_CHANNEL_ID = "server-devices";
 
+    // Thing Bridge constants
+    public static final String GATEWAY_CONNECTED_DEVICES_CHANNEL_ID = "gateway-connected-devices";
+
+    // sub device
+    public static final String SUPLA_SUB_DEVICE_ID = "id";
+
     public static class ServerDevicesProperties {
         public static final String SOFT_VERSION_PROPERTY = "softVersion";
+        public static final String MANUFACTURER_ID_PROPERTY = "manufacturerId";
+        public static final String PRODUCT_ID_PROPERTY = "productId";
+        public static final String PRODUCT_CODE_PROPERTY = "productCode";
         public static final String CONFIG_AUTH_PROPERTY = "authKey";
         public static final String SERVER_NAME_PROPERTY = "serverName";
+        public static final String SERIAL_NUMBER_PROPERTY = "serialNumber";
     }
 
     // CloudBridgeHandler
@@ -61,6 +78,7 @@ public class SuplaBindingConstants {
         public static final String LIGHT_CHANNEL_ID = "light-channel";
         public static final String SWITCH_CHANNEL_ID = "switch-channel";
         public static final String SWITCH_CHANNEL_RO_ID = "switch-channel-ro";
+        public static final String FLAG_CHANNEL_ID = "flag-channel";
         public static final String DECIMAL_CHANNEL_ID = "decimal-channel";
         public static final String ENERGY_CHANNEL_ID = "energy-channel";
         public static final String POWER_CHANNEL_ID = "power-channel";
@@ -75,5 +93,19 @@ public class SuplaBindingConstants {
         public static final String TOGGLE_GAT_CHANNEL_ID = "toggle-gate-channel";
         public static final String STRING_CHANNEL_ID = "string-channel";
         public static final String UNKNOWN_CHANNEL_ID = "unknown-channel";
+        // hvac
+        public static final String HVAC_WORKING_CHANNEL_ID = "hvac-working";
+        public static final String HVAC_MODE_CHANNEL_ID = "hvac-mode";
+        public static final String HVAC_TEMPERATURE_HEAT_CHANNEL_ID = "hvac-temperature-heat";
+        public static final String HVAC_TEMPERATURE_COOL_CHANNEL_ID = "hvac-temperature-cool";
+    }
+
+    public static class ChannelIds {
+        public static class Hvac {
+            public static final String HVAC_ON = "on";
+            public static final String HVAC_MODE = "mode";
+            public static final String HVAC_SET_POINT_TEMPERATURE_HEAT = "setPointTemperatureHeat";
+            public static final String HVAC_SET_POINT_TEMPERATURE_COOL = "setPointTemperatureCool";
+        }
     }
 }

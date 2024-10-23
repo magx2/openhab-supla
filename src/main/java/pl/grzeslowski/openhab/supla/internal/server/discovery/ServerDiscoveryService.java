@@ -3,17 +3,20 @@ package pl.grzeslowski.openhab.supla.internal.server.discovery;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.*;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ServerDevicesProperties.CONFIG_AUTH_PROPERTY;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ServerDevicesProperties.SERVER_NAME_PROPERTY;
+import static pl.grzeslowski.openhab.supla.internal.server.ByteArrayToHex.bytesToHex;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.val;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
 import org.openhab.core.config.discovery.AbstractDiscoveryService;
 import org.openhab.core.config.discovery.DiscoveryResult;
 import org.openhab.core.config.discovery.DiscoveryResultBuilder;
+import org.openhab.core.thing.ThingTypeUID;
 import org.openhab.core.thing.ThingUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,6 +28,7 @@ public class ServerDiscoveryService extends AbstractDiscoveryService {
     private final Logger logger;
     private final ThingUID bridgeThingUID;
     private final List<DiscoveryResult> discoveryResults = Collections.synchronizedList(new ArrayList<>());
+    private final AtomicBoolean scanning = new AtomicBoolean();
 
     public ServerDiscoveryService(org.openhab.core.thing.ThingUID bridgeThingUID) {
         super(SUPPORTED_THING_TYPES_UIDS, DEVICE_REGISTER_MAX_DELAY * 2, false);
@@ -39,38 +43,61 @@ public class ServerDiscoveryService extends AbstractDiscoveryService {
         logger.info("Registering device: {}", registerDeviceTrait);
         var discoveryResult = buildDiscoveryResult(registerDeviceTrait);
         discoveryResults.add(discoveryResult);
+        thingDiscovered(discoveryResult);
+    }
+
+    public void addSubDevice(int id, String name) {
+        logger.info("Registering sub device: {}/{}", name, id);
+        var discoveryResult = buildDiscoveryResult(id, name);
+        discoveryResults.add(discoveryResult);
+        thingDiscovered(discoveryResult);
     }
 
     public void removeDevice(String guid) {
-        val result = discoveryResults.removeIf(
-                discoveryResult -> discoveryResult.getThingUID().getId().equals(guid));
-        if (result) {
+        val result = discoveryResults.stream()
+                .filter(r -> r.getThingUID().getId().equals(guid))
+                .findAny();
+        if (result.isPresent()) {
             logger.info("Removing device: {}", guid);
+            thingRemoved(result.get().getThingUID());
         } else {
             logger.warn("Failed to remove device: {}", guid);
         }
     }
 
-    private DiscoveryResult buildDiscoveryResult(RegisterDeviceTrait registerDeviceTrait) {
-        var guid = registerDeviceTrait.getGuid();
-        var name = registerDeviceTrait.getName();
-        var builder = buildDiscoveryResult(guid, name);
-        if (registerDeviceTrait instanceof RegisterEmailDeviceTrait registerDevice) {
+    public void removeSubDevice(int id) {
+        removeDevice(String.valueOf(id));
+    }
+
+    private DiscoveryResult buildDiscoveryResult(RegisterDeviceTrait trait) {
+        var guid = trait.getGuid();
+        var name = trait.getName();
+        var gateway = trait.getChannels().stream().anyMatch(c -> c.getSubDeviceId() != null && c.getSubDeviceId() > 0);
+        var type = gateway ? SUPLA_GATEWAY_DEVICE_TYPE : SUPLA_SERVER_DEVICE_TYPE;
+
+        var builder = buildDiscoveryResult(SUPLA_DEVICE_GUID, guid, name, type);
+        if (trait instanceof RegisterEmailDeviceTrait registerDevice) {
             var authKey = registerDevice.getAuthKey();
             var serverName = registerDevice.getServerName();
-            builder.withProperties(Map.of(CONFIG_AUTH_PROPERTY, authKey));
-            builder.withProperties(Map.of(SERVER_NAME_PROPERTY, serverName));
+            builder.withProperty(CONFIG_AUTH_PROPERTY, bytesToHex(authKey));
+            builder.withProperty(SERVER_NAME_PROPERTY, serverName);
         }
         return builder.build();
     }
 
-    private DiscoveryResultBuilder buildDiscoveryResult(String guid, @Nullable String name) {
-        var thingUID = new ThingUID(SUPLA_SERVER_DEVICE_TYPE, bridgeThingUID, guid);
-        var label = buildLabel(guid, name);
+    private DiscoveryResult buildDiscoveryResult(int id, String name) {
+        return buildDiscoveryResult(SUPLA_SUB_DEVICE_ID, String.valueOf(id), name + " #" + id, SUPLA_SUB_DEVICE_TYPE)
+                .build();
+    }
+
+    private DiscoveryResultBuilder buildDiscoveryResult(
+            String idKey, String id, @Nullable String name, ThingTypeUID type) {
+        var thingUID = new ThingUID(type, bridgeThingUID, id);
+        var label = buildLabel(id, name);
         return DiscoveryResultBuilder.create(thingUID)
                 .withBridge(bridgeThingUID)
-                .withProperties(Map.of(SUPLA_DEVICE_GUID, guid))
-                .withRepresentationProperty(SUPLA_DEVICE_GUID)
+                .withProperties(Map.of(idKey, id))
+                .withRepresentationProperty(idKey)
                 .withLabel(label);
     }
 

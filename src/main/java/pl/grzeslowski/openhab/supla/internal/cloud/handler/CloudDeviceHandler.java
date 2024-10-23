@@ -18,6 +18,8 @@ import io.swagger.client.model.ChannelFunctionActionEnum;
 import io.swagger.client.model.Device;
 import java.util.List;
 import java.util.stream.Collectors;
+import lombok.Getter;
+import lombok.SneakyThrows;
 import org.eclipse.jdt.annotation.NonNull;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
@@ -53,7 +55,9 @@ import pl.grzeslowski.openhab.supla.internal.handler.AbstractDeviceHandler;
  */
 @NonNullByDefault
 public final class CloudDeviceHandler extends AbstractDeviceHandler {
-    private final Logger logger = LoggerFactory.getLogger(CloudDeviceHandler.class);
+    @Getter
+    private Logger logger = LoggerFactory.getLogger(CloudDeviceHandler.class);
+
     private final LedCommandExecutorFactory ledCommandExecutorFactory;
 
     @Nullable
@@ -78,7 +82,8 @@ public final class CloudDeviceHandler extends AbstractDeviceHandler {
     }
 
     @Override
-    protected void internalInitialize() throws Exception {
+    @SneakyThrows
+    protected void internalInitialize() {
         @Nullable final Bridge bridge = getBridge();
         if (bridge == null) {
             logger.debug("No bridge for thing with UID {}", thing.getUID());
@@ -98,7 +103,9 @@ public final class CloudDeviceHandler extends AbstractDeviceHandler {
         }
         initApi(handler);
 
-        if (!initCloudApi()) {
+        var cloudIdString = String.valueOf(getConfig().get(SUPLA_DEVICE_CLOUD_ID));
+        logger = LoggerFactory.getLogger(CloudDeviceHandler.class.getName() + "." + cloudIdString);
+        if (!initCloudApi(cloudIdString)) {
             return;
         }
 
@@ -117,8 +124,7 @@ public final class CloudDeviceHandler extends AbstractDeviceHandler {
         updateStatus(ONLINE);
     }
 
-    private boolean initCloudApi() {
-        final String cloudIdString = String.valueOf(getConfig().get(SUPLA_DEVICE_CLOUD_ID));
+    private boolean initCloudApi(String cloudIdString) {
         try {
             this.cloudId = parseInt(cloudIdString);
             return true;
@@ -136,7 +142,7 @@ public final class CloudDeviceHandler extends AbstractDeviceHandler {
         channelsApi = handler;
     }
 
-    private boolean checkIfIsOnline() throws Exception {
+    private boolean checkIfIsOnline() {
         try {
             var device = findDevice(singletonList("connected"));
             if (device.isConnected() == null || !device.isConnected()) {
@@ -198,7 +204,8 @@ public final class CloudDeviceHandler extends AbstractDeviceHandler {
     }
 
     @Override
-    protected void handleRefreshCommand(final ChannelUID channelUID) throws Exception {
+    @SneakyThrows
+    public void handleRefreshCommand(final ChannelUID channelUID) {
         var channelInfo = ChannelInfoParser.PARSER.parse(channelUID);
         var channelId = channelInfo.getChannelId();
         logger.trace("Refreshing channel `{}`", channelUID);
@@ -219,7 +226,8 @@ public final class CloudDeviceHandler extends AbstractDeviceHandler {
     }
 
     @Override
-    protected void handleOnOffCommand(final ChannelUID channelUID, final OnOffType command) throws Exception {
+    @SneakyThrows
+    public void handleOnOffCommand(final ChannelUID channelUID, final OnOffType command) {
         final ChannelInfo channelInfo = ChannelInfoParser.PARSER.parse(channelUID);
         final int channelId = channelInfo.getChannelId();
         final io.swagger.client.model.Channel channel = queryForChannel(channelId);
@@ -235,7 +243,8 @@ public final class CloudDeviceHandler extends AbstractDeviceHandler {
     }
 
     @Override
-    protected void handleUpDownCommand(final ChannelUID channelUID, final UpDownType command) throws Exception {
+    @SneakyThrows
+    public void handleUpDownCommand(final ChannelUID channelUID, final UpDownType command) {
         final ChannelInfo channelInfo = ChannelInfoParser.PARSER.parse(channelUID);
         final int channelId = channelInfo.getChannelId();
         final io.swagger.client.model.Channel channel = queryForChannel(channelId);
@@ -250,7 +259,8 @@ public final class CloudDeviceHandler extends AbstractDeviceHandler {
     }
 
     @Override
-    protected void handleHsbCommand(final ChannelUID channelUID, final HSBType command) throws Exception {
+    @SneakyThrows
+    public void handleHsbCommand(final ChannelUID channelUID, final HSBType command) {
         final ChannelInfo channelInfo = ChannelInfoParser.PARSER.parse(channelUID);
         final int channelId = channelInfo.getChannelId();
         final io.swagger.client.model.Channel channel = queryForChannel(channelId);
@@ -275,7 +285,8 @@ public final class CloudDeviceHandler extends AbstractDeviceHandler {
     }
 
     @Override
-    protected void handleOpenClosedCommand(final ChannelUID channelUID, final OpenClosedType command) throws Exception {
+    @SneakyThrows
+    public void handleOpenClosedCommand(final ChannelUID channelUID, final OpenClosedType command) {
         final ChannelInfo channelInfo = ChannelInfoParser.PARSER.parse(channelUID);
         final int channelId = channelInfo.getChannelId();
         final io.swagger.client.model.Channel channel = queryForChannel(channelId);
@@ -287,7 +298,8 @@ public final class CloudDeviceHandler extends AbstractDeviceHandler {
     }
 
     @Override
-    protected void handlePercentCommand(final ChannelUID channelUID, final PercentType command) throws Exception {
+    @SneakyThrows
+    public void handlePercentCommand(final ChannelUID channelUID, final PercentType command) {
         if (channelsApi == null) {
             logger.debug("Cannot handle `{}` on channel `{}` because channelsApi is null", command, channelUID);
             return;
@@ -329,7 +341,8 @@ public final class CloudDeviceHandler extends AbstractDeviceHandler {
     }
 
     @Override
-    protected void handleDecimalCommand(final ChannelUID channelUID, final DecimalType command) {
+    @SneakyThrows
+    public void handleDecimalCommand(final ChannelUID channelUID, final DecimalType command) {
         // TODO handle this command
         logger.warn(
                 "Not handling `{}` ({}) on channel `{}`",
@@ -355,8 +368,8 @@ public final class CloudDeviceHandler extends AbstractDeviceHandler {
 
     @SuppressWarnings("SwitchStatementWithTooFewBranches")
     @Override
-    protected void handleStopMoveTypeCommand(final @NonNull ChannelUID channelUID, final @NonNull StopMoveType command)
-            throws Exception {
+    @SneakyThrows
+    public void handleStopMoveTypeCommand(final @NonNull ChannelUID channelUID, final @NonNull StopMoveType command) {
         final ChannelInfo channelInfo = ChannelInfoParser.PARSER.parse(channelUID);
         final int channelId = channelInfo.getChannelId();
         final io.swagger.client.model.Channel channel = queryForChannel(channelId);
@@ -386,14 +399,23 @@ public final class CloudDeviceHandler extends AbstractDeviceHandler {
                         "Do not know how to handle command `{}` on roller shutter with id `{}`", command, channelUID);
                 return;
             case STOP:
-                final ChannelFunctionActionEnum action = ChannelFunctionActionEnum.STOP;
+                final ChannelFunctionActionEnum action = STOP;
                 logger.trace("Sending stop action `{}` to channel with UUID `{}`", action, channelUID);
                 channelsApi.executeAction(new ChannelExecuteActionRequest().action(action), channel.getId());
         }
     }
 
     @Override
-    protected void handleStringCommand(final ChannelUID channelUID, final StringType command) throws Exception {
+    public void handleStringCommand(final ChannelUID channelUID, final StringType command) {
+        logger.warn(
+                "Not handling `{}` ({}) on channel `{}`",
+                command,
+                command.getClass().getSimpleName(),
+                channelUID);
+    }
+
+    @Override
+    public void handleQuantityType(ChannelUID channelUID, QuantityType<?> command) {
         logger.warn(
                 "Not handling `{}` ({}) on channel `{}`",
                 command,
@@ -426,5 +448,11 @@ public final class CloudDeviceHandler extends AbstractDeviceHandler {
 
     private io.swagger.client.model.Channel queryForChannel(final int channelId) throws Exception {
         return requireNonNull(channelsApi).getChannel(channelId, List.of("state"));
+    }
+
+    @Override
+    public void dispose() {
+        logger = LoggerFactory.getLogger(CloudDeviceHandler.class);
+        super.dispose();
     }
 }

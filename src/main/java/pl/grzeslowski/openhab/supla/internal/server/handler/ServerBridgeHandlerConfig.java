@@ -31,6 +31,9 @@ public class ServerBridgeHandlerConfig {
     @Nullable
     private String email;
 
+    @Nullable
+    private String authKey;
+
     private BigDecimal port = new BigDecimal(DEFAULT_PORT);
     private boolean ssl = true;
     private String protocols = "TLSv1.3, TLSv1.2, TLSv1, TLSv1.1";

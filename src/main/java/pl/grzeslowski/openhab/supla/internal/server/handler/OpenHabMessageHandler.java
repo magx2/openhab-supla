@@ -2,6 +2,7 @@ package pl.grzeslowski.openhab.supla.internal.server.handler;
 
 import static java.util.Objects.requireNonNull;
 
+import io.netty.channel.socket.SocketChannel;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -16,7 +17,7 @@ import pl.grzeslowski.openhab.supla.internal.server.traits.RegisterDeviceTraitPa
 
 @Slf4j
 @RequiredArgsConstructor
-class OpenHabMessageHandler implements MessageHandler {
+public class OpenHabMessageHandler implements MessageHandler {
     private final Object lock = new Object();
     private final AtomicReference<SuplaThing> currentThing = new AtomicReference<>();
     private final AtomicReference<Writer> writer = new AtomicReference<>();
@@ -24,6 +25,7 @@ class OpenHabMessageHandler implements MessageHandler {
 
     private final SuplaThingRegistry registry;
     private final ServerDiscoveryService serverDiscoveryService;
+    private final SocketChannel socketChannel;
 
     @Override
     public void active(Writer writer) {
@@ -65,7 +67,7 @@ class OpenHabMessageHandler implements MessageHandler {
                 }
                 var suplaThing = suplaThingOptional.get();
                 suplaThing.active(requireNonNull(writer.get(), "writer is null"));
-                var registerResult = suplaThing.register(entity);
+                var registerResult = suplaThing.register(entity, this);
                 if (registerResult) {
                     // correctly registered
                     currentThing.set(suplaThing);
@@ -76,5 +78,11 @@ class OpenHabMessageHandler implements MessageHandler {
             // fallback
             log.debug("There is no Supla thing and the device did not send register message, but {}", proto);
         }
+    }
+
+    public void clear() {
+        currentThing.set(null);
+        var close = socketChannel.close();
+        close.addListener(__ -> log.debug("Closing channel"));
     }
 }
