@@ -113,7 +113,7 @@ public class ServerSubDeviceHandler extends AbstractDeviceHandler implements Sup
         logger = LoggerFactory.getLogger("%s.%s.%s"
                 .formatted(
                         this.getClass().getName(), requireNonNull(bridgeHandler).getGuid(), subDeviceId));
-        updateStatus(OFFLINE, CONFIGURATION_PENDING, "Waiting for gateway");
+        updateStatus(ThingStatus.UNKNOWN, CONFIGURATION_PENDING, "Waiting for gateway");
     }
 
     public void setChannels(List<DeviceChannelTrait> channels) {
