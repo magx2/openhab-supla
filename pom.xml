@@ -228,11 +228,13 @@
             <name>JCenter Repository</name>
             <url>https://jcenter.bintray.com</url>
         </repository>
+        <!-- for jSupla snapshots
         <repository>
             <id>github</id>
             <name>Git Hub</name>
             <url>https://maven.pkg.github.com/magx2/*</url>
         </repository>
+        -->
         <repository>
             <releases>
                 <enabled>true</enabled>
