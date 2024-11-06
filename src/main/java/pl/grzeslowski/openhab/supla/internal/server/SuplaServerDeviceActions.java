@@ -53,12 +53,12 @@ public class SuplaServerDeviceActions implements ThingActions {
         this.thingHandler = suplaHandler;
     }
 
-    @RuleAction(label = "Device Config Config", description = "todo")
+    @RuleAction(label = "Device Config Config", description = "Set device config")
     public void setDeviceConfig(String... deviceConfigs) throws InterruptedException, TimeoutException {
         setDeviceConfig(Arrays.asList(deviceConfigs));
     }
 
-    @RuleAction(label = "Device Config Config", description = "todo")
+    @RuleAction(label = "Device Config Config", description = "Set device config")
     public void setDeviceConfig(Collection<String> configs) throws InterruptedException, TimeoutException {
         if (configs.isEmpty()) {
             throw new IllegalArgumentException("You need to pass configs!");
