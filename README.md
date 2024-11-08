@@ -225,9 +225,10 @@ the following paths:
 4. Check current settings: `cat java.security | grep jdk.tls.disabledAlgorithms`
 5. Replace
 it:
-`sed -i 's/jdk.tls.disabledAlgorithms=SSLv3, TLSv1, TLSv1.1, RC4, DES, MD5withRSA, \\/jdk.tls.disabledAlgorithms=RC4, DES, MD5withRSA, \\/g' java.security`
+`sed -i -E '/^jdk\.tls\.disabledAlgorithms=/ s/(,\s*)?(SSLv3|TLSv1\.1?|TLSv1)(,\s*)?//g' java.security`
 6. Check changed settings: `cat java.security | grep jdk.tls.disabledAlgorithms`
-7. Exit and restart docker container
+7. Compare changes: `diff java.security java.security.bak`
+8. Exit and restart docker container
 
 #### Restarting OpenHAB
 
