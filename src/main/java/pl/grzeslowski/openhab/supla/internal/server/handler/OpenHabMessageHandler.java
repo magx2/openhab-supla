@@ -8,16 +8,17 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import pl.grzeslowski.jsupla.protocol.api.types.ToServerProto;
 import pl.grzeslowski.jsupla.server.api.MessageHandler;
 import pl.grzeslowski.jsupla.server.api.Writer;
 import pl.grzeslowski.openhab.supla.internal.server.discovery.ServerDiscoveryService;
 import pl.grzeslowski.openhab.supla.internal.server.traits.RegisterDeviceTraitParser;
 
-@Slf4j
 @RequiredArgsConstructor
-public class OpenHabMessageHandler implements MessageHandler {
+public final class OpenHabMessageHandler implements MessageHandler {
+    private final Logger log = LoggerFactory.getLogger(OpenHabMessageHandler.class.getName() + "#" + hashCode());
     private final Object lock = new Object();
     private final AtomicReference<SuplaThing> currentThing = new AtomicReference<>();
     private final AtomicReference<Writer> writer = new AtomicReference<>();
@@ -29,11 +30,13 @@ public class OpenHabMessageHandler implements MessageHandler {
 
     @Override
     public void active(Writer writer) {
+        log.debug("active");
         this.writer.set(writer);
     }
 
     @Override
     public void inactive() {
+        log.debug("inactive");
         var local = currentThing.getAndSet(null);
         if (local != null) {
             local.inactive();
@@ -41,6 +44,20 @@ public class OpenHabMessageHandler implements MessageHandler {
         writer.set(null);
         discoveredThings.forEach(serverDiscoveryService::removeDevice);
         discoveredThings.clear();
+    }
+
+    @Override
+    public void socketException(Throwable exception) {
+        var thing = currentThing.get();
+        currentThing.set(null);
+        if (thing == null) {
+            log.warn(
+                    "Got exception from socket without having handler attached. Breaking the socket connection",
+                    exception);
+            clear();
+            return;
+        }
+        thing.socketException(exception);
     }
 
     @Override
@@ -81,8 +98,9 @@ public class OpenHabMessageHandler implements MessageHandler {
     }
 
     public void clear() {
+        log.debug("clear");
         currentThing.set(null);
         var close = socketChannel.close();
-        close.addListener(__ -> log.debug("Closing channel"));
+        close.addListener(__ -> log.debug("Closed channel"));
     }
 }

@@ -11,17 +11,21 @@ import static org.openhab.core.thing.ThingStatus.ONLINE;
 import static org.openhab.core.thing.ThingStatusDetail.*;
 import static pl.grzeslowski.jsupla.protocol.api.ProtocolHelpers.parseString;
 import static pl.grzeslowski.jsupla.protocol.api.ResultCode.SUPLA_RESULTCODE_TRUE;
-import static pl.grzeslowski.jsupla.protocol.api.consts.ProtoConsts.SUPLA_PROTO_VERSION;
 import static pl.grzeslowski.jsupla.protocol.api.consts.ProtoConsts.SUPLA_PROTO_VERSION_MIN;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.BINDING_ID;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ServerDevicesProperties.*;
 import static pl.grzeslowski.openhab.supla.internal.server.ByteArrayToHex.bytesToHex;
 import static pl.grzeslowski.openhab.supla.internal.server.ByteArrayToHex.hexToBytes;
 
+import io.netty.handler.timeout.ReadTimeoutException;
 import java.math.BigInteger;
+import java.net.SocketException;
+import java.text.SimpleDateFormat;
 import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.time.format.TextStyle;
 import java.util.*;
 import java.util.concurrent.ScheduledFuture;
@@ -268,15 +272,20 @@ public abstract class ServerAbstractDeviceHandler extends AbstractDeviceHandler 
     public void inactive() {
         updateStatus(OFFLINE, COMMUNICATION_ERROR, "Channel disconnected");
         this.writer.set(null);
-        var local = bridgeHandler;
-        if (local != null) {
-            local.deviceDisconnected();
-        }
+        dispose();
     }
 
     @Override
     public boolean register(RegisterDeviceTrait registerEntity, OpenHabMessageHandler handler) {
         updateStatus(OFFLINE, HANDLER_CONFIGURATION_PENDING, "Device is authorizing...");
+        var oldHandler = this.handler;
+        if (oldHandler != null) {
+            logger.warn(
+                    "Having old handler. Should not happen! handler={}#{}",
+                    oldHandler.getClass().getSimpleName(),
+                    oldHandler.hashCode());
+            oldHandler.clear();
+        }
         this.handler = handler;
         {
             var local = pingSchedule;
@@ -336,11 +345,15 @@ public abstract class ServerAbstractDeviceHandler extends AbstractDeviceHandler 
 
         var register = afterRegister(registerEntity);
         if (register) {
-            requireNonNull(getWriter().get())
-                    .write(new SuplaRegisterDeviceResult(
-                            SUPLA_RESULTCODE_TRUE.getValue(), ACTIVITY_TIMEOUT, (byte) SUPLA_PROTO_VERSION, (byte)
-                                    SUPLA_PROTO_VERSION_MIN));
-            updateStatus(ONLINE);
+            var w = requireNonNull(getWriter().get(), "There is no writer!");
+            w.write(new SuplaRegisterDeviceResult(
+                    SUPLA_RESULTCODE_TRUE.getValue(), ACTIVITY_TIMEOUT, (byte) w.getVersion(), (byte)
+                            SUPLA_PROTO_VERSION_MIN));
+            // thing will have status ONLINE after receiving proto from the device (method `handle(ToServerProto)`)
+            updateStatus(
+                    ThingStatus.UNKNOWN,
+                    CONFIGURATION_PENDING,
+                    "Waiting for registration confirmation from the device...");
         }
         return register;
     }
@@ -387,7 +400,10 @@ public abstract class ServerAbstractDeviceHandler extends AbstractDeviceHandler 
     public final void consumeSuplaPingServer(SuplaPingServer ping, Writer writer) {
         var response = new SuplaPingServerResult(ping.now);
         writer.write(response).addListener(f -> {
-            logger.trace("pingServer {}s {}ms", response.now.tvSec, response.now.tvUsec);
+            var millis = SECONDS.toMillis(response.now.tvSec) + response.now.tvUsec;
+            var formatter = DateTimeFormatter.ofPattern("HH:mm:ss.SSS z");
+            var date = Instant.ofEpochMilli(millis).atZone(ZoneId.of("UTC")).withZoneSameLocal(ZoneId.systemDefault());
+            logger.trace("pingServer {} ({}s {}ms)", formatter.format(date), response.now.tvSec, response.now.tvUsec);
             lastMessageFromDevice.set(now().getEpochSecond());
         });
     }
@@ -460,18 +476,13 @@ public abstract class ServerAbstractDeviceHandler extends AbstractDeviceHandler 
         var delta = now - lastPing;
         if (delta > timeout.max()) {
             var lastPingDate = new Date(SECONDS.toMillis(lastPing));
+            var formatter = new SimpleDateFormat("HH:mm:ss z");
             updateStatus(
                     OFFLINE,
                     COMMUNICATION_ERROR,
                     "Device did not send ping message in last " + delta + " seconds. Last message was from "
-                            + lastPingDate);
-            {
-                var local = pingSchedule;
-                pingSchedule = null;
-                if (local != null) {
-                    local.cancel(true);
-                }
-            }
+                            + formatter.format(lastPingDate));
+            dispose();
         }
     }
 
@@ -481,23 +492,37 @@ public abstract class ServerAbstractDeviceHandler extends AbstractDeviceHandler 
 
     @Override
     public void dispose() {
-        {
-            var local = pingSchedule;
-            pingSchedule = null;
-            if (local != null) {
-                local.cancel(true);
-            }
-        }
-        {
-            var localHandler = handler;
-            handler = null;
-            if (localHandler != null) {
-                localHandler.clear();
-            }
-        }
+        logger.debug("Disposing handler");
+        disposePing();
+        disposeHandler();
+        disposeBridgeHandler();
         writer.set(null);
         logger = LoggerFactory.getLogger(this.getClass());
         authorized = false;
+    }
+
+    private void disposePing() {
+        var local = pingSchedule;
+        pingSchedule = null;
+        if (local != null) {
+            local.cancel(true);
+        }
+    }
+
+    private void disposeHandler() {
+        var localHandler = handler;
+        handler = null;
+        if (localHandler != null) {
+            localHandler.clear();
+        }
+    }
+
+    private void disposeBridgeHandler() {
+        var local = bridgeHandler;
+        bridgeHandler = null;
+        if (local != null && authorized) {
+            local.deviceDisconnected();
+        }
     }
 
     @Override
@@ -597,5 +622,22 @@ public abstract class ServerAbstractDeviceHandler extends AbstractDeviceHandler 
                         .map(BigInteger::longValue)
                         .map(Objects::toString)
                         .orElse(null));
+    }
+
+    @Override
+    public void socketException(Throwable exception) {
+        String text;
+        if (exception instanceof ReadTimeoutException) {
+            logger.warn("Got timeout from socket. Going offline");
+            text = "Socket timeout";
+        } else if (exception instanceof SocketException) {
+            logger.warn("Got socket exception from socket. Going offline");
+            text = "Socket exception. " + exception.getLocalizedMessage();
+        } else {
+            logger.warn("Got exception from socket. Going offline", exception);
+            text = "%s: %s".formatted(exception.getClass().getSimpleName(), exception.getLocalizedMessage());
+        }
+        updateStatus(OFFLINE, COMMUNICATION_ERROR, text);
+        dispose();
     }
 }
