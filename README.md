@@ -268,7 +268,7 @@ To enable logging for the Supla plugin in OpenHAB, follow these steps:
 <Logger name="pl.grzeslowski.jsupla.protocol" level="debug" additivity="false">
 <AppenderRef ref="SUPLA"/>
 </Logger>
-<Logger name="pl.grzeslowski.openhab.supla" level="debug" additivity="false">
+<Logger name="pl.grzeslowski.supla.openhab" level="debug" additivity="false">
 <AppenderRef ref="SUPLA"/>
 </Logger>
 <Logger name="io.netty" level="debug" additivity="false">
