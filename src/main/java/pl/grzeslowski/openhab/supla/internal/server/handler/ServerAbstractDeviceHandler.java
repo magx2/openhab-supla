@@ -76,7 +76,7 @@ public abstract class ServerAbstractDeviceHandler extends AbstractDeviceHandler 
     public static final String AVAILABLE_FIELDS = "AVAILABLE_FIELDS";
 
     @Getter
-    protected Logger logger = LoggerFactory.getLogger(this.getClass());
+    protected Logger logger = LoggerFactory.getLogger(baseLogger());
 
     @ToString.Include
     @Nullable
@@ -150,7 +150,7 @@ public abstract class ServerAbstractDeviceHandler extends AbstractDeviceHandler 
             updateStatus(OFFLINE, CONFIGURATION_ERROR, "There is no guid for this thing.");
             return;
         }
-        logger = LoggerFactory.getLogger(this.getClass().getName() + "." + guid);
+        logger = LoggerFactory.getLogger(baseLogger() + "." + guid);
 
         {
             var timeoutConfiguration = buildTimeoutConfiguration(localBridgeHandler, config);
@@ -497,7 +497,7 @@ public abstract class ServerAbstractDeviceHandler extends AbstractDeviceHandler 
         disposeHandler();
         disposeBridgeHandler();
         writer.set(null);
-        logger = LoggerFactory.getLogger(this.getClass());
+        logger = LoggerFactory.getLogger(baseLogger());
         authorized = false;
     }
 
@@ -639,5 +639,18 @@ public abstract class ServerAbstractDeviceHandler extends AbstractDeviceHandler 
         }
         updateStatus(OFFLINE, COMMUNICATION_ERROR, text);
         dispose();
+    }
+
+    /*
+     * the purpose of this override is to make hashcode final,
+     * because it is used during object initialization (check logger)
+     */
+    @Override
+    public final int hashCode() {
+        return super.hashCode();
+    }
+
+    private String baseLogger() {
+        return this.getClass().getName() + "#" + hashCode();
     }
 }
