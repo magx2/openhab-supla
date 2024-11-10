@@ -359,6 +359,7 @@ public abstract class ServerAbstractDeviceHandler extends AbstractDeviceHandler 
                     ThingStatus.UNKNOWN,
                     CONFIGURATION_PENDING,
                     "Waiting for registration confirmation from the device...");
+            lastMessageFromDevice.set(now().getEpochSecond());
         }
         return register;
     }
