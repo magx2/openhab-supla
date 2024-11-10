@@ -368,6 +368,13 @@ public abstract class ServerAbstractDeviceHandler extends AbstractDeviceHandler 
         var data = new SuplaSetActivityTimeoutResult(
                 (short) timeout.timeout(), (short) timeout.min(), (short) timeout.max());
         writer.write(data).addListener(f -> logger.trace("setActivityTimeout {}", data));
+        {
+            var local = pingSchedule;
+            if (local != null) {
+                logger.warn("Ping schedule was not set to null!");
+                local.cancel(true);
+            }
+        }
         pingSchedule = ThreadPoolManager.getScheduledPool(BINDING_ID)
                 .scheduleWithFixedDelay(this::checkIfDeviceIsUp, timeout.timeout() * 2L, timeout.timeout(), SECONDS);
     }
