@@ -43,6 +43,7 @@ import org.openhab.core.thing.ChannelUID;
 import org.openhab.core.thing.Thing;
 import org.openhab.core.thing.ThingStatus;
 import org.openhab.core.thing.binding.ThingHandlerService;
+import org.openhab.core.types.Command;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import pl.grzeslowski.jsupla.protocol.api.structs.SuplaTimeval;
@@ -655,5 +656,14 @@ public abstract class ServerAbstractDeviceHandler extends AbstractDeviceHandler 
 
     private String baseLogger() {
         return this.getClass().getName() + "#" + hashCode();
+    }
+
+    @Override
+    public void handleCommand(ChannelUID channelUID, Command command) {
+        if(!authorized) {
+            logger.warn("Not handling command {} on channel {}, because device is not authorize!", command, channelUID);
+            return;
+        }
+        super.handleCommand(channelUID, command);
     }
 }
