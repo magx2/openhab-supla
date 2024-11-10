@@ -45,6 +45,7 @@ import org.openhab.core.thing.ThingStatus;
 import org.openhab.core.thing.binding.ThingHandlerService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import pl.grzeslowski.jsupla.protocol.api.structs.SuplaTimeval;
 import pl.grzeslowski.jsupla.protocol.api.structs.dcs.LocalTimeRequest;
 import pl.grzeslowski.jsupla.protocol.api.structs.dcs.SetCaption;
 import pl.grzeslowski.jsupla.protocol.api.structs.dcs.SuplaPingServer;
@@ -398,13 +399,14 @@ public abstract class ServerAbstractDeviceHandler extends AbstractDeviceHandler 
 
     @Override
     public final void consumeSuplaPingServer(SuplaPingServer ping, Writer writer) {
-        var response = new SuplaPingServerResult(ping.now);
+        var epochSecond = now().getEpochSecond();
+        var response = new SuplaPingServerResult(new SuplaTimeval(epochSecond, 0));
         writer.write(response).addListener(f -> {
             var millis = SECONDS.toMillis(response.now.tvSec) + response.now.tvUsec;
             var formatter = DateTimeFormatter.ofPattern("HH:mm:ss.SSS z");
             var date = Instant.ofEpochMilli(millis).atZone(ZoneId.of("UTC")).withZoneSameLocal(ZoneId.systemDefault());
             logger.trace("pingServer {} ({}s {}ms)", formatter.format(date), response.now.tvSec, response.now.tvUsec);
-            lastMessageFromDevice.set(now().getEpochSecond());
+            lastMessageFromDevice.set(epochSecond);
         });
     }
 
