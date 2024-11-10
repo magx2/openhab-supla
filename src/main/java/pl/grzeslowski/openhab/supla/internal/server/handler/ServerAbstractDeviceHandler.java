@@ -660,7 +660,7 @@ public abstract class ServerAbstractDeviceHandler extends AbstractDeviceHandler 
 
     @Override
     public void handleCommand(ChannelUID channelUID, Command command) {
-        if(!authorized) {
+        if (!authorized) {
             logger.warn("Not handling command {} on channel {}, because device is not authorize!", command, channelUID);
             return;
         }
