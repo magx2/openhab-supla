@@ -507,6 +507,7 @@ public abstract class ServerAbstractDeviceHandler extends AbstractDeviceHandler 
         if (local != null) {
             local.cancel(true);
         }
+        lastMessageFromDevice.set(0);
     }
 
     private void disposeHandler() {
