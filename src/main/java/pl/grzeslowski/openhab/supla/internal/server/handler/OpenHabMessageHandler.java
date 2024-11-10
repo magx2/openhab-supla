@@ -6,6 +6,7 @@ import io.netty.channel.socket.SocketChannel;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -18,7 +19,10 @@ import pl.grzeslowski.openhab.supla.internal.server.traits.RegisterDeviceTraitPa
 
 @RequiredArgsConstructor
 public final class OpenHabMessageHandler implements MessageHandler {
-    private final Logger log = LoggerFactory.getLogger(OpenHabMessageHandler.class.getName() + "#" + hashCode());
+    private static final AtomicLong ID = new AtomicLong();
+
+    private final long id = ID.incrementAndGet();
+    private final Logger log = LoggerFactory.getLogger(OpenHabMessageHandler.class.getName() + "#" + id);
     private final Object lock = new Object();
     private final AtomicReference<SuplaThing> currentThing = new AtomicReference<>();
     private final AtomicReference<Writer> writer = new AtomicReference<>();

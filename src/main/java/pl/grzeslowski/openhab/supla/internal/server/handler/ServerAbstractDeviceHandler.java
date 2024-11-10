@@ -76,6 +76,9 @@ import pl.grzeslowski.openhab.supla.internal.server.traits.RegisterLocationDevic
 public abstract class ServerAbstractDeviceHandler extends AbstractDeviceHandler implements SuplaThing, HandleProto {
     public static final byte ACTIVITY_TIMEOUT = (byte) 100;
     public static final String AVAILABLE_FIELDS = "AVAILABLE_FIELDS";
+    private static final AtomicLong ID = new AtomicLong();
+
+    private final long id = ID.incrementAndGet();
 
     @Getter
     protected Logger logger = LoggerFactory.getLogger(baseLogger());
@@ -652,17 +655,8 @@ public abstract class ServerAbstractDeviceHandler extends AbstractDeviceHandler 
         dispose();
     }
 
-    /*
-     * the purpose of this override is to make hashcode final,
-     * because it is used during object initialization (check logger)
-     */
-    @Override
-    public final int hashCode() {
-        return super.hashCode();
-    }
-
     private String baseLogger() {
-        return this.getClass().getName() + "#" + hashCode();
+        return this.getClass().getName() + "#" + id;
     }
 
     @Override
