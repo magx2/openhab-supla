@@ -22,6 +22,9 @@ By installing it with AURATON Vela actuators, you ensure a 10-year warranty on t
 comfort in your home to a new level. The device will ensure that your desired temperature is exactly where you are.
 This minimalist thermostat was created to be close to you and your loved ones. Available in two versatile colours:
 white and black.
+- [AURATON Switch ONE](https://www.auraton.pl/oferta/inteligentny-dom-smart/energia/auraton-switch-one-1) Switch One
+makes it convenient for you to control electrical devices. For example, to control the lighting of the entire house.
+Just download the Auraton Smart App after installation and Switch One will help you create a fully smart home.
 - [Zamel MEW-01](https://supla.zamel.com/product/monitor-energii-elektrycznej-wi-fi-3fn-mew-01/) The highest standard of
 accuracy in electricity consumption monitoring available with tools for advanced data analysis. MEW-01 is designed for
 DIN-rail (TH35) mounting, occupies a width of two modules and offers the possibility of attaching an external antenna
