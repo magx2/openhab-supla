@@ -36,7 +36,7 @@
         <dependency>
             <groupId>pl.grzeslowski.jSupla</groupId>
             <artifactId>server</artifactId>
-            <version>3.20.3</version>
+            <version>3.21.3</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
