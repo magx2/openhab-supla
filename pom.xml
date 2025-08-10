@@ -27,7 +27,7 @@
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
 
-        <openhab.version>4.2.0</openhab.version>
+        <openhab.version>5.0.0</openhab.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
@@ -135,6 +135,11 @@
             <artifactId>lombok</artifactId>
             <version>1.18.32</version>
             <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+            <version>2.13.1</version>
         </dependency>
         <!-- ❌ MISC -->
         <!-- ✅✅✅ TEST ✅✅✅ -->
@@ -333,7 +338,6 @@ netty-*.jar;lib:=true,\
 logging-interceptor-*.jar;lib:=true,\
 swagger-*.jar;lib:=true,\
 jsupla-*.jar;lib:=true,\
-com.google.gson-*.jar;lib:=true,\
 javax*.jar;lib:=true,\
 jakarta.validation-api-*.jar;lib:=true,\
 okio-*.jar;lib:=true,\
@@ -386,10 +390,10 @@ bcutil-jdk15on-*.jar;lib:=true
                         </includes>
                         <sortPom>
                             <predefinedSortOrder>recommended_2008_06</predefinedSortOrder>
-                            <sortDependencies />
-                            <sortDependencyManagement />
-                            <sortDependencyExclusions />
-                            <sortPlugins />
+                            <sortDependencies/>
+                            <sortDependencyManagement/>
+                            <sortDependencyExclusions/>
+                            <sortPlugins/>
                             <sortProperties>true</sortProperties>
                             <sortExecutions>true</sortExecutions>
                             <nrOfIndentSpace>4</nrOfIndentSpace>
@@ -414,8 +418,8 @@ bcutil-jdk15on-*.jar;lib:=true
                                 <exclude>*.http</exclude>
                                 <exclude>imgs/**</exclude>
                             </excludes>
-                            <trimTrailingWhitespace />
-                            <endWithNewline />
+                            <trimTrailingWhitespace/>
+                            <endWithNewline/>
                             <indent>
                                 <tabs>true</tabs>
                                 <spacesPerTab>4</spacesPerTab>
@@ -423,9 +427,9 @@ bcutil-jdk15on-*.jar;lib:=true
                         </format>
                     </formats>
                     <java>
-                        <importOrder />
-                        <removeUnusedImports />
-                        <formatAnnotations />
+                        <importOrder/>
+                        <removeUnusedImports/>
+                        <formatAnnotations/>
                         <palantirJavaFormat>
                             <version>2.43.0</version>
                             <style>PALANTIR</style>
