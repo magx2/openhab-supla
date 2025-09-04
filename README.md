@@ -223,7 +223,7 @@ the following paths:
 ##### Docker 🐳
 
 1. Log in into container: `docker exec -it <docker-container-id> /bin/bash`
-2. Go to folder with `java.security`: `cd /usr/lib/jvm/java-17-openjdk-amd64/conf/security`
+2. Go to folder with `java.security`: `cd /usr/lib/jvm/java-1.21.0-openjdk-amd64/conf/security`
 3. Do a backup: `cp java.security java.security.bak`
 4. Check current settings: `cat java.security | grep jdk.tls.disabledAlgorithms`
 5. Replace
