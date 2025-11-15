@@ -67,37 +67,42 @@ public final class OpenHabMessageHandler implements MessageHandler {
     @Override
     public void handle(ToServerProto proto) {
         synchronized (lock) {
-            // the current thing is set that means it already registered
-            var thing = currentThing.get();
-            if (thing != null) {
-                thing.handle(proto);
-                return;
-            }
+            synchronizedHandle(proto);
+        }
+    }
 
-            // register process
-            var register = RegisterDeviceTraitParser.parse(proto);
-            if (register.isPresent()) {
-                var entity = register.get();
-                var guid = entity.getGuid();
-                var suplaThingOptional = registry.findSuplaThing(guid);
-                if (suplaThingOptional.isEmpty()) {
-                    log.debug("There is no handler for device with GUID={}", guid);
-                    serverDiscoveryService.addDevice(entity);
-                    discoveredThings.add(entity.getGuid());
-                    return;
-                }
-                var suplaThing = suplaThingOptional.get();
-                suplaThing.active(requireNonNull(writer.get(), "writer is null"));
-                var registerResult = suplaThing.register(entity, this);
-                if (registerResult) {
-                    // correctly registered
-                    currentThing.set(suplaThing);
-                }
-                return;
-            }
+    /**
+     * Metod synchronized over lock
+     */
+    private void synchronizedHandle(ToServerProto proto) {
+        // the current thing is set that means it already registered
+        var thing = currentThing.get();
+        if (thing != null) {
+            thing.handle(proto);
+            return;
+        }
 
-            // fallback
+        // register process
+        var register = RegisterDeviceTraitParser.parse(proto);
+        if (register.isEmpty()) {
             log.debug("There is no Supla thing and the device did not send register message, but {}", proto);
+            return;
+        }
+        var entity = register.get();
+        var guid = entity.getGuid();
+        var suplaThingOptional = registry.findSuplaThing(guid);
+        if (suplaThingOptional.isEmpty()) {
+            log.debug("There is no handler for device with GUID={}", guid);
+            serverDiscoveryService.addDevice(entity);
+            discoveredThings.add(entity.getGuid());
+            return;
+        }
+        var suplaThing = suplaThingOptional.get();
+        suplaThing.active(requireNonNull(writer.get(), "writer is null"));
+        var registerResult = suplaThing.register(entity, this);
+        if (registerResult) {
+            // correctly registered
+            currentThing.set(suplaThing);
         }
     }
 
