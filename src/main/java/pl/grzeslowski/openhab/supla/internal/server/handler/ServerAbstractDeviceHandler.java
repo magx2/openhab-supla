@@ -34,6 +34,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.ToString;
 import lombok.experimental.Delegate;
 import org.eclipse.jdt.annotation.NonNullByDefault;
@@ -281,7 +282,7 @@ public abstract class ServerAbstractDeviceHandler extends AbstractDeviceHandler 
     }
 
     @Override
-    public boolean register(RegisterDeviceTrait registerEntity, OpenHabMessageHandler handler) {
+    public boolean register(@NonNull RegisterDeviceTrait registerEntity, OpenHabMessageHandler handler) {
         updateStatus(OFFLINE, HANDLER_CONFIGURATION_PENDING, "Device is authorizing...");
         var oldHandler = this.handler;
         if (oldHandler != null) {
@@ -303,33 +304,9 @@ public abstract class ServerAbstractDeviceHandler extends AbstractDeviceHandler 
         // auth
         logger.debug("Authorizing...");
         authorized = false;
-        if (registerEntity instanceof RegisterLocationDeviceTrait registerDevice) {
-            authorized = authorizeForLocation(registerDevice.getLocationId(), registerDevice.getLocationPwd());
-            if (!authorized) {
-                updateStatus(
-                        OFFLINE,
-                        CONFIGURATION_ERROR,
-                        "Device authorization failed. Device tried to log in with locationId=%s and locationPassword=%s"
-                                .formatted(
-                                        registerDevice.getLocationId(), parseString(registerDevice.getLocationPwd())));
-            }
-        } else if (registerEntity instanceof RegisterEmailDeviceTrait registerDevice) {
-            authorized = authorizeForEmail(registerDevice.getEmail(), registerDevice.getAuthKey());
-            if (!authorized) {
-                updateStatus(
-                        OFFLINE,
-                        CONFIGURATION_ERROR,
-                        "Device authorization failed. Device tried to log in with email=%s and authKey=%s"
-                                .formatted(registerDevice.getEmail(), bytesToHex(registerDevice.getAuthKey())));
-            }
-        } else {
-            updateStatus(
-                    OFFLINE,
-                    COMMUNICATION_ERROR,
-                    "Do not know how to handle %s during registration"
-                            .formatted(registerEntity.getClass().getSimpleName()));
-        }
+        authorized = authorize(registerEntity);
         if (!authorized) {
+            updateStatus(OFFLINE, CONFIGURATION_ERROR, findNonAuthMessage(registerEntity));
             return false;
         }
         {
@@ -362,6 +339,26 @@ public abstract class ServerAbstractDeviceHandler extends AbstractDeviceHandler 
             lastMessageFromDevice.set(now().getEpochSecond());
         }
         return register;
+    }
+
+    private static String findNonAuthMessage(RegisterDeviceTrait registerEntity) {
+        return switch (registerEntity) {
+            case RegisterLocationDeviceTrait
+            registerDevice -> "Device authorization failed. Device tried to log in with locationId=%s and locationPassword=%s"
+                    .formatted(registerDevice.getLocationId(), parseString(registerDevice.getLocationPwd()));
+            case RegisterEmailDeviceTrait
+            registerDevice -> "Device authorization failed. Device tried to log in with email=%s and authKey=%s"
+                    .formatted(registerDevice.getEmail(), bytesToHex(registerDevice.getAuthKey()));
+        };
+    }
+
+    private boolean authorize(RegisterDeviceTrait registerEntity) {
+        return switch (registerEntity) {
+            case RegisterLocationDeviceTrait registerDevice -> authorizeForLocation(
+                    registerDevice.getLocationId(), registerDevice.getLocationPwd());
+            case RegisterEmailDeviceTrait registerDevice -> authorizeForEmail(
+                    registerDevice.getEmail(), registerDevice.getAuthKey());
+        };
     }
 
     protected abstract boolean afterRegister(RegisterDeviceTrait registerEntity);
