@@ -407,10 +407,11 @@ public abstract class ServerAbstractDeviceHandler extends AbstractDeviceHandler 
     }
 
     private boolean authorizeForLocation(int accessId, byte[] accessIdPassword) {
-        if (deviceConfiguration == null) {
+        var localDeviceConfiguration = deviceConfiguration;
+        if (localDeviceConfiguration == null) {
             return false;
         }
-        var locationAuthData = deviceConfiguration.authData().locationAuthData();
+        var locationAuthData = localDeviceConfiguration.authData().locationAuthData();
         if (locationAuthData == null) {
             // not using access id authorization
             return false;
@@ -439,10 +440,11 @@ public abstract class ServerAbstractDeviceHandler extends AbstractDeviceHandler 
     }
 
     private boolean authorizeForEmail(String email, byte[] authKey) {
-        if (deviceConfiguration == null) {
+        var localDeviceConfiguration = deviceConfiguration;
+        if (localDeviceConfiguration == null) {
             return false;
         }
-        var emailAuthData = deviceConfiguration.authData().emailAuthData();
+        var emailAuthData = localDeviceConfiguration.authData().emailAuthData();
         if (emailAuthData == null) {
             // not using email authorization
             return false;
@@ -465,10 +467,11 @@ public abstract class ServerAbstractDeviceHandler extends AbstractDeviceHandler 
     }
 
     private void checkIfDeviceIsUp() {
-        if (deviceConfiguration == null) {
+        var localDeviceConfiguration = deviceConfiguration;
+        if (localDeviceConfiguration == null) {
             return;
         }
-        var timeout = deviceConfiguration.timeoutConfiguration();
+        var timeout = localDeviceConfiguration.timeoutConfiguration();
         var now = now().getEpochSecond();
         var lastPing = lastMessageFromDevice.get();
         var delta = now - lastPing;
