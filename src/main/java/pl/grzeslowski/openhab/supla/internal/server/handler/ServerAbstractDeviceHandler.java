@@ -289,7 +289,6 @@ public abstract class ServerAbstractDeviceHandler extends AbstractDeviceHandler 
 
         // auth
         logger.debug("Authorizing...");
-        authorized = false;
         authorized = authorize(registerEntity);
         if (!authorized) {
             updateStatus(OFFLINE, CONFIGURATION_ERROR, findNonAuthMessage(registerEntity));
