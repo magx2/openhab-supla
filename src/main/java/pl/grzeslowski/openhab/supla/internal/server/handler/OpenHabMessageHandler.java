@@ -109,4 +109,16 @@ public final class OpenHabMessageHandler implements MessageHandler {
         var close = socketChannel.close();
         close.addListener(__ -> log.debug("Closed channel"));
     }
+
+    @Override
+    public final boolean equals(Object o) {
+        if (!(o instanceof OpenHabMessageHandler that)) return false;
+
+        return id == that.id;
+    }
+
+    @Override
+    public int hashCode() {
+        return Long.hashCode(id);
+    }
 }
