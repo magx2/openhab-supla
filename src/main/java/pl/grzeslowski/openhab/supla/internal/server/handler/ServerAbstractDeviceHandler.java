@@ -285,13 +285,7 @@ public abstract class ServerAbstractDeviceHandler extends AbstractDeviceHandler 
             oldHandler.clear();
         }
         this.handler = handler;
-        {
-            var local = pingSchedule;
-            pingSchedule = null;
-            if (local != null) {
-                local.cancel(false);
-            }
-        }
+        disposePing();
 
         // auth
         logger.debug("Authorizing...");
