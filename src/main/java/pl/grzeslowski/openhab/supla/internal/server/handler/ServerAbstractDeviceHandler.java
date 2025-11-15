@@ -229,37 +229,29 @@ public abstract class ServerAbstractDeviceHandler extends AbstractDeviceHandler 
             return;
         }
         try {
-            if (entity instanceof SuplaPingServer ping) {
-                consumeSuplaPingServer(ping, writer);
-            } else if (entity instanceof SuplaSetActivityTimeout) {
-                consumeSuplaSetActivityTimeout(writer);
-            } else if (entity instanceof SuplaDeviceChannelValue value) {
-                consumeDeviceChannelValueTrait(new DeviceChannelValueTrait(value));
-            } else if (entity instanceof SuplaDeviceChannelValueB value) {
-                consumeDeviceChannelValueTrait(new DeviceChannelValueTrait(value));
-            } else if (entity instanceof SuplaDeviceChannelValueC value) {
-                consumeDeviceChannelValueTrait(new DeviceChannelValueTrait(value));
-            } else if (entity instanceof SuplaDeviceChannelExtendedValue value) {
-                var extendedValue = value.value;
-                consumeSuplaDeviceChannelExtendedValue(value.channelNumber, extendedValue.type, extendedValue.value);
-            } else if (entity instanceof LocalTimeRequest value) {
-                consumeLocalTimeRequest(writer);
-            } else if (entity instanceof SetCaption value) {
-                consumeSetCaption(value);
-            } else if (entity instanceof ChannelState value) {
-                consumeChannelState(value);
-            } else if (entity instanceof SubdeviceDetails value) {
-                consumeSubDeviceDetails(value);
-            } else if (entity instanceof SuplaChannelNewValueResult value) {
-                consumeSuplaChannelNewValueResult(value);
-            } else if (entity instanceof SetDeviceConfigResult value) {
-                consumeSetDeviceConfigResult(value);
-            } else if (entity instanceof SetDeviceConfig value) {
-                consumeSetDeviceConfig(value);
-            } else if (entity instanceof SetChannelConfigResult value) {
-                consumeSetChannelConfigResult(value);
-            } else {
-                logger.debug("Not supporting message:\n{}", entity);
+            switch (entity) {
+                case SuplaPingServer ping -> consumeSuplaPingServer(ping, writer);
+                case SuplaSetActivityTimeout suplaSetActivityTimeout -> consumeSuplaSetActivityTimeout(writer);
+                case SuplaDeviceChannelValue value -> consumeDeviceChannelValueTrait(
+                        new DeviceChannelValueTrait(value));
+                case SuplaDeviceChannelValueB value -> consumeDeviceChannelValueTrait(
+                        new DeviceChannelValueTrait(value));
+                case SuplaDeviceChannelValueC value -> consumeDeviceChannelValueTrait(
+                        new DeviceChannelValueTrait(value));
+                case SuplaDeviceChannelExtendedValue value -> {
+                    var extendedValue = value.value;
+                    consumeSuplaDeviceChannelExtendedValue(
+                            value.channelNumber, extendedValue.type, extendedValue.value);
+                }
+                case LocalTimeRequest value -> consumeLocalTimeRequest(writer);
+                case SetCaption value -> consumeSetCaption(value);
+                case ChannelState value -> consumeChannelState(value);
+                case SubdeviceDetails value -> consumeSubDeviceDetails(value);
+                case SuplaChannelNewValueResult value -> consumeSuplaChannelNewValueResult(value);
+                case SetDeviceConfigResult value -> consumeSetDeviceConfigResult(value);
+                case SetDeviceConfig value -> consumeSetDeviceConfig(value);
+                case SetChannelConfigResult value -> consumeSetChannelConfigResult(value);
+                default -> logger.debug("Not supporting message: {}", entity);
             }
             updateStatus(ONLINE);
         } catch (Exception ex) {
