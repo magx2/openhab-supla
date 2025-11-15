@@ -97,10 +97,12 @@ public final class OpenHabMessageHandler implements MessageHandler {
         var suplaThing = suplaThingOptional.get();
         suplaThing.active(requireNonNull(writer.get(), "writer is null"));
         var registerResult = suplaThing.register(entity, this);
-        if (registerResult) {
-            // correctly registered
-            currentThing.set(suplaThing);
+        if (!registerResult) {
+            log.debug("Could not register device GUID={}", guid);
+            return;
         }
+        // correctly registered
+        currentThing.set(suplaThing);
     }
 
     public void clear() {
