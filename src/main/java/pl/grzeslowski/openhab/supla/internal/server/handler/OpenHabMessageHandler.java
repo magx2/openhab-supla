@@ -52,16 +52,15 @@ public final class OpenHabMessageHandler implements MessageHandler {
 
     @Override
     public void socketException(Throwable exception) {
-        var thing = currentThing.get();
-        currentThing.set(null);
+        var thing = currentThing.getAndSet(null);
         if (thing == null) {
             log.warn(
                     "Got exception from socket without having handler attached. Breaking the socket connection",
                     exception);
-            clear();
-            return;
+        } else {
+            thing.socketException(exception);
         }
-        thing.socketException(exception);
+        clear();
     }
 
     @Override
@@ -71,9 +70,7 @@ public final class OpenHabMessageHandler implements MessageHandler {
         }
     }
 
-    /**
-     * Metod synchronized over lock
-     */
+    /** Metod synchronized over lock */
     private void synchronizedHandle(ToServerProto proto) {
         // the current thing is set that means it already registered
         var thing = currentThing.get();
