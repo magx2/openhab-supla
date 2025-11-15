@@ -294,6 +294,7 @@ public abstract class ServerAbstractDeviceHandler extends AbstractDeviceHandler 
             updateStatus(OFFLINE, CONFIGURATION_ERROR, findNonAuthMessage(registerEntity));
             return false;
         }
+        logger.debug("Authorized!");
         {
             var local = bridgeHandler;
             if (local != null) {
@@ -311,6 +312,7 @@ public abstract class ServerAbstractDeviceHandler extends AbstractDeviceHandler 
         }
 
         var register = afterRegister(registerEntity);
+        logger.debug("register={}", register);
         if (register) {
             var w = requireNonNull(getWriter().get(), "There is no writer!");
             w.write(new SuplaRegisterDeviceResult(
