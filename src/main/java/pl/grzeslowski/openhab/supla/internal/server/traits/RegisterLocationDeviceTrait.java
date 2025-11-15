@@ -12,7 +12,7 @@ import pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaRegisterDeviceC;
 @Getter
 @ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
-public class RegisterLocationDeviceTrait extends RegisterDeviceTrait {
+public final class RegisterLocationDeviceTrait extends RegisterDeviceTrait {
     private final int locationId;
     private final byte[] locationPwd;
 

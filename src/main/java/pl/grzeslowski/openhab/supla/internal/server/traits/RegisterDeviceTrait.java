@@ -18,7 +18,7 @@ import pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaRegisterDevice;
 @ToString
 @EqualsAndHashCode
 @NonNullByDefault
-public class RegisterDeviceTrait {
+public abstract sealed class RegisterDeviceTrait permits RegisterLocationDeviceTrait, RegisterEmailDeviceTrait {
     private final String guid;
     private final String name;
     private final String softVer;

@@ -14,7 +14,7 @@ import pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaRegisterDeviceG;
 @Getter
 @ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
-public class RegisterEmailDeviceTrait extends RegisterDeviceTrait {
+public final class RegisterEmailDeviceTrait extends RegisterDeviceTrait {
     private final String email;
     private final byte[] authKey;
     private final String serverName;
