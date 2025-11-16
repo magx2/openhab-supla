@@ -18,40 +18,40 @@ public final class RegisterLocationDeviceTrait extends RegisterDeviceTrait {
 
     public RegisterLocationDeviceTrait(SuplaRegisterDevice register) {
         super(
-                register.guid,
-                register.name,
-                register.softVer,
+                register.guid(),
+                register.name(),
+                register.softVer(),
                 null,
                 null,
                 0,
-                stream(register.channels).map(DeviceChannelTrait::new).toList());
-        this.locationId = register.locationId;
-        this.locationPwd = register.locationPwd;
+                stream(register.channels()).map(DeviceChannelTrait::new).toList());
+        this.locationId = register.locationId();
+        this.locationPwd = register.locationPwd();
     }
 
     public RegisterLocationDeviceTrait(SuplaRegisterDeviceB register) {
         super(
-                register.guid,
-                register.name,
-                register.softVer,
+                register.guid(),
+                register.name(),
+                register.softVer(),
                 null,
                 null,
                 0,
-                stream(register.channels).map(DeviceChannelTrait::new).toList());
-        this.locationId = register.locationId;
-        this.locationPwd = register.locationPwd;
+                stream(register.channels()).map(DeviceChannelTrait::new).toList());
+        this.locationId = register.locationId();
+        this.locationPwd = register.locationPwd();
     }
 
     public RegisterLocationDeviceTrait(SuplaRegisterDeviceC register) {
         super(
-                register.guid,
-                register.name,
-                register.softVer,
+                register.guid(),
+                register.name(),
+                register.softVer(),
                 null,
                 null,
                 0,
-                stream(register.channels).map(DeviceChannelTrait::new).toList());
-        this.locationId = register.locationId;
-        this.locationPwd = register.locationPwd;
+                stream(register.channels()).map(DeviceChannelTrait::new).toList());
+        this.locationId = register.locationId();
+        this.locationPwd = register.locationPwd();
     }
 }

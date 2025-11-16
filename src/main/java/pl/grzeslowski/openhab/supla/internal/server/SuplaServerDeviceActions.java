@@ -103,7 +103,7 @@ public class SuplaServerDeviceActions implements ThingActions {
         }
         writer.write(message).await(30, SECONDS);
         var deviceConfigResult = localHandler.listenForSetDeviceConfigResult(30, SECONDS);
-        var result = DeviceConfigResult.findConfigResult(deviceConfigResult.result);
+        var result = DeviceConfigResult.findConfigResult(deviceConfigResult.result());
         if (!result.isSuccess()) {
             throw new RuntimeException("Setting device config did not succeed! configs=%s. %s"
                     .formatted(

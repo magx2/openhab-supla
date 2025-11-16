@@ -163,7 +163,7 @@ public class ChannelUtil {
     }
 
     public void setCaption(SetCaption value) {
-        var id = findId(value.id, value.channelNumber).orElse(null);
+        var id = findId(value.id(), value.channelNumber()).orElse(null);
         if (id == null) {
             invoker.getLogger().debug("Cannot set caption, because ID is null. value={}", value);
             return;
@@ -188,7 +188,7 @@ public class ChannelUtil {
                                 "There is no channel with ID {} that I can set value to. value={}, caption={}",
                                 id,
                                 value,
-                                parseString(value.caption));
+                                parseString(value.caption()));
                 return;
             }
         } else {
@@ -196,7 +196,7 @@ public class ChannelUtil {
         }
         var channelsWithCaption = channels.stream()
                 .map(c -> ChannelBuilder.create(c)
-                        .withLabel(parseString(value.caption) + " > " + c.getLabel())
+                        .withLabel(parseString(value.caption()) + " > " + c.getLabel())
                         .build())
                 .toList();
         var updatedChannelsIds =
@@ -214,8 +214,8 @@ public class ChannelUtil {
     }
 
     public void consumeSuplaChannelNewValueResult(SuplaChannelNewValueResult value) {
-        var channelAndPreviousState = invoker.getSenderIdToChannelUID().remove(value.senderId);
-        if (value.success != 0) {
+        var channelAndPreviousState = invoker.getSenderIdToChannelUID().remove(value.senderId());
+        if (value.success() != 0) {
             // operation was successful; can terminate
             return;
         }
@@ -223,11 +223,11 @@ public class ChannelUtil {
             invoker.getLogger()
                     .info(
                             "Some previous new value result failed. " + "Refreshing channel nr {}. value={}",
-                            value.channelNumber,
+                            value.channelNumber(),
                             value);
             invoker.getThing().getChannels().stream()
                     .map(Channel::getUID)
-                    .filter(uid -> correctChannelNumber(uid, value.channelNumber))
+                    .filter(uid -> correctChannelNumber(uid, value.channelNumber()))
                     .forEach(invoker::handleRefreshCommand);
             return;
         }
@@ -268,38 +268,38 @@ public class ChannelUtil {
     }
 
     public void consumeChannelState(ChannelState value) {
-        var fields = value.fields;
-        setField(fields, SUPLA_CHANNELSTATE_FIELD_IPV4, "IPV4", parseIpv4(value.iPv4));
-        setField(fields, SUPLA_CHANNELSTATE_FIELD_MAC, "MAC", parseMac(value.mAC));
-        setField(fields, SUPLA_CHANNELSTATE_FIELD_BATTERYLEVEL, "Battery Level", value.batteryLevel + "%");
-        setField(fields, SUPLA_CHANNELSTATE_FIELD_BATTERYPOWERED, "Battery Powered", value.batteryPowered != 1);
-        setField(fields, SUPLA_CHANNELSTATE_FIELD_WIFIRSSI, "WI-FI RSSI", value.wiFiRSSI);
+        var fields = value.fields();
+        setField(fields, SUPLA_CHANNELSTATE_FIELD_IPV4, "IPV4", parseIpv4(value.iPv4()));
+        setField(fields, SUPLA_CHANNELSTATE_FIELD_MAC, "MAC", parseMac(value.mAC()));
+        setField(fields, SUPLA_CHANNELSTATE_FIELD_BATTERYLEVEL, "Battery Level", value.batteryLevel() + "%");
+        setField(fields, SUPLA_CHANNELSTATE_FIELD_BATTERYPOWERED, "Battery Powered", value.batteryPowered() != 1);
+        setField(fields, SUPLA_CHANNELSTATE_FIELD_WIFIRSSI, "WI-FI RSSI", value.wiFiRSSI());
         setField(
                 fields,
                 SUPLA_CHANNELSTATE_FIELD_WIFISIGNALSTRENGTH,
                 "WI-FI Signal Strength",
-                value.wiFiSignalStrength + "%");
+                value.wiFiSignalStrength() + "%");
         setField(
                 fields,
                 SUPLA_CHANNELSTATE_FIELD_BRIDGENODESIGNALSTRENGTH,
                 "Bridge Node Signal Strength",
-                value.bridgeNodeSignalStrength + "%");
-        setField(fields, SUPLA_CHANNELSTATE_FIELD_UPTIME, "Up Time", Duration.ofSeconds(value.uptime));
+                value.bridgeNodeSignalStrength() + "%");
+        setField(fields, SUPLA_CHANNELSTATE_FIELD_UPTIME, "Up Time", Duration.ofSeconds(value.uptime()));
         setField(
                 fields,
                 SUPLA_CHANNELSTATE_FIELD_CONNECTIONUPTIME,
                 "Connection Up Time",
-                Duration.ofSeconds(value.connectionUptime));
-        setField(fields, SUPLA_CHANNELSTATE_FIELD_BATTERYHEALTH, "Battery Health", value.batteryHealth);
-        setField(fields, SUPLA_CHANNELSTATE_FIELD_BRIDGENODEONLINE, "Bridge Node Online", value.bridgeNodeOnline);
+                Duration.ofSeconds(value.connectionUptime()));
+        setField(fields, SUPLA_CHANNELSTATE_FIELD_BATTERYHEALTH, "Battery Health", value.batteryHealth());
+        setField(fields, SUPLA_CHANNELSTATE_FIELD_BRIDGENODEONLINE, "Bridge Node Online", value.bridgeNodeOnline());
 
         var lastConnectionResetCause =
-                switch (value.lastConnectionResetCause) {
+                switch (value.lastConnectionResetCause()) {
                     case 0 -> "UNKNOWN";
                     case 1 -> "ACTIVITY_TIMEOUT";
                     case 2 -> "WIFI_CONNECTION_LOST";
                     case 3 -> "SERVER_CONNECTION_LOST";
-                    default -> "UNKNOWN(%s)".formatted(value.lastConnectionResetCause);
+                    default -> "UNKNOWN(%s)".formatted(value.lastConnectionResetCause());
                 };
         setField(
                 fields,
@@ -309,20 +309,20 @@ public class ChannelUtil {
 
         invoker.setProperty(
                 "Light Source Lifespan",
-                Duration.ofHours(value.lightSourceLifespan).toString());
-        if (value.lightSourceLifespanLeft != null) {
+                Duration.ofHours(value.lightSourceLifespan()).toString());
+        if (value.lightSourceLifespanLeft() != null) {
             var string =
-                    value.lightSourceLifespanLeft == -32767 ? "100%" : (value.lightSourceLifespanLeft * 0.01) + "%";
+                    value.lightSourceLifespanLeft() == -32767 ? "100%" : (value.lightSourceLifespanLeft() * 0.01) + "%";
             invoker.setProperty("Light Source Lifespan", string);
         }
-        if (value.lightSourceOperatingTime != null) {
+        if (value.lightSourceOperatingTime() != null) {
             invoker.setProperty(
                     "Light Source Operating Time",
-                    Duration.ofSeconds(value.lightSourceOperatingTime).toString());
+                    Duration.ofSeconds(value.lightSourceOperatingTime()).toString());
         }
-        if (value.operatingTime != null) {
+        if (value.operatingTime() != null) {
             invoker.setProperty(
-                    "Operating Time", Duration.ofSeconds(value.operatingTime).toString());
+                    "Operating Time", Duration.ofSeconds(value.operatingTime()).toString());
         }
     }
 

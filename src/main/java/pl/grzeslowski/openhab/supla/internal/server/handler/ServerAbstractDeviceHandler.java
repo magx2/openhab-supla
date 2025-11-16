@@ -237,9 +237,9 @@ public abstract class ServerAbstractDeviceHandler extends AbstractDeviceHandler 
                 case SuplaDeviceChannelValueC value -> consumeDeviceChannelValueTrait(
                         new DeviceChannelValueTrait(value));
                 case SuplaDeviceChannelExtendedValue value -> {
-                    var extendedValue = value.value;
+                    var extendedValue = value.value();
                     consumeSuplaDeviceChannelExtendedValue(
-                            value.channelNumber, extendedValue.type, extendedValue.value);
+                            value.channelNumber(), extendedValue.type(), extendedValue.value());
                 }
                 case LocalTimeRequest value -> consumeLocalTimeRequest(writer);
                 case SetCaption value -> consumeSetCaption(value);
@@ -396,10 +396,15 @@ public abstract class ServerAbstractDeviceHandler extends AbstractDeviceHandler 
         var epochSecond = now().getEpochSecond();
         var response = new SuplaPingServerResult(new SuplaTimeval(epochSecond, 0));
         writer.write(response).addListener(f -> {
-            var millis = SECONDS.toMillis(response.now.tvSec) + response.now.tvUsec;
+            var millis =
+                    SECONDS.toMillis(response.now().tvSec()) + response.now().tvUsec();
             var formatter = DateTimeFormatter.ofPattern("HH:mm:ss.SSS z");
             var date = Instant.ofEpochMilli(millis).atZone(ZoneId.of("UTC")).withZoneSameLocal(ZoneId.systemDefault());
-            logger.trace("pingServer {} ({}s {}ms)", formatter.format(date), response.now.tvSec, response.now.tvUsec);
+            logger.trace(
+                    "pingServer {} ({}s {}ms)",
+                    formatter.format(date),
+                    response.now().tvSec(),
+                    response.now().tvUsec());
             lastMessageFromDevice.set(epochSecond);
         });
     }
@@ -532,7 +537,7 @@ public abstract class ServerAbstractDeviceHandler extends AbstractDeviceHandler 
 
     @Override
     public void consumeSetDeviceConfigResult(SetDeviceConfigResult value) {
-        var result = DeviceConfigResult.findConfigResult(value.result);
+        var result = DeviceConfigResult.findConfigResult(value.result());
         if (!result.isSuccess()) {
             logger.warn("Did not succeed ({}) with setting config for device", result);
         } else {
@@ -571,7 +576,7 @@ public abstract class ServerAbstractDeviceHandler extends AbstractDeviceHandler 
 
     @Override
     public void consumeSetChannelConfigResult(SetChannelConfigResult value) {
-        var result = DeviceConfigResult.findConfigResult(value.result);
+        var result = DeviceConfigResult.findConfigResult(value.result());
         if (!result.isSuccess()) {
             logger.warn("Did not succeed ({}) with setting config for device", result);
         } else {
@@ -581,12 +586,12 @@ public abstract class ServerAbstractDeviceHandler extends AbstractDeviceHandler 
 
     @Override
     public void consumeSetDeviceConfig(SetDeviceConfig value) {
-        if (value.endOfDataFlag == 0) {
+        if (value.endOfDataFlag() == 0) {
             logger.warn("SetDeviceConfig has more data but I'm not supporting it! config={}", value);
             return;
         }
-        setAvailableFields(value.availableFields);
-        consumeSetDeviceConfig(value.fields.longValue(), value.config);
+        setAvailableFields(value.availableFields());
+        consumeSetDeviceConfig(value.fields().longValue(), value.config());
     }
 
     public void consumeSetDeviceConfig(long fields, byte[] config) {

@@ -52,24 +52,41 @@ public class DeviceChannelTrait {
     }
 
     public DeviceChannelTrait(SuplaDeviceChannel channel) {
-        this(channel.number, channel.type, null, channel.value, null, null);
+        this(channel.number(), channel.type(), null, channel.value(), null, null);
     }
 
     public DeviceChannelTrait(SuplaDeviceChannelB channel) {
-        this(channel.number, channel.type, channel.funcList, channel.value, null, null);
+        this(channel.number(), channel.type(), channel.funcList(), channel.value(), null, null);
     }
 
     public DeviceChannelTrait(SuplaDeviceChannelC channel) {
-        this(channel.number, channel.type, channel.funcList, channel.value, mapHvacValue(channel.hvacValue), null);
+        this(
+                channel.number(),
+                channel.type(),
+                channel.funcList(),
+                channel.value(),
+                mapHvacValue(channel.hvacValue()),
+                null);
     }
 
     public DeviceChannelTrait(SuplaDeviceChannelD channel) {
-        this(channel.number, channel.type, channel.funcList, channel.value, mapHvacValue(channel.hvacValue), null);
+        this(
+                channel.number(),
+                channel.type(),
+                channel.funcList(),
+                channel.value(),
+                mapHvacValue(channel.hvacValue()),
+                null);
     }
 
     public DeviceChannelTrait(SuplaDeviceChannelE channel) {
-        this(channel.number, channel.type, channel.funcList, channel.value, mapHvacValue(channel.hvacValue), (int)
-                channel.subDeviceId);
+        this(
+                channel.number(),
+                channel.type(),
+                channel.funcList(),
+                channel.value(),
+                mapHvacValue(channel.hvacValue()),
+                (int) channel.subDeviceId());
     }
 
     @Nullable
