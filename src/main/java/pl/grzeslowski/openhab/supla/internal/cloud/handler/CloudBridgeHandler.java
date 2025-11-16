@@ -39,6 +39,8 @@ import org.slf4j.LoggerFactory;
 import pl.grzeslowski.jsupla.api.internal.ApiClientFactory;
 import pl.grzeslowski.openhab.supla.internal.ReadWriteMonad;
 import pl.grzeslowski.openhab.supla.internal.cloud.api.*;
+import pl.grzeslowski.openhab.supla.internal.handler.InitializationException;
+import pl.grzeslowski.openhab.supla.internal.handler.OfflineInitializationException;
 
 @NonNullByDefault
 public class CloudBridgeHandler extends BaseBridgeHandler implements IoDevicesCloudApi, ChannelsCloudApi {
@@ -68,6 +70,8 @@ public class CloudBridgeHandler extends BaseBridgeHandler implements IoDevicesCl
     public void initialize() {
         try {
             internalInitialize();
+        } catch (InitializationException e) {
+            updateStatus(e.getStatus(), e.getStatusDetail(), e.getMessage());
         } catch (Exception ex) {
             updateStatus(OFFLINE, CONFIGURATION_ERROR, "Cannot start server! " + ex.getMessage());
         }
@@ -93,28 +97,24 @@ public class CloudBridgeHandler extends BaseBridgeHandler implements IoDevicesCl
                 channelsApi = serverCloudApiFactory.newChannelsCloudApi(config.getOAuthToken());
             }
         } catch (Exception e) {
-            updateStatus(
-                    OFFLINE,
+            throw new OfflineInitializationException(
                     CONFIGURATION_ERROR,
                     "Cannot create client to Supla Cloud! Probably oAuth token is incorrect! " + e.getMessage());
-            return;
         }
 
         // update channels
         updateServerInfo();
         updateApiCalls();
 
-        // check if current api is supported
+        // check if the current api is supported
         var apiVersion = ApiClientFactory.getApiVersion();
         var serverInfo = localServerCloudApi.getServerInfo();
         List<String> supportedApiVersions = serverInfo.getSupportedApiVersions();
         if (!supportedApiVersions.contains(apiVersion)) {
-            updateStatus(
-                    OFFLINE,
+            throw new OfflineInitializationException(
                     CONFIGURATION_ERROR,
-                    "This API version `" + apiVersion + "` is not supported! Supported api versions: ["
-                            + String.join(", ", supportedApiVersions) + "].");
-            return;
+                    "This API version `%s` is not supported! Supported api versions: [%s]."
+                            .formatted(apiVersion, String.join(", ", supportedApiVersions)));
         }
 
         var scheduledPool = ThreadPoolManager.getScheduledPool(THREAD_POOL_NAME);

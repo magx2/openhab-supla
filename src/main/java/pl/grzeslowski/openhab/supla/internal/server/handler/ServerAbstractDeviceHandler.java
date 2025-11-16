@@ -61,6 +61,8 @@ import pl.grzeslowski.jsupla.protocol.api.structs.sdc.UserLocalTimeResult;
 import pl.grzeslowski.jsupla.protocol.api.types.ToServerProto;
 import pl.grzeslowski.jsupla.server.api.Writer;
 import pl.grzeslowski.openhab.supla.internal.handler.AbstractDeviceHandler;
+import pl.grzeslowski.openhab.supla.internal.handler.InitializationException;
+import pl.grzeslowski.openhab.supla.internal.handler.OfflineInitializationException;
 import pl.grzeslowski.openhab.supla.internal.server.SuplaServerDeviceActions;
 import pl.grzeslowski.openhab.supla.internal.server.handler.device_config.DeviceConfigResult;
 import pl.grzeslowski.openhab.supla.internal.server.handler.device_config.DeviceConfigUtil;
@@ -121,12 +123,11 @@ public abstract class ServerAbstractDeviceHandler extends AbstractDeviceHandler 
     }
 
     @Override
-    protected void internalInitialize() {
+    protected void internalInitialize() throws InitializationException {
         var bridge = getBridge();
         if (bridge == null) {
-            updateStatus(
-                    OFFLINE, BRIDGE_UNINITIALIZED, "There is no bridge for this thing. Remove it and add it again.");
-            return;
+            throw new OfflineInitializationException(
+                    BRIDGE_UNINITIALIZED, "There is no bridge for this thing. Remove it and add it again.");
         }
         var rawBridgeHandler = bridge.getHandler();
         var bridgeClasses = findAllowedBridgeClasses();
@@ -141,11 +142,9 @@ public abstract class ServerAbstractDeviceHandler extends AbstractDeviceHandler 
             }
             var allowedBridgeClasses =
                     bridgeClasses.stream().map(Class::getSimpleName).collect(joining(", ", "[", "]"));
-            updateStatus(
-                    OFFLINE,
+            throw new OfflineInitializationException(
                     CONFIGURATION_ERROR,
                     "Bridge has wrong type! Should be one of:" + allowedBridgeClasses + ", but was " + simpleName);
-            return;
         }
         var localBridgeHandler = this.bridgeHandler = (SuplaBridge) rawBridgeHandler;
 
@@ -153,8 +152,7 @@ public abstract class ServerAbstractDeviceHandler extends AbstractDeviceHandler 
         guid = config.getGuid();
         if (guid == null || guid.isEmpty()) {
             guid = null;
-            updateStatus(OFFLINE, CONFIGURATION_ERROR, "There is no guid for this thing.");
-            return;
+            throw new OfflineInitializationException(CONFIGURATION_ERROR, "There is no guid for this thing.");
         }
         logger = LoggerFactory.getLogger(baseLogger() + "." + guid);
 

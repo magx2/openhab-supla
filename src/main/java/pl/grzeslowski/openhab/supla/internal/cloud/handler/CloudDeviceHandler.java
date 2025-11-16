@@ -24,10 +24,7 @@ import org.eclipse.jdt.annotation.NonNull;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
 import org.openhab.core.library.types.*;
-import org.openhab.core.thing.Bridge;
-import org.openhab.core.thing.Channel;
-import org.openhab.core.thing.ChannelUID;
-import org.openhab.core.thing.Thing;
+import org.openhab.core.thing.*;
 import org.openhab.core.thing.binding.BridgeHandler;
 import org.openhab.core.thing.binding.builder.ThingBuilder;
 import org.openhab.core.types.State;
@@ -45,6 +42,8 @@ import pl.grzeslowski.openhab.supla.internal.cloud.executors.SuplaLedCommandExec
 import pl.grzeslowski.openhab.supla.internal.cloud.functionswitch.CreateChannelFunctionSwitch;
 import pl.grzeslowski.openhab.supla.internal.cloud.functionswitch.FindStateFunctionSwitch;
 import pl.grzeslowski.openhab.supla.internal.handler.AbstractDeviceHandler;
+import pl.grzeslowski.openhab.supla.internal.handler.InitializationException;
+import pl.grzeslowski.openhab.supla.internal.handler.OfflineInitializationException;
 
 /**
  * This is handler for all Supla devices.
@@ -82,14 +81,12 @@ public final class CloudDeviceHandler extends AbstractDeviceHandler {
     }
 
     @Override
-    @SneakyThrows
-    protected void internalInitialize() {
+    protected void internalInitialize() throws Exception {
         @Nullable final Bridge bridge = getBridge();
         if (bridge == null) {
             logger.debug("No bridge for thing with UID {}", thing.getUID());
-            updateStatus(
-                    OFFLINE, BRIDGE_UNINITIALIZED, "There is no bridge for this thing. Remove it and add it again.");
-            return;
+            throw new OfflineInitializationException(
+                    BRIDGE_UNINITIALIZED, "There is no bridge for this thing. Remove it and add it again.");
         }
         final @Nullable BridgeHandler bridgeHandler = bridge.getHandler();
         if (!(bridgeHandler instanceof CloudBridgeHandler handler)) {
@@ -98,25 +95,16 @@ public final class CloudDeviceHandler extends AbstractDeviceHandler {
                     CloudBridgeHandler.class.getSimpleName(),
                     bridgeHandler != null ? bridgeHandler.getClass().getSimpleName() : "<null>",
                     thing.getUID());
-            updateStatus(OFFLINE, BRIDGE_UNINITIALIZED, "There is wrong type of bridge for cloud device!");
-            return;
+            throw new OfflineInitializationException(
+                    BRIDGE_UNINITIALIZED, "There is wrong type of bridge for cloud device!");
         }
         initApi(handler);
 
         var cloudIdString = String.valueOf(getConfig().get(SUPLA_DEVICE_CLOUD_ID));
         logger = LoggerFactory.getLogger(CloudDeviceHandler.class.getName() + "." + cloudIdString);
-        if (!initCloudApi(cloudIdString)) {
-            return;
-        }
-
-        if (!checkIfIsOnline()) {
-            return;
-        }
-
-        if (!checkIfIsEnabled()) {
-            return;
-        }
-
+        initCloudApi(cloudIdString);
+        checkIfIsOnline();
+        checkIfIsEnabled();
         initChannels();
         initCommandExecutors();
 
@@ -124,16 +112,13 @@ public final class CloudDeviceHandler extends AbstractDeviceHandler {
         updateStatus(ONLINE);
     }
 
-    private boolean initCloudApi(String cloudIdString) {
+    private void initCloudApi(String cloudIdString) throws OfflineInitializationException {
         try {
             this.cloudId = parseInt(cloudIdString);
-            return true;
         } catch (NumberFormatException e) {
-            updateStatus(
-                    OFFLINE,
+            throw new OfflineInitializationException(
                     CONFIGURATION_ERROR,
-                    "Cannot parse cloud ID `" + cloudIdString + "` to integer! " + e.getLocalizedMessage());
-            return false;
+                    "Cannot parse cloud ID `%s` to integer! %s".formatted(cloudIdString, e.getLocalizedMessage()));
         }
     }
 
@@ -142,21 +127,19 @@ public final class CloudDeviceHandler extends AbstractDeviceHandler {
         channelsApi = handler;
     }
 
-    private boolean checkIfIsOnline() {
+    private void checkIfIsOnline() throws InitializationException {
         try {
             var device = findDevice(singletonList("connected"));
             if (device.isConnected() == null || !device.isConnected()) {
-                updateStatus(OFFLINE, NONE, "This device is is not connected to Supla Cloud.");
-                return false;
+                throw new OfflineInitializationException(NONE, "This device is is not connected to Supla Cloud.");
             }
-            return true;
         } catch (Exception e) {
+            if (e instanceof InitializationException iex) {
+                throw iex;
+            }
             logger.debug("Error when loading IO device from Supla Cloud!", e);
-            updateStatus(
-                    OFFLINE,
-                    COMMUNICATION_ERROR,
-                    "Error when loading IO device from Supla Cloud! " + e.getLocalizedMessage());
-            return false;
+            throw new OfflineInitializationException(
+                    COMMUNICATION_ERROR, "Error when loading IO device from Supla Cloud! " + e.getLocalizedMessage());
         }
     }
 
@@ -164,17 +147,14 @@ public final class CloudDeviceHandler extends AbstractDeviceHandler {
         return requireNonNull(ioDevicesApi).getIoDevice(cloudId, include);
     }
 
-    private boolean checkIfIsEnabled() throws Exception {
+    private void checkIfIsEnabled() throws Exception {
         final Device device = findDevice(emptyList());
         if (device.isEnabled() == null || !device.isEnabled()) {
-            updateStatus(OFFLINE, NONE, "This device is turned off in Supla Cloud.");
-            return false;
+            throw new OfflineInitializationException(NONE, "This device is turned off in Supla Cloud.");
         }
-
-        return true;
     }
 
-    private void initChannels() {
+    private void initChannels() throws OfflineInitializationException {
         try {
             final List<Channel> channels = findDevice(singletonList("channels")) //
                     .getChannels() //
@@ -186,10 +166,8 @@ public final class CloudDeviceHandler extends AbstractDeviceHandler {
                     .collect(Collectors.toList());
             updateChannels(channels);
         } catch (Exception e) {
-            updateStatus(
-                    OFFLINE,
-                    COMMUNICATION_ERROR,
-                    "Error when loading IO device from Supla Cloud! " + e.getLocalizedMessage());
+            throw new OfflineInitializationException(
+                    COMMUNICATION_ERROR, "Error when loading IO device from Supla Cloud! " + e.getLocalizedMessage());
         }
     }
 
@@ -434,15 +412,21 @@ public final class CloudDeviceHandler extends AbstractDeviceHandler {
     void refresh() {
         logger.trace("Refreshing `{}`", thing.getUID());
         try {
-            if (checkIfIsOnline() && checkIfIsEnabled()) {
-                updateStatus(ONLINE);
-                logger.trace("Thing `{}` is connected & enabled. Refreshing channels", thing.getUID());
-                thing.getChannels().stream()
-                        .map(Channel::getUID)
-                        .forEach(channelUID -> handleCommand(channelUID, REFRESH));
-            }
+            checkIfIsOnline();
+            checkIfIsEnabled();
+            updateStatus(ONLINE);
+            logger.trace("Thing `{}` is connected & enabled. Refreshing channels", thing.getUID());
+            thing.getChannels().stream().map(Channel::getUID).forEach(channelUID -> handleCommand(channelUID, REFRESH));
         } catch (Exception e) {
-            logger.error("Cannot check if device `{}` is online/enabled", thing.getUID(), e);
+            if (e instanceof InitializationException iex) {
+                updateStatus(iex.getStatus(), iex.getStatusDetail(), iex.getMessage());
+            } else {
+                logger.error("Cannot check if device `{}` is online/enabled", thing.getUID(), e);
+                updateStatus(
+                        OFFLINE,
+                        COMMUNICATION_ERROR,
+                        "Cannot check if device %s is online/enabled".formatted(thing.getUID()));
+            }
         }
     }
 
