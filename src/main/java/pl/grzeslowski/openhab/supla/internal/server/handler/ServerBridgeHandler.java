@@ -5,7 +5,6 @@ import static java.util.stream.Collectors.toCollection;
 import static java.util.stream.Collectors.toSet;
 import static org.openhab.core.thing.ThingStatus.OFFLINE;
 import static org.openhab.core.thing.ThingStatus.ONLINE;
-import static org.openhab.core.thing.ThingStatusDetail.COMMUNICATION_ERROR;
 import static org.openhab.core.thing.ThingStatusDetail.CONFIGURATION_ERROR;
 import static org.openhab.core.types.RefreshType.REFRESH;
 import static pl.grzeslowski.jsupla.server.api.ServerProperties.fromList;
@@ -43,6 +42,8 @@ import pl.grzeslowski.jsupla.protocol.api.encoders.EncoderFactoryImpl;
 import pl.grzeslowski.jsupla.server.api.*;
 import pl.grzeslowski.jsupla.server.netty.NettyServerFactory;
 import pl.grzeslowski.openhab.supla.internal.Documentation;
+import pl.grzeslowski.openhab.supla.internal.handler.InitializationException;
+import pl.grzeslowski.openhab.supla.internal.handler.OfflineInitializationException;
 import pl.grzeslowski.openhab.supla.internal.server.discovery.ServerDiscoveryService;
 
 @NonNullByDefault
@@ -77,6 +78,8 @@ public class ServerBridgeHandler extends BaseBridgeHandler implements SuplaThing
     public void initialize() {
         try {
             internalInitialize();
+        } catch (InitializationException e) {
+            updateStatus(e.getStatus(), e.getStatusDetail(), e.getMessage());
         } catch (CertificateException | SSLException ex) {
             logger.debug("Problem with generating certificates! ", ex);
             updateStatus(
@@ -93,20 +96,18 @@ public class ServerBridgeHandler extends BaseBridgeHandler implements SuplaThing
     private void internalInitialize() throws Exception {
         var config = this.getConfigAs(ServerBridgeHandlerConfig.class);
         if (!config.isServerAuth() && !config.isEmailAuth()) {
-            updateStatus(OFFLINE, CONFIGURATION_ERROR, "You need to pass either server auth or email auth!");
-            return;
+            throw new OfflineInitializationException(
+                    CONFIGURATION_ERROR, "You need to pass either server auth or email auth!");
         }
         if (config.getPort().intValue() <= 0) {
-            updateStatus(OFFLINE, CONFIGURATION_ERROR, "You need to pass port!");
-            return;
+            throw new OfflineInitializationException(CONFIGURATION_ERROR, "You need to pass port!");
         }
         authData = SuplaBridge.buildAuthData(config);
         var port = config.getPort().intValue();
         var protocols =
                 stream(config.getProtocols().split(",")).map(String::trim).collect(toSet());
         if (protocols.isEmpty()) {
-            updateStatus(OFFLINE, CONFIGURATION_ERROR, "You need to pass at least one protocol!");
-            return;
+            throw new OfflineInitializationException(CONFIGURATION_ERROR, "You need to pass at least one protocol!");
         }
 
         logger = LoggerFactory.getLogger(ServerBridgeHandler.class.getName() + "." + port);
@@ -140,12 +141,10 @@ public class ServerBridgeHandler extends BaseBridgeHandler implements SuplaThing
                 disabledAlgorithms.retainAll(protocolsWithSslv3);
                 if (!disabledAlgorithms.isEmpty()) {
                     var algorithms = String.join(", ", disabledAlgorithms);
-                    updateStatus(
-                            OFFLINE,
+                    throw new OfflineInitializationException(
                             CONFIGURATION_ERROR,
                             "Those protocols are disabled in java.security: %s. See: %s"
                                     .formatted(algorithms, Documentation.DISABLED_ALGORITHMS_PROBLEM));
-                    return;
                 }
             } else {
                 logger.debug("jdk.tls.disabledAlgorithms is null, should not be a problem, carry on...");
@@ -167,7 +166,6 @@ public class ServerBridgeHandler extends BaseBridgeHandler implements SuplaThing
 
     private MessageHandler messageHandlerFactory(SocketChannel ch) {
         logger.debug("Device connected");
-        // todo serverDiscoveryService.setNewDeviceFlux(newChannelsPipe);
         return new OpenHabMessageHandler(this, serverDiscoveryService, ch);
     }
 
@@ -177,12 +175,6 @@ public class ServerBridgeHandler extends BaseBridgeHandler implements SuplaThing
                 .filter(handler -> Objects.equals(handler.getGuid(), guid))
                 .map(SuplaThing.class::cast)
                 .findAny();
-    }
-
-    private void errorOccurredInChannel(Throwable ex) {
-        logger.error("Error occurred in server pipe", ex);
-        updateStatus(
-                OFFLINE, COMMUNICATION_ERROR, "Error occurred in server pipe. Message: " + ex.getLocalizedMessage());
     }
 
     @Override
@@ -256,6 +248,9 @@ public class ServerBridgeHandler extends BaseBridgeHandler implements SuplaThing
     @Override
     public void childHandlerInitialized(ThingHandler childHandler, Thing childThing) {
         if (!(childHandler instanceof ServerAbstractDeviceHandler serverDevice)) {
+            logger.warn(
+                    "Child handler ({}) is not instance of ServerAbstractDeviceHandler.",
+                    childHandler.getClass().getSimpleName());
             return;
         }
         logger.debug("Add Handler {}", serverDevice.getGuid());
@@ -265,9 +260,15 @@ public class ServerBridgeHandler extends BaseBridgeHandler implements SuplaThing
     @Override
     public void childHandlerDisposed(ThingHandler childHandler, Thing childThing) {
         if (!(childHandler instanceof ServerAbstractDeviceHandler serverDevice)) {
+            logger.warn(
+                    "Child handler ({}) is not instance of ServerAbstractDeviceHandler.",
+                    childHandler.getClass().getSimpleName());
             return;
         }
         logger.debug("Remove Handler {}", serverDevice.getGuid());
-        childHandlers.remove(serverDevice);
+        var remove = childHandlers.remove(serverDevice);
+        if (!remove) {
+            logger.warn("There was no child handler with id {} found", serverDevice.getGuid());
+        }
     }
 }

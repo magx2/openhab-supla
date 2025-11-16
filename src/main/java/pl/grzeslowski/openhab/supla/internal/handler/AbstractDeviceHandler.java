@@ -24,6 +24,8 @@ public abstract class AbstractDeviceHandler extends BaseThingHandler implements 
     public final void initialize() {
         try {
             internalInitialize();
+        } catch (InitializationException e) {
+            updateStatus(e.getStatus(), e.getStatusDetail(), e.getMessage());
         } catch (Exception e) {
             getLogger().error("Error occurred while initializing Supla device!", e);
             updateStatus(
