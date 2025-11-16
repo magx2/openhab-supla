@@ -21,14 +21,14 @@ public class DeviceChannelValueTrait {
     Long validityTimeSec;
 
     public DeviceChannelValueTrait(SuplaDeviceChannelValue value) {
-        this(value.channelNumber, value.value, false, null);
+        this(value.channelNumber(), value.value(), false, null);
     }
 
     public DeviceChannelValueTrait(SuplaDeviceChannelValueB value) {
-        this(value.channelNumber, value.value, value.offline != 0, null);
+        this(value.channelNumber(), value.value(), value.offline() != 0, null);
     }
 
     public DeviceChannelValueTrait(SuplaDeviceChannelValueC value) {
-        this(value.channelNumber, value.value, value.offline != 0, value.validityTimeSec);
+        this(value.channelNumber(), value.value(), value.offline() != 0, value.validityTimeSec());
     }
 }

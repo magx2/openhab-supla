@@ -52,12 +52,12 @@ public abstract sealed class RegisterDeviceTrait permits RegisterLocationDeviceT
 
     public RegisterDeviceTrait(SuplaRegisterDevice register) {
         this(
-                register.guid,
-                register.name,
-                register.softVer,
+                register.guid(),
+                register.name(),
+                register.softVer(),
                 null,
                 null,
                 0,
-                stream(register.channels).map(DeviceChannelTrait::new).toList());
+                stream(register.channels()).map(DeviceChannelTrait::new).toList());
     }
 }

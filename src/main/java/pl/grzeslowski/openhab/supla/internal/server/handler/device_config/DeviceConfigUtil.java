@@ -127,36 +127,36 @@ public class DeviceConfigUtil {
             case STATUS_LED -> {
                 var decode = DeviceConfigStatusLedDecoder.INSTANCE.decode(config, offset);
                 var value =
-                        switch (decode.statusLedType) {
+                        switch (decode.statusLedType()) {
                             case SUPLA_DEVCFG_STATUS_LED_ON_WHEN_CONNECTED -> "ON_WHEN_CONNECTED";
                             case SUPLA_DEVCFG_STATUS_LED_OFF_WHEN_CONNECTED -> "OFF_WHEN_CONNECTED";
                             case SUPLA_DEVCFG_STATUS_LED_ALWAYS_OFF -> "ALWAYS_OFF";
                             default -> "UNKNOWN";
                         };
-                yield new DecodeResult(Map.of(STATUS_LED.name(), value), decode.size());
+                yield new DecodeResult(Map.of(STATUS_LED.name(), value), decode.protoSize());
             }
             case SCREEN_BRIGHTNESS -> {
                 var values = new HashMap<String, String>();
                 var decode = DeviceConfigScreenBrightnessDecoder.INSTANCE.decode(config, offset);
-                values.put(SCREEN_BRIGHTNESS.name(), decode.screenBrightness + "%");
-                values.put(SCREEN_BRIGHTNESS.name() + "_AUTOMATIC", Boolean.toString(decode.automatic == 0));
+                values.put(SCREEN_BRIGHTNESS.name(), decode.screenBrightness() + "%");
+                values.put(SCREEN_BRIGHTNESS.name() + "_AUTOMATIC", Boolean.toString(decode.automatic() == 0));
                 values.put(
                         SCREEN_BRIGHTNESS.name() + "_ADJUSTMENT_FOR_AUTOMATIC",
-                        String.valueOf(decode.adjustmentForAutomatic));
-                yield new DecodeResult(values, decode.size());
+                        String.valueOf(decode.adjustmentForAutomatic()));
+                yield new DecodeResult(values, decode.protoSize());
             }
             case BUTTON_VOLUME -> {
                 var values = new HashMap<String, String>();
                 var decode = DeviceConfigButtonVolumeDecoder.INSTANCE.decode(config, offset);
-                values.put(BUTTON_VOLUME.name(), decode.volume + "%");
-                yield new DecodeResult(values, decode.size());
+                values.put(BUTTON_VOLUME.name(), decode.volume() + "%");
+                yield new DecodeResult(values, decode.protoSize());
             }
             case DISABLE_USER_INTERFACE -> {
                 var values = new HashMap<String, String>();
                 var decode = DeviceConfigDisableUserInterfaceDecoder.INSTANCE.decode(config, offset);
                 values.put(
                         DISABLE_USER_INTERFACE.name(),
-                        switch (decode.disableUserInterface) {
+                        switch (decode.disableUserInterface()) {
                             case 0 -> Boolean.toString(false);
                             case 1 -> Boolean.toString(true);
                             case 2 -> "partial";
@@ -164,33 +164,34 @@ public class DeviceConfigUtil {
                         });
                 values.put(
                         DISABLE_USER_INTERFACE.name() + "_MIN_ALLOWED_TEMPERATURE_SET_POINT_FROM_LOCAL_UI",
-                        String.valueOf(decode.minAllowedTemperatureSetpointFromLocalUI));
+                        String.valueOf(decode.minAllowedTemperatureSetpointFromLocalUI()));
                 values.put(
                         DISABLE_USER_INTERFACE.name() + "_MAX_ALLOWED_TEMPERATURE_SET_POINT_FROM_LOCAL_UI",
-                        String.valueOf(decode.maxAllowedTemperatureSetpointFromLocalUI));
+                        String.valueOf(decode.maxAllowedTemperatureSetpointFromLocalUI()));
 
-                yield new DecodeResult(values, decode.size());
+                yield new DecodeResult(values, decode.protoSize());
             }
             case AUTOMATIC_TIME_SYNC -> {
                 var values = new HashMap<String, String>();
                 var decode = DeviceConfigAutomaticTimeSyncDecoder.INSTANCE.decode(config, offset);
-                values.put(AUTOMATIC_TIME_SYNC.name(), decode.automaticTimeSync == 0 ? "disabled" : "enabled");
-                yield new DecodeResult(values, decode.size());
+                values.put(AUTOMATIC_TIME_SYNC.name(), decode.automaticTimeSync() == 0 ? "disabled" : "enabled");
+                yield new DecodeResult(values, decode.protoSize());
             }
             case HOME_SCREEN_OFF_DELAY -> {
                 var values = new HashMap<String, String>();
                 var decode = DeviceConfigHomeScreenOffDelayDecoder.INSTANCE.decode(config, offset);
                 values.put(
                         HOME_SCREEN_OFF_DELAY.name(),
-                        decode.homeScreenOffDelayS == 0
+                        decode.homeScreenOffDelayS() == 0
                                 ? "disabled"
-                                : Duration.ofSeconds(decode.homeScreenOffDelayS).toString());
-                yield new DecodeResult(values, decode.size());
+                                : Duration.ofSeconds(decode.homeScreenOffDelayS())
+                                        .toString());
+                yield new DecodeResult(values, decode.protoSize());
             }
             case HOME_SCREEN_CONTENT -> {
                 var values = new HashMap<String, String>();
                 var decode = DeviceConfigHomeScreenContentDecoder.INSTANCE.decode(config, offset);
-                var homeScreenContent = decode.homeScreenContent.longValue();
+                var homeScreenContent = decode.homeScreenContent().longValue();
                 values.put(
                         HOME_SCREEN_CONTENT.name() + "_NONE",
                         Boolean.toString((homeScreenContent & SUPLA_DEVCFG_HOME_SCREEN_CONTENT_NONE) != 0));
@@ -218,25 +219,25 @@ public class DeviceConfigUtil {
                         HOME_SCREEN_CONTENT.name() + "_MODE_OR_TEMPERATURE",
                         Boolean.toString(
                                 (homeScreenContent & SUPLA_DEVCFG_HOME_SCREEN_CONTENT_MODE_OR_TEMPERATURE) != 0));
-                yield new DecodeResult(values, decode.size());
+                yield new DecodeResult(values, decode.protoSize());
             }
             case HOME_SCREEN_OFF_DELAY_TYPE -> {
                 var values = new HashMap<String, String>();
                 var decode = HomeScreenOffDelayTypeDecoder.INSTANCE.decode(config, offset);
                 values.put(
                         HOME_SCREEN_OFF_DELAY_TYPE.name(),
-                        switch (decode.homeScreenOffDelayType) {
+                        switch (decode.homeScreenOffDelayType()) {
                             case SUPLA_DEVCFG_HOME_SCREEN_OFF_DELAY_TYPE_ALWAYS_ENABLED -> "ALWAYS_ENABLED";
                             case SUPLA_DEVCFG_HOME_SCREEN_OFF_DELAY_TYPE_ENABLED_WHEN_DARK -> "ENABLED_WHEN_DARK";
                             default -> "UNKNOWN";
                         });
-                yield new DecodeResult(values, decode.size());
+                yield new DecodeResult(values, decode.protoSize());
             }
             case POWER_STATUS_LED -> {
                 var values = new HashMap<String, String>();
                 var decode = PowerStatusLedDecoder.INSTANCE.decode(config, offset);
-                values.put(POWER_STATUS_LED.name(), decode.disabled == 0 ? "disabled" : "enabled");
-                yield new DecodeResult(values, decode.size());
+                values.put(POWER_STATUS_LED.name(), decode.disabled() == 0 ? "disabled" : "enabled");
+                yield new DecodeResult(values, decode.protoSize());
             }
         };
     }

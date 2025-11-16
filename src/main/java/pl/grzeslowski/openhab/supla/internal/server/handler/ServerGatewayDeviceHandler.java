@@ -250,7 +250,7 @@ public class ServerGatewayDeviceHandler extends ServerAbstractDeviceHandler impl
 
     @Override
     public void consumeSetCaption(SetCaption value) {
-        var optional = findId(value.id, value.channelNumber).flatMap(this::findSubDevice);
+        var optional = findId(value.id(), value.channelNumber()).flatMap(this::findSubDevice);
         if (optional.isEmpty()) {
             logger.warn("There is no channel number for SetCaption! value={}", value);
             return;
@@ -275,11 +275,11 @@ public class ServerGatewayDeviceHandler extends ServerAbstractDeviceHandler impl
 
     @Override
     public void consumeSubDeviceDetails(SubdeviceDetails value) {
-        var subDeviceId = (int) value.subDeviceId;
-        var name = parseString(value.name);
-        var softVer = parseString(value.softVer);
-        var productCode = parseString(value.productCode);
-        var serialNumber = parseString(value.serialNumber);
+        var subDeviceId = (int) value.subDeviceId();
+        var name = parseString(value.name());
+        var softVer = parseString(value.softVer());
+        var productCode = parseString(value.productCode());
+        var serialNumber = parseString(value.serialNumber());
 
         findSubDevice(subDeviceId).ifPresent(subDevice -> {
             var builder = subDevice.editThing();
@@ -304,7 +304,7 @@ public class ServerGatewayDeviceHandler extends ServerAbstractDeviceHandler impl
 
     @Override
     public void consumeSuplaChannelNewValueResult(SuplaChannelNewValueResult value) {
-        var handlerId = channelNumberToHandlerId.get((int) value.channelNumber);
+        var handlerId = channelNumberToHandlerId.get((int) value.channelNumber());
         if (handlerId == null) {
             // todo
             return;

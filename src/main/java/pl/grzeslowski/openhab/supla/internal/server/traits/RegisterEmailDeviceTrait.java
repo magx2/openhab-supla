@@ -21,57 +21,57 @@ public final class RegisterEmailDeviceTrait extends RegisterDeviceTrait {
 
     public RegisterEmailDeviceTrait(SuplaRegisterDeviceD register) {
         super(
-                register.guid,
-                register.name,
-                register.softVer,
+                register.guid(),
+                register.name(),
+                register.softVer(),
                 null,
                 null,
                 0,
-                stream(register.channels).map(DeviceChannelTrait::new).toList());
-        this.email = parseString(register.email);
-        this.authKey = register.authKey;
-        this.serverName = parseString(register.serverName);
+                stream(register.channels()).map(DeviceChannelTrait::new).toList());
+        this.email = parseString(register.email());
+        this.authKey = register.authKey();
+        this.serverName = parseString(register.serverName());
     }
 
     public RegisterEmailDeviceTrait(SuplaRegisterDeviceE register) {
         super(
-                register.guid,
-                register.name,
-                register.softVer,
-                (int) register.manufacturerId,
-                (int) register.productId,
-                register.flags,
-                stream(register.channels).map(DeviceChannelTrait::new).toList());
-        this.email = parseString(register.email);
-        this.authKey = register.authKey;
-        this.serverName = parseString(register.serverName);
+                register.guid(),
+                register.name(),
+                register.softVer(),
+                (int) register.manufacturerId(),
+                (int) register.productId(),
+                register.flags(),
+                stream(register.channels()).map(DeviceChannelTrait::new).toList());
+        this.email = parseString(register.email());
+        this.authKey = register.authKey();
+        this.serverName = parseString(register.serverName());
     }
 
     public RegisterEmailDeviceTrait(SuplaRegisterDeviceF register) {
         super(
-                register.guid,
-                register.name,
-                register.softVer,
-                (int) register.manufacturerId,
-                (int) register.productId,
-                register.flags,
-                stream(register.channels).map(DeviceChannelTrait::new).toList());
-        this.email = parseString(register.email);
-        this.authKey = register.authKey;
-        this.serverName = parseString(register.serverName);
+                register.guid(),
+                register.name(),
+                register.softVer(),
+                (int) register.manufacturerId(),
+                (int) register.productId(),
+                register.flags(),
+                stream(register.channels()).map(DeviceChannelTrait::new).toList());
+        this.email = parseString(register.email());
+        this.authKey = register.authKey();
+        this.serverName = parseString(register.serverName());
     }
 
     public RegisterEmailDeviceTrait(SuplaRegisterDeviceG register) {
         super(
-                register.guid,
-                register.name,
-                register.softVer,
-                (int) register.manufacturerId,
-                (int) register.productId,
-                register.flags,
-                stream(register.channels).map(DeviceChannelTrait::new).toList());
-        this.email = parseString(register.email);
-        this.authKey = register.authKey;
-        this.serverName = parseString(register.serverName);
+                register.guid(),
+                register.name(),
+                register.softVer(),
+                (int) register.manufacturerId(),
+                (int) register.productId(),
+                register.flags(),
+                stream(register.channels()).map(DeviceChannelTrait::new).toList());
+        this.email = parseString(register.email());
+        this.authKey = register.authKey();
+        this.serverName = parseString(register.serverName());
     }
 }

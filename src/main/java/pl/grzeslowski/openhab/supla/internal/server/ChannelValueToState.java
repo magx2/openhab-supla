@@ -39,7 +39,7 @@ public class ChannelValueToState implements ChannelValueSwitch.Callback<Stream<P
         if (decimalValue == null) {
             return Stream.of(Pair.with(id, NULL));
         }
-        return Stream.of(Pair.with(id, new DecimalType(decimalValue.getValue())));
+        return Stream.of(Pair.with(id, new DecimalType(decimalValue.value())));
     }
 
     @Override
@@ -72,7 +72,7 @@ public class ChannelValueToState implements ChannelValueSwitch.Callback<Stream<P
         if (percentValue == null) {
             return Stream.of(Pair.with(id, NULL));
         }
-        return Stream.of(Pair.with(id, new PercentType(percentValue.getValue())));
+        return Stream.of(Pair.with(id, new PercentType(percentValue.value())));
     }
 
     @Override
@@ -81,7 +81,7 @@ public class ChannelValueToState implements ChannelValueSwitch.Callback<Stream<P
         if (rgbValue == null) {
             return Stream.of(Pair.with(id, NULL));
         }
-        return Stream.of(Pair.with(id, HSBType.fromRGB(rgbValue.getRed(), rgbValue.getGreen(), rgbValue.getBlue())));
+        return Stream.of(Pair.with(id, HSBType.fromRGB(rgbValue.red(), rgbValue.green(), rgbValue.blue())));
     }
 
     @Override
@@ -102,7 +102,7 @@ public class ChannelValueToState implements ChannelValueSwitch.Callback<Stream<P
         if (temperatureValue == null) {
             return Stream.of(Pair.with(id, NULL));
         }
-        return Stream.of(buildTempPair(temperatureValue.getTemperature(), id));
+        return Stream.of(buildTempPair(temperatureValue.temperature(), id));
     }
 
     private static Pair<ChannelUID, State> buildTempPair(BigDecimal temperature, ChannelUID id) {
@@ -122,13 +122,13 @@ public class ChannelValueToState implements ChannelValueSwitch.Callback<Stream<P
             return Stream.of(Pair.with(tempId, NULL), Pair.with(humidityId, NULL));
         }
         return Stream.of(
-                buildTempPair(temperatureAndHumidityValue.getTemperature(), tempId),
+                buildTempPair(temperatureAndHumidityValue.temperature(), tempId),
                 buildHumidityPair(temperatureAndHumidityValue, humidityId));
     }
 
     private static Pair<ChannelUID, State> buildHumidityPair(
             TemperatureAndHumidityValue temperatureAndHumidityValue, ChannelUID humidityId) {
-        var humidity = temperatureAndHumidityValue.getHumidity();
+        var humidity = temperatureAndHumidityValue.humidity();
         if (humidity.compareTo(BigDecimal.valueOf(-1)) <= 0) {
             return Pair.with(humidityId, UNDEF);
         }
@@ -145,35 +145,35 @@ public class ChannelValueToState implements ChannelValueSwitch.Callback<Stream<P
         {
             val id = new ChannelUID(groupUid, "totalForwardActiveEnergyBalanced");
             val stateValue = optionalMeter
-                    .<State>map(value -> new DecimalType(new BigDecimal(value.getTotalForwardActiveEnergyBalanced())))
+                    .<State>map(value -> new DecimalType(new BigDecimal(value.totalForwardActiveEnergyBalanced())))
                     .orElse(NULL);
             pairs.add(Pair.with(id, stateValue));
         }
         {
             val id = new ChannelUID(groupUid, "totalReverseActiveEnergyBalanced");
             val stateValue = optionalMeter
-                    .<State>map(value -> new DecimalType(new BigDecimal(value.getTotalReverseActiveEnergyBalanced())))
+                    .<State>map(value -> new DecimalType(new BigDecimal(value.totalReverseActiveEnergyBalanced())))
                     .orElse(NULL);
             pairs.add(Pair.with(id, stateValue));
         }
         {
             val id = new ChannelUID(groupUid, "totalCost");
             val stateValue = optionalMeter
-                    .<State>map(value -> new DecimalType(value.getTotalCost()))
+                    .<State>map(value -> new DecimalType(value.totalCost()))
                     .orElse(NULL);
             pairs.add(Pair.with(id, stateValue));
         }
         {
             val id = new ChannelUID(groupUid, "pricePerUnit");
             val stateValue = optionalMeter
-                    .<State>map(value -> new DecimalType(value.getPricePerUnit()))
+                    .<State>map(value -> new DecimalType(value.pricePerUnit()))
                     .orElse(NULL);
             pairs.add(Pair.with(id, stateValue));
         }
         {
             val id = new ChannelUID(groupUid, "currency");
             val stateValue = optionalMeter
-                    .map(value -> ofNullable(value.getCurrency())
+                    .map(value -> ofNullable(value.currency())
                             .map(Object::toString)
                             .<State>map(StringType::new)
                             .orElse(NULL))
@@ -183,14 +183,14 @@ public class ChannelValueToState implements ChannelValueSwitch.Callback<Stream<P
         {
             val id = new ChannelUID(groupUid, "measuredValues");
             val stateValue = optionalMeter
-                    .<State>map(value -> new DecimalType(value.getMeasuredValues()))
+                    .<State>map(value -> new DecimalType(value.measuredValues()))
                     .orElse(NULL);
             pairs.add(Pair.with(id, stateValue));
         }
         {
             val id = new ChannelUID(groupUid, "period");
             val stateValue = optionalMeter
-                    .<State>map(value -> new DecimalType(value.getPeriod()))
+                    .<State>map(value -> new DecimalType(value.period()))
                     .orElse(NULL);
             pairs.add(Pair.with(id, stateValue));
         }
@@ -205,76 +205,76 @@ public class ChannelValueToState implements ChannelValueSwitch.Callback<Stream<P
     private List<Pair<ChannelUID, State>> buildStateForPhase(
             ChannelGroupUID groupUid, int phaseNumber, @Nullable ElectricityMeterValue meter) {
         val pairs = new ArrayList<Pair<ChannelUID, State>>();
-        val phase = ofNullable(meter).map(m -> meter.getPhases()).map(p -> p.get(phaseNumber - 1));
+        val phase = ofNullable(meter).map(m -> m.phases()).map(p -> p.get(phaseNumber - 1));
         {
             val channelUid = new ChannelUID(groupUid, "phase-" + phaseNumber + "-" + "totalForwardActiveEnergy");
-            val stateValue = phase.<State>map(value -> new DecimalType(value.getTotalForwardActiveEnergy()))
+            val stateValue = phase.<State>map(value -> new DecimalType(value.totalForwardActiveEnergy()))
                     .orElse(NULL);
             pairs.add(Pair.with(channelUid, stateValue));
         }
         {
             val channelUid = new ChannelUID(groupUid, "phase-" + phaseNumber + "-" + "totalReverseActiveEnergy");
-            val stateValue = phase.<State>map(value -> new DecimalType(value.getTotalReverseActiveEnergy()))
+            val stateValue = phase.<State>map(value -> new DecimalType(value.totalReverseActiveEnergy()))
                     .orElse(NULL);
             pairs.add(Pair.with(channelUid, stateValue));
         }
         {
             val channelUid = new ChannelUID(groupUid, "phase-" + phaseNumber + "-" + "totalForwardReactiveEnergy");
-            val stateValue = phase.<State>map(value -> new DecimalType(value.getTotalForwardReactiveEnergy()))
+            val stateValue = phase.<State>map(value -> new DecimalType(value.totalForwardReactiveEnergy()))
                     .orElse(NULL);
             pairs.add(Pair.with(channelUid, stateValue));
         }
         {
             val channelUid = new ChannelUID(groupUid, "phase-" + phaseNumber + "-" + "totalReverseReactiveEnergy");
-            val stateValue = phase.<State>map(value -> new DecimalType(value.getTotalReverseReactiveEnergy()))
+            val stateValue = phase.<State>map(value -> new DecimalType(value.totalReverseReactiveEnergy()))
                     .orElse(NULL);
             pairs.add(Pair.with(channelUid, stateValue));
         }
         {
             val channelUid = new ChannelUID(groupUid, "phase-" + phaseNumber + "-" + "voltage");
-            val stateValue = phase.<State>map(value -> new DecimalType(value.getVoltage()))
-                    .orElse(NULL);
+            val stateValue =
+                    phase.<State>map(value -> new DecimalType(value.voltage())).orElse(NULL);
             pairs.add(Pair.with(channelUid, stateValue));
         }
         {
             val channelUid = new ChannelUID(groupUid, "phase-" + phaseNumber + "-" + "current");
-            val stateValue = phase.<State>map(value -> new DecimalType(value.getCurrent()))
-                    .orElse(NULL);
+            val stateValue =
+                    phase.<State>map(value -> new DecimalType(value.current())).orElse(NULL);
             pairs.add(Pair.with(channelUid, stateValue));
         }
         {
             val channelUid = new ChannelUID(groupUid, "phase-" + phaseNumber + "-" + "powerActive");
-            val stateValue = phase.<State>map(value -> new DecimalType(value.getPowerActive()))
+            val stateValue = phase.<State>map(value -> new DecimalType(value.powerActive()))
                     .orElse(NULL);
             pairs.add(Pair.with(channelUid, stateValue));
         }
         {
             val channelUid = new ChannelUID(groupUid, "phase-" + phaseNumber + "-" + "powerReactive");
-            val stateValue = phase.<State>map(value -> new DecimalType(value.getPowerReactive()))
+            val stateValue = phase.<State>map(value -> new DecimalType(value.powerReactive()))
                     .orElse(NULL);
             pairs.add(Pair.with(channelUid, stateValue));
         }
         {
             val channelUid = new ChannelUID(groupUid, "phase-" + phaseNumber + "-" + "powerApparent");
-            val stateValue = phase.<State>map(value -> new DecimalType(value.getPowerApparent()))
+            val stateValue = phase.<State>map(value -> new DecimalType(value.powerApparent()))
                     .orElse(NULL);
             pairs.add(Pair.with(channelUid, stateValue));
         }
         {
             val channelUid = new ChannelUID(groupUid, "phase-" + phaseNumber + "-" + "powerApparent");
-            val stateValue = phase.<State>map(value -> new DecimalType(value.getPowerApparent()))
+            val stateValue = phase.<State>map(value -> new DecimalType(value.powerApparent()))
                     .orElse(NULL);
             pairs.add(Pair.with(channelUid, stateValue));
         }
         {
             val channelUid = new ChannelUID(groupUid, "phase-" + phaseNumber + "-" + "powerApparent");
-            val stateValue = phase.<State>map(value -> new DecimalType(value.getPowerApparent()))
+            val stateValue = phase.<State>map(value -> new DecimalType(value.powerApparent()))
                     .orElse(NULL);
             pairs.add(Pair.with(channelUid, stateValue));
         }
         {
             val channelUid = new ChannelUID(groupUid, "phase-" + phaseNumber + "-" + "frequency");
-            val stateValue = phase.<State>map(value -> new DecimalType(value.getFrequency()))
+            val stateValue = phase.<State>map(value -> new DecimalType(value.frequency()))
                     .orElse(NULL);
             pairs.add(Pair.with(channelUid, stateValue));
         }
@@ -287,93 +287,93 @@ public class ChannelValueToState implements ChannelValueSwitch.Callback<Stream<P
         val pairs = new ArrayList<Pair<ChannelUID, State>>();
         {
             val id = new ChannelUID(groupUid, "on");
-            val stateValue = OnOffType.from(channelValue.isOn());
+            val stateValue = OnOffType.from(channelValue.on());
             pairs.add(Pair.with(id, stateValue));
         } // on
         {
             val id = new ChannelUID(groupUid, "mode");
-            val stateValue = StringType.valueOf(channelValue.getMode().name());
+            val stateValue = StringType.valueOf(channelValue.mode().name());
             pairs.add(Pair.with(id, stateValue));
         } // mode
         {
             val id = new ChannelUID(groupUid, "setPointTemperatureHeat");
-            val stateValue = ofNullable(channelValue.getSetPointTemperatureHeat())
+            val stateValue = ofNullable(channelValue.setPointTemperatureHeat())
                     .<State>map(temp -> new QuantityType<>(temp, CELSIUS))
                     .orElse(NULL);
             pairs.add(Pair.with(id, stateValue));
         } // setPointTemperatureHeat
         {
             val id = new ChannelUID(groupUid, "setPointTemperatureCool");
-            val stateValue = ofNullable(channelValue.getSetPointTemperatureCool())
+            val stateValue = ofNullable(channelValue.setPointTemperatureCool())
                     .<State>map(temp -> new QuantityType<>(temp, CELSIUS))
                     .orElse(NULL);
             pairs.add(Pair.with(id, stateValue));
         } // setPointTemperatureCool
         {
-            val flags = channelValue.getFlags();
+            val flags = channelValue.flags();
             {
                 val id = new ChannelUID(groupUid, "flags-setPointTempHeatSet");
-                val stateValue = OnOffType.from(flags.isSetPointTempHeatSet());
+                val stateValue = OnOffType.from(flags.setPointTempHeatSet());
                 pairs.add(Pair.with(id, stateValue));
             } // setPointTempHeatSet
             {
                 val id = new ChannelUID(groupUid, "flags-setPointTempCoolSet");
-                val stateValue = OnOffType.from(flags.isSetPointTempCoolSet());
+                val stateValue = OnOffType.from(flags.setPointTempCoolSet());
                 pairs.add(Pair.with(id, stateValue));
             } // setPointTempCoolSet
             {
                 val id = new ChannelUID(groupUid, "flags-heating");
-                val stateValue = OnOffType.from(flags.isHeating());
+                val stateValue = OnOffType.from(flags.heating());
                 pairs.add(Pair.with(id, stateValue));
             } // heating
             {
                 val id = new ChannelUID(groupUid, "flags-cooling");
-                val stateValue = OnOffType.from(flags.isCooling());
+                val stateValue = OnOffType.from(flags.cooling());
                 pairs.add(Pair.with(id, stateValue));
             } // cooling
             {
                 val id = new ChannelUID(groupUid, "flags-weeklySchedule");
-                val stateValue = OnOffType.from(flags.isWeeklySchedule());
+                val stateValue = OnOffType.from(flags.weeklySchedule());
                 pairs.add(Pair.with(id, stateValue));
             } // weeklySchedule
             {
                 val id = new ChannelUID(groupUid, "flags-countdownTimer");
-                val stateValue = OnOffType.from(flags.isCountdownTimer());
+                val stateValue = OnOffType.from(flags.countdownTimer());
                 pairs.add(Pair.with(id, stateValue));
             } // countdownTimer
             {
                 val id = new ChannelUID(groupUid, "flags-fanEnabled");
-                val stateValue = OnOffType.from(flags.isFanEnabled());
+                val stateValue = OnOffType.from(flags.fanEnabled());
                 pairs.add(Pair.with(id, stateValue));
             } // fanEnabled
             {
                 val id = new ChannelUID(groupUid, "flags-thermometerError");
-                val stateValue = OnOffType.from(flags.isThermometerError());
+                val stateValue = OnOffType.from(flags.thermometerError());
                 pairs.add(Pair.with(id, stateValue));
             } // thermometerError
             {
                 val id = new ChannelUID(groupUid, "flags-clockError");
-                val stateValue = OnOffType.from(flags.isClockError());
+                val stateValue = OnOffType.from(flags.clockError());
                 pairs.add(Pair.with(id, stateValue));
             } // clockError
             {
                 val id = new ChannelUID(groupUid, "flags-forcedOffBySensor");
-                val stateValue = OnOffType.from(flags.isForcedOffBySensor());
+                val stateValue = OnOffType.from(flags.forcedOffBySensor());
                 pairs.add(Pair.with(id, stateValue));
             } // forcedOffBySensor
             {
                 val id = new ChannelUID(groupUid, "flags-cool");
-                val stateValue = OnOffType.from(flags.isCooling());
+                val stateValue = OnOffType.from(flags.cooling());
                 pairs.add(Pair.with(id, stateValue));
             } // cool
             {
                 val id = new ChannelUID(groupUid, "flags-weeklyScheduleTemporalOverride");
-                val stateValue = OnOffType.from(flags.isWeeklyScheduleTemporalOverride());
+                val stateValue = OnOffType.from(flags.weeklyScheduleTemporalOverride());
                 pairs.add(Pair.with(id, stateValue));
             } // weeklyScheduleTemporalOverride
             {
                 val id = new ChannelUID(groupUid, "flags-batteryCoverOpen");
-                val stateValue = OnOffType.from(flags.isBatteryCoverOpen());
+                val stateValue = OnOffType.from(flags.batteryCoverOpen());
                 pairs.add(Pair.with(id, stateValue));
             } // batteryCoverOpen
         } // flags
@@ -394,7 +394,7 @@ public class ChannelValueToState implements ChannelValueSwitch.Callback<Stream<P
             return Stream.of(Pair.with(id, NULL));
         }
 
-        return Stream.of(Pair.with(id, StringType.valueOf(unknownValue.getMessage())));
+        return Stream.of(Pair.with(id, StringType.valueOf(unknownValue.message())));
     }
 
     private ChannelUID createChannelUid(int channelNumber) {
