@@ -7,9 +7,7 @@ import static org.openhab.core.thing.ThingStatus.OFFLINE;
 import static org.openhab.core.thing.ThingStatus.ONLINE;
 import static org.openhab.core.thing.ThingStatusDetail.CONFIGURATION_ERROR;
 import static org.openhab.core.types.RefreshType.REFRESH;
-import static pl.grzeslowski.jsupla.server.api.ServerProperties.fromList;
-import static pl.grzeslowski.jsupla.server.netty.NettyServerFactory.PORT;
-import static pl.grzeslowski.jsupla.server.netty.NettyServerFactory.SSL_CTX;
+import static pl.grzeslowski.jsupla.server.NettyConfig.DEFAULT_TIMEOUT;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.BINDING_ID;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.CONNECTED_DEVICES_CHANNEL_ID;
 
@@ -36,11 +34,9 @@ import org.openhab.core.thing.binding.ThingHandler;
 import org.openhab.core.types.Command;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import pl.grzeslowski.jsupla.protocol.api.calltypes.CallTypeParser;
-import pl.grzeslowski.jsupla.protocol.api.decoders.DecoderFactoryImpl;
-import pl.grzeslowski.jsupla.protocol.api.encoders.EncoderFactoryImpl;
-import pl.grzeslowski.jsupla.server.api.*;
-import pl.grzeslowski.jsupla.server.netty.NettyServerFactory;
+import pl.grzeslowski.jsupla.server.MessageHandler;
+import pl.grzeslowski.jsupla.server.NettyConfig;
+import pl.grzeslowski.jsupla.server.NettyServer;
 import pl.grzeslowski.openhab.supla.internal.Documentation;
 import pl.grzeslowski.openhab.supla.internal.handler.InitializationException;
 import pl.grzeslowski.openhab.supla.internal.handler.OfflineInitializationException;
@@ -52,7 +48,7 @@ public class ServerBridgeHandler extends BaseBridgeHandler implements SuplaThing
     private Logger logger = LoggerFactory.getLogger(ServerBridgeHandler.class);
 
     @Nullable
-    private Server server;
+    private NettyServer server;
 
     private final ServerDiscoveryService serverDiscoveryService;
 
@@ -155,8 +151,7 @@ public class ServerBridgeHandler extends BaseBridgeHandler implements SuplaThing
 
         timeoutConfiguration = SuplaBridge.buildTimeoutConfiguration(config);
 
-        var factory = buildServerFactory();
-        server = factory.createNewServer(buildServerProperties(port, protocols), this::messageHandlerFactory);
+        server = new NettyServer(buildNettyConfig(port, protocols), this::messageHandlerFactory);
 
         logger.debug("jSuplaServer running on port {}", port);
         updateStatus(ONLINE);
@@ -199,14 +194,8 @@ public class ServerBridgeHandler extends BaseBridgeHandler implements SuplaThing
         updateState(CONNECTED_DEVICES_CHANNEL_ID, new DecimalType(numberOfConnectedDevices));
     }
 
-    private ServerFactory buildServerFactory() {
-        return new NettyServerFactory(
-                CallTypeParser.INSTANCE, DecoderFactoryImpl.INSTANCE, EncoderFactoryImpl.INSTANCE);
-    }
-
-    private ServerProperties buildServerProperties(int port, Set<String> protocols)
-            throws CertificateException, SSLException {
-        return fromList(Arrays.asList(PORT, port, SSL_CTX, buildSslContext(protocols)));
+    private NettyConfig buildNettyConfig(int port, Set<String> protocols) throws CertificateException, SSLException {
+        return new NettyConfig(port, DEFAULT_TIMEOUT, buildSslContext(protocols));
     }
 
     private SslContext buildSslContext(Set<String> protocols) throws CertificateException, SSLException {

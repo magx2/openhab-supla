@@ -5,6 +5,7 @@ import static java.util.concurrent.TimeUnit.MINUTES;
 import java.util.Set;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.openhab.core.thing.ThingTypeUID;
+import pl.grzeslowski.jsupla.server.NettyConfig;
 
 /** The {@link SuplaBindingConstants} class defines common constants, which are used across the whole binding. */
 @NonNullByDefault
@@ -35,7 +36,7 @@ public class SuplaBindingConstants {
     public static final String THREAD_POOL_NAME = "supla-cloud-thread-pool";
 
     // SuplaServer constants
-    public static final int DEFAULT_PORT = 2016;
+    public static final int DEFAULT_PORT = NettyConfig.SUPLA_HTTPS_PORT;
     public static final String CONFIG_SERVER_ACCESS_ID = "serverAccessId";
     public static final String CONFIG_SERVER_ACCESS_ID_PASSWORD = "serverAccessIdPassword";
     public static final String CONFIG_EMAIL = "email";
