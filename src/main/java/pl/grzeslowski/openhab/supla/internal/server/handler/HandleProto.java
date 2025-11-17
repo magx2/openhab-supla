@@ -5,20 +5,20 @@ import pl.grzeslowski.jsupla.protocol.api.structs.dcs.SetCaption;
 import pl.grzeslowski.jsupla.protocol.api.structs.dcs.SuplaPingServer;
 import pl.grzeslowski.jsupla.protocol.api.structs.ds.*;
 import pl.grzeslowski.jsupla.protocol.api.structs.dsc.ChannelState;
-import pl.grzeslowski.jsupla.server.api.Writer;
+import pl.grzeslowski.jsupla.server.SuplaWriter;
 import pl.grzeslowski.openhab.supla.internal.server.traits.DeviceChannelValueTrait;
 
 @NonNullByDefault
 public interface HandleProto {
-    void consumeSuplaPingServer(SuplaPingServer ping, Writer writer);
+    void consumeSuplaPingServer(SuplaPingServer ping, SuplaWriter writer);
 
-    void consumeSuplaSetActivityTimeout(Writer writer);
+    void consumeSuplaSetActivityTimeout(SuplaWriter writer);
 
     void consumeDeviceChannelValueTrait(DeviceChannelValueTrait trait);
 
     void consumeSuplaDeviceChannelExtendedValue(int channelNumber, int type, byte[] value);
 
-    void consumeLocalTimeRequest(Writer writer);
+    void consumeLocalTimeRequest(SuplaWriter writer);
 
     void consumeSetCaption(SetCaption value);
 

@@ -29,7 +29,7 @@ import pl.grzeslowski.jsupla.protocol.api.structs.dcs.SuplaPingServer;
 import pl.grzeslowski.jsupla.protocol.api.structs.ds.*;
 import pl.grzeslowski.jsupla.protocol.api.structs.dsc.ChannelState;
 import pl.grzeslowski.jsupla.protocol.api.types.FromServerProto;
-import pl.grzeslowski.jsupla.server.api.Writer;
+import pl.grzeslowski.jsupla.server.SuplaWriter;
 import pl.grzeslowski.openhab.supla.internal.handler.AbstractDeviceHandler;
 import pl.grzeslowski.openhab.supla.internal.server.ChannelUtil;
 import pl.grzeslowski.openhab.supla.internal.server.traits.DeviceChannelTrait;
@@ -153,12 +153,12 @@ public class ServerSubDeviceHandler extends AbstractDeviceHandler implements Sup
     }
 
     @Override
-    public void consumeSuplaPingServer(SuplaPingServer ping, Writer writer) {
+    public void consumeSuplaPingServer(SuplaPingServer ping, SuplaWriter SuplaWriter) {
         logger.warn("Not supporting `consumeSuplaPingServer()`");
     }
 
     @Override
-    public void consumeSuplaSetActivityTimeout(Writer writer) {
+    public void consumeSuplaSetActivityTimeout(SuplaWriter SuplaWriter) {
         logger.warn("Not supporting `consumeSuplaSetActivityTimeout()`");
     }
 
@@ -171,7 +171,7 @@ public class ServerSubDeviceHandler extends AbstractDeviceHandler implements Sup
     public void consumeSuplaDeviceChannelExtendedValue(int channelNumber, int type, byte[] value) {}
 
     @Override
-    public void consumeLocalTimeRequest(Writer writer) {
+    public void consumeLocalTimeRequest(SuplaWriter SuplaWriter) {
         logger.warn("Not supporting `consumeLocalTimeRequest()`");
     }
 

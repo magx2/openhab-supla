@@ -12,8 +12,8 @@ import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import pl.grzeslowski.jsupla.protocol.api.types.ToServerProto;
-import pl.grzeslowski.jsupla.server.api.MessageHandler;
-import pl.grzeslowski.jsupla.server.api.Writer;
+import pl.grzeslowski.jsupla.server.MessageHandler;
+import pl.grzeslowski.jsupla.server.SuplaWriter;
 import pl.grzeslowski.openhab.supla.internal.server.discovery.ServerDiscoveryService;
 import pl.grzeslowski.openhab.supla.internal.server.traits.RegisterDeviceTraitParser;
 
@@ -25,7 +25,7 @@ public final class OpenHabMessageHandler implements MessageHandler {
     private final Logger log = LoggerFactory.getLogger(OpenHabMessageHandler.class.getName() + "#" + id);
     private final Object lock = new Object();
     private final AtomicReference<SuplaThing> currentThing = new AtomicReference<>();
-    private final AtomicReference<Writer> writer = new AtomicReference<>();
+    private final AtomicReference<SuplaWriter> writer = new AtomicReference<>();
     private final Set<String> discoveredThings = Collections.synchronizedSet(new HashSet<>());
 
     private final SuplaThingRegistry registry;
@@ -33,7 +33,7 @@ public final class OpenHabMessageHandler implements MessageHandler {
     private final SocketChannel socketChannel;
 
     @Override
-    public void active(Writer writer) {
+    public void active(SuplaWriter writer) {
         log.debug("active");
         this.writer.set(writer);
     }

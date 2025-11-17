@@ -59,7 +59,7 @@ import pl.grzeslowski.jsupla.protocol.api.structs.sdc.SuplaPingServerResult;
 import pl.grzeslowski.jsupla.protocol.api.structs.sdc.SuplaSetActivityTimeoutResult;
 import pl.grzeslowski.jsupla.protocol.api.structs.sdc.UserLocalTimeResult;
 import pl.grzeslowski.jsupla.protocol.api.types.ToServerProto;
-import pl.grzeslowski.jsupla.server.api.Writer;
+import pl.grzeslowski.jsupla.server.SuplaWriter;
 import pl.grzeslowski.openhab.supla.internal.handler.AbstractDeviceHandler;
 import pl.grzeslowski.openhab.supla.internal.handler.InitializationException;
 import pl.grzeslowski.openhab.supla.internal.handler.OfflineInitializationException;
@@ -108,7 +108,7 @@ public abstract class ServerAbstractDeviceHandler extends AbstractDeviceHandler 
     private SuplaBridge bridgeHandler;
 
     @Getter
-    private final AtomicReference<@Nullable Writer> writer = new AtomicReference<>();
+    private final AtomicReference<@Nullable SuplaWriter> writer = new AtomicReference<>();
 
     private final AtomicReference<@Nullable SetDeviceConfigResult> setDeviceConfigResult = new AtomicReference<>();
 
@@ -260,7 +260,7 @@ public abstract class ServerAbstractDeviceHandler extends AbstractDeviceHandler 
     }
 
     @Override
-    public void active(Writer writer) {
+    public void active(SuplaWriter writer) {
         this.writer.set(writer);
     }
 
@@ -349,7 +349,7 @@ public abstract class ServerAbstractDeviceHandler extends AbstractDeviceHandler 
     protected abstract boolean afterRegister(RegisterDeviceTrait registerEntity);
 
     @Override
-    public final void consumeSuplaSetActivityTimeout(Writer writer) {
+    public final void consumeSuplaSetActivityTimeout(SuplaWriter writer) {
         var timeout = requireNonNull(deviceConfiguration).timeoutConfiguration();
         var data = new SuplaSetActivityTimeoutResult(
                 (short) timeout.timeout(), (short) timeout.min(), (short) timeout.max());
@@ -366,7 +366,7 @@ public abstract class ServerAbstractDeviceHandler extends AbstractDeviceHandler 
     }
 
     @Override
-    public final void consumeLocalTimeRequest(Writer writer) {
+    public final void consumeLocalTimeRequest(SuplaWriter writer) {
         // Get current local date and time
         var now = LocalDateTime.now();
 
@@ -392,7 +392,7 @@ public abstract class ServerAbstractDeviceHandler extends AbstractDeviceHandler 
     }
 
     @Override
-    public final void consumeSuplaPingServer(SuplaPingServer ping, Writer writer) {
+    public final void consumeSuplaPingServer(SuplaPingServer ping, SuplaWriter writer) {
         var epochSecond = now().getEpochSecond();
         var response = new SuplaPingServerResult(new SuplaTimeval(epochSecond, 0));
         writer.write(response).addListener(f -> {
