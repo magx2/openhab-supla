@@ -52,7 +52,7 @@ public final class OpenHabMessageHandler implements MessageHandler {
 
     @Override
     public void socketException(Throwable exception) {
-        var thing = currentThing.getAndSet(null);
+        var thing = currentThing.get();
         if (thing == null) {
             log.warn(
                     "Got exception from socket without having handler attached. Breaking the socket connection",
@@ -60,7 +60,6 @@ public final class OpenHabMessageHandler implements MessageHandler {
         } else {
             thing.socketException(exception);
         }
-        clear();
     }
 
     @Override
