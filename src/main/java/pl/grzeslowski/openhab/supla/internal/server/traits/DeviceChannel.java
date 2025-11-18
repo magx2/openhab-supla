@@ -12,9 +12,9 @@ import pl.grzeslowski.jsupla.protocol.api.structs.ds.*;
 
 public record DeviceChannel(
         int number, int type, ChannelFunction channelFunction, byte[] value, HvacValue hvacValue, Integer subDeviceId) {
-    public static DeviceChannel fromProto(SuplaDeviceChannelTrait proto) {
+    public static DeviceChannel fromProto(SuplaDeviceChannel proto) {
         return switch (proto) {
-            case SuplaDeviceChannel a -> new DeviceChannel(a.number(), a.type(), a.value());
+            case SuplaDeviceChannelA a -> new DeviceChannel(a.number(), a.type(), a.value());
             case SuplaDeviceChannelB b -> new DeviceChannel(b.number(), b.type(), b.funcList(), b.value(), null, null);
             case SuplaDeviceChannelC c -> new DeviceChannel(
                     c.number(), c.type(), c.funcList(), c.value(), mapHvacValue(c.hvacValue()), null);
