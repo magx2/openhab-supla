@@ -643,7 +643,6 @@ public abstract class ServerAbstractDeviceHandler extends AbstractDeviceHandler 
             text = "%s: %s".formatted(exception.getClass().getSimpleName(), exception.getLocalizedMessage());
         }
         updateStatus(OFFLINE, COMMUNICATION_ERROR, text);
-        dispose();
     }
 
     private String baseLogger() {
