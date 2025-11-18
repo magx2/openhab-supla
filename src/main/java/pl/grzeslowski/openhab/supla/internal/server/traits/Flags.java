@@ -1,24 +1,18 @@
 package pl.grzeslowski.openhab.supla.internal.server.traits;
 
-import static lombok.AccessLevel.PRIVATE;
 import static pl.grzeslowski.jsupla.protocol.api.consts.ProtoConsts.*;
 
-import lombok.RequiredArgsConstructor;
-import lombok.Value;
-
-@Value
-@RequiredArgsConstructor(access = PRIVATE)
-public class Flags {
-    boolean calcfgEnterCfgMode;
-    boolean sleepModeEnabled;
-    boolean calcfgSetTime;
-    boolean deviceConfigSupported;
-    boolean deviceLocked;
-    boolean calcfgSubdevicePairing;
-    boolean calcfgIdentifyDevice;
-    boolean calcfgRestartDevice;
-    boolean alwaysAllowChannelDeletion;
-    boolean suplaDeviceFlagBlockAddingChannelsAfterDeletion;
+public record Flags(
+        boolean calcfgEnterCfgMode,
+        boolean sleepModeEnabled,
+        boolean calcfgSetTime,
+        boolean deviceConfigSupported,
+        boolean deviceLocked,
+        boolean calcfgSubdevicePairing,
+        boolean calcfgIdentifyDevice,
+        boolean calcfgRestartDevice,
+        boolean alwaysAllowChannelDeletion,
+        boolean suplaDeviceFlagBlockAddingChannelsAfterDeletion) {
 
     public Flags(int flags) {
         this(

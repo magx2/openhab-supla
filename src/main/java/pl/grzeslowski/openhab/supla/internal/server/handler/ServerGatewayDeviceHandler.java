@@ -36,8 +36,8 @@ import pl.grzeslowski.jsupla.protocol.api.structs.dsc.ChannelState;
 import pl.grzeslowski.jsupla.protocol.api.types.FromServerProto;
 import pl.grzeslowski.openhab.supla.internal.server.ChannelUtil;
 import pl.grzeslowski.openhab.supla.internal.server.discovery.ServerDiscoveryService;
-import pl.grzeslowski.openhab.supla.internal.server.traits.DeviceChannelTrait;
-import pl.grzeslowski.openhab.supla.internal.server.traits.DeviceChannelValueTrait;
+import pl.grzeslowski.openhab.supla.internal.server.traits.DeviceChannel;
+import pl.grzeslowski.openhab.supla.internal.server.traits.DeviceChannelValue;
 import pl.grzeslowski.openhab.supla.internal.server.traits.RegisterDeviceTrait;
 
 @NonNullByDefault
@@ -56,7 +56,7 @@ public class ServerGatewayDeviceHandler extends ServerAbstractDeviceHandler impl
     @Nullable
     private AuthData authData;
 
-    private List<DeviceChannelTrait> channels = List.of();
+    private List<DeviceChannel> channels = List.of();
     private final AtomicReference<@Nullable ScheduledFuture<?>> initServiceDiscoverySchedule = new AtomicReference<>();
     private final ServerDiscoveryService serverDiscoveryService;
     private final Set<Integer> discoveredIds = Collections.synchronizedSet(new HashSet<>());
@@ -86,28 +86,28 @@ public class ServerGatewayDeviceHandler extends ServerAbstractDeviceHandler impl
 
     @Override
     protected boolean afterRegister(RegisterDeviceTrait registerEntity) {
-        var flags = registerEntity.getFlags();
-        if (!flags.isCalcfgSubdevicePairing()) {
+        var flags = registerEntity.flags();
+        if (!flags.calcfgSubdevicePairing()) {
             updateStatus(OFFLINE, CONFIGURATION_ERROR, "This is not a gateway device!");
             return false;
         }
 
-        channels = unmodifiableList(registerEntity.getChannels());
+        channels = unmodifiableList(registerEntity.channels());
         childHandlers.values().forEach(this::initChannels);
         channelNumberToHandlerId = channels.stream()
-                .filter(c -> c.getSubDeviceId() != null)
-                .map(c -> new Pair<>(c.getNumber(), c.getSubDeviceId()))
+                .filter(c -> c.subDeviceId() != null)
+                .map(c -> new Pair<>(c.number(), c.subDeviceId()))
                 .collect(Collectors.toMap(Pair::getValue0, Pair::getValue1));
 
         if (!channels.isEmpty()) {
             var scheduledPool =
                     ThreadPoolManager.getScheduledPool(this.getClass().getSimpleName());
             this.initServiceDiscoverySchedule.set(
-                    scheduledPool.schedule(() -> initServiceDiscovery(registerEntity.getName()), 30, SECONDS));
+                    scheduledPool.schedule(() -> initServiceDiscovery(registerEntity.name()), 30, SECONDS));
         }
 
         var notSubDeviceChannels =
-                channels.stream().filter(c -> c.getSubDeviceId() == null).toList();
+                channels.stream().filter(c -> c.subDeviceId() == null).toList();
         if (!notSubDeviceChannels.isEmpty()) {
             logger.warn("Gateway has channels, but it is not supported by addon! channels={}", notSubDeviceChannels);
         }
@@ -117,7 +117,7 @@ public class ServerGatewayDeviceHandler extends ServerAbstractDeviceHandler impl
 
     private void initChannels(ServerSubDeviceHandler subDeviceHandler) {
         var channels = this.channels.stream()
-                .filter(c -> c.getSubDeviceId() != null && c.getSubDeviceId().equals(subDeviceHandler.getSubDeviceId()))
+                .filter(c -> c.subDeviceId() != null && c.subDeviceId().equals(subDeviceHandler.getSubDeviceId()))
                 .toList();
         subDeviceHandler.setChannels(channels);
     }
@@ -126,7 +126,7 @@ public class ServerGatewayDeviceHandler extends ServerAbstractDeviceHandler impl
         this.initServiceDiscoverySchedule.set(null);
         var childIds = childHandlers.keySet();
         var discoveredIds = channels.stream()
-                .map(DeviceChannelTrait::getSubDeviceId)
+                .map(DeviceChannel::subDeviceId)
                 .filter(Objects::nonNull)
                 .filter(i -> !childIds.contains(i))
                 .collect(toUnmodifiableSet());
@@ -264,8 +264,8 @@ public class ServerGatewayDeviceHandler extends ServerAbstractDeviceHandler impl
     }
 
     @Override
-    public void consumeDeviceChannelValueTrait(DeviceChannelValueTrait trait) {
-        var optional = findId(trait.getChannelNumber(), null).flatMap(this::findSubDevice);
+    public void consumeDeviceChannelValueTrait(DeviceChannelValue trait) {
+        var optional = findId(trait.channelNumber(), null).flatMap(this::findSubDevice);
         if (optional.isEmpty()) {
             logger.warn("There is no channel number for ChannelState! value={}", trait);
             return;

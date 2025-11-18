@@ -70,15 +70,15 @@ public class ServerDiscoveryService extends AbstractDiscoveryService {
     }
 
     private DiscoveryResult buildDiscoveryResult(RegisterDeviceTrait trait) {
-        var guid = trait.getGuid();
-        var name = trait.getName();
-        var gateway = trait.getChannels().stream().anyMatch(c -> c.getSubDeviceId() != null && c.getSubDeviceId() > 0);
+        var guid = trait.guid();
+        var name = trait.name();
+        var gateway = trait.channels().stream().anyMatch(c -> c.subDeviceId() != null && c.subDeviceId() > 0);
         var type = gateway ? SUPLA_GATEWAY_DEVICE_TYPE : SUPLA_SERVER_DEVICE_TYPE;
 
         var builder = buildDiscoveryResult(SUPLA_DEVICE_GUID, guid, name, type);
         if (trait instanceof RegisterEmailDeviceTrait registerDevice) {
-            var authKey = registerDevice.getAuthKey();
-            var serverName = registerDevice.getServerName();
+            var authKey = registerDevice.authKey();
+            var serverName = registerDevice.serverName();
             builder.withProperty(CONFIG_AUTH_PROPERTY, bytesToHex(authKey));
             builder.withProperty(SERVER_NAME_PROPERTY, serverName);
         }

@@ -28,8 +28,8 @@ import pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaChannelNewValueResult;
 import pl.grzeslowski.jsupla.protocol.api.structs.dsc.ChannelState;
 import pl.grzeslowski.jsupla.protocol.api.types.FromServerProto;
 import pl.grzeslowski.openhab.supla.internal.server.ChannelUtil;
-import pl.grzeslowski.openhab.supla.internal.server.traits.DeviceChannelTrait;
-import pl.grzeslowski.openhab.supla.internal.server.traits.DeviceChannelValueTrait;
+import pl.grzeslowski.openhab.supla.internal.server.traits.DeviceChannel;
+import pl.grzeslowski.openhab.supla.internal.server.traits.DeviceChannelValue;
 import pl.grzeslowski.openhab.supla.internal.server.traits.RegisterDeviceTrait;
 
 @NonNullByDefault
@@ -54,8 +54,8 @@ public class ServerSingleDeviceHandler extends ServerAbstractDeviceHandler imple
 
     @Override
     protected boolean afterRegister(RegisterDeviceTrait registerEntity) {
-        var flags = registerEntity.getFlags();
-        if (flags.isCalcfgSubdevicePairing()) {
+        var flags = registerEntity.flags();
+        if (flags.calcfgSubdevicePairing()) {
             updateStatus(
                     OFFLINE,
                     CONFIGURATION_ERROR,
@@ -64,15 +64,15 @@ public class ServerSingleDeviceHandler extends ServerAbstractDeviceHandler imple
             return false;
         }
 
-        channelUtil.buildChannels(registerEntity.getChannels());
+        channelUtil.buildChannels(registerEntity.channels());
 
         return true;
     }
 
-    private void setChannels(List<DeviceChannelTrait> deviceChannels) {}
+    private void setChannels(List<DeviceChannel> deviceChannels) {}
 
     @Override
-    public void consumeDeviceChannelValueTrait(DeviceChannelValueTrait trait) {
+    public void consumeDeviceChannelValueTrait(DeviceChannelValue trait) {
         channelUtil.updateStatus(trait);
     }
 

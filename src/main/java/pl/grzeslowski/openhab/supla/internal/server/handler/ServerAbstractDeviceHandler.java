@@ -66,7 +66,7 @@ import pl.grzeslowski.openhab.supla.internal.handler.OfflineInitializationExcept
 import pl.grzeslowski.openhab.supla.internal.server.SuplaServerDeviceActions;
 import pl.grzeslowski.openhab.supla.internal.server.handler.device_config.DeviceConfigResult;
 import pl.grzeslowski.openhab.supla.internal.server.handler.device_config.DeviceConfigUtil;
-import pl.grzeslowski.openhab.supla.internal.server.traits.DeviceChannelValueTrait;
+import pl.grzeslowski.openhab.supla.internal.server.traits.DeviceChannelValue;
 import pl.grzeslowski.openhab.supla.internal.server.traits.RegisterDeviceTrait;
 import pl.grzeslowski.openhab.supla.internal.server.traits.RegisterEmailDeviceTrait;
 import pl.grzeslowski.openhab.supla.internal.server.traits.RegisterLocationDeviceTrait;
@@ -231,11 +231,11 @@ public abstract class ServerAbstractDeviceHandler extends AbstractDeviceHandler 
                 case SuplaPingServer ping -> consumeSuplaPingServer(ping, writer);
                 case SuplaSetActivityTimeout suplaSetActivityTimeout -> consumeSuplaSetActivityTimeout(writer);
                 case SuplaDeviceChannelValue value -> consumeDeviceChannelValueTrait(
-                        new DeviceChannelValueTrait(value));
+                        DeviceChannelValue.fromProto(value));
                 case SuplaDeviceChannelValueB value -> consumeDeviceChannelValueTrait(
-                        new DeviceChannelValueTrait(value));
+                        DeviceChannelValue.fromProto(value));
                 case SuplaDeviceChannelValueC value -> consumeDeviceChannelValueTrait(
-                        new DeviceChannelValueTrait(value));
+                        DeviceChannelValue.fromProto(value));
                 case SuplaDeviceChannelExtendedValue value -> {
                     var extendedValue = value.value();
                     consumeSuplaDeviceChannelExtendedValue(
@@ -301,12 +301,12 @@ public abstract class ServerAbstractDeviceHandler extends AbstractDeviceHandler 
         }
 
         // set properties
-        thing.setProperty(SOFT_VERSION_PROPERTY, registerEntity.getSoftVer());
-        if (registerEntity.getManufacturerId() != null) {
-            thing.setProperty(MANUFACTURER_ID_PROPERTY, valueOf(registerEntity.getManufacturerId()));
+        thing.setProperty(SOFT_VERSION_PROPERTY, registerEntity.softVer());
+        if (registerEntity.manufacturerId() != null) {
+            thing.setProperty(MANUFACTURER_ID_PROPERTY, valueOf(registerEntity.manufacturerId()));
         }
-        if (registerEntity.getProductId() != null) {
-            thing.setProperty(PRODUCT_ID_PROPERTY, valueOf(registerEntity.getProductId()));
+        if (registerEntity.productId() != null) {
+            thing.setProperty(PRODUCT_ID_PROPERTY, valueOf(registerEntity.productId()));
         }
 
         var register = afterRegister(registerEntity);
@@ -330,19 +330,19 @@ public abstract class ServerAbstractDeviceHandler extends AbstractDeviceHandler 
         return switch (registerEntity) {
             case RegisterLocationDeviceTrait
             registerDevice -> "Device authorization failed. Device tried to log in with locationId=%s and locationPassword=%s"
-                    .formatted(registerDevice.getLocationId(), parseString(registerDevice.getLocationPwd()));
+                    .formatted(registerDevice.locationId(), parseString(registerDevice.locationPwd()));
             case RegisterEmailDeviceTrait
             registerDevice -> "Device authorization failed. Device tried to log in with email=%s and authKey=%s"
-                    .formatted(registerDevice.getEmail(), bytesToHex(registerDevice.getAuthKey()));
+                    .formatted(registerDevice.email(), bytesToHex(registerDevice.authKey()));
         };
     }
 
     private boolean authorize(RegisterDeviceTrait registerEntity) {
         return switch (registerEntity) {
             case RegisterLocationDeviceTrait registerDevice -> authorizeForLocation(
-                    registerDevice.getLocationId(), registerDevice.getLocationPwd());
+                    registerDevice.locationId(), registerDevice.locationPwd());
             case RegisterEmailDeviceTrait registerDevice -> authorizeForEmail(
-                    registerDevice.getEmail(), registerDevice.getAuthKey());
+                    registerDevice.email(), registerDevice.authKey());
         };
     }
 

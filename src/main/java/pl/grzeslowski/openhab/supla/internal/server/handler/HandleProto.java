@@ -6,7 +6,7 @@ import pl.grzeslowski.jsupla.protocol.api.structs.dcs.SuplaPingServer;
 import pl.grzeslowski.jsupla.protocol.api.structs.ds.*;
 import pl.grzeslowski.jsupla.protocol.api.structs.dsc.ChannelState;
 import pl.grzeslowski.jsupla.server.SuplaWriter;
-import pl.grzeslowski.openhab.supla.internal.server.traits.DeviceChannelValueTrait;
+import pl.grzeslowski.openhab.supla.internal.server.traits.DeviceChannelValue;
 
 @NonNullByDefault
 public interface HandleProto {
@@ -14,7 +14,7 @@ public interface HandleProto {
 
     void consumeSuplaSetActivityTimeout(SuplaWriter writer);
 
-    void consumeDeviceChannelValueTrait(DeviceChannelValueTrait trait);
+    void consumeDeviceChannelValueTrait(DeviceChannelValue trait);
 
     void consumeSuplaDeviceChannelExtendedValue(int channelNumber, int type, byte[] value);
 
