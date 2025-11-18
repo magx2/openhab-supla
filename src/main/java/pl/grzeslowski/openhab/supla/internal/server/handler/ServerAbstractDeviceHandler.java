@@ -54,7 +54,7 @@ import pl.grzeslowski.jsupla.protocol.api.structs.dcs.SuplaPingServer;
 import pl.grzeslowski.jsupla.protocol.api.structs.dcs.SuplaSetActivityTimeout;
 import pl.grzeslowski.jsupla.protocol.api.structs.ds.*;
 import pl.grzeslowski.jsupla.protocol.api.structs.dsc.ChannelState;
-import pl.grzeslowski.jsupla.protocol.api.structs.sd.SuplaRegisterDeviceResult;
+import pl.grzeslowski.jsupla.protocol.api.structs.sd.SuplaRegisterDeviceResultA;
 import pl.grzeslowski.jsupla.protocol.api.structs.sdc.SuplaPingServerResult;
 import pl.grzeslowski.jsupla.protocol.api.structs.sdc.SuplaSetActivityTimeoutResult;
 import pl.grzeslowski.jsupla.protocol.api.structs.sdc.UserLocalTimeResult;
@@ -230,7 +230,7 @@ public abstract class ServerAbstractDeviceHandler extends AbstractDeviceHandler 
             switch (entity) {
                 case SuplaPingServer ping -> consumeSuplaPingServer(ping, writer);
                 case SuplaSetActivityTimeout suplaSetActivityTimeout -> consumeSuplaSetActivityTimeout(writer);
-                case SuplaDeviceChannelValue value -> consumeDeviceChannelValueTrait(
+                case SuplaDeviceChannelValueA value -> consumeDeviceChannelValueTrait(
                         DeviceChannelValue.fromProto(value));
                 case SuplaDeviceChannelValueB value -> consumeDeviceChannelValueTrait(
                         DeviceChannelValue.fromProto(value));
@@ -313,7 +313,8 @@ public abstract class ServerAbstractDeviceHandler extends AbstractDeviceHandler 
         logger.debug("register={}", register);
         if (register) {
             var w = requireNonNull(getWriter().get(), "There is no writer!");
-            w.write(new SuplaRegisterDeviceResult(
+            // TODO should I send version A or B?
+            w.write(new SuplaRegisterDeviceResultA(
                     SUPLA_RESULTCODE_TRUE.getValue(), ACTIVITY_TIMEOUT, (byte) w.getVersion(), (byte)
                             SUPLA_PROTO_VERSION_MIN));
             // thing will have status ONLINE after receiving proto from the device (method `handle(ToServerProto)`)

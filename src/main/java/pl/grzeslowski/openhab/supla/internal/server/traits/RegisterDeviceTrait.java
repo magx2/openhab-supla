@@ -13,17 +13,17 @@ import pl.grzeslowski.jsupla.protocol.api.types.ToServerProto;
 public sealed interface RegisterDeviceTrait permits RegisterLocationDeviceTrait, RegisterEmailDeviceTrait {
     @SuppressWarnings("StaticMethodOnlyUsedInOneClass")
     public static Optional<RegisterDeviceTrait> fromProto(ToServerProto proto) {
-        if (proto instanceof SuplaRegisterDeviceTrait trait) {
+        if (proto instanceof SuplaRegisterDevice trait) {
             return Optional.of(fromProto(trait));
         }
 
         return Optional.empty();
     }
 
-    public static RegisterDeviceTrait fromProto(SuplaRegisterDeviceTrait proto) {
+    public static RegisterDeviceTrait fromProto(SuplaRegisterDevice proto) {
         return switch (proto) {
                 // location
-            case SuplaRegisterDevice register -> new RegisterLocationDeviceTrait(
+            case SuplaRegisterDeviceA register -> new RegisterLocationDeviceTrait(
                     parseHexString(register.guid()),
                     parseString(register.name()),
                     parseString(register.softVer()),
