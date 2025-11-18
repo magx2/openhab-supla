@@ -32,8 +32,8 @@ import pl.grzeslowski.jsupla.protocol.api.types.FromServerProto;
 import pl.grzeslowski.jsupla.server.SuplaWriter;
 import pl.grzeslowski.openhab.supla.internal.handler.AbstractDeviceHandler;
 import pl.grzeslowski.openhab.supla.internal.server.ChannelUtil;
-import pl.grzeslowski.openhab.supla.internal.server.traits.DeviceChannelTrait;
-import pl.grzeslowski.openhab.supla.internal.server.traits.DeviceChannelValueTrait;
+import pl.grzeslowski.openhab.supla.internal.server.traits.DeviceChannel;
+import pl.grzeslowski.openhab.supla.internal.server.traits.DeviceChannelValue;
 
 @NonNullByDefault
 @ToString(onlyExplicitlyIncluded = true)
@@ -64,7 +64,7 @@ public class ServerSubDeviceHandler extends AbstractDeviceHandler implements Sup
     private final Map<Integer, ChannelAndPreviousState> senderIdToChannelUID = synchronizedMap(new HashMap<>());
 
     @Getter
-    private List<DeviceChannelTrait> channels = List.of();
+    private List<DeviceChannel> channels = List.of();
 
     @Delegate(types = StateCache.class)
     private final StateCache stateCache = new InMemoryStateCache(logger);
@@ -116,7 +116,7 @@ public class ServerSubDeviceHandler extends AbstractDeviceHandler implements Sup
         updateStatus(ThingStatus.UNKNOWN, CONFIGURATION_PENDING, "Waiting for gateway");
     }
 
-    public void setChannels(List<DeviceChannelTrait> channels) {
+    public void setChannels(List<DeviceChannel> channels) {
         this.channels = channels;
         channelUtil.buildChannels(channels);
         if (channels.isEmpty()) {
@@ -163,7 +163,7 @@ public class ServerSubDeviceHandler extends AbstractDeviceHandler implements Sup
     }
 
     @Override
-    public void consumeDeviceChannelValueTrait(DeviceChannelValueTrait trait) {
+    public void consumeDeviceChannelValueTrait(DeviceChannelValue trait) {
         channelUtil.updateStatus(trait);
     }
 

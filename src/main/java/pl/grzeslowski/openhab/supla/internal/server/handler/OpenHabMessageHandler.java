@@ -15,7 +15,7 @@ import pl.grzeslowski.jsupla.protocol.api.types.ToServerProto;
 import pl.grzeslowski.jsupla.server.MessageHandler;
 import pl.grzeslowski.jsupla.server.SuplaWriter;
 import pl.grzeslowski.openhab.supla.internal.server.discovery.ServerDiscoveryService;
-import pl.grzeslowski.openhab.supla.internal.server.traits.RegisterDeviceTraitParser;
+import pl.grzeslowski.openhab.supla.internal.server.traits.RegisterDeviceTrait;
 
 @RequiredArgsConstructor
 public final class OpenHabMessageHandler implements MessageHandler {
@@ -79,18 +79,18 @@ public final class OpenHabMessageHandler implements MessageHandler {
         }
 
         // register process
-        var register = RegisterDeviceTraitParser.parse(proto);
+        var register = RegisterDeviceTrait.fromProto(proto);
         if (register.isEmpty()) {
             log.debug("There is no Supla thing and the device did not send register message, but {}", proto);
             return;
         }
         var entity = register.get();
-        var guid = entity.getGuid();
+        var guid = entity.guid();
         var suplaThingOptional = registry.findSuplaThing(guid);
         if (suplaThingOptional.isEmpty()) {
             log.debug("There is no handler for device with GUID={}", guid);
             serverDiscoveryService.addDevice(entity);
-            discoveredThings.add(entity.getGuid());
+            discoveredThings.add(entity.guid());
             return;
         }
         var suplaThing = suplaThingOptional.get();

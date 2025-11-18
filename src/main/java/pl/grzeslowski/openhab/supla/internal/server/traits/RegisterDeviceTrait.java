@@ -6,58 +6,114 @@ import static pl.grzeslowski.jsupla.protocol.api.ProtocolHelpers.parseString;
 
 import jakarta.annotation.Nullable;
 import java.util.List;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import lombok.ToString;
-import org.eclipse.jdt.annotation.NonNullByDefault;
-import pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaRegisterDevice;
+import java.util.Optional;
+import pl.grzeslowski.jsupla.protocol.api.structs.ds.*;
+import pl.grzeslowski.jsupla.protocol.api.types.ToServerProto;
 
-@RequiredArgsConstructor
-@Getter
-@ToString
-@EqualsAndHashCode
-@NonNullByDefault
-public abstract sealed class RegisterDeviceTrait permits RegisterLocationDeviceTrait, RegisterEmailDeviceTrait {
-    private final String guid;
-    private final String name;
-    private final String softVer;
+public sealed interface RegisterDeviceTrait permits RegisterLocationDeviceTrait, RegisterEmailDeviceTrait {
+    @SuppressWarnings("StaticMethodOnlyUsedInOneClass")
+    public static Optional<RegisterDeviceTrait> fromProto(ToServerProto proto) {
+        if (proto instanceof SuplaRegisterDeviceTrait trait) {
+            return Optional.of(fromProto(trait));
+        }
 
-    @Nullable
-    private final Integer manufacturerId;
-
-    @Nullable
-    private final Integer productId;
-
-    private final Flags flags;
-    private final List<DeviceChannelTrait> channels;
-
-    public RegisterDeviceTrait(
-            byte[] guid,
-            byte[] name,
-            byte[] softVer,
-            @Nullable Integer manufacturerId,
-            @Nullable Integer productId,
-            int flags,
-            List<DeviceChannelTrait> list) {
-        this(
-                parseHexString(guid),
-                parseString(name),
-                parseString(softVer),
-                manufacturerId,
-                productId,
-                new Flags(flags),
-                list);
+        return Optional.empty();
     }
 
-    public RegisterDeviceTrait(SuplaRegisterDevice register) {
-        this(
-                register.guid(),
-                register.name(),
-                register.softVer(),
-                null,
-                null,
-                0,
-                stream(register.channels()).map(DeviceChannelTrait::new).toList());
+    public static RegisterDeviceTrait fromProto(SuplaRegisterDeviceTrait proto) {
+        return switch (proto) {
+                // location
+            case SuplaRegisterDevice register -> new RegisterLocationDeviceTrait(
+                    parseHexString(register.guid()),
+                    parseString(register.name()),
+                    parseString(register.softVer()),
+                    null,
+                    null,
+                    new Flags(0),
+                    stream(register.channels()).map(DeviceChannel::fromProto).toList(),
+                    register.locationId(),
+                    register.locationPwd());
+            case SuplaRegisterDeviceB register -> new RegisterLocationDeviceTrait(
+                    parseHexString(register.guid()),
+                    parseString(register.name()),
+                    parseString(register.softVer()),
+                    null,
+                    null,
+                    new Flags(0),
+                    stream(register.channels()).map(DeviceChannel::fromProto).toList(),
+                    register.locationId(),
+                    register.locationPwd());
+            case SuplaRegisterDeviceC register -> new RegisterLocationDeviceTrait(
+                    parseHexString(register.guid()),
+                    parseString(register.name()),
+                    parseString(register.softVer()),
+                    null,
+                    null,
+                    new Flags(0),
+                    stream(register.channels()).map(DeviceChannel::fromProto).toList(),
+                    register.locationId(),
+                    register.locationPwd());
+                // email
+            case SuplaRegisterDeviceD register -> new RegisterEmailDeviceTrait(
+                    parseHexString(register.guid()),
+                    parseString(register.name()),
+                    parseString(register.softVer()),
+                    null,
+                    null,
+                    new Flags(0),
+                    stream(register.channels()).map(DeviceChannel::fromProto).toList(),
+                    parseString(register.email()),
+                    register.authKey(),
+                    parseString(register.serverName()));
+            case SuplaRegisterDeviceE register -> new RegisterEmailDeviceTrait(
+                    parseHexString(register.guid()),
+                    parseString(register.name()),
+                    parseString(register.softVer()),
+                    null,
+                    null,
+                    new Flags(0),
+                    stream(register.channels()).map(DeviceChannel::fromProto).toList(),
+                    parseString(register.email()),
+                    register.authKey(),
+                    parseString(register.serverName()));
+            case SuplaRegisterDeviceF register -> new RegisterEmailDeviceTrait(
+                    parseHexString(register.guid()),
+                    parseString(register.name()),
+                    parseString(register.softVer()),
+                    null,
+                    null,
+                    new Flags(0),
+                    stream(register.channels()).map(DeviceChannel::fromProto).toList(),
+                    parseString(register.email()),
+                    register.authKey(),
+                    parseString(register.serverName()));
+            case SuplaRegisterDeviceG register -> new RegisterEmailDeviceTrait(
+                    parseHexString(register.guid()),
+                    parseString(register.name()),
+                    parseString(register.softVer()),
+                    null,
+                    null,
+                    new Flags(0),
+                    stream(register.channels()).map(DeviceChannel::fromProto).toList(),
+                    parseString(register.email()),
+                    register.authKey(),
+                    parseString(register.serverName()));
+        };
     }
+
+    String guid();
+
+    String name();
+
+    String softVer();
+
+    @Nullable
+    Integer manufacturerId();
+
+    @Nullable
+    Integer productId();
+
+    Flags flags();
+
+    List<DeviceChannel> channels();
 }
