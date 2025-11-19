@@ -3,6 +3,7 @@ package pl.grzeslowski.openhab.supla.internal.server.handler;
 import static java.util.Objects.requireNonNull;
 
 import io.netty.channel.socket.SocketChannel;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -41,13 +42,18 @@ public final class OpenHabMessageHandler implements MessageHandler {
     @Override
     public void inactive() {
         log.debug("inactive");
-        var local = currentThing.getAndSet(null);
-        if (local != null) {
-            local.inactive();
+        {
+            var local = currentThing.getAndSet(null);
+            if (local != null) {
+                local.inactive();
+            }
         }
         writer.set(null);
-        discoveredThings.forEach(serverDiscoveryService::removeDevice);
-        discoveredThings.clear();
+        {
+            var localDiscoveredThings = new ArrayList<>(discoveredThings);
+            discoveredThings.clear();
+            localDiscoveredThings.forEach(serverDiscoveryService::removeDevice);
+        }
     }
 
     @Override
