@@ -8,6 +8,7 @@ import static org.openhab.core.thing.ThingStatus.ONLINE;
 import static org.openhab.core.thing.ThingStatusDetail.CONFIGURATION_ERROR;
 import static org.openhab.core.types.RefreshType.REFRESH;
 import static pl.grzeslowski.jsupla.server.NettyConfig.DEFAULT_TIMEOUT;
+import static pl.grzeslowski.openhab.supla.internal.GuidLogger.attachGuid;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.BINDING_ID;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.CONNECTED_DEVICES_CHANNEL_ID;
 
@@ -65,6 +66,8 @@ public class ServerBridgeHandler extends BaseBridgeHandler implements SuplaThing
     @Nullable
     private AuthData authData;
 
+    private int port;
+
     public ServerBridgeHandler(Bridge bridge, ServerDiscoveryService serverDiscoveryService) {
         super(bridge);
         this.serverDiscoveryService = serverDiscoveryService;
@@ -72,21 +75,23 @@ public class ServerBridgeHandler extends BaseBridgeHandler implements SuplaThing
 
     @Override
     public void initialize() {
-        try {
-            internalInitialize();
-        } catch (InitializationException e) {
-            updateStatus(e.getStatus(), e.getStatusDetail(), e.getMessage());
-        } catch (CertificateException | SSLException ex) {
-            logger.debug("Problem with generating certificates! ", ex);
-            updateStatus(
-                    OFFLINE,
-                    CONFIGURATION_ERROR,
-                    "Problem with generating certificates! " + ex.getLocalizedMessage() + ". See: "
-                            + Documentation.SSL_PROBLEM);
-        } catch (Exception ex) {
-            logger.debug("Cannot start server! ", ex);
-            updateStatus(OFFLINE, CONFIGURATION_ERROR, "Cannot start server! " + ex.getLocalizedMessage());
-        }
+        attachGuid(findGuid(), () -> {
+            try {
+                internalInitialize();
+            } catch (InitializationException e) {
+                updateStatus(e.getStatus(), e.getStatusDetail(), e.getMessage());
+            } catch (CertificateException | SSLException ex) {
+                logger.debug("Problem with generating certificates! ", ex);
+                updateStatus(
+                        OFFLINE,
+                        CONFIGURATION_ERROR,
+                        "Problem with generating certificates! " + ex.getLocalizedMessage() + ". See: "
+                                + Documentation.SSL_PROBLEM);
+            } catch (Exception ex) {
+                logger.debug("Cannot start server! ", ex);
+                updateStatus(OFFLINE, CONFIGURATION_ERROR, "Cannot start server! " + ex.getLocalizedMessage());
+            }
+        });
     }
 
     private void internalInitialize() throws Exception {
@@ -99,7 +104,7 @@ public class ServerBridgeHandler extends BaseBridgeHandler implements SuplaThing
             throw new OfflineInitializationException(CONFIGURATION_ERROR, "You need to pass port!");
         }
         authData = SuplaBridge.buildAuthData(config);
-        var port = config.getPort().intValue();
+        port = config.getPort().intValue();
         var protocols =
                 stream(config.getProtocols().split(",")).map(String::trim).collect(toSet());
         if (protocols.isEmpty()) {
@@ -157,6 +162,14 @@ public class ServerBridgeHandler extends BaseBridgeHandler implements SuplaThing
         updateStatus(ONLINE);
         numberOfConnectedDevices.set(0);
         updateConnectedDevices(0);
+    }
+
+    private String findGuid() {
+        if (port > 0) {
+            return String.valueOf(port);
+        }
+        return String.valueOf(
+                this.getConfigAs(ServerBridgeHandlerConfig.class).getPort().intValue());
     }
 
     private MessageHandler messageHandlerFactory(SocketChannel ch) {

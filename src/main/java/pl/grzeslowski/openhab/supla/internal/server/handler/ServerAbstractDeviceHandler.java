@@ -171,6 +171,19 @@ public abstract class ServerAbstractDeviceHandler extends AbstractDeviceHandler 
                 "Waiting for Supla device to connect with the server");
     }
 
+    @Override
+    protected @Nullable String findGuid() {
+        if (guid != null) {
+            return guid;
+        }
+        var config = getConfigAs(ServerDeviceHandlerConfiguration.class);
+        var guid = config.getGuid();
+        if (guid == null || guid.isEmpty()) {
+            return null;
+        }
+        return guid;
+    }
+
     protected AuthData buildAuthData(SuplaBridge localBridgeHandler, ServerDeviceHandlerConfiguration config) {
         var bridgeAuthData = requireNonNull(localBridgeHandler.getAuthData(), "No auth data in bridge!");
         AuthData.@Nullable LocationAuthData locationAuthData;

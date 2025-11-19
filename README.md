@@ -257,7 +257,7 @@ To enable logging for the Supla plugin in OpenHAB, follow these steps:
 		<SizeBasedTriggeringPolicy size="1 MB"/>
 	</Policies>
 	<DefaultRolloverStrategy max="7"/>
-	<PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} [%-5.5p] [%-36.36c] - %m%n"/>
+	<PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} [%-5.5p] [%-36.36c] [guid=%X{guid}] - %m%n"/>
 </RollingFile>
 ```
 

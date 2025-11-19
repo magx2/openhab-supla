@@ -10,16 +10,14 @@ import io.netty.channel.ChannelFuture;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import lombok.Getter;
 import lombok.ToString;
 import lombok.experimental.Delegate;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
-import org.openhab.core.thing.ChannelUID;
-import org.openhab.core.thing.Thing;
-import org.openhab.core.thing.ThingStatus;
-import org.openhab.core.thing.ThingStatusDetail;
+import org.openhab.core.thing.*;
 import org.openhab.core.thing.binding.builder.ThingBuilder;
 import org.openhab.core.types.State;
 import org.slf4j.Logger;
@@ -52,6 +50,10 @@ public class ServerSubDeviceHandler extends AbstractDeviceHandler implements Sup
     @Getter
     @ToString.Include
     private int subDeviceId;
+
+    @Nullable
+    @ToString.Include
+    private String guid;
 
     @Nullable
     @Getter
@@ -110,10 +112,28 @@ public class ServerSubDeviceHandler extends AbstractDeviceHandler implements Sup
                 return;
             }
         } // config
-        logger = LoggerFactory.getLogger("%s.%s.%s"
-                .formatted(
-                        this.getClass().getName(), requireNonNull(bridgeHandler).getGuid(), subDeviceId));
+        guid = requireNonNull(bridgeHandler).getGuid() + "." + subDeviceId;
+        logger = LoggerFactory.getLogger("%s.%s".formatted(this.getClass().getName(), guid));
         updateStatus(ThingStatus.UNKNOWN, CONFIGURATION_PENDING, "Waiting for gateway");
+    }
+
+    @Override
+    protected @Nullable String findGuid() {
+        if (guid != null) {
+            return guid;
+        }
+        var bridgeGuid = Optional.ofNullable(getBridge())
+                .map(Bridge::getHandler)
+                .filter(ServerGatewayDeviceHandler.class::isInstance)
+                .map(ServerGatewayDeviceHandler.class::cast)
+                .map(ServerAbstractDeviceHandler::getGuid);
+        if (bridgeGuid.isEmpty()) {
+            return null;
+        }
+        if (subDeviceId < 1) {
+            return null;
+        }
+        return bridgeGuid.get() + "." + subDeviceId;
     }
 
     public void setChannels(List<DeviceChannel> channels) {
