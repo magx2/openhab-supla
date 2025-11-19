@@ -1,5 +1,6 @@
 package pl.grzeslowski.openhab.supla.internal.server.discovery;
 
+import static pl.grzeslowski.openhab.supla.internal.GuidLogger.attachGuid;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.*;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ServerDevicesProperties.CONFIG_AUTH_PROPERTY;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ServerDevicesProperties.SERVER_NAME_PROPERTY;
@@ -20,6 +21,7 @@ import org.openhab.core.thing.ThingTypeUID;
 import org.openhab.core.thing.ThingUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import pl.grzeslowski.openhab.supla.internal.GuidLogger;
 import pl.grzeslowski.openhab.supla.internal.server.traits.RegisterDeviceTrait;
 import pl.grzeslowski.openhab.supla.internal.server.traits.RegisterEmailDeviceTrait;
 
@@ -53,18 +55,22 @@ public class ServerDiscoveryService extends AbstractDiscoveryService {
         thingDiscovered(discoveryResult);
     }
 
+    @GuidLogger.GuidLogged
     public void removeDevice(String guid) {
-        val result = discoveryResults.stream()
-                .filter(r -> r.getThingUID().getId().equals(guid))
-                .findAny();
-        if (result.isPresent()) {
-            logger.info("Removing device: {}", guid);
-            thingRemoved(result.get().getThingUID());
-        } else {
-            logger.warn("Failed to remove device: {}", guid);
-        }
+        attachGuid(guid, () -> {
+            val result = discoveryResults.stream()
+                    .filter(r -> r.getThingUID().getId().equals(guid))
+                    .findAny();
+            if (result.isPresent()) {
+                logger.info("Removing device: {}", guid);
+                thingRemoved(result.get().getThingUID());
+            } else {
+                logger.warn("Failed to remove device: {}", guid);
+            }
+        });
     }
 
+    @GuidLogger.GuidLogged
     public void removeSubDevice(int id) {
         removeDevice(String.valueOf(id));
     }

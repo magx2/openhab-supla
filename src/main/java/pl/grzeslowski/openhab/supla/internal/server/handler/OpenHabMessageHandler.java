@@ -1,6 +1,7 @@
 package pl.grzeslowski.openhab.supla.internal.server.handler;
 
 import static java.util.Objects.requireNonNull;
+import static pl.grzeslowski.openhab.supla.internal.GuidLogger.attachGuid;
 
 import io.netty.channel.socket.SocketChannel;
 import java.util.ArrayList;
@@ -15,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import pl.grzeslowski.jsupla.protocol.api.types.ToServerProto;
 import pl.grzeslowski.jsupla.server.MessageHandler;
 import pl.grzeslowski.jsupla.server.SuplaWriter;
+import pl.grzeslowski.openhab.supla.internal.GuidLogger.GuidLogged;
 import pl.grzeslowski.openhab.supla.internal.server.discovery.ServerDiscoveryService;
 import pl.grzeslowski.openhab.supla.internal.server.traits.RegisterDeviceTrait;
 
@@ -39,13 +41,14 @@ public final class OpenHabMessageHandler implements MessageHandler {
         this.writer.set(writer);
     }
 
+    @GuidLogged
     @Override
     public void inactive() {
         log.debug("inactive");
         {
             var local = currentThing.getAndSet(null);
             if (local != null) {
-                local.inactive();
+                attachGuid(local.getGuid(), local::inactive);
             }
         }
         writer.set(null);
@@ -64,7 +67,7 @@ public final class OpenHabMessageHandler implements MessageHandler {
                     "Got exception from socket without having handler attached. Breaking the socket connection",
                     exception);
         } else {
-            thing.socketException(exception);
+            attachGuid(thing.getGuid(), () -> thing.socketException(exception));
         }
     }
 
@@ -80,10 +83,9 @@ public final class OpenHabMessageHandler implements MessageHandler {
         // the current thing is set that means it already registered
         var thing = currentThing.get();
         if (thing != null) {
-            thing.handle(proto);
+            attachGuid(thing.getGuid(), () -> thing.handle(proto));
             return;
         }
-
         // register process
         var register = RegisterDeviceTrait.fromProto(proto);
         if (register.isEmpty()) {
@@ -92,29 +94,35 @@ public final class OpenHabMessageHandler implements MessageHandler {
         }
         var entity = register.get();
         var guid = entity.guid();
-        var suplaThingOptional = registry.findSuplaThing(guid);
-        if (suplaThingOptional.isEmpty()) {
-            log.debug("There is no handler for device with GUID={}", guid);
-            serverDiscoveryService.addDevice(entity);
-            discoveredThings.add(entity.guid());
-            return;
-        }
-        var suplaThing = suplaThingOptional.get();
-        suplaThing.active(requireNonNull(writer.get(), "writer is null"));
-        var registerResult = suplaThing.register(entity, this);
-        if (!registerResult) {
-            log.debug("Could not register device GUID={}", guid);
-            return;
-        }
-        // correctly registered
-        currentThing.set(suplaThing);
+        attachGuid(guid, () -> {
+            var suplaThingOptional = registry.findSuplaThing(guid);
+            if (suplaThingOptional.isEmpty()) {
+                log.debug("There is no handler for device with GUID={}", guid);
+                serverDiscoveryService.addDevice(entity);
+                discoveredThings.add(entity.guid());
+                return;
+            }
+            var suplaThing = suplaThingOptional.get();
+            suplaThing.active(requireNonNull(writer.get(), "writer is null"));
+            var registerResult = suplaThing.register(entity, this);
+            if (!registerResult) {
+                log.debug("Could not register device GUID={}", guid);
+                return;
+            }
+            // correctly registered
+            currentThing.set(suplaThing);
+        });
     }
 
+    @GuidLogged
     public void clear() {
-        log.debug("clear");
-        currentThing.set(null);
-        var close = socketChannel.close();
-        close.addListener(__ -> log.debug("Closed channel"));
+        var thing = currentThing.getAndSet(null);
+        var guid = thing != null ? thing.getGuid() : null;
+        attachGuid(guid, () -> {
+            log.debug("clear");
+            var close = socketChannel.close();
+            close.addListener(__ -> log.debug("Closed channel"));
+        });
     }
 
     @Override
