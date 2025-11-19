@@ -632,17 +632,20 @@ public abstract class ServerAbstractDeviceHandler extends AbstractDeviceHandler 
 
     @Override
     public void socketException(Throwable exception) {
-        String text;
-        if (exception instanceof ReadTimeoutException) {
-            logger.warn("Got timeout from socket. Going offline");
-            text = "Socket timeout";
-        } else if (exception instanceof SocketException) {
-            logger.warn("Got socket exception from socket. Going offline");
-            text = "Socket exception. " + exception.getLocalizedMessage();
-        } else {
-            logger.warn("Got exception from socket. Going offline", exception);
-            text = "%s: %s".formatted(exception.getClass().getSimpleName(), exception.getLocalizedMessage());
-        }
+        var text = switch (exception) {
+            case ReadTimeoutException readTimeoutException -> {
+                logger.warn("Got timeout from socket. Going offline");
+                yield "Socket timeout";
+            }
+            case SocketException socketException -> {
+                logger.warn("Got socket exception from socket. Going offline");
+                yield "Socket exception. " + exception.getLocalizedMessage();
+            }
+            default -> {
+                logger.warn("Got exception from socket. Going offline", exception);
+                yield "%s: %s".formatted(exception.getClass().getSimpleName(), exception.getLocalizedMessage());
+            }
+        };
         updateStatus(OFFLINE, COMMUNICATION_ERROR, text);
     }
 
