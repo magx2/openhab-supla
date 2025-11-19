@@ -85,7 +85,7 @@ public class SuplaServerDeviceActions implements ThingActions {
         }
 
         var fields = BigInteger.valueOf(deviceConfig.stream()
-                .map(DeviceConfig::getField)
+                .map(DeviceConfig::field)
                 .map(DeviceConfigField::getMask)
                 .reduce(0L, (field, mask) -> field | mask));
 

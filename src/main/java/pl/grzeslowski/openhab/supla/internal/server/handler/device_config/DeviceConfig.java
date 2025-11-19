@@ -15,26 +15,26 @@ import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
-import lombok.Value;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import pl.grzeslowski.jsupla.protocol.api.encoders.*;
 import pl.grzeslowski.jsupla.protocol.api.structs.*;
 
 @NonNullByDefault
 public sealed interface DeviceConfig extends Comparable<DeviceConfig> {
-    DeviceConfigField getField();
+    DeviceConfigField field();
 
     byte[] encode();
 
     @Override
     default int compareTo(DeviceConfig o) {
-        return Comparator.comparing(DeviceConfig::getField).compare(this, o);
+        return Comparator.comparing(DeviceConfig::field).compare(this, o);
     }
 
-    @Value
-    public class PowerStatusLedConfig implements DeviceConfig {
-        DeviceConfigField field = POWER_STATUS_LED;
-        boolean disabled;
+    public record PowerStatusLedConfig(DeviceConfigField field, boolean disabled) implements DeviceConfig {
+
+        public PowerStatusLedConfig(boolean disabled) {
+            this(POWER_STATUS_LED, disabled);
+        }
 
         @Override
         public byte[] encode() {
@@ -46,12 +46,12 @@ public sealed interface DeviceConfig extends Comparable<DeviceConfig> {
         }
     }
 
-    @Value
-    public class HomeScreenOffDelayTypeConfig implements DeviceConfig {
-        DeviceConfigField field = HOME_SCREEN_OFF_DELAY_TYPE;
+    public record HomeScreenOffDelayTypeConfig(DeviceConfigField field, @NonNull DelayType delayType)
+            implements DeviceConfig {
 
-        @NonNull
-        DelayType delayType;
+        public HomeScreenOffDelayTypeConfig(@NonNull DelayType delayType) {
+            this(HOME_SCREEN_OFF_DELAY_TYPE, delayType);
+        }
 
         @Override
         public byte[] encode() {
@@ -70,12 +70,12 @@ public sealed interface DeviceConfig extends Comparable<DeviceConfig> {
         }
     }
 
-    @Value
-    public class HomeScreenContentConfig implements DeviceConfig {
-        DeviceConfigField field = HOME_SCREEN_CONTENT;
+    public record HomeScreenContentConfig(DeviceConfigField field, @NonNull List<HomeScreenContent> contents)
+            implements DeviceConfig {
 
-        @NonNull
-        List<HomeScreenContent> contents;
+        public HomeScreenContentConfig(@NonNull List<HomeScreenContent> contents) {
+            this(HOME_SCREEN_CONTENT, contents);
+        }
 
         @Override
         public byte[] encode() {
@@ -105,13 +105,12 @@ public sealed interface DeviceConfig extends Comparable<DeviceConfig> {
         }
     }
 
-    @Value
-    public class HomeScreenOffDelayConfig implements DeviceConfig {
-        DeviceConfigField field = HOME_SCREEN_OFF_DELAY;
-        boolean enabled;
+    public record HomeScreenOffDelayConfig(DeviceConfigField field, boolean enabled, @NonNull Duration duration)
+            implements DeviceConfig {
 
-        @NonNull
-        Duration duration;
+        public HomeScreenOffDelayConfig(boolean enabled, @NonNull Duration duration) {
+            this(HOME_SCREEN_OFF_DELAY, enabled, duration);
+        }
 
         @Override
         public byte[] encode() {
@@ -124,10 +123,11 @@ public sealed interface DeviceConfig extends Comparable<DeviceConfig> {
         }
     }
 
-    @Value
-    public class AutomaticTimeSyncConfig implements DeviceConfig {
-        DeviceConfigField field = AUTOMATIC_TIME_SYNC;
-        boolean enabled;
+    public record AutomaticTimeSyncConfig(DeviceConfigField field, boolean enabled) implements DeviceConfig {
+
+        public AutomaticTimeSyncConfig(boolean enabled) {
+            this(AUTOMATIC_TIME_SYNC, enabled);
+        }
 
         @Override
         public byte[] encode() {
@@ -140,18 +140,17 @@ public sealed interface DeviceConfig extends Comparable<DeviceConfig> {
         }
     }
 
-    @Value
-    public class DisableUserInterfaceConfig implements DeviceConfig {
-        DeviceConfigField field = DISABLE_USER_INTERFACE;
+    public record DisableUserInterfaceConfig(
+            DeviceConfigField field,
+            @NonNull UserInterface userInterface,
+            @Nullable Integer minTemp,
+            @Nullable Integer maxTemp)
+            implements DeviceConfig {
 
-        @NonNull
-        UserInterface userInterface;
-
-        @Nullable
-        Integer minTemp;
-
-        @Nullable
-        Integer maxTemp;
+        public DisableUserInterfaceConfig(
+                @NonNull UserInterface userInterface, @Nullable Integer minTemp, @Nullable Integer maxTemp) {
+            this(DISABLE_USER_INTERFACE, userInterface, minTemp, maxTemp);
+        }
 
         @Override
         public byte[] encode() {
@@ -180,13 +179,11 @@ public sealed interface DeviceConfig extends Comparable<DeviceConfig> {
         }
     }
 
-    @Value
-    public class ButtonVolumeConfig implements DeviceConfig {
-        DeviceConfigField field = BUTTON_VOLUME;
+    public record ButtonVolumeConfig(DeviceConfigField field, @Min(0) @Max(100) int volume) implements DeviceConfig {
 
-        @Min(0)
-        @Max(100)
-        int volume;
+        public ButtonVolumeConfig(@Min(0) @Max(100) int volume) {
+            this(BUTTON_VOLUME, volume);
+        }
 
         @Override
         public byte[] encode() {
@@ -199,16 +196,16 @@ public sealed interface DeviceConfig extends Comparable<DeviceConfig> {
         }
     }
 
-    @Value
-    public class ScreenBrightnessConfig implements DeviceConfig {
-        DeviceConfigField field = SCREEN_BRIGHTNESS;
+    public record ScreenBrightnessConfig(
+            DeviceConfigField field,
+            @Min(0) @Max(100) int screenBrightness,
+            boolean automatic,
+            int adjustmentForAutomatic)
+            implements DeviceConfig {
 
-        @Min(0)
-        @Max(100)
-        int screenBrightness;
-
-        boolean automatic;
-        int adjustmentForAutomatic;
+        public ScreenBrightnessConfig(int screenBrightness, boolean automatic, int adjustmentForAutomatic) {
+            this(SCREEN_BRIGHTNESS, screenBrightness, automatic, adjustmentForAutomatic);
+        }
 
         @Override
         public byte[] encode() {
@@ -223,12 +220,11 @@ public sealed interface DeviceConfig extends Comparable<DeviceConfig> {
         }
     }
 
-    @Value
-    public class StatusLedConfig implements DeviceConfig {
-        DeviceConfigField field = STATUS_LED;
+    public record StatusLedConfig(DeviceConfigField field, @NonNull StatusLed statusLed) implements DeviceConfig {
 
-        @NonNull
-        StatusLed statusLed;
+        public StatusLedConfig(@NonNull StatusLed statusLed) {
+            this(STATUS_LED, statusLed);
+        }
 
         public static StatusLedConfig parse(List<String> parameters) {
             return new StatusLedConfig(parseEnum(parameters.get(0), StatusLed.class));
