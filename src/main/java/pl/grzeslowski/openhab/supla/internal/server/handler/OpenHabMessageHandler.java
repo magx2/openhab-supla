@@ -23,7 +23,7 @@ public final class OpenHabMessageHandler implements MessageHandler {
 
     private final long id = ID.incrementAndGet();
     private final Logger log = LoggerFactory.getLogger(OpenHabMessageHandler.class.getName() + "#" + id);
-    private final Object lock = new Object();
+    private final Object handleLock = new Object();
     private final AtomicReference<SuplaThing> currentThing = new AtomicReference<>();
     private final AtomicReference<SuplaWriter> writer = new AtomicReference<>();
     private final Set<String> discoveredThings = Collections.synchronizedSet(new HashSet<>());
@@ -64,7 +64,7 @@ public final class OpenHabMessageHandler implements MessageHandler {
 
     @Override
     public void handle(ToServerProto proto) {
-        synchronized (lock) {
+        synchronized (handleLock) {
             synchronizedHandle(proto);
         }
     }
