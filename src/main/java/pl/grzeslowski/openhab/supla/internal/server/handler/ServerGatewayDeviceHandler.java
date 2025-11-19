@@ -6,6 +6,7 @@ import static java.util.stream.Collectors.toUnmodifiableSet;
 import static org.openhab.core.thing.ThingStatus.OFFLINE;
 import static org.openhab.core.thing.ThingStatusDetail.CONFIGURATION_ERROR;
 import static pl.grzeslowski.jsupla.protocol.api.ProtocolHelpers.parseString;
+import static pl.grzeslowski.openhab.supla.internal.GuidLogger.attachGuid;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.GATEWAY_CONNECTED_DEVICES_CHANNEL_ID;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ServerDevicesProperties.*;
 import static pl.grzeslowski.openhab.supla.internal.server.ChannelUtil.findId;
@@ -34,6 +35,7 @@ import pl.grzeslowski.jsupla.protocol.api.structs.ds.SubdeviceDetails;
 import pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaChannelNewValueResult;
 import pl.grzeslowski.jsupla.protocol.api.structs.dsc.ChannelState;
 import pl.grzeslowski.jsupla.protocol.api.types.FromServerProto;
+import pl.grzeslowski.openhab.supla.internal.GuidLogger;
 import pl.grzeslowski.openhab.supla.internal.server.ChannelUtil;
 import pl.grzeslowski.openhab.supla.internal.server.discovery.ServerDiscoveryService;
 import pl.grzeslowski.openhab.supla.internal.server.traits.DeviceChannel;
@@ -167,44 +169,50 @@ public class ServerGatewayDeviceHandler extends ServerAbstractDeviceHandler impl
     @Override
     public void handleQuantityType(ChannelUID channelUID, QuantityType<?> command) {}
 
+    @GuidLogger.GuidLogged
     @Override
     public void childHandlerInitialized(ThingHandler childHandler, Thing childThing) {
-        if (!(childHandler instanceof ServerSubDeviceHandler subDevice)) {
-            return;
-        }
-        var subDeviceId = subDevice.getSubDeviceId();
-        if (childHandlers.containsKey(subDeviceId)) {
-            var existing = childHandlers.get(subDeviceId);
-            logger.warn(
-                    "childHandlers already contains sub device with ID {}! "
-                            + "Will override this handler. "
-                            + "existing={}, subDevice={}",
-                    subDeviceId,
-                    existing,
-                    subDevice);
-        }
-        childHandlers.put(subDeviceId, subDevice);
-        if (discoveredIds.contains(subDeviceId)) {
-            discoveredIds.remove(subDeviceId);
-            serverDiscoveryService.removeSubDevice(subDeviceId);
-        }
-        if (!channels.isEmpty()) {
-            initChannels(subDevice);
-        }
+        attachGuid(findGuid(), () -> {
+            if (!(childHandler instanceof SubDeviceHandler subDevice)) {
+                return;
+            }
+            var subDeviceId = subDevice.getSubDeviceId();
+            if (childHandlers.containsKey(subDeviceId)) {
+                var existing = childHandlers.get(subDeviceId);
+                logger.warn(
+                        "childHandlers already contains sub device with ID {}! "
+                                + "Will override this handler. "
+                                + "existing={}, subDevice={}",
+                        subDeviceId,
+                        existing,
+                        subDevice);
+            }
+            childHandlers.put(subDeviceId, subDevice);
+            if (discoveredIds.contains(subDeviceId)) {
+                discoveredIds.remove(subDeviceId);
+                serverDiscoveryService.removeSubDevice(subDeviceId);
+            }
+            if (!channels.isEmpty()) {
+                initChannels(subDevice);
+            }
+        });
     }
 
+    @GuidLogger.GuidLogged
     @Override
     public void childHandlerDisposed(ThingHandler childHandler, Thing childThing) {
-        if (!(childHandler instanceof ServerSubDeviceHandler subDevice)) {
-            return;
-        }
-        var subDeviceId = subDevice.getSubDeviceId();
-        logger.debug("Remove Handler {}", subDevice);
-        if (!childHandlers.containsKey(subDeviceId)) {
-            logger.warn("childHandlers do not contains sub device with ID {}!", subDeviceId);
-            return;
-        }
-        childHandlers.remove(subDeviceId);
+        attachGuid(findGuid(), () -> {
+            if (!(childHandler instanceof SubDeviceHandler subDevice)) {
+                return;
+            }
+            var subDeviceId = subDevice.getSubDeviceId();
+            logger.debug("Remove Handler {}", subDevice);
+            if (!childHandlers.containsKey(subDeviceId)) {
+                logger.warn("childHandlers do not contains sub device with ID {}!", subDeviceId);
+                return;
+            }
+            childHandlers.remove(subDeviceId);
+        });
     }
 
     @Override
@@ -217,10 +225,13 @@ public class ServerGatewayDeviceHandler extends ServerAbstractDeviceHandler impl
         changeNumberOfConnectedDevices(-1);
     }
 
+    @GuidLogger.GuidLogged
     private void changeNumberOfConnectedDevices(int delta) {
-        var number = numberOfConnectedDevices.addAndGet(delta);
-        logger.debug("Number of connected devices: {} (delta: {})", number, delta);
-        updateConnectedDevices(number);
+        attachGuid(findGuid(), () -> {
+            var number = numberOfConnectedDevices.addAndGet(delta);
+            logger.debug("Number of connected devices: {} (delta: {})", number, delta);
+            updateConnectedDevices(number);
+        });
     }
 
     private void updateConnectedDevices(int numberOfConnectedDevices) {
@@ -238,24 +249,30 @@ public class ServerGatewayDeviceHandler extends ServerAbstractDeviceHandler impl
         super.dispose();
     }
 
+    @GuidLogger.GuidLogged
     @Override
     public void consumeSuplaDeviceChannelExtendedValue(int channelNumber, int type, byte[] value) {
-        var optional = findId(channelNumber, null).flatMap(this::findSubDevice);
-        if (optional.isEmpty()) {
-            logger.warn("There is no channel number for ExtendedValue! value={}", value);
-            return;
-        }
-        optional.ifPresent(sd -> sd.consumeSuplaDeviceChannelExtendedValue(channelNumber, type, value));
+        attachGuid(findGuid(), () -> {
+            var optional = findId(channelNumber, null).flatMap(this::findSubDevice);
+            if (optional.isEmpty()) {
+                logger.warn("There is no channel number for ExtendedValue! value={}", value);
+                return;
+            }
+            optional.ifPresent(sd -> sd.consumeSuplaDeviceChannelExtendedValue(channelNumber, type, value));
+        });
     }
 
+    @GuidLogger.GuidLogged
     @Override
     public void consumeSetCaption(SetCaption value) {
-        var optional = findId(value.id(), value.channelNumber()).flatMap(this::findSubDevice);
-        if (optional.isEmpty()) {
-            logger.warn("There is no channel number for SetCaption! value={}", value);
-            return;
-        }
-        optional.ifPresent(sd -> sd.consumeSetCaption(value));
+        attachGuid(findGuid(), () -> {
+            var optional = findId(value.id(), value.channelNumber()).flatMap(this::findSubDevice);
+            if (optional.isEmpty()) {
+                logger.warn("There is no channel number for SetCaption! value={}", value);
+                return;
+            }
+            optional.ifPresent(sd -> sd.consumeSetCaption(value));
+        });
     }
 
     @Override
@@ -263,14 +280,17 @@ public class ServerGatewayDeviceHandler extends ServerAbstractDeviceHandler impl
         channelUtil.consumeChannelState(value);
     }
 
+    @GuidLogger.GuidLogged
     @Override
     public void consumeDeviceChannelValueTrait(DeviceChannelValue trait) {
-        var optional = findId(trait.channelNumber(), null).flatMap(this::findSubDevice);
-        if (optional.isEmpty()) {
-            logger.warn("There is no channel number for ChannelState! value={}", trait);
-            return;
-        }
-        optional.ifPresent(sd -> sd.consumeDeviceChannelValueTrait(trait));
+        attachGuid(findGuid(), () -> {
+            var optional = findId(trait.channelNumber(), null).flatMap(this::findSubDevice);
+            if (optional.isEmpty()) {
+                logger.warn("There is no channel number for ChannelState! value={}", trait);
+                return;
+            }
+            optional.ifPresent(sd -> sd.consumeDeviceChannelValueTrait(trait));
+        });
     }
 
     @Override
@@ -302,19 +322,22 @@ public class ServerGatewayDeviceHandler extends ServerAbstractDeviceHandler impl
         return Optional.of(childHandlers.get(handlerId));
     }
 
+    @GuidLogger.GuidLogged
     @Override
     public void consumeSuplaChannelNewValueResult(SuplaChannelNewValueResult value) {
-        var handlerId = channelNumberToHandlerId.get((int) value.channelNumber());
-        if (handlerId == null) {
-            // todo
-            return;
-        }
-        var handler = childHandlers.get(handlerId);
-        if (handler == null) {
-            // todo log
-            return;
-        }
-        handler.consumeSuplaChannelNewValueResult(value);
+        attachGuid(findGuid(), () -> {
+            var handlerId = channelNumberToHandlerId.get((int) value.channelNumber());
+            if (handlerId == null) {
+                // todo
+                return;
+            }
+            var handler = childHandlers.get(handlerId);
+            if (handler == null) {
+                // todo log
+                return;
+            }
+            handler.consumeSuplaChannelNewValueResult(value);
+        });
     }
 
     @Override

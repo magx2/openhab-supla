@@ -112,6 +112,13 @@ public final class CloudDeviceHandler extends AbstractDeviceHandler {
         updateStatus(ONLINE);
     }
 
+    @Override
+    protected @Nullable String findGuid() {
+        var guid = getConfig().get(SUPLA_DEVICE_CLOUD_ID);
+        if (guid == null) return null;
+        return String.valueOf(guid);
+    }
+
     private void initCloudApi(String cloudIdString) throws OfflineInitializationException {
         try {
             this.cloudId = parseInt(cloudIdString);

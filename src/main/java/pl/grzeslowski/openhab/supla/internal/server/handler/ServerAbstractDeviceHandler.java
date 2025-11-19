@@ -12,6 +12,7 @@ import static org.openhab.core.thing.ThingStatusDetail.*;
 import static pl.grzeslowski.jsupla.protocol.api.ProtocolHelpers.parseString;
 import static pl.grzeslowski.jsupla.protocol.api.ResultCode.SUPLA_RESULTCODE_TRUE;
 import static pl.grzeslowski.jsupla.protocol.api.consts.ProtoConsts.SUPLA_PROTO_VERSION_MIN;
+import static pl.grzeslowski.openhab.supla.internal.GuidLogger.attachGuid;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.BINDING_ID;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ServerDevicesProperties.*;
 import static pl.grzeslowski.openhab.supla.internal.server.ByteArrayToHex.bytesToHex;
@@ -60,6 +61,7 @@ import pl.grzeslowski.jsupla.protocol.api.structs.sdc.SuplaSetActivityTimeoutRes
 import pl.grzeslowski.jsupla.protocol.api.structs.sdc.UserLocalTimeResult;
 import pl.grzeslowski.jsupla.protocol.api.types.ToServerProto;
 import pl.grzeslowski.jsupla.server.SuplaWriter;
+import pl.grzeslowski.openhab.supla.internal.GuidLogger.GuidLogged;
 import pl.grzeslowski.openhab.supla.internal.handler.AbstractDeviceHandler;
 import pl.grzeslowski.openhab.supla.internal.handler.InitializationException;
 import pl.grzeslowski.openhab.supla.internal.handler.OfflineInitializationException;
@@ -169,6 +171,19 @@ public abstract class ServerAbstractDeviceHandler extends AbstractDeviceHandler 
                 ThingStatus.UNKNOWN,
                 HANDLER_CONFIGURATION_PENDING,
                 "Waiting for Supla device to connect with the server");
+    }
+
+    @Override
+    protected @Nullable String findGuid() {
+        if (guid != null) {
+            return guid;
+        }
+        var config = getConfigAs(ServerDeviceHandlerConfiguration.class);
+        var guid = config.getGuid();
+        if (guid == null || guid.isEmpty()) {
+            return null;
+        }
+        return guid;
     }
 
     protected AuthData buildAuthData(SuplaBridge localBridgeHandler, ServerDeviceHandlerConfiguration config) {
@@ -347,6 +362,7 @@ public abstract class ServerAbstractDeviceHandler extends AbstractDeviceHandler 
         };
     }
 
+    @GuidLogged
     protected abstract boolean afterRegister(RegisterDeviceTrait registerEntity);
 
     @Override
@@ -495,15 +511,18 @@ public abstract class ServerAbstractDeviceHandler extends AbstractDeviceHandler 
         return new ChannelUID(getThing().getUID(), valueOf(channelNumber));
     }
 
+    @GuidLogged
     @Override
     public void dispose() {
-        logger.debug("Disposing handler");
-        disposePing();
-        disposeHandler();
-        disposeBridgeHandler();
-        writer.set(null);
-        logger = LoggerFactory.getLogger(baseLogger());
-        authorized = false;
+        attachGuid(findGuid(), () -> {
+            logger.debug("Disposing handler");
+            disposePing();
+            disposeHandler();
+            disposeBridgeHandler();
+            writer.set(null);
+            logger = LoggerFactory.getLogger(baseLogger());
+            authorized = false;
+        });
     }
 
     private void disposePing() {
@@ -630,6 +649,7 @@ public abstract class ServerAbstractDeviceHandler extends AbstractDeviceHandler 
                         .orElse(null));
     }
 
+    @GuidLogged
     @Override
     public void socketException(Throwable exception) {
         var text =
