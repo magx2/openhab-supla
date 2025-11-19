@@ -30,10 +30,10 @@ public sealed interface DeviceConfig extends Comparable<DeviceConfig> {
         return Comparator.comparing(DeviceConfig::field).compare(this, o);
     }
 
-    public record PowerStatusLedConfig(DeviceConfigField field, boolean disabled) implements DeviceConfig {
-
-        public PowerStatusLedConfig(boolean disabled) {
-            this(POWER_STATUS_LED, disabled);
+    public record PowerStatusLedConfig(boolean disabled) implements DeviceConfig {
+        @Override
+        public DeviceConfigField field() {
+            return POWER_STATUS_LED;
         }
 
         @Override
@@ -46,11 +46,10 @@ public sealed interface DeviceConfig extends Comparable<DeviceConfig> {
         }
     }
 
-    public record HomeScreenOffDelayTypeConfig(DeviceConfigField field, @NonNull DelayType delayType)
-            implements DeviceConfig {
-
-        public HomeScreenOffDelayTypeConfig(@NonNull DelayType delayType) {
-            this(HOME_SCREEN_OFF_DELAY_TYPE, delayType);
+    public record HomeScreenOffDelayTypeConfig(@NonNull DelayType delayType) implements DeviceConfig {
+        @Override
+        public DeviceConfigField field() {
+            return HOME_SCREEN_OFF_DELAY_TYPE;
         }
 
         @Override
@@ -70,11 +69,10 @@ public sealed interface DeviceConfig extends Comparable<DeviceConfig> {
         }
     }
 
-    public record HomeScreenContentConfig(DeviceConfigField field, @NonNull List<HomeScreenContent> contents)
-            implements DeviceConfig {
-
-        public HomeScreenContentConfig(@NonNull List<HomeScreenContent> contents) {
-            this(HOME_SCREEN_CONTENT, contents);
+    public record HomeScreenContentConfig(@NonNull List<HomeScreenContent> contents) implements DeviceConfig {
+        @Override
+        public DeviceConfigField field() {
+            return HOME_SCREEN_CONTENT;
         }
 
         @Override
@@ -105,11 +103,10 @@ public sealed interface DeviceConfig extends Comparable<DeviceConfig> {
         }
     }
 
-    public record HomeScreenOffDelayConfig(DeviceConfigField field, boolean enabled, @NonNull Duration duration)
-            implements DeviceConfig {
-
-        public HomeScreenOffDelayConfig(boolean enabled, @NonNull Duration duration) {
-            this(HOME_SCREEN_OFF_DELAY, enabled, duration);
+    public record HomeScreenOffDelayConfig(boolean enabled, @NonNull Duration duration) implements DeviceConfig {
+        @Override
+        public DeviceConfigField field() {
+            return HOME_SCREEN_OFF_DELAY;
         }
 
         @Override
@@ -123,10 +120,10 @@ public sealed interface DeviceConfig extends Comparable<DeviceConfig> {
         }
     }
 
-    public record AutomaticTimeSyncConfig(DeviceConfigField field, boolean enabled) implements DeviceConfig {
-
-        public AutomaticTimeSyncConfig(boolean enabled) {
-            this(AUTOMATIC_TIME_SYNC, enabled);
+    public record AutomaticTimeSyncConfig(boolean enabled) implements DeviceConfig {
+        @Override
+        public DeviceConfigField field() {
+            return AUTOMATIC_TIME_SYNC;
         }
 
         @Override
@@ -141,15 +138,11 @@ public sealed interface DeviceConfig extends Comparable<DeviceConfig> {
     }
 
     public record DisableUserInterfaceConfig(
-            DeviceConfigField field,
-            @NonNull UserInterface userInterface,
-            @Nullable Integer minTemp,
-            @Nullable Integer maxTemp)
+            @NonNull UserInterface userInterface, @Nullable Integer minTemp, @Nullable Integer maxTemp)
             implements DeviceConfig {
-
-        public DisableUserInterfaceConfig(
-                @NonNull UserInterface userInterface, @Nullable Integer minTemp, @Nullable Integer maxTemp) {
-            this(DISABLE_USER_INTERFACE, userInterface, minTemp, maxTemp);
+        @Override
+        public DeviceConfigField field() {
+            return DISABLE_USER_INTERFACE;
         }
 
         @Override
@@ -179,10 +172,10 @@ public sealed interface DeviceConfig extends Comparable<DeviceConfig> {
         }
     }
 
-    public record ButtonVolumeConfig(DeviceConfigField field, @Min(0) @Max(100) int volume) implements DeviceConfig {
-
-        public ButtonVolumeConfig(@Min(0) @Max(100) int volume) {
-            this(BUTTON_VOLUME, volume);
+    public record ButtonVolumeConfig(@Min(0) @Max(100) int volume) implements DeviceConfig {
+        @Override
+        public DeviceConfigField field() {
+            return BUTTON_VOLUME;
         }
 
         @Override
@@ -197,14 +190,11 @@ public sealed interface DeviceConfig extends Comparable<DeviceConfig> {
     }
 
     public record ScreenBrightnessConfig(
-            DeviceConfigField field,
-            @Min(0) @Max(100) int screenBrightness,
-            boolean automatic,
-            int adjustmentForAutomatic)
+            @Min(0) @Max(100) int screenBrightness, boolean automatic, int adjustmentForAutomatic)
             implements DeviceConfig {
-
-        public ScreenBrightnessConfig(int screenBrightness, boolean automatic, int adjustmentForAutomatic) {
-            this(SCREEN_BRIGHTNESS, screenBrightness, automatic, adjustmentForAutomatic);
+        @Override
+        public DeviceConfigField field() {
+            return SCREEN_BRIGHTNESS;
         }
 
         @Override
@@ -220,10 +210,10 @@ public sealed interface DeviceConfig extends Comparable<DeviceConfig> {
         }
     }
 
-    public record StatusLedConfig(DeviceConfigField field, @NonNull StatusLed statusLed) implements DeviceConfig {
-
-        public StatusLedConfig(@NonNull StatusLed statusLed) {
-            this(STATUS_LED, statusLed);
+    public record StatusLedConfig(@NonNull StatusLed statusLed) implements DeviceConfig {
+        @Override
+        public DeviceConfigField field() {
+            return STATUS_LED;
         }
 
         public static StatusLedConfig parse(List<String> parameters) {
