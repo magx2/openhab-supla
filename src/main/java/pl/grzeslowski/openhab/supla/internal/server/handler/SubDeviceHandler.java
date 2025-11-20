@@ -112,7 +112,7 @@ public class SubDeviceHandler extends AbstractDeviceHandler implements SuplaDevi
         } // bridge
         {
             var config = getConfigAs(ServerSubDeviceHandlerConfiguration.class);
-            subDeviceId = config.getId();
+            subDeviceId = config.id();
             if (subDeviceId < 1) {
                 updateStatus(OFFLINE, CONFIGURATION_ERROR, "There is no ID for this thing.");
                 return;

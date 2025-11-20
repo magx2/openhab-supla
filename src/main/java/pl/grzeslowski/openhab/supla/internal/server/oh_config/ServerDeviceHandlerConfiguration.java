@@ -1,55 +1,37 @@
 package pl.grzeslowski.openhab.supla.internal.server.oh_config;
 
 import java.math.BigDecimal;
-import lombok.Data;
 import lombok.ToString;
 import org.eclipse.jdt.annotation.Nullable;
 
-@Data
-public class ServerDeviceHandlerConfiguration {
-    @Nullable
-    private String guid;
-
-    @Nullable
-    private BigDecimal serverAccessId;
-
-    @Nullable
-    @ToString.Exclude
-    private String serverAccessIdPassword;
-
-    @Nullable
-    private String email;
-
-    @Nullable
-    private String authKey;
-
-    @Nullable
-    private BigDecimal timeout;
-
-    @Nullable
-    private BigDecimal timeoutMin;
-
-    @Nullable
-    private BigDecimal timeoutMax;
+public record ServerDeviceHandlerConfiguration(
+        @Nullable String guid,
+        @Nullable BigDecimal serverAccessId,
+        @Nullable @ToString.Exclude String serverAccessIdPassword,
+        @Nullable String email,
+        @Nullable String authKey,
+        @Nullable BigDecimal timeout,
+        @Nullable BigDecimal timeoutMin,
+        @Nullable BigDecimal timeoutMax) {
 
     public Integer getTimeout() {
-        if (timeout == null) {
+        if (this.timeout == null) {
             return null;
         }
-        return timeout.intValue();
+        return this.timeout.intValue();
     }
 
     public Integer getTimeoutMin() {
-        if (timeoutMin == null) {
+        if (this.timeoutMin == null) {
             return null;
         }
-        return timeoutMin.intValue();
+        return this.timeoutMin.intValue();
     }
 
     public Integer getTimeoutMax() {
-        if (timeoutMax == null) {
+        if (this.timeoutMax == null) {
             return null;
         }
-        return timeoutMax.intValue();
+        return this.timeoutMax.intValue();
     }
 }
