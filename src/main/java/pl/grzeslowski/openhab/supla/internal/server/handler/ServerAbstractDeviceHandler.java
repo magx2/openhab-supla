@@ -68,6 +68,10 @@ import pl.grzeslowski.openhab.supla.internal.handler.OfflineInitializationExcept
 import pl.grzeslowski.openhab.supla.internal.server.SuplaServerDeviceActions;
 import pl.grzeslowski.openhab.supla.internal.server.handler.device_config.DeviceConfigResult;
 import pl.grzeslowski.openhab.supla.internal.server.handler.device_config.DeviceConfigUtil;
+import pl.grzeslowski.openhab.supla.internal.server.handler.oh_config.AuthData;
+import pl.grzeslowski.openhab.supla.internal.server.handler.oh_config.DeviceConfiguration;
+import pl.grzeslowski.openhab.supla.internal.server.handler.oh_config.ServerDeviceHandlerConfiguration;
+import pl.grzeslowski.openhab.supla.internal.server.handler.oh_config.TimeoutConfiguration;
 import pl.grzeslowski.openhab.supla.internal.server.traits.DeviceChannelValue;
 import pl.grzeslowski.openhab.supla.internal.server.traits.RegisterDeviceTrait;
 import pl.grzeslowski.openhab.supla.internal.server.traits.RegisterEmailDeviceTrait;
