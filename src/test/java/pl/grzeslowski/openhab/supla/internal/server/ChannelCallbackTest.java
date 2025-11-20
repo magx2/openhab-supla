@@ -1,14 +1,14 @@
 package pl.grzeslowski.openhab.supla.internal.server;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ChannelIds.Hvac.HVAC_MODE_CHANNEL_ID;
-import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ChannelIds.Hvac.HVAC_TEMPERATURE_COOL_CHANNEL_ID;
-import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ChannelIds.Hvac.HVAC_TEMPERATURE_HEAT_CHANNEL_ID;
-import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ChannelIds.Hvac.HVAC_WORKING_CHANNEL_ID;
-import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ChannelIds.UNKNOWN_CHANNEL_ID;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.Channels.HUMIDITY_CHANNEL_ID;
+import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.Channels.HVAC_MODE_CHANNEL_ID;
+import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.Channels.HVAC_TEMPERATURE_COOL_CHANNEL_ID;
+import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.Channels.HVAC_TEMPERATURE_HEAT_CHANNEL_ID;
+import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.Channels.HVAC_WORKING_CHANNEL_ID;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.Channels.SWITCH_CHANNEL_ID;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.Channels.TEMPERATURE_CHANNEL_ID;
+import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.Channels.UNKNOWN_CHANNEL_ID;
 
 import java.util.List;
 import org.junit.jupiter.api.Test;

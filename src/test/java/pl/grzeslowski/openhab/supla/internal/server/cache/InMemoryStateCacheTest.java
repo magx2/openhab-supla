@@ -25,6 +25,16 @@ class InMemoryStateCacheTest {
         ChannelUID channelUID = new ChannelUID("binding:thing:1");
         State state = new State() {
             @Override
+            public <T extends State> T as(Class<T> type) {
+                return null;
+            }
+
+            @Override
+            public String format(String pattern) {
+                return "state";
+            }
+
+            @Override
             public String toFullString() {
                 return "state";
             }
