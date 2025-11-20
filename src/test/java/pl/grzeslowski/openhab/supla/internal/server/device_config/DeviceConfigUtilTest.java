@@ -40,7 +40,7 @@ class DeviceConfigUtilTest {
     void shouldRejectMissingSeparatorWhenParsingDeviceConfig() {
         assertThatThrownBy(() -> DeviceConfigUtil.parseDeviceConfig("InvalidString"))
                 .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("at least one \"\:");
+                .hasMessageContaining("at least one \":\"");
     }
 
     @Test
