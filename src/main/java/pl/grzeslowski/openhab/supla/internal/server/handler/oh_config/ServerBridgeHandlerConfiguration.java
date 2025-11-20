@@ -8,7 +8,7 @@
  *
  * <p>SPDX-License-Identifier: EPL-2.0
  */
-package pl.grzeslowski.openhab.supla.internal.server.handler;
+package pl.grzeslowski.openhab.supla.internal.server.handler.oh_config;
 
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.DEFAULT_PORT;
 
@@ -20,7 +20,7 @@ import org.eclipse.jdt.annotation.Nullable;
 
 @NonNullByDefault
 @Data
-public class ServerBridgeHandlerConfig {
+public class ServerBridgeHandlerConfiguration {
     @Nullable
     private BigDecimal serverAccessId;
 
