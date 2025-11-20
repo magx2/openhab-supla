@@ -1,0 +1,35 @@
+@startuml
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+
+' OpenHAB core abstractions
+interface ThingHandler
+interface BridgeHandler
+abstract class BaseThingHandler
+abstract class BaseBridgeHandler
+
+' Device handler hierarchy
+abstract class AbstractDeviceHandler
+abstract class ServerAbstractDeviceHandler
+class GatewayDeviceHandler
+class SingleDeviceHandler
+class SubDeviceHandler
+class CloudDeviceHandler
+
+' Bridge handler hierarchy
+class CloudBridgeHandler
+class ServerBridgeHandler
+
+ThingHandler <|.. BaseThingHandler
+BaseThingHandler <|-- AbstractDeviceHandler
+AbstractDeviceHandler <|-- ServerAbstractDeviceHandler
+ServerAbstractDeviceHandler <|-- GatewayDeviceHandler
+ServerAbstractDeviceHandler <|-- SingleDeviceHandler
+AbstractDeviceHandler <|-- SubDeviceHandler
+AbstractDeviceHandler <|-- CloudDeviceHandler
+
+ThingHandler <|.. BridgeHandler
+BridgeHandler <|.. BaseBridgeHandler
+BaseBridgeHandler <|-- CloudBridgeHandler
+BaseBridgeHandler <|-- ServerBridgeHandler
+@enduml
