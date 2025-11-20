@@ -1,4 +1,4 @@
-package pl.grzeslowski.openhab.supla.internal.server.handler;
+package pl.grzeslowski.openhab.supla.internal.server.handler.trait;
 
 import io.netty.channel.ChannelFuture;
 import java.util.Map;
@@ -13,6 +13,7 @@ import org.openhab.core.thing.binding.builder.ThingBuilder;
 import org.openhab.core.types.State;
 import org.slf4j.Logger;
 import pl.grzeslowski.jsupla.protocol.api.types.FromServerProto;
+import pl.grzeslowski.openhab.supla.internal.server.cache.StateCache;
 
 @NonNullByDefault
 public interface SuplaDevice extends HandleCommand, HandleProto, StateCache {

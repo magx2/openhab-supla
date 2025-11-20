@@ -1,4 +1,4 @@
-package pl.grzeslowski.openhab.supla.internal.server.handler;
+package pl.grzeslowski.openhab.supla.internal.server.handler.trait;
 
 import org.openhab.core.library.types.*;
 import org.openhab.core.thing.ChannelUID;

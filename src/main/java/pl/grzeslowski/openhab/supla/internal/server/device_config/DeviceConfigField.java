@@ -1,4 +1,4 @@
-package pl.grzeslowski.openhab.supla.internal.server.handler.device_config;
+package pl.grzeslowski.openhab.supla.internal.server.device_config;
 
 import static java.util.Arrays.stream;
 import static pl.grzeslowski.jsupla.protocol.api.consts.ProtoConsts.*;

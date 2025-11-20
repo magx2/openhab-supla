@@ -1,4 +1,4 @@
-package pl.grzeslowski.openhab.supla.internal.server.handler;
+package pl.grzeslowski.openhab.supla.internal.server.cache;
 
 import static java.util.Collections.synchronizedMap;
 
@@ -11,7 +11,7 @@ import org.openhab.core.types.State;
 import org.slf4j.Logger;
 
 @RequiredArgsConstructor
-class InMemoryStateCache implements StateCache {
+public class InMemoryStateCache implements StateCache {
     private final Map<ChannelUID, State> stateCache = synchronizedMap(new HashMap<>());
     private final Logger logger;
 

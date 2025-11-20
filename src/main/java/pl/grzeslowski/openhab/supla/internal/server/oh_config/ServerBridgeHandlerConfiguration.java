@@ -8,7 +8,7 @@
  *
  * <p>SPDX-License-Identifier: EPL-2.0
  */
-package pl.grzeslowski.openhab.supla.internal.server.handler.oh_config;
+package pl.grzeslowski.openhab.supla.internal.server.oh_config;
 
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.DEFAULT_PORT;
 

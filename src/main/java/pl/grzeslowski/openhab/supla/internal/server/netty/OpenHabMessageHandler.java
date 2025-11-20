@@ -1,4 +1,4 @@
-package pl.grzeslowski.openhab.supla.internal.server.handler;
+package pl.grzeslowski.openhab.supla.internal.server.netty;
 
 import static java.util.Objects.requireNonNull;
 import static pl.grzeslowski.openhab.supla.internal.GuidLogger.attachGuid;
@@ -18,6 +18,8 @@ import pl.grzeslowski.jsupla.server.MessageHandler;
 import pl.grzeslowski.jsupla.server.SuplaWriter;
 import pl.grzeslowski.openhab.supla.internal.GuidLogger.GuidLogged;
 import pl.grzeslowski.openhab.supla.internal.server.discovery.ServerDiscoveryService;
+import pl.grzeslowski.openhab.supla.internal.server.handler.trait.SuplaThing;
+import pl.grzeslowski.openhab.supla.internal.server.handler.trait.SuplaThingRegistry;
 import pl.grzeslowski.openhab.supla.internal.server.traits.RegisterDeviceTrait;
 
 @RequiredArgsConstructor

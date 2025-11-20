@@ -4,7 +4,6 @@ import static java.lang.System.arraycopy;
 import static java.util.Objects.requireNonNull;
 import static java.util.Objects.requireNonNullElse;
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static pl.grzeslowski.jsupla.protocol.api.consts.ProtoConsts.*;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.BINDING_ID;
 
 import java.math.BigInteger;
@@ -23,11 +22,11 @@ import org.openhab.core.thing.binding.ThingActions;
 import org.openhab.core.thing.binding.ThingActionsScope;
 import org.openhab.core.thing.binding.ThingHandler;
 import pl.grzeslowski.jsupla.protocol.api.structs.sd.SetDeviceConfig;
+import pl.grzeslowski.openhab.supla.internal.server.device_config.DeviceConfig;
+import pl.grzeslowski.openhab.supla.internal.server.device_config.DeviceConfigField;
+import pl.grzeslowski.openhab.supla.internal.server.device_config.DeviceConfigResult;
+import pl.grzeslowski.openhab.supla.internal.server.device_config.DeviceConfigUtil;
 import pl.grzeslowski.openhab.supla.internal.server.handler.ServerAbstractDeviceHandler;
-import pl.grzeslowski.openhab.supla.internal.server.handler.device_config.DeviceConfig;
-import pl.grzeslowski.openhab.supla.internal.server.handler.device_config.DeviceConfigField;
-import pl.grzeslowski.openhab.supla.internal.server.handler.device_config.DeviceConfigResult;
-import pl.grzeslowski.openhab.supla.internal.server.handler.device_config.DeviceConfigUtil;
 
 @ThingActionsScope(name = BINDING_ID)
 @NonNullByDefault
