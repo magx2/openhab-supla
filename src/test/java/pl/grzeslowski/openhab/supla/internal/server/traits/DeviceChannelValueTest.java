@@ -1,32 +1,17 @@
 package pl.grzeslowski.openhab.supla.internal.server.traits;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.when;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 import pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaDeviceChannelValueA;
 import pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaDeviceChannelValueB;
 import pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaDeviceChannelValueC;
 
-@ExtendWith(MockitoExtension.class)
 class DeviceChannelValueTest {
-    @Mock
-    private SuplaDeviceChannelValueA valueA;
-
-    @Mock
-    private SuplaDeviceChannelValueB valueB;
-
-    @Mock
-    private SuplaDeviceChannelValueC valueC;
-
     @Test
     void shouldBuildFromProtoA() {
         byte[] bytes = new byte[] {0x01};
-        when(valueA.channelNumber()).thenReturn((short) 2);
-        when(valueA.value()).thenReturn(bytes);
+        SuplaDeviceChannelValueA valueA = new SuplaDeviceChannelValueA((short) 2, bytes);
 
         DeviceChannelValue deviceChannelValue = DeviceChannelValue.fromProto(valueA);
 
@@ -39,9 +24,7 @@ class DeviceChannelValueTest {
     @Test
     void shouldBuildFromProtoB() {
         byte[] bytes = new byte[] {0x02};
-        when(valueB.channelNumber()).thenReturn((short) 3);
-        when(valueB.value()).thenReturn(bytes);
-        when(valueB.offline()).thenReturn((short) 1);
+        SuplaDeviceChannelValueB valueB = new SuplaDeviceChannelValueB((short) 3, (short) 1, bytes);
 
         DeviceChannelValue deviceChannelValue = DeviceChannelValue.fromProto(valueB);
 
@@ -54,10 +37,7 @@ class DeviceChannelValueTest {
     @Test
     void shouldBuildFromProtoC() {
         byte[] bytes = new byte[] {0x03};
-        when(valueC.channelNumber()).thenReturn((short) 4);
-        when(valueC.value()).thenReturn(bytes);
-        when(valueC.offline()).thenReturn((short) 0);
-        when(valueC.validityTimeSec()).thenReturn(99L);
+        SuplaDeviceChannelValueC valueC = new SuplaDeviceChannelValueC((short) 4, (short) 0, 99L, bytes);
 
         DeviceChannelValue deviceChannelValue = DeviceChannelValue.fromProto(valueC);
 

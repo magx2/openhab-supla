@@ -2,32 +2,16 @@ package pl.grzeslowski.openhab.supla.internal.server.traits;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.mock;
 import static pl.grzeslowski.jsupla.protocol.api.ChannelFunction.SUPLA_CHANNELFNC_NONE;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.value.HvacValue;
 import pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaDeviceChannelA;
 import pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaDeviceChannelB;
 import pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaDeviceChannelE;
 
-@ExtendWith(MockitoExtension.class)
 class DeviceChannelTest {
-    @Mock
-    private SuplaDeviceChannelA channelA;
-
-    @Mock
-    private SuplaDeviceChannelB channelB;
-
-    @Mock
-    private SuplaDeviceChannelE channelE;
-
-    @Mock
-    private HvacValue hvacValue;
-
     @Test
     void shouldRejectMissingValues() {
         assertThatThrownBy(() -> new DeviceChannel(1, 2, SUPLA_CHANNELFNC_NONE, null, null, null))
@@ -38,9 +22,7 @@ class DeviceChannelTest {
     @Test
     void shouldBuildFromProtoA() {
         byte[] value = new byte[] {0x01, 0x02};
-        when(channelA.number()).thenReturn((short) 5);
-        when(channelA.type()).thenReturn(7);
-        when(channelA.value()).thenReturn(value);
+        SuplaDeviceChannelA channelA = new SuplaDeviceChannelA((short) 5, 7, value);
 
         DeviceChannel deviceChannel = DeviceChannel.fromProto(channelA);
 
@@ -55,10 +37,8 @@ class DeviceChannelTest {
     @Test
     void shouldBuildFromProtoBWithChannelFunction() {
         byte[] value = new byte[] {0x0A};
-        when(channelB.number()).thenReturn((short) 10);
-        when(channelB.type()).thenReturn(20);
-        when(channelB.funcList()).thenReturn(SUPLA_CHANNELFNC_NONE.getValue());
-        when(channelB.value()).thenReturn(value);
+        SuplaDeviceChannelB channelB =
+                new SuplaDeviceChannelB((short) 10, 20, SUPLA_CHANNELFNC_NONE.getValue(), 0, value);
 
         DeviceChannel deviceChannel = DeviceChannel.fromProto(channelB);
 
@@ -73,12 +53,20 @@ class DeviceChannelTest {
     @Test
     void shouldBuildFromProtoEWithSubDeviceId() {
         byte[] value = new byte[] {0x0B, 0x0C};
-        when(channelE.number()).thenReturn((short) 11);
-        when(channelE.type()).thenReturn(21);
-        when(channelE.funcList()).thenReturn(SUPLA_CHANNELFNC_NONE.getValue());
-        when(channelE.value()).thenReturn(value);
-        when(channelE.hvacValue()).thenReturn(null);
-        when(channelE.subDeviceId()).thenReturn((short) 3);
+        SuplaDeviceChannelE channelE = new SuplaDeviceChannelE(
+                (short) 11,
+                21,
+                SUPLA_CHANNELFNC_NONE.getValue(),
+                null,
+                0,
+                0,
+                (short) 0,
+                0,
+                value,
+                null,
+                null,
+                (short) 0,
+                (short) 3);
 
         DeviceChannel deviceChannel = DeviceChannel.fromProto(channelE);
 
@@ -92,6 +80,7 @@ class DeviceChannelTest {
 
     @Test
     void shouldAcceptHvacWithoutValue() {
+        HvacValue hvacValue = mock(HvacValue.class);
         DeviceChannel deviceChannel = new DeviceChannel(1, 2, SUPLA_CHANNELFNC_NONE, null, hvacValue, null);
 
         assertThat(deviceChannel.value()).isNull();

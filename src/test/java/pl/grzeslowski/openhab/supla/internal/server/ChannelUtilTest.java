@@ -115,10 +115,8 @@ class ChannelUtilTest {
         var channelUID = new ChannelUID("supla:test:1:1");
         map.put(5, new SuplaDevice.ChannelAndPreviousState(channelUID, null));
         when(suplaDevice.getSenderIdToChannelUID()).thenReturn(map);
-        var newValueResult = org.mockito.Mockito.mock(
-                pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaChannelNewValueResult.class);
-        when(newValueResult.senderId()).thenReturn(5);
-        when(newValueResult.success()).thenReturn((byte) 1);
+        var newValueResult =
+                new pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaChannelNewValueResult((short) 0, 5, (byte) 1);
 
         channelUtil.consumeSuplaChannelNewValueResult(newValueResult);
 
@@ -134,11 +132,8 @@ class ChannelUtilTest {
         var channel = org.mockito.Mockito.mock(Channel.class);
         when(channel.getUID()).thenReturn(channelUID);
         when(thing.getChannels()).thenReturn(new ArrayList<>(java.util.List.of(channel)));
-        var newValueResult = org.mockito.Mockito.mock(
-                pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaChannelNewValueResult.class);
-        when(newValueResult.senderId()).thenReturn(8);
-        when(newValueResult.channelNumber()).thenReturn((short) 2);
-        when(newValueResult.success()).thenReturn((byte) 0);
+        var newValueResult =
+                new pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaChannelNewValueResult((short) 2, 8, (byte) 0);
 
         channelUtil.consumeSuplaChannelNewValueResult(newValueResult);
 
