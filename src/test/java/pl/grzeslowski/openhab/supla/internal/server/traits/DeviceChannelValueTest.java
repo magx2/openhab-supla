@@ -25,7 +25,7 @@ class DeviceChannelValueTest {
     @Test
     void shouldBuildFromProtoA() {
         byte[] bytes = new byte[] {0x01};
-        when(valueA.channelNumber()).thenReturn(2);
+        when(valueA.channelNumber()).thenReturn((short) 2);
         when(valueA.value()).thenReturn(bytes);
 
         DeviceChannelValue deviceChannelValue = DeviceChannelValue.fromProto(valueA);
@@ -39,9 +39,9 @@ class DeviceChannelValueTest {
     @Test
     void shouldBuildFromProtoB() {
         byte[] bytes = new byte[] {0x02};
-        when(valueB.channelNumber()).thenReturn(3);
+        when(valueB.channelNumber()).thenReturn((short) 3);
         when(valueB.value()).thenReturn(bytes);
-        when(valueB.offline()).thenReturn((byte) 1);
+        when(valueB.offline()).thenReturn((short) 1);
 
         DeviceChannelValue deviceChannelValue = DeviceChannelValue.fromProto(valueB);
 
@@ -54,9 +54,9 @@ class DeviceChannelValueTest {
     @Test
     void shouldBuildFromProtoC() {
         byte[] bytes = new byte[] {0x03};
-        when(valueC.channelNumber()).thenReturn(4);
+        when(valueC.channelNumber()).thenReturn((short) 4);
         when(valueC.value()).thenReturn(bytes);
-        when(valueC.offline()).thenReturn((byte) 0);
+        when(valueC.offline()).thenReturn((short) 0);
         when(valueC.validityTimeSec()).thenReturn(99L);
 
         DeviceChannelValue deviceChannelValue = DeviceChannelValue.fromProto(valueC);

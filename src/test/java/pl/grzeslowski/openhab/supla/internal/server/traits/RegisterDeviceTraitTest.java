@@ -51,7 +51,8 @@ class RegisterDeviceTraitTest {
         when(registerDeviceA.locationId()).thenReturn(5);
         when(registerDeviceA.locationPwd()).thenReturn(locationPassword);
 
-        RegisterDeviceTrait trait = RegisterDeviceTrait.fromProto(registerDeviceA);
+        RegisterDeviceTrait trait = RegisterDeviceTrait.fromProto(
+                (pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaRegisterDevice) registerDeviceA);
 
         assertThat(trait).isInstanceOf(RegisterLocationDeviceTrait.class);
         RegisterLocationDeviceTrait locationTrait = (RegisterLocationDeviceTrait) trait;
@@ -72,12 +73,13 @@ class RegisterDeviceTraitTest {
         when(registerDeviceD.name()).thenReturn(NAME);
         when(registerDeviceD.softVer()).thenReturn(SOFT_VER);
         when(registerDeviceD.channels())
-                .thenReturn(new pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaDeviceChannelE[0]);
+                .thenReturn(new pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaDeviceChannelB[0]);
         when(registerDeviceD.email()).thenReturn("user@example.com".getBytes());
         when(registerDeviceD.authKey()).thenReturn(authKey);
         when(registerDeviceD.serverName()).thenReturn("server.supla.org".getBytes());
 
-        RegisterDeviceTrait trait = RegisterDeviceTrait.fromProto(registerDeviceD);
+        RegisterDeviceTrait trait = RegisterDeviceTrait.fromProto(
+                (pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaRegisterDevice) registerDeviceD);
 
         assertThat(trait).isInstanceOf(RegisterEmailDeviceTrait.class);
         RegisterEmailDeviceTrait emailTrait = (RegisterEmailDeviceTrait) trait;
@@ -99,14 +101,15 @@ class RegisterDeviceTraitTest {
         when(registerDeviceE.name()).thenReturn(NAME);
         when(registerDeviceE.softVer()).thenReturn(SOFT_VER);
         when(registerDeviceE.channels())
-                .thenReturn(new pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaDeviceChannelE[0]);
-        when(registerDeviceE.manufacturerId()).thenReturn(10L);
-        when(registerDeviceE.productId()).thenReturn(20L);
+                .thenReturn(new pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaDeviceChannelC[0]);
+        when(registerDeviceE.manufacturerId()).thenReturn((short) 10);
+        when(registerDeviceE.productId()).thenReturn((short) 20);
         when(registerDeviceE.email()).thenReturn("another@example.com".getBytes());
         when(registerDeviceE.authKey()).thenReturn(authKey);
         when(registerDeviceE.serverName()).thenReturn("prod.server".getBytes());
 
-        RegisterDeviceTrait trait = RegisterDeviceTrait.fromProto(registerDeviceE);
+        RegisterDeviceTrait trait = RegisterDeviceTrait.fromProto(
+                (pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaRegisterDevice) registerDeviceE);
 
         assertThat(trait).isInstanceOf(RegisterEmailDeviceTrait.class);
         RegisterEmailDeviceTrait emailTrait = (RegisterEmailDeviceTrait) trait;

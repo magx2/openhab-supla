@@ -76,24 +76,23 @@ class ChannelValueToStateTest {
     @Test
     void shouldConvertPercentAndRgb() {
         var converter = new ChannelValueToState(thingUID, 6);
-        org.mockito.Mockito.when(percentValue.value()).thenReturn(new BigDecimal("55"));
-        org.mockito.Mockito.when(rgbValue.red()).thenReturn((short) 1);
-        org.mockito.Mockito.when(rgbValue.green()).thenReturn((short) 2);
-        org.mockito.Mockito.when(rgbValue.blue()).thenReturn((short) 3);
+        org.mockito.Mockito.when(percentValue.value()).thenReturn(55);
+        org.mockito.Mockito.when(rgbValue.red()).thenReturn(1);
+        org.mockito.Mockito.when(rgbValue.green()).thenReturn(2);
+        org.mockito.Mockito.when(rgbValue.blue()).thenReturn(3);
 
-        List<State> states = converter
-                .onPercentValue(percentValue)
-                .map(pair -> pair.getValue1())
-                .concat(converter.onRgbValue(rgbValue).map(pair -> pair.getValue1()))
+        List<State> states = java.util.stream.Stream.concat(
+                        converter.onPercentValue(percentValue).map(pair -> pair.getValue1()),
+                        converter.onRgbValue(rgbValue).map(pair -> pair.getValue1()))
                 .toList();
 
-        assertThat(states).containsExactly(new PercentType(55), HSBType.fromRGB((short) 1, (short) 2, (short) 3));
+        assertThat(states).containsExactly(new PercentType(55), HSBType.fromRGB(1, 2, 3));
     }
 
     @Test
     void shouldReturnUndefForSpecialTemperatureValue() {
         var converter = new ChannelValueToState(thingUID, 7);
-        org.mockito.Mockito.when(temperatureValue.temperature()).thenReturn(BigDecimal.valueOf(-275));
+        org.mockito.Mockito.when(temperatureValue.temperature()).thenReturn(BigDecimal.valueOf(-275.0));
 
         State state = converter
                 .onTemperatureValue(temperatureValue)
@@ -107,8 +106,8 @@ class ChannelValueToStateTest {
     @Test
     void shouldMapTemperatureAndHumidityGroup() {
         var converter = new ChannelValueToState(thingUID, 8);
-        org.mockito.Mockito.when(temperatureAndHumidityValue.temperature()).thenReturn(BigDecimal.valueOf(21));
-        org.mockito.Mockito.when(temperatureAndHumidityValue.humidity()).thenReturn(BigDecimal.valueOf(-1));
+        org.mockito.Mockito.when(temperatureAndHumidityValue.temperature()).thenReturn(BigDecimal.valueOf(21.0));
+        org.mockito.Mockito.when(temperatureAndHumidityValue.humidity()).thenReturn(BigDecimal.valueOf(-1.0));
 
         List<State> states = converter
                 .onTemperatureAndHumidityValue(temperatureAndHumidityValue)
@@ -117,7 +116,7 @@ class ChannelValueToStateTest {
 
         assertThat(states)
                 .containsExactly(
-                        new QuantityType<>(BigDecimal.valueOf(21), org.openhab.core.library.unit.SIUnits.CELSIUS),
+                        new QuantityType<>(BigDecimal.valueOf(21.0), org.openhab.core.library.unit.SIUnits.CELSIUS),
                         UNDEF);
     }
 

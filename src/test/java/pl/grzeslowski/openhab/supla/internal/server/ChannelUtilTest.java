@@ -8,6 +8,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -51,7 +52,7 @@ class ChannelUtilTest {
         when(suplaDevice.getThing()).thenReturn(thing);
         when(suplaDevice.getChannelTypes()).thenReturn(channelTypes);
         when(suplaDevice.editThing()).thenReturn(thingBuilder);
-        when(thingBuilder.withChannels(any())).thenReturn(thingBuilder);
+        when(thingBuilder.withChannels(any(List.class))).thenReturn(thingBuilder);
     }
 
     @Test
