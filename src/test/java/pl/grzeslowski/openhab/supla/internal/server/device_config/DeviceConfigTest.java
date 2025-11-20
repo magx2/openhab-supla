@@ -47,7 +47,6 @@ class DeviceConfigTest {
     void shouldParseStatusLedConfig() {
         var config = DeviceConfig.StatusLedConfig.parse(List.of("OFF_WHEN_CONNECTED"));
 
-        assertThat(config.statusLed())
-                .isEqualTo(DeviceConfig.StatusLedConfig.StatusLed.OFF_WHEN_CONNECTED);
+        assertThat(config.statusLed()).isEqualTo(DeviceConfig.StatusLedConfig.StatusLed.OFF_WHEN_CONNECTED);
     }
 }

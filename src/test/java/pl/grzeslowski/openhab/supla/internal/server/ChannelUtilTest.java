@@ -20,7 +20,6 @@ import org.openhab.core.thing.ChannelGroupUID;
 import org.openhab.core.thing.ChannelUID;
 import org.openhab.core.thing.Thing;
 import org.openhab.core.thing.binding.builder.ThingBuilder;
-import org.openhab.core.types.State;
 import org.slf4j.Logger;
 import pl.grzeslowski.openhab.supla.internal.server.handler.trait.SuplaDevice;
 import pl.grzeslowski.openhab.supla.internal.server.traits.DeviceChannelValue;

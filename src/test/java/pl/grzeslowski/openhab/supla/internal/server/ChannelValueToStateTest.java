@@ -14,8 +14,8 @@ import org.openhab.core.library.types.DecimalType;
 import org.openhab.core.library.types.HSBType;
 import org.openhab.core.library.types.OnOffType;
 import org.openhab.core.library.types.PercentType;
-import org.openhab.core.library.types.StringType;
 import org.openhab.core.library.types.QuantityType;
+import org.openhab.core.library.types.StringType;
 import org.openhab.core.thing.ChannelGroupUID;
 import org.openhab.core.thing.ChannelUID;
 import org.openhab.core.thing.ThingUID;
@@ -27,7 +27,6 @@ import pl.grzeslowski.jsupla.protocol.api.channeltype.value.StoppableOpenClose;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.value.TemperatureAndHumidityValue;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.value.TemperatureValue;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.value.UnknownValue;
-import pl.grzeslowski.openhab.supla.internal.server.ChannelValueToState;
 
 @ExtendWith(MockitoExtension.class)
 class ChannelValueToStateTest {
@@ -56,7 +55,10 @@ class ChannelValueToStateTest {
         var converter = new ChannelValueToState(thingUID, 2);
         org.mockito.Mockito.when(decimalValue.value()).thenReturn(BigDecimal.TEN);
 
-        List<State> states = converter.onDecimalValue(decimalValue).map(pair -> pair.getValue1()).toList();
+        List<State> states = converter
+                .onDecimalValue(decimalValue)
+                .map(pair -> pair.getValue1())
+                .toList();
 
         assertThat(states).containsExactly(new DecimalType(BigDecimal.TEN));
     }
@@ -65,7 +67,8 @@ class ChannelValueToStateTest {
     void shouldReturnNullForMissingDecimal() {
         var converter = new ChannelValueToState(thingUID, 4);
 
-        List<State> states = converter.onDecimalValue(null).map(pair -> pair.getValue1()).toList();
+        List<State> states =
+                converter.onDecimalValue(null).map(pair -> pair.getValue1()).toList();
 
         assertThat(states).containsExactly(NULL);
     }
@@ -78,7 +81,8 @@ class ChannelValueToStateTest {
         org.mockito.Mockito.when(rgbValue.green()).thenReturn((short) 2);
         org.mockito.Mockito.when(rgbValue.blue()).thenReturn((short) 3);
 
-        List<State> states = converter.onPercentValue(percentValue)
+        List<State> states = converter
+                .onPercentValue(percentValue)
                 .map(pair -> pair.getValue1())
                 .concat(converter.onRgbValue(rgbValue).map(pair -> pair.getValue1()))
                 .toList();
@@ -91,7 +95,11 @@ class ChannelValueToStateTest {
         var converter = new ChannelValueToState(thingUID, 7);
         org.mockito.Mockito.when(temperatureValue.temperature()).thenReturn(BigDecimal.valueOf(-275));
 
-        State state = converter.onTemperatureValue(temperatureValue).findFirst().orElseThrow().getValue1();
+        State state = converter
+                .onTemperatureValue(temperatureValue)
+                .findFirst()
+                .orElseThrow()
+                .getValue1();
 
         assertThat(state).isEqualTo(UNDEF);
     }
@@ -102,7 +110,8 @@ class ChannelValueToStateTest {
         org.mockito.Mockito.when(temperatureAndHumidityValue.temperature()).thenReturn(BigDecimal.valueOf(21));
         org.mockito.Mockito.when(temperatureAndHumidityValue.humidity()).thenReturn(BigDecimal.valueOf(-1));
 
-        List<State> states = converter.onTemperatureAndHumidityValue(temperatureAndHumidityValue)
+        List<State> states = converter
+                .onTemperatureAndHumidityValue(temperatureAndHumidityValue)
                 .map(pair -> pair.getValue1())
                 .toList();
 
@@ -116,7 +125,11 @@ class ChannelValueToStateTest {
     void shouldHandleStoppableOpenClose() {
         var converter = new ChannelValueToState(thingUID, 9);
 
-        State state = converter.onStoppableOpenClose(StoppableOpenClose.STOP).findFirst().orElseThrow().getValue1();
+        State state = converter
+                .onStoppableOpenClose(StoppableOpenClose.STOP)
+                .findFirst()
+                .orElseThrow()
+                .getValue1();
 
         assertThat(state).isEqualTo(OnOffType.from(false));
     }
@@ -125,8 +138,12 @@ class ChannelValueToStateTest {
     void shouldHandleUnknownValueNulls() {
         var converter = new ChannelValueToState(thingUID, 5);
 
-        List<State> nullStates = converter.onUnknownValue(null).map(pair -> pair.getValue1()).toList();
-        List<State> messageStates = converter.onUnknownValue(unknownValue).map(pair -> pair.getValue1()).toList();
+        List<State> nullStates =
+                converter.onUnknownValue(null).map(pair -> pair.getValue1()).toList();
+        List<State> messageStates = converter
+                .onUnknownValue(unknownValue)
+                .map(pair -> pair.getValue1())
+                .toList();
 
         assertThat(nullStates).containsExactly(NULL);
         org.mockito.Mockito.when(unknownValue.message()).thenReturn("oops");
@@ -137,7 +154,10 @@ class ChannelValueToStateTest {
     void shouldReturnGroupedUidsForTemperatureAndHumidity() {
         var converter = new ChannelValueToState(thingUID, 12);
 
-        List<ChannelUID> uids = converter.onTemperatureAndHumidityValue(null).map(pair -> pair.getValue0()).toList();
+        List<ChannelUID> uids = converter
+                .onTemperatureAndHumidityValue(null)
+                .map(pair -> pair.getValue0())
+                .toList();
 
         assertThat(uids)
                 .containsExactly(
