@@ -2,6 +2,9 @@ package pl.grzeslowski.openhab.supla.internal.server.handler;
 
 import org.eclipse.jdt.annotation.Nullable;
 import org.openhab.core.thing.binding.BridgeHandler;
+import pl.grzeslowski.openhab.supla.internal.server.handler.oh_config.AuthData;
+import pl.grzeslowski.openhab.supla.internal.server.handler.oh_config.ServerBridgeHandlerConfiguration;
+import pl.grzeslowski.openhab.supla.internal.server.handler.oh_config.TimeoutConfiguration;
 
 public interface SuplaBridge extends BridgeHandler {
     TimeoutConfiguration getTimeoutConfiguration();
@@ -12,7 +15,7 @@ public interface SuplaBridge extends BridgeHandler {
 
     void deviceConnected();
 
-    static AuthData buildAuthData(ServerBridgeHandlerConfig config) {
+    static AuthData buildAuthData(ServerBridgeHandlerConfiguration config) {
         AuthData.@Nullable LocationAuthData locationAuthData;
         if (config.getServerAccessId() != null && config.getServerAccessIdPassword() != null) {
             locationAuthData = new AuthData.LocationAuthData(
@@ -29,7 +32,7 @@ public interface SuplaBridge extends BridgeHandler {
         return new AuthData(locationAuthData, emailAuthData);
     }
 
-    static TimeoutConfiguration buildTimeoutConfiguration(ServerBridgeHandlerConfig config) {
+    static TimeoutConfiguration buildTimeoutConfiguration(ServerBridgeHandlerConfiguration config) {
         return new TimeoutConfiguration(
                 config.getTimeout().intValue(),
                 config.getTimeoutMin().intValue(),

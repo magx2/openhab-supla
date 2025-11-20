@@ -42,6 +42,9 @@ import pl.grzeslowski.openhab.supla.internal.Documentation;
 import pl.grzeslowski.openhab.supla.internal.handler.InitializationException;
 import pl.grzeslowski.openhab.supla.internal.handler.OfflineInitializationException;
 import pl.grzeslowski.openhab.supla.internal.server.discovery.ServerDiscoveryService;
+import pl.grzeslowski.openhab.supla.internal.server.handler.oh_config.AuthData;
+import pl.grzeslowski.openhab.supla.internal.server.handler.oh_config.ServerBridgeHandlerConfiguration;
+import pl.grzeslowski.openhab.supla.internal.server.handler.oh_config.TimeoutConfiguration;
 
 @NonNullByDefault
 public class ServerBridgeHandler extends BaseBridgeHandler implements SuplaThingRegistry, SuplaBridge {
@@ -95,7 +98,7 @@ public class ServerBridgeHandler extends BaseBridgeHandler implements SuplaThing
     }
 
     private void internalInitialize() throws Exception {
-        var config = this.getConfigAs(ServerBridgeHandlerConfig.class);
+        var config = this.getConfigAs(ServerBridgeHandlerConfiguration.class);
         if (!config.isServerAuth() && !config.isEmailAuth()) {
             throw new OfflineInitializationException(
                     CONFIGURATION_ERROR, "You need to pass either server auth or email auth!");
@@ -168,8 +171,9 @@ public class ServerBridgeHandler extends BaseBridgeHandler implements SuplaThing
         if (port > 0) {
             return String.valueOf(port);
         }
-        return String.valueOf(
-                this.getConfigAs(ServerBridgeHandlerConfig.class).getPort().intValue());
+        return String.valueOf(this.getConfigAs(ServerBridgeHandlerConfiguration.class)
+                .getPort()
+                .intValue());
     }
 
     private MessageHandler messageHandlerFactory(SocketChannel ch) {

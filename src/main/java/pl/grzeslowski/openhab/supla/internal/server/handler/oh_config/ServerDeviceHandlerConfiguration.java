@@ -1,4 +1,4 @@
-package pl.grzeslowski.openhab.supla.internal.server.handler;
+package pl.grzeslowski.openhab.supla.internal.server.handler.oh_config;
 
 import java.math.BigDecimal;
 import lombok.Data;
