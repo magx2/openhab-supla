@@ -1,37 +1,22 @@
 package pl.grzeslowski.openhab.supla.internal.server.traits;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.when;
 import static pl.grzeslowski.jsupla.protocol.api.ProtocolHelpers.parseHexString;
 import static pl.grzeslowski.jsupla.protocol.api.ProtocolHelpers.parseString;
 
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 import pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaRegisterDeviceA;
 import pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaRegisterDeviceD;
 import pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaRegisterDeviceE;
 import pl.grzeslowski.jsupla.protocol.api.types.ToServerProto;
 
-@ExtendWith(MockitoExtension.class)
 class RegisterDeviceTraitTest {
     private static final byte[] GUID = new byte[] {0x01, 0x02, 0x03, 0x04};
     private static final byte[] NAME = "Test Device".getBytes();
     private static final byte[] SOFT_VER = "1.0".getBytes();
 
-    @Mock
-    private ToServerProto toServerProto;
-
-    @Mock
-    private SuplaRegisterDeviceA registerDeviceA;
-
-    @Mock
-    private SuplaRegisterDeviceD registerDeviceD;
-
-    @Mock
-    private SuplaRegisterDeviceE registerDeviceE;
+    private final ToServerProto toServerProto = new ToServerProto() {};
 
     @Test
     void shouldReturnEmptyOptionalWhenNotRegisterDevice() {
@@ -43,13 +28,14 @@ class RegisterDeviceTraitTest {
     @Test
     void shouldMapRegisterDeviceAToLocationTrait() {
         byte[] locationPassword = new byte[] {0x0A};
-        when(registerDeviceA.guid()).thenReturn(GUID);
-        when(registerDeviceA.name()).thenReturn(NAME);
-        when(registerDeviceA.softVer()).thenReturn(SOFT_VER);
-        when(registerDeviceA.channels())
-                .thenReturn(new pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaDeviceChannelA[0]);
-        when(registerDeviceA.locationId()).thenReturn(5);
-        when(registerDeviceA.locationPwd()).thenReturn(locationPassword);
+        SuplaRegisterDeviceA registerDeviceA = new SuplaRegisterDeviceA(
+                5,
+                locationPassword,
+                GUID,
+                NAME,
+                SOFT_VER,
+                (short) 0,
+                new pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaDeviceChannelA[0]);
 
         RegisterDeviceTrait trait = RegisterDeviceTrait.fromProto(
                 (pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaRegisterDevice) registerDeviceA);
@@ -69,14 +55,15 @@ class RegisterDeviceTraitTest {
     @Test
     void shouldMapRegisterDeviceDToEmailTrait() {
         byte[] authKey = new byte[] {0x01, 0x02};
-        when(registerDeviceD.guid()).thenReturn(GUID);
-        when(registerDeviceD.name()).thenReturn(NAME);
-        when(registerDeviceD.softVer()).thenReturn(SOFT_VER);
-        when(registerDeviceD.channels())
-                .thenReturn(new pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaDeviceChannelB[0]);
-        when(registerDeviceD.email()).thenReturn("user@example.com".getBytes());
-        when(registerDeviceD.authKey()).thenReturn(authKey);
-        when(registerDeviceD.serverName()).thenReturn("server.supla.org".getBytes());
+        SuplaRegisterDeviceD registerDeviceD = new SuplaRegisterDeviceD(
+                "user@example.com".getBytes(),
+                authKey,
+                GUID,
+                NAME,
+                SOFT_VER,
+                "server.supla.org".getBytes(),
+                (short) 0,
+                new pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaDeviceChannelB[0]);
 
         RegisterDeviceTrait trait = RegisterDeviceTrait.fromProto(
                 (pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaRegisterDevice) registerDeviceD);
@@ -97,16 +84,18 @@ class RegisterDeviceTraitTest {
     @Test
     void shouldMapRegisterDeviceEWithManufacturerAndProduct() {
         byte[] authKey = new byte[] {0x05};
-        when(registerDeviceE.guid()).thenReturn(GUID);
-        when(registerDeviceE.name()).thenReturn(NAME);
-        when(registerDeviceE.softVer()).thenReturn(SOFT_VER);
-        when(registerDeviceE.channels())
-                .thenReturn(new pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaDeviceChannelC[0]);
-        when(registerDeviceE.manufacturerId()).thenReturn((short) 10);
-        when(registerDeviceE.productId()).thenReturn((short) 20);
-        when(registerDeviceE.email()).thenReturn("another@example.com".getBytes());
-        when(registerDeviceE.authKey()).thenReturn(authKey);
-        when(registerDeviceE.serverName()).thenReturn("prod.server".getBytes());
+        SuplaRegisterDeviceE registerDeviceE = new SuplaRegisterDeviceE(
+                "another@example.com".getBytes(),
+                authKey,
+                GUID,
+                NAME,
+                SOFT_VER,
+                "prod.server".getBytes(),
+                0,
+                (short) 10,
+                (short) 20,
+                (short) 0,
+                new pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaDeviceChannelC[0]);
 
         RegisterDeviceTrait trait = RegisterDeviceTrait.fromProto(
                 (pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaRegisterDevice) registerDeviceE);
