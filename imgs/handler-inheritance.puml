@@ -2,24 +2,28 @@
 skinparam classAttributeIconSize 0
 skinparam linetype ortho
 
+top to bottom direction
+
 skinparam class {
   BackgroundColor<<OpenHAB>> HoneyDew
   BackgroundColor<<Supla>> Cornsilk
 }
 
-' OpenHAB core abstractions
+' Core OpenHAB abstractions (kept at the top)
 interface ThingHandler <<OpenHAB>>
 interface BridgeHandler <<OpenHAB>>
 abstract class BaseThingHandler <<OpenHAB>>
 abstract class BaseBridgeHandler <<OpenHAB>>
 
-' Device handler hierarchy
+' Supla traits and shared interfaces
 interface HandleCommand <<Supla>>
 interface HandleProto <<Supla>>
 interface SuplaDevice <<Supla>>
 interface SuplaThing <<Supla>>
 interface SuplaThingRegistry <<Supla>>
 interface SuplaBridge <<Supla>>
+
+' Device handler hierarchy
 abstract class AbstractDeviceHandler <<Supla>>
 abstract class ServerAbstractDeviceHandler <<Supla>>
 class GatewayDeviceHandler <<Supla>>
@@ -31,13 +35,20 @@ class CloudDeviceHandler <<Supla>>
 class CloudBridgeHandler <<Supla>>
 class ServerBridgeHandler <<Supla>>
 
+' OpenHAB core relationships
 ThingHandler <|.. BaseThingHandler
+ThingHandler <|.. BridgeHandler
+BridgeHandler <|.. BaseBridgeHandler
+
+' Device handler relationships
 BaseThingHandler <|-- AbstractDeviceHandler
 AbstractDeviceHandler <|-- ServerAbstractDeviceHandler
-ServerAbstractDeviceHandler <|-- GatewayDeviceHandler
-ServerAbstractDeviceHandler <|-- SingleDeviceHandler
 AbstractDeviceHandler <|-- SubDeviceHandler
 AbstractDeviceHandler <|-- CloudDeviceHandler
+ServerAbstractDeviceHandler <|-- GatewayDeviceHandler
+ServerAbstractDeviceHandler <|-- SingleDeviceHandler
+
+' Supla trait implementations (device side)
 HandleCommand <|.. AbstractDeviceHandler
 HandleCommand <|.. SubDeviceHandler
 HandleCommand <|.. SingleDeviceHandler
@@ -50,14 +61,13 @@ HandleProto <|-- SuplaDevice
 SuplaDevice <|.. SubDeviceHandler
 SuplaDevice <|.. SingleDeviceHandler
 SuplaDevice <|.. GatewayDeviceHandler
+SuplaThing <|.. ServerAbstractDeviceHandler
 
-ThingHandler <|.. BridgeHandler
-BridgeHandler <|.. BaseBridgeHandler
+' Bridge handler relationships
 BaseBridgeHandler <|-- CloudBridgeHandler
 BaseBridgeHandler <|-- ServerBridgeHandler
 BridgeHandler <|.. SuplaBridge
 SuplaBridge <|.. GatewayDeviceHandler
 SuplaBridge <|.. ServerBridgeHandler
-SuplaThing <|.. ServerAbstractDeviceHandler
 SuplaThingRegistry <|.. ServerBridgeHandler
 @enduml
