@@ -102,7 +102,11 @@ public class ChannelValueToState implements ChannelValueSwitch.Callback<Stream<P
         if (temperatureValue == null) {
             return Stream.of(Pair.with(id, NULL));
         }
-        return Stream.of(buildTempPair(temperatureValue.temperature(), id));
+        var temperature = temperatureValue.temperature();
+        if (temperature.compareTo(UNDEF_TEMPERATURE_VALUE) == 0) {
+            return Stream.of(Pair.with(id, UNDEF));
+        }
+        return Stream.of(buildTempPair(temperature, id));
     }
 
     private static Pair<ChannelUID, State> buildTempPair(BigDecimal temperature, ChannelUID id) {

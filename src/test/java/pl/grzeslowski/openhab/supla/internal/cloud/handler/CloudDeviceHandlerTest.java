@@ -67,8 +67,7 @@ import pl.grzeslowski.openhab.supla.internal.cloud.executors.LedCommandExecutor;
 import pl.grzeslowski.openhab.supla.internal.cloud.executors.LedCommandExecutorFactory;
 
 @SuppressWarnings({"WeakerAccess", "unused"})
-@ExtendWith(MockitoExtension.class)
-@ExtendWith(RandomBeansExtension.class)
+@ExtendWith({MockitoExtension.class, RandomBeansExtension.class})
 class CloudDeviceHandlerTest {
     CloudDeviceHandler handler;
 

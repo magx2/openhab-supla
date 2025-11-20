@@ -2,9 +2,7 @@ package pl.grzeslowski.openhab.supla.internal.server;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -39,20 +37,18 @@ class ChannelUtilTest {
     @Mock
     private ThingBuilder thingBuilder;
 
-    private HashMap<Integer, Integer> channelTypes;
-
     @InjectMocks
     private ChannelUtil channelUtil;
 
     @BeforeEach
     void setUp() {
-        channelTypes = new HashMap<>();
+        var channelTypes = new HashMap<Integer, Integer>();
 
-        when(suplaDevice.getLogger()).thenReturn(logger);
-        when(suplaDevice.getThing()).thenReturn(thing);
-        when(suplaDevice.getChannelTypes()).thenReturn(channelTypes);
-        when(suplaDevice.editThing()).thenReturn(thingBuilder);
-        when(thingBuilder.withChannels(any(List.class))).thenReturn(thingBuilder);
+        lenient().when(suplaDevice.getLogger()).thenReturn(logger);
+        lenient().when(suplaDevice.getThing()).thenReturn(thing);
+        lenient().when(suplaDevice.getChannelTypes()).thenReturn(channelTypes);
+        lenient().when(suplaDevice.editThing()).thenReturn(thingBuilder);
+        lenient().when(thingBuilder.withChannels(any(List.class))).thenReturn(thingBuilder);
     }
 
     @Test
