@@ -161,7 +161,7 @@ public abstract class ServerAbstractDeviceHandler extends AbstractDeviceHandler 
         var localBridgeHandler = this.bridgeHandler = (SuplaBridge) rawBridgeHandler;
 
         var config = getConfigAs(ServerDeviceHandlerConfiguration.class);
-        guid = config.guid();
+        guid = config.getGuid();
         if (guid == null || guid.isEmpty()) {
             guid = null;
             throw new OfflineInitializationException(CONFIGURATION_ERROR, "There is no guid for this thing.");
@@ -189,7 +189,7 @@ public abstract class ServerAbstractDeviceHandler extends AbstractDeviceHandler 
             return guid;
         }
         var config = getConfigAs(ServerDeviceHandlerConfiguration.class);
-        var guid = config.guid();
+        var guid = config.getGuid();
         if (guid == null || guid.isEmpty()) {
             return null;
         }
@@ -199,15 +199,15 @@ public abstract class ServerAbstractDeviceHandler extends AbstractDeviceHandler 
     protected AuthData buildAuthData(SuplaBridge localBridgeHandler, ServerDeviceHandlerConfiguration config) {
         var bridgeAuthData = requireNonNull(localBridgeHandler.getAuthData(), "No auth data in bridge!");
         AuthData.@Nullable LocationAuthData locationAuthData;
-        if (config.serverAccessId() != null && config.serverAccessIdPassword() != null) {
-            locationAuthData =
-                    new AuthData.LocationAuthData(config.serverAccessId().intValue(), config.serverAccessIdPassword());
+        if (config.getServerAccessId() != null && config.getServerAccessIdPassword() != null) {
+            locationAuthData = new AuthData.LocationAuthData(
+                    config.getServerAccessId().intValue(), config.getServerAccessIdPassword());
         } else {
             locationAuthData = bridgeAuthData.locationAuthData();
         }
         AuthData.@Nullable EmailAuthData emailAuthData;
-        var configEmail = config.email();
-        var configAuthKey = config.authKey();
+        var configEmail = config.getEmail();
+        var configAuthKey = config.getAuthKey();
         var bridgeEmailAuthData = bridgeAuthData.emailAuthData();
 
         if ((configEmail == null || configAuthKey == null) && bridgeEmailAuthData == null) {
