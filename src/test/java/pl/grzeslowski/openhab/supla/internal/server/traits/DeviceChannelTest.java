@@ -27,7 +27,7 @@ class DeviceChannelTest {
 
         assertThat(deviceChannel.number()).isEqualTo(5);
         assertThat(deviceChannel.type()).isEqualTo(7);
-        assertThat(deviceChannel.channelFunction()).isEqualTo(SUPLA_CHANNELFNC_NONE);
+        assertThat(deviceChannel.channelFunction()).isEqualTo(null);
         assertThat(deviceChannel.value()).containsExactly(value);
         assertThat(deviceChannel.hvacValue()).isNull();
         assertThat(deviceChannel.subDeviceId()).isNull();
