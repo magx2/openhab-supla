@@ -46,7 +46,8 @@ class RegisterDeviceTraitTest {
         when(registerDeviceA.guid()).thenReturn(GUID);
         when(registerDeviceA.name()).thenReturn(NAME);
         when(registerDeviceA.softVer()).thenReturn(SOFT_VER);
-        when(registerDeviceA.channels()).thenReturn(new pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaDeviceChannelA[0]);
+        when(registerDeviceA.channels())
+                .thenReturn(new pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaDeviceChannelA[0]);
         when(registerDeviceA.locationId()).thenReturn(5);
         when(registerDeviceA.locationPwd()).thenReturn(locationPassword);
 
@@ -70,7 +71,8 @@ class RegisterDeviceTraitTest {
         when(registerDeviceD.guid()).thenReturn(GUID);
         when(registerDeviceD.name()).thenReturn(NAME);
         when(registerDeviceD.softVer()).thenReturn(SOFT_VER);
-        when(registerDeviceD.channels()).thenReturn(new pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaDeviceChannelE[0]);
+        when(registerDeviceD.channels())
+                .thenReturn(new pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaDeviceChannelE[0]);
         when(registerDeviceD.email()).thenReturn("user@example.com".getBytes());
         when(registerDeviceD.authKey()).thenReturn(authKey);
         when(registerDeviceD.serverName()).thenReturn("server.supla.org".getBytes());
@@ -96,7 +98,8 @@ class RegisterDeviceTraitTest {
         when(registerDeviceE.guid()).thenReturn(GUID);
         when(registerDeviceE.name()).thenReturn(NAME);
         when(registerDeviceE.softVer()).thenReturn(SOFT_VER);
-        when(registerDeviceE.channels()).thenReturn(new pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaDeviceChannelE[0]);
+        when(registerDeviceE.channels())
+                .thenReturn(new pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaDeviceChannelE[0]);
         when(registerDeviceE.manufacturerId()).thenReturn(10L);
         when(registerDeviceE.productId()).thenReturn(20L);
         when(registerDeviceE.email()).thenReturn("another@example.com".getBytes());

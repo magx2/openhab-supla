@@ -16,16 +16,15 @@ import org.junit.jupiter.api.Test;
 class FlagsTest {
     @Test
     void shouldSetAllFlags() {
-        int combined =
-                SUPLA_DEVICE_FLAG_CALCFG_ENTER_CFG_MODE
-                        | SUPLA_DEVICE_FLAG_SLEEP_MODE_ENABLED
-                        | SUPLA_DEVICE_FLAG_CALCFG_SET_TIME
-                        | SUPLA_DEVICE_FLAG_DEVICE_CONFIG_SUPPORTED
-                        | SUPLA_DEVICE_FLAG_DEVICE_LOCKED
-                        | SUPLA_DEVICE_FLAG_CALCFG_SUBDEVICE_PAIRING
-                        | SUPLA_DEVICE_FLAG_CALCFG_IDENTIFY_DEVICE
-                        | SUPLA_DEVICE_FLAG_CALCFG_RESTART_DEVICE
-                        | SUPLA_DEVICE_FLAG_ALWAYS_ALLOW_CHANNEL_DELETION;
+        int combined = SUPLA_DEVICE_FLAG_CALCFG_ENTER_CFG_MODE
+                | SUPLA_DEVICE_FLAG_SLEEP_MODE_ENABLED
+                | SUPLA_DEVICE_FLAG_CALCFG_SET_TIME
+                | SUPLA_DEVICE_FLAG_DEVICE_CONFIG_SUPPORTED
+                | SUPLA_DEVICE_FLAG_DEVICE_LOCKED
+                | SUPLA_DEVICE_FLAG_CALCFG_SUBDEVICE_PAIRING
+                | SUPLA_DEVICE_FLAG_CALCFG_IDENTIFY_DEVICE
+                | SUPLA_DEVICE_FLAG_CALCFG_RESTART_DEVICE
+                | SUPLA_DEVICE_FLAG_ALWAYS_ALLOW_CHANNEL_DELETION;
 
         Flags flags = new Flags(combined);
 
