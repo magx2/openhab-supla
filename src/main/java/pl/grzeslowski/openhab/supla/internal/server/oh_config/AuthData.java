@@ -1,4 +1,4 @@
-package pl.grzeslowski.openhab.supla.internal.server.handler.oh_config;
+package pl.grzeslowski.openhab.supla.internal.server.oh_config;
 
 import lombok.NonNull;
 import org.eclipse.jdt.annotation.Nullable;

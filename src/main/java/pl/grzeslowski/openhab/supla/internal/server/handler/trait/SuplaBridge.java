@@ -1,10 +1,10 @@
-package pl.grzeslowski.openhab.supla.internal.server.handler;
+package pl.grzeslowski.openhab.supla.internal.server.handler.trait;
 
 import org.eclipse.jdt.annotation.Nullable;
 import org.openhab.core.thing.binding.BridgeHandler;
-import pl.grzeslowski.openhab.supla.internal.server.handler.oh_config.AuthData;
-import pl.grzeslowski.openhab.supla.internal.server.handler.oh_config.ServerBridgeHandlerConfiguration;
-import pl.grzeslowski.openhab.supla.internal.server.handler.oh_config.TimeoutConfiguration;
+import pl.grzeslowski.openhab.supla.internal.server.oh_config.AuthData;
+import pl.grzeslowski.openhab.supla.internal.server.oh_config.ServerBridgeHandlerConfiguration;
+import pl.grzeslowski.openhab.supla.internal.server.oh_config.TimeoutConfiguration;
 
 public interface SuplaBridge extends BridgeHandler {
     TimeoutConfiguration getTimeoutConfiguration();

@@ -42,9 +42,13 @@ import pl.grzeslowski.openhab.supla.internal.Documentation;
 import pl.grzeslowski.openhab.supla.internal.handler.InitializationException;
 import pl.grzeslowski.openhab.supla.internal.handler.OfflineInitializationException;
 import pl.grzeslowski.openhab.supla.internal.server.discovery.ServerDiscoveryService;
-import pl.grzeslowski.openhab.supla.internal.server.handler.oh_config.AuthData;
-import pl.grzeslowski.openhab.supla.internal.server.handler.oh_config.ServerBridgeHandlerConfiguration;
-import pl.grzeslowski.openhab.supla.internal.server.handler.oh_config.TimeoutConfiguration;
+import pl.grzeslowski.openhab.supla.internal.server.handler.trait.SuplaBridge;
+import pl.grzeslowski.openhab.supla.internal.server.handler.trait.SuplaThing;
+import pl.grzeslowski.openhab.supla.internal.server.handler.trait.SuplaThingRegistry;
+import pl.grzeslowski.openhab.supla.internal.server.netty.OpenHabMessageHandler;
+import pl.grzeslowski.openhab.supla.internal.server.oh_config.AuthData;
+import pl.grzeslowski.openhab.supla.internal.server.oh_config.ServerBridgeHandlerConfiguration;
+import pl.grzeslowski.openhab.supla.internal.server.oh_config.TimeoutConfiguration;
 
 @NonNullByDefault
 public class ServerBridgeHandler extends BaseBridgeHandler implements SuplaThingRegistry, SuplaBridge {

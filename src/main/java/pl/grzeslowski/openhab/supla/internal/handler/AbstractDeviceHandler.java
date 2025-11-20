@@ -13,7 +13,7 @@ import org.openhab.core.thing.binding.BaseThingHandler;
 import org.openhab.core.types.Command;
 import org.openhab.core.types.RefreshType;
 import org.slf4j.Logger;
-import pl.grzeslowski.openhab.supla.internal.server.handler.HandleCommand;
+import pl.grzeslowski.openhab.supla.internal.server.handler.trait.HandleCommand;
 
 @NonNullByDefault
 public abstract class AbstractDeviceHandler extends BaseThingHandler implements HandleCommand {

@@ -1,10 +1,10 @@
-package pl.grzeslowski.openhab.supla.internal.server.handler.device_config;
+package pl.grzeslowski.openhab.supla.internal.server.device_config;
 
 import static java.util.Objects.requireNonNullElse;
 import static pl.grzeslowski.jsupla.protocol.api.consts.ProtoConsts.*;
-import static pl.grzeslowski.openhab.supla.internal.server.handler.device_config.DeviceConfig.DisableUserInterfaceConfig.UserInterface.PARTIAL;
-import static pl.grzeslowski.openhab.supla.internal.server.handler.device_config.DeviceConfigField.*;
-import static pl.grzeslowski.openhab.supla.internal.server.handler.device_config.DeviceConfigUtil.*;
+import static pl.grzeslowski.openhab.supla.internal.server.device_config.DeviceConfig.DisableUserInterfaceConfig.UserInterface.PARTIAL;
+import static pl.grzeslowski.openhab.supla.internal.server.device_config.DeviceConfigField.*;
+import static pl.grzeslowski.openhab.supla.internal.server.device_config.DeviceConfigUtil.*;
 
 import jakarta.annotation.Nullable;
 import java.math.BigInteger;

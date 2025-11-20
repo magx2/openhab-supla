@@ -30,13 +30,18 @@ import pl.grzeslowski.jsupla.protocol.api.types.FromServerProto;
 import pl.grzeslowski.jsupla.server.SuplaWriter;
 import pl.grzeslowski.openhab.supla.internal.handler.AbstractDeviceHandler;
 import pl.grzeslowski.openhab.supla.internal.server.ChannelUtil;
-import pl.grzeslowski.openhab.supla.internal.server.handler.oh_config.ServerSubDeviceHandlerConfiguration;
+import pl.grzeslowski.openhab.supla.internal.server.cache.InMemoryStateCache;
+import pl.grzeslowski.openhab.supla.internal.server.cache.StateCache;
+import pl.grzeslowski.openhab.supla.internal.server.handler.trait.HandleCommand;
+import pl.grzeslowski.openhab.supla.internal.server.handler.trait.HandlerCommandTrait;
+import pl.grzeslowski.openhab.supla.internal.server.handler.trait.SuplaDevice;
+import pl.grzeslowski.openhab.supla.internal.server.oh_config.ServerSubDeviceHandlerConfiguration;
 import pl.grzeslowski.openhab.supla.internal.server.traits.DeviceChannel;
 import pl.grzeslowski.openhab.supla.internal.server.traits.DeviceChannelValue;
 
 @NonNullByDefault
 @ToString(onlyExplicitlyIncluded = true)
-public class ServerSubDeviceHandler extends AbstractDeviceHandler implements SuplaDevice {
+public class SubDeviceHandler extends AbstractDeviceHandler implements SuplaDevice {
     @Getter
     private final Map<Integer, Integer> channelTypes = synchronizedMap(new HashMap<>());
 
@@ -58,7 +63,7 @@ public class ServerSubDeviceHandler extends AbstractDeviceHandler implements Sup
 
     @Nullable
     @Getter
-    private ServerGatewayDeviceHandler bridgeHandler;
+    private GatewayDeviceHandler bridgeHandler;
 
     @Getter
     private final AtomicInteger senderId = new AtomicInteger(1);
@@ -72,7 +77,7 @@ public class ServerSubDeviceHandler extends AbstractDeviceHandler implements Sup
     @Delegate(types = StateCache.class)
     private final StateCache stateCache = new InMemoryStateCache(logger);
 
-    public ServerSubDeviceHandler(Thing thing) {
+    public SubDeviceHandler(Thing thing) {
         super(thing);
     }
 
@@ -88,7 +93,7 @@ public class ServerSubDeviceHandler extends AbstractDeviceHandler implements Sup
                 return;
             }
             var rawBridgeHandler = bridge.getHandler();
-            if (!(rawBridgeHandler instanceof ServerGatewayDeviceHandler localBridgeHandler)) {
+            if (!(rawBridgeHandler instanceof GatewayDeviceHandler localBridgeHandler)) {
                 String simpleName;
                 if (rawBridgeHandler != null) {
                     simpleName = rawBridgeHandler.getClass().getSimpleName();
@@ -98,8 +103,8 @@ public class ServerSubDeviceHandler extends AbstractDeviceHandler implements Sup
                 updateStatus(
                         OFFLINE,
                         CONFIGURATION_ERROR,
-                        "Bridge has wrong type! Should be " + ServerGatewayDeviceHandler.class.getSimpleName()
-                                + ", but was " + simpleName);
+                        "Bridge has wrong type! Should be " + GatewayDeviceHandler.class.getSimpleName() + ", but was "
+                                + simpleName);
                 return;
             }
             this.bridgeHandler = localBridgeHandler;
@@ -125,8 +130,8 @@ public class ServerSubDeviceHandler extends AbstractDeviceHandler implements Sup
         }
         var bridgeGuid = Optional.ofNullable(getBridge())
                 .map(Bridge::getHandler)
-                .filter(ServerGatewayDeviceHandler.class::isInstance)
-                .map(ServerGatewayDeviceHandler.class::cast)
+                .filter(GatewayDeviceHandler.class::isInstance)
+                .map(GatewayDeviceHandler.class::cast)
                 .map(ServerAbstractDeviceHandler::getGuid);
         if (bridgeGuid.isEmpty()) {
             return null;

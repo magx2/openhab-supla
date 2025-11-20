@@ -1,4 +1,4 @@
-package pl.grzeslowski.openhab.supla.internal.server.handler;
+package pl.grzeslowski.openhab.supla.internal.server.handler.trait;
 
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import pl.grzeslowski.jsupla.protocol.api.structs.dcs.SetCaption;

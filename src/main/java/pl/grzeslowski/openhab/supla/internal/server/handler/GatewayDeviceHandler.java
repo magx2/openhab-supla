@@ -38,17 +38,19 @@ import pl.grzeslowski.jsupla.protocol.api.types.FromServerProto;
 import pl.grzeslowski.openhab.supla.internal.GuidLogger;
 import pl.grzeslowski.openhab.supla.internal.server.ChannelUtil;
 import pl.grzeslowski.openhab.supla.internal.server.discovery.ServerDiscoveryService;
-import pl.grzeslowski.openhab.supla.internal.server.handler.oh_config.AuthData;
-import pl.grzeslowski.openhab.supla.internal.server.handler.oh_config.ServerDeviceHandlerConfiguration;
-import pl.grzeslowski.openhab.supla.internal.server.handler.oh_config.TimeoutConfiguration;
+import pl.grzeslowski.openhab.supla.internal.server.handler.trait.SuplaBridge;
+import pl.grzeslowski.openhab.supla.internal.server.handler.trait.SuplaDevice;
+import pl.grzeslowski.openhab.supla.internal.server.oh_config.AuthData;
+import pl.grzeslowski.openhab.supla.internal.server.oh_config.ServerDeviceHandlerConfiguration;
+import pl.grzeslowski.openhab.supla.internal.server.oh_config.TimeoutConfiguration;
 import pl.grzeslowski.openhab.supla.internal.server.traits.DeviceChannel;
 import pl.grzeslowski.openhab.supla.internal.server.traits.DeviceChannelValue;
 import pl.grzeslowski.openhab.supla.internal.server.traits.RegisterDeviceTrait;
 
 @NonNullByDefault
-public class ServerGatewayDeviceHandler extends ServerAbstractDeviceHandler implements SuplaBridge, SuplaDevice {
+public class GatewayDeviceHandler extends ServerAbstractDeviceHandler implements SuplaBridge, SuplaDevice {
     private final AtomicInteger numberOfConnectedDevices = new AtomicInteger();
-    private final Map<Integer, ServerSubDeviceHandler> childHandlers = Collections.synchronizedMap(new HashMap<>());
+    private final Map<Integer, SubDeviceHandler> childHandlers = Collections.synchronizedMap(new HashMap<>());
     private Map<Integer, Integer> channelNumberToHandlerId = Map.of();
 
     @Getter
@@ -66,7 +68,7 @@ public class ServerGatewayDeviceHandler extends ServerAbstractDeviceHandler impl
     private final ServerDiscoveryService serverDiscoveryService;
     private final Set<Integer> discoveredIds = Collections.synchronizedSet(new HashSet<>());
 
-    public ServerGatewayDeviceHandler(Thing thing, ServerDiscoveryService serverDiscoveryService) {
+    public GatewayDeviceHandler(Thing thing, ServerDiscoveryService serverDiscoveryService) {
         super(thing);
         this.serverDiscoveryService = serverDiscoveryService;
     }
@@ -120,7 +122,7 @@ public class ServerGatewayDeviceHandler extends ServerAbstractDeviceHandler impl
         return true;
     }
 
-    private void initChannels(ServerSubDeviceHandler subDeviceHandler) {
+    private void initChannels(SubDeviceHandler subDeviceHandler) {
         var channels = this.channels.stream()
                 .filter(c -> c.subDeviceId() != null && c.subDeviceId().equals(subDeviceHandler.getSubDeviceId()))
                 .toList();
@@ -314,7 +316,7 @@ public class ServerGatewayDeviceHandler extends ServerAbstractDeviceHandler impl
         });
     }
 
-    private Optional<ServerSubDeviceHandler> findSubDevice(Integer channelNumber) {
+    private Optional<SubDeviceHandler> findSubDevice(Integer channelNumber) {
         if (!channelNumberToHandlerId.containsKey(channelNumber)) {
             return Optional.empty();
         }

@@ -1,4 +1,4 @@
-package pl.grzeslowski.openhab.supla.internal.server.handler;
+package pl.grzeslowski.openhab.supla.internal.server.handler.trait;
 
 import java.util.Optional;
 

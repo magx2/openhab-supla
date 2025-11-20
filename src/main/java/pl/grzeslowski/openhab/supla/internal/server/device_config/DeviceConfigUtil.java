@@ -1,10 +1,10 @@
-package pl.grzeslowski.openhab.supla.internal.server.handler.device_config;
+package pl.grzeslowski.openhab.supla.internal.server.device_config;
 
 import static java.util.Arrays.stream;
 import static java.util.Map.entry;
 import static pl.grzeslowski.jsupla.protocol.api.consts.ProtoConsts.*;
 import static pl.grzeslowski.openhab.supla.internal.Documentation.SET_DEVICE_CONFIG;
-import static pl.grzeslowski.openhab.supla.internal.server.handler.device_config.DeviceConfigField.*;
+import static pl.grzeslowski.openhab.supla.internal.server.device_config.DeviceConfigField.*;
 
 import java.time.Duration;
 import java.time.format.DateTimeParseException;

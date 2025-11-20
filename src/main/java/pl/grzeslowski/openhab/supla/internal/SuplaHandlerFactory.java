@@ -85,7 +85,7 @@ public class SuplaHandlerFactory extends BaseThingHandlerFactory {
 
     @NonNull
     private ThingHandler newServerDeviceHandler(final Thing thing) {
-        return new ServerSingleDeviceHandler(thing);
+        return new SingleDeviceHandler(thing);
     }
 
     @NonNull
@@ -129,13 +129,13 @@ public class SuplaHandlerFactory extends BaseThingHandlerFactory {
 
     private ThingHandler newGatewayDeviceHandler(Thing thing) {
         var discovery = new ServerDiscoveryService(thing.getUID());
-        var bridgeHandler = new ServerGatewayDeviceHandler(thing, discovery);
+        var bridgeHandler = new GatewayDeviceHandler(thing, discovery);
         var serviceRegistration = registerThingDiscovery(discovery);
         servicesToDispose.put(bridgeHandler, serviceRegistration.getReference());
         return bridgeHandler;
     }
 
     private ThingHandler newSubDeviceHandler(Thing thing) {
-        return new ServerSubDeviceHandler(thing);
+        return new SubDeviceHandler(thing);
     }
 }
