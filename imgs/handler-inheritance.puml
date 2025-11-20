@@ -14,6 +14,12 @@ abstract class BaseThingHandler <<OpenHAB>>
 abstract class BaseBridgeHandler <<OpenHAB>>
 
 ' Device handler hierarchy
+interface HandleCommand <<Supla>>
+interface HandleProto <<Supla>>
+interface SuplaDevice <<Supla>>
+interface SuplaThing <<Supla>>
+interface SuplaThingRegistry <<Supla>>
+interface SuplaBridge <<Supla>>
 abstract class AbstractDeviceHandler <<Supla>>
 abstract class ServerAbstractDeviceHandler <<Supla>>
 class GatewayDeviceHandler <<Supla>>
@@ -32,9 +38,26 @@ ServerAbstractDeviceHandler <|-- GatewayDeviceHandler
 ServerAbstractDeviceHandler <|-- SingleDeviceHandler
 AbstractDeviceHandler <|-- SubDeviceHandler
 AbstractDeviceHandler <|-- CloudDeviceHandler
+HandleCommand <|.. AbstractDeviceHandler
+HandleCommand <|.. SubDeviceHandler
+HandleCommand <|.. SingleDeviceHandler
+HandleCommand <|.. GatewayDeviceHandler
+HandleProto <|.. ServerAbstractDeviceHandler
+HandleProto <|.. SingleDeviceHandler
+HandleProto <|.. GatewayDeviceHandler
+HandleCommand <|-- SuplaDevice
+HandleProto <|-- SuplaDevice
+SuplaDevice <|.. SubDeviceHandler
+SuplaDevice <|.. SingleDeviceHandler
+SuplaDevice <|.. GatewayDeviceHandler
 
 ThingHandler <|.. BridgeHandler
 BridgeHandler <|.. BaseBridgeHandler
 BaseBridgeHandler <|-- CloudBridgeHandler
 BaseBridgeHandler <|-- ServerBridgeHandler
+BridgeHandler <|.. SuplaBridge
+SuplaBridge <|.. GatewayDeviceHandler
+SuplaBridge <|.. ServerBridgeHandler
+SuplaThing <|.. ServerAbstractDeviceHandler
+SuplaThingRegistry <|.. ServerBridgeHandler
 @enduml
