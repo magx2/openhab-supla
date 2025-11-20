@@ -1,4 +1,4 @@
-package pl.grzeslowski.openhab.supla.internal.server.handler;
+package pl.grzeslowski.openhab.supla.internal.server.handler.trait;
 
 import static java.util.Objects.requireNonNull;
 import static org.openhab.core.thing.ThingStatus.OFFLINE;
@@ -27,7 +27,7 @@ import pl.grzeslowski.jsupla.protocol.api.structs.sd.SuplaChannelNewValue;
 
 @NonNullByDefault
 @RequiredArgsConstructor
-class HandlerCommandTrait implements HandleCommand {
+public class HandlerCommandTrait implements HandleCommand {
     private final SuplaDevice suplaDevice;
 
     @Override
