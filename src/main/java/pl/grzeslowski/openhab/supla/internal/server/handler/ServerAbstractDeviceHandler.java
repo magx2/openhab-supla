@@ -513,7 +513,7 @@ public abstract class ServerAbstractDeviceHandler extends AbstractDeviceHandler 
                     COMMUNICATION_ERROR,
                     "Device did not send ping message in last " + delta + " seconds. Last message was from "
                             + formatter.format(lastPingDate));
-            dispose();
+            disposePing();
         }
     }
 
@@ -678,6 +678,7 @@ public abstract class ServerAbstractDeviceHandler extends AbstractDeviceHandler 
                     }
                 };
         updateStatus(OFFLINE, COMMUNICATION_ERROR, text);
+        disposePing();
     }
 
     private String baseLogger() {
