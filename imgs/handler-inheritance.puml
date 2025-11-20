@@ -2,23 +2,28 @@
 skinparam classAttributeIconSize 0
 skinparam linetype ortho
 
+skinparam class {
+  BackgroundColor<<OpenHAB>> HoneyDew
+  BackgroundColor<<Supla>> Cornsilk
+}
+
 ' OpenHAB core abstractions
-interface ThingHandler
-interface BridgeHandler
-abstract class BaseThingHandler
-abstract class BaseBridgeHandler
+interface ThingHandler <<OpenHAB>>
+interface BridgeHandler <<OpenHAB>>
+abstract class BaseThingHandler <<OpenHAB>>
+abstract class BaseBridgeHandler <<OpenHAB>>
 
 ' Device handler hierarchy
-abstract class AbstractDeviceHandler
-abstract class ServerAbstractDeviceHandler
-class GatewayDeviceHandler
-class SingleDeviceHandler
-class SubDeviceHandler
-class CloudDeviceHandler
+abstract class AbstractDeviceHandler <<Supla>>
+abstract class ServerAbstractDeviceHandler <<Supla>>
+class GatewayDeviceHandler <<Supla>>
+class SingleDeviceHandler <<Supla>>
+class SubDeviceHandler <<Supla>>
+class CloudDeviceHandler <<Supla>>
 
 ' Bridge handler hierarchy
-class CloudBridgeHandler
-class ServerBridgeHandler
+class CloudBridgeHandler <<Supla>>
+class ServerBridgeHandler <<Supla>>
 
 ThingHandler <|.. BaseThingHandler
 BaseThingHandler <|-- AbstractDeviceHandler
