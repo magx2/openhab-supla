@@ -4,8 +4,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static pl.grzeslowski.jsupla.protocol.api.ProtocolHelpers.parseHexString;
 import static pl.grzeslowski.jsupla.protocol.api.ProtocolHelpers.parseString;
 
+import java.util.Arrays;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
+import pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaDeviceChannelValueA;
 import pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaRegisterDeviceA;
 import pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaRegisterDeviceD;
 import pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaRegisterDeviceE;
@@ -16,7 +18,8 @@ class RegisterDeviceTraitTest {
     private static final byte[] NAME = "Test Device".getBytes();
     private static final byte[] SOFT_VER = "1.0".getBytes();
 
-    private final ToServerProto toServerProto = new ToServerProto() {};
+    private final ToServerProto toServerProto =
+            new SuplaDeviceChannelValueA((short) 1, new byte[] {1, 2, 3, 4, 5, 6, 7, 8});
 
     @Test
     void shouldReturnEmptyOptionalWhenNotRegisterDevice() {
@@ -27,7 +30,8 @@ class RegisterDeviceTraitTest {
 
     @Test
     void shouldMapRegisterDeviceAToLocationTrait() {
-        byte[] locationPassword = new byte[] {0x0A};
+        byte[] locationPassword = new byte[33];
+        locationPassword[0] = 0x0A;
         SuplaRegisterDeviceA registerDeviceA = new SuplaRegisterDeviceA(
                 5,
                 locationPassword,
@@ -56,12 +60,12 @@ class RegisterDeviceTraitTest {
     void shouldMapRegisterDeviceDToEmailTrait() {
         byte[] authKey = new byte[] {0x01, 0x02};
         SuplaRegisterDeviceD registerDeviceD = new SuplaRegisterDeviceD(
-                "user@example.com".getBytes(),
+                Arrays.copyOf("user@example.com".getBytes(), 256),
                 authKey,
                 GUID,
                 NAME,
                 SOFT_VER,
-                "server.supla.org".getBytes(),
+                Arrays.copyOf("server.supla.org".getBytes(), 256),
                 (short) 0,
                 new pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaDeviceChannelB[0]);
 
@@ -85,12 +89,12 @@ class RegisterDeviceTraitTest {
     void shouldMapRegisterDeviceEWithManufacturerAndProduct() {
         byte[] authKey = new byte[] {0x05};
         SuplaRegisterDeviceE registerDeviceE = new SuplaRegisterDeviceE(
-                "another@example.com".getBytes(),
+                Arrays.copyOf("another@example.com".getBytes(), 256),
                 authKey,
                 GUID,
                 NAME,
                 SOFT_VER,
-                "prod.server".getBytes(),
+                Arrays.copyOf("prod.server".getBytes(), 256),
                 0,
                 (short) 10,
                 (short) 20,

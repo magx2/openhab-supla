@@ -22,7 +22,7 @@ class InMemoryStateCacheTest {
 
     @Test
     void shouldStoreAndReturnState() {
-        ChannelUID channelUID = new ChannelUID("binding:thing:1");
+        ChannelUID channelUID = new ChannelUID("binding:thing:1:channel");
         State state = new State() {
             @Override
             public <T extends State> T as(Class<T> type) {
@@ -50,7 +50,7 @@ class InMemoryStateCacheTest {
 
     @Test
     void shouldAllowNullState() {
-        ChannelUID channelUID = new ChannelUID("binding:thing:2");
+        ChannelUID channelUID = new ChannelUID("binding:thing:2:channel");
 
         cache.saveState(channelUID, null);
         var found = cache.findState(channelUID);

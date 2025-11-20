@@ -10,7 +10,7 @@ import pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaDeviceChannelValueC;
 class DeviceChannelValueTest {
     @Test
     void shouldBuildFromProtoA() {
-        byte[] bytes = new byte[] {0x01};
+        byte[] bytes = new byte[] {0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08};
         SuplaDeviceChannelValueA valueA = new SuplaDeviceChannelValueA((short) 2, bytes);
 
         DeviceChannelValue deviceChannelValue = DeviceChannelValue.fromProto(valueA);
@@ -23,7 +23,7 @@ class DeviceChannelValueTest {
 
     @Test
     void shouldBuildFromProtoB() {
-        byte[] bytes = new byte[] {0x02};
+        byte[] bytes = new byte[] {0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x02};
         SuplaDeviceChannelValueB valueB = new SuplaDeviceChannelValueB((short) 3, (short) 1, bytes);
 
         DeviceChannelValue deviceChannelValue = DeviceChannelValue.fromProto(valueB);
@@ -36,7 +36,7 @@ class DeviceChannelValueTest {
 
     @Test
     void shouldBuildFromProtoC() {
-        byte[] bytes = new byte[] {0x03};
+        byte[] bytes = new byte[] {0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x03};
         SuplaDeviceChannelValueC valueC = new SuplaDeviceChannelValueC((short) 4, (short) 0, 99L, bytes);
 
         DeviceChannelValue deviceChannelValue = DeviceChannelValue.fromProto(valueC);
