@@ -1,0 +1,42 @@
+name: Generate PlantUML images
+
+on:
+  push:
+    paths:
+      - "imgs/*.puml"
+      - ".github/workflows/plantuml.yml"
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.PAT }}
+
+      - name: Install PlantUML
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y plantuml graphviz
+
+      - name: Generate PNG diagrams
+        run: |
+          for file in imgs/*.puml; do
+            plantuml "$file"
+          done
+
+      - name: Commit updated diagrams
+        run: |
+          git config --global user.name 'GitHub Actions'
+          git config --global user.email 'actions@github.com'
+
+          git status -uno
+
+          if [[ `git status --porcelain` ]]; then
+            git add imgs/*.png
+            git status -uno
+            git commit -m "Generate PlantUML diagrams"
+            git push
+          else
+            echo "👍 Diagrams are up to date"
+          fi
