@@ -71,6 +71,6 @@ BaseBridgeHandler <|-down- CloudBridgeHandler
 BaseBridgeHandler <|-down- ServerBridgeHandler
 BridgeHandler <|.. SuplaBridge
 SuplaBridge <|.. GatewayDeviceHandler
-SuplaBridge <|.. ServerBridgeHandler
-SuplaThingRegistry <|.. ServerBridgeHandler
+SuplaBridge <|.up. ServerBridgeHandler
+SuplaThingRegistry <|.up. ServerBridgeHandler
 @enduml
