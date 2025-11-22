@@ -263,7 +263,8 @@ public class GatewayDeviceHandler extends ServerAbstractDeviceHandler implements
                 logger.warn("There is no channel number for ExtendedValue! value={}", value);
                 return;
             }
-            optional.ifPresent(sd -> sd.consumeSuplaDeviceChannelExtendedValue(channelNumber, type, value));
+            //            optional.ifPresent(sd -> sd.consumeSuplaDeviceChannelExtendedValue(channelNumber, type,
+            // value));
         });
     }
 

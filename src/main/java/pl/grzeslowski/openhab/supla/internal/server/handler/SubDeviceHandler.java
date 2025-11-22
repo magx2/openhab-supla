@@ -23,11 +23,8 @@ import org.openhab.core.types.State;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import pl.grzeslowski.jsupla.protocol.api.structs.dcs.SetCaption;
-import pl.grzeslowski.jsupla.protocol.api.structs.dcs.SuplaPingServer;
 import pl.grzeslowski.jsupla.protocol.api.structs.ds.*;
-import pl.grzeslowski.jsupla.protocol.api.structs.dsc.ChannelState;
 import pl.grzeslowski.jsupla.protocol.api.types.FromServerProto;
-import pl.grzeslowski.jsupla.server.SuplaWriter;
 import pl.grzeslowski.openhab.supla.internal.handler.AbstractDeviceHandler;
 import pl.grzeslowski.openhab.supla.internal.server.ChannelUtil;
 import pl.grzeslowski.openhab.supla.internal.server.cache.InMemoryStateCache;
@@ -178,45 +175,14 @@ public class SubDeviceHandler extends AbstractDeviceHandler implements SuplaDevi
         super.updateThing(thing);
     }
 
-    @Override
-    public void consumeSuplaPingServer(SuplaPingServer ping, SuplaWriter SuplaWriter) {
-        logger.warn("Not supporting `consumeSuplaPingServer()`");
-    }
-
-    @Override
-    public void consumeSuplaSetActivityTimeout(SuplaWriter SuplaWriter) {
-        logger.warn("Not supporting `consumeSuplaSetActivityTimeout()`");
-    }
-
-    @Override
     public void consumeDeviceChannelValueTrait(DeviceChannelValue trait) {
         channelUtil.updateStatus(trait);
     }
 
-    @Override
-    public void consumeSuplaDeviceChannelExtendedValue(int channelNumber, int type, byte[] value) {}
-
-    @Override
-    public void consumeLocalTimeRequest(SuplaWriter SuplaWriter) {
-        logger.warn("Not supporting `consumeLocalTimeRequest()`");
-    }
-
-    @Override
     public void consumeSetCaption(SetCaption value) {
         channelUtil.setCaption(value);
     }
 
-    @Override
-    public void consumeChannelState(ChannelState value) {
-        throw new UnsupportedOperationException("ServerSubDeviceHandler.consumeChannelState(value)");
-    }
-
-    @Override
-    public void consumeSubDeviceDetails(SubdeviceDetails value) {
-        logger.warn("Not supporting `consumeSubDeviceDetails({})`", value);
-    }
-
-    @Override
     public void consumeSuplaChannelNewValueResult(SuplaChannelNewValueResult value) {
         channelUtil.consumeSuplaChannelNewValueResult(value);
     }
@@ -243,20 +209,5 @@ public class SubDeviceHandler extends AbstractDeviceHandler implements SuplaDevi
     @Override
     public String setProperty(String name, @Nullable String value) {
         return thing.setProperty(name, value);
-    }
-
-    @Override
-    public void consumeSetDeviceConfigResult(SetDeviceConfigResult value) {
-        throw new UnsupportedOperationException("ServerSubDeviceHandler.consumeSetDeviceConfigResult(value)");
-    }
-
-    @Override
-    public void consumeSetDeviceConfig(SetDeviceConfig value) {
-        throw new UnsupportedOperationException("ServerSubDeviceHandler.consumeSetDeviceConfig(value)");
-    }
-
-    @Override
-    public void consumeSetChannelConfigResult(SetChannelConfigResult value) {
-        throw new UnsupportedOperationException("ServerSubDeviceHandler.consumeSetChannelConfigResult(value)");
     }
 }
