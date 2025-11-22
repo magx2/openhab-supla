@@ -23,7 +23,7 @@ abstract class BaseThingHandler <<OpenHAB>>
 abstract class BaseBridgeHandler <<OpenHAB>>
 
 abstract class AbstractDeviceHandler <<SuplaCommon>>
-abstract class ServerAbstractDeviceHandler <<SuplaCommon>>
+abstract class ServerAbstractDeviceHandler <<SuplaServer>>
 
 interface HandleCommand <<SuplaServer>>
 interface SuplaDevice <<SuplaServer>>
@@ -65,6 +65,6 @@ BaseBridgeHandler <|-- CloudBridgeHandler
 BaseBridgeHandler <|-- ServerBridgeHandler
 BridgeHandler <|-- SuplaBridge
 SuplaBridge <|.. GatewayDeviceHandler
-SuplaBridge <|.. ServerBridgeHandler
+SuplaBridge <|.left. ServerBridgeHandler
 SuplaThingRegistry <|.. ServerBridgeHandler
 @enduml
