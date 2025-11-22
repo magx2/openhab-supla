@@ -54,8 +54,6 @@ ServerAbstractDeviceHandler <|-- SingleDeviceHandler
 
 ' Supla trait implementations (device side)
 HandleCommand <|.. AbstractDeviceHandler
-HandleCommand <|.. SubDeviceHandler
-HandleCommand <|.. SingleDeviceHandler
 HandleProto <|.up. ServerAbstractDeviceHandler
 HandleProto <|.up. SingleDeviceHandler
 HandleProto <|.up. GatewayDeviceHandler
