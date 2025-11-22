@@ -27,7 +27,7 @@ import org.slf4j.Logger;
 @ExtendWith(MockitoExtension.class)
 class HandlerCommandTraitTest {
     @Mock
-    private SuplaDevice suplaDevice;
+    private ServerDevice serverDevice;
 
     @Mock
     private Logger logger;
@@ -36,7 +36,7 @@ class HandlerCommandTraitTest {
     private HandlerCommandTrait handlerCommandTrait;
 
     private AtomicInteger senderId;
-    private HashMap<Integer, SuplaDevice.ChannelAndPreviousState> senderMap;
+    private HashMap<Integer, ServerDevice.ChannelAndPreviousState> senderMap;
     private ChannelFuture successfulFuture;
 
     @BeforeEach
@@ -46,10 +46,10 @@ class HandlerCommandTraitTest {
         var channel = new EmbeddedChannel();
         successfulFuture = new DefaultChannelPromise(channel).setSuccess(null);
 
-        lenient().when(suplaDevice.getLogger()).thenReturn(logger);
-        lenient().when(suplaDevice.getSenderId()).thenReturn(senderId);
-        lenient().when(suplaDevice.getSenderIdToChannelUID()).thenReturn(senderMap);
-        lenient().when(suplaDevice.write(any())).thenReturn(successfulFuture);
+        lenient().when(serverDevice.getLogger()).thenReturn(logger);
+        lenient().when(serverDevice.getSenderId()).thenReturn(senderId);
+        lenient().when(serverDevice.getSenderIdToChannelUID()).thenReturn(senderMap);
+        lenient().when(serverDevice.write(any())).thenReturn(successfulFuture);
     }
 
     @Test
@@ -71,21 +71,21 @@ class HandlerCommandTraitTest {
                 return "state";
             }
         };
-        when(suplaDevice.findState(channelUID)).thenReturn(state);
+        when(serverDevice.findState(channelUID)).thenReturn(state);
 
         handlerCommandTrait.handleRefreshCommand(channelUID);
 
-        verify(suplaDevice).updateState(channelUID, state);
+        verify(serverDevice).updateState(channelUID, state);
     }
 
     @Test
     void shouldNotRefreshWhenStateMissing() {
         ChannelUID channelUID = new ChannelUID("binding:thing:sub:1");
-        when(suplaDevice.findState(channelUID)).thenReturn(null);
+        when(serverDevice.findState(channelUID)).thenReturn(null);
 
         handlerCommandTrait.handleRefreshCommand(channelUID);
 
-        verify(suplaDevice, never()).updateState(any(), any());
+        verify(serverDevice, never()).updateState(any(), any());
     }
 
     @Test
@@ -97,11 +97,11 @@ class HandlerCommandTraitTest {
         assertThat(senderMap).hasSize(1);
         var entry = senderMap.entrySet().iterator().next();
         assertThat(entry.getKey()).isZero();
-        SuplaDevice.ChannelAndPreviousState value = entry.getValue();
+        ServerDevice.ChannelAndPreviousState value = entry.getValue();
         assertThat(value.channelUID()).isEqualTo(channelUID);
         assertThat((OnOffType) value.previousState()).isEqualTo(OFF);
-        verify(suplaDevice).write(any());
-        verify(suplaDevice).updateStatus(ONLINE);
+        verify(serverDevice).write(any());
+        verify(serverDevice).updateStatus(ONLINE);
     }
 
     @Test

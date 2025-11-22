@@ -8,7 +8,7 @@ import pl.grzeslowski.openhab.supla.internal.server.oh_config.AuthData;
 import pl.grzeslowski.openhab.supla.internal.server.oh_config.ServerBridgeHandlerConfiguration;
 import pl.grzeslowski.openhab.supla.internal.server.oh_config.TimeoutConfiguration;
 
-class SuplaBridgeTest {
+class ServerBridgeTest {
 
     @Test
     void shouldBuildAuthDataWithLocationAndEmail() {
@@ -18,7 +18,7 @@ class SuplaBridgeTest {
         config.setEmail("user@example.com");
         config.setAuthKey("key");
 
-        AuthData authData = SuplaBridge.buildAuthData(config);
+        AuthData authData = ServerBridge.buildAuthData(config);
 
         assertThat(authData.locationAuthData()).isNotNull();
         assertThat(authData.locationAuthData().serverAccessId()).isEqualTo(123);
@@ -34,7 +34,7 @@ class SuplaBridgeTest {
         config.setEmail("user@example.com");
         config.setAuthKey("key");
 
-        AuthData authData = SuplaBridge.buildAuthData(config);
+        AuthData authData = ServerBridge.buildAuthData(config);
 
         assertThat(authData.locationAuthData()).isNull();
         assertThat(authData.emailAuthData()).isNotNull();
@@ -49,7 +49,7 @@ class SuplaBridgeTest {
         config.setTimeoutMin(BigDecimal.valueOf(3));
         config.setTimeoutMax(BigDecimal.valueOf(7));
 
-        TimeoutConfiguration timeoutConfiguration = SuplaBridge.buildTimeoutConfiguration(config);
+        TimeoutConfiguration timeoutConfiguration = ServerBridge.buildTimeoutConfiguration(config);
 
         assertThat(timeoutConfiguration.timeout()).isEqualTo(5);
         assertThat(timeoutConfiguration.min()).isEqualTo(3);

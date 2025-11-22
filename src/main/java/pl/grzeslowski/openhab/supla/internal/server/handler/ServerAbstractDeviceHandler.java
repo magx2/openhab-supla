@@ -71,7 +71,7 @@ import pl.grzeslowski.openhab.supla.internal.server.cache.StateCache;
 import pl.grzeslowski.openhab.supla.internal.server.device_config.DeviceConfigResult;
 import pl.grzeslowski.openhab.supla.internal.server.device_config.DeviceConfigUtil;
 import pl.grzeslowski.openhab.supla.internal.server.handler.trait.HandleProto;
-import pl.grzeslowski.openhab.supla.internal.server.handler.trait.SuplaBridge;
+import pl.grzeslowski.openhab.supla.internal.server.handler.trait.ServerBridge;
 import pl.grzeslowski.openhab.supla.internal.server.handler.trait.SuplaThing;
 import pl.grzeslowski.openhab.supla.internal.server.netty.OpenHabMessageHandler;
 import pl.grzeslowski.openhab.supla.internal.server.oh_config.AuthData;
@@ -117,7 +117,7 @@ public abstract class ServerAbstractDeviceHandler extends AbstractDeviceHandler 
 
     @Nullable
     @Getter
-    private SuplaBridge bridgeHandler;
+    private ServerBridge bridgeHandler;
 
     @Getter
     private final AtomicReference<@Nullable SuplaWriter> writer = new AtomicReference<>();
@@ -158,7 +158,7 @@ public abstract class ServerAbstractDeviceHandler extends AbstractDeviceHandler 
                     CONFIGURATION_ERROR,
                     "Bridge has wrong type! Should be one of:" + allowedBridgeClasses + ", but was " + simpleName);
         }
-        var localBridgeHandler = this.bridgeHandler = (SuplaBridge) rawBridgeHandler;
+        var localBridgeHandler = this.bridgeHandler = (ServerBridge) rawBridgeHandler;
 
         var config = getConfigAs(ServerDeviceHandlerConfiguration.class);
         guid = config.getGuid();
@@ -196,7 +196,7 @@ public abstract class ServerAbstractDeviceHandler extends AbstractDeviceHandler 
         return guid;
     }
 
-    protected AuthData buildAuthData(SuplaBridge localBridgeHandler, ServerDeviceHandlerConfiguration config) {
+    protected AuthData buildAuthData(ServerBridge localBridgeHandler, ServerDeviceHandlerConfiguration config) {
         var bridgeAuthData = requireNonNull(localBridgeHandler.getAuthData(), "No auth data in bridge!");
         AuthData.@Nullable LocationAuthData locationAuthData;
         if (config.getServerAccessId() != null && config.getServerAccessIdPassword() != null) {
@@ -232,7 +232,7 @@ public abstract class ServerAbstractDeviceHandler extends AbstractDeviceHandler 
     }
 
     protected TimeoutConfiguration buildTimeoutConfiguration(
-            SuplaBridge localBridgeHandler, ServerDeviceHandlerConfiguration config) {
+            ServerBridge localBridgeHandler, ServerDeviceHandlerConfiguration config) {
         var bridgeHandlerTimeoutConfiguration =
                 requireNonNullElse(localBridgeHandler.getTimeoutConfiguration(), new TimeoutConfiguration(10, 8, 12));
 
@@ -242,7 +242,7 @@ public abstract class ServerAbstractDeviceHandler extends AbstractDeviceHandler 
                 requireNonNullElse(config.getTimeoutMax(), bridgeHandlerTimeoutConfiguration.max()));
     }
 
-    protected abstract List<Class<? extends SuplaBridge>> findAllowedBridgeClasses();
+    protected abstract List<Class<? extends ServerBridge>> findAllowedBridgeClasses();
 
     @Override
     public void handle(ToServerProto entity) {

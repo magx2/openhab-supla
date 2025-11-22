@@ -38,8 +38,8 @@ import pl.grzeslowski.jsupla.protocol.api.types.FromServerProto;
 import pl.grzeslowski.openhab.supla.internal.GuidLogger;
 import pl.grzeslowski.openhab.supla.internal.server.ChannelUtil;
 import pl.grzeslowski.openhab.supla.internal.server.discovery.ServerDiscoveryService;
-import pl.grzeslowski.openhab.supla.internal.server.handler.trait.SuplaBridge;
-import pl.grzeslowski.openhab.supla.internal.server.handler.trait.SuplaDevice;
+import pl.grzeslowski.openhab.supla.internal.server.handler.trait.ServerBridge;
+import pl.grzeslowski.openhab.supla.internal.server.handler.trait.ServerDevice;
 import pl.grzeslowski.openhab.supla.internal.server.oh_config.AuthData;
 import pl.grzeslowski.openhab.supla.internal.server.oh_config.ServerDeviceHandlerConfiguration;
 import pl.grzeslowski.openhab.supla.internal.server.oh_config.TimeoutConfiguration;
@@ -48,7 +48,7 @@ import pl.grzeslowski.openhab.supla.internal.server.traits.DeviceChannelValue;
 import pl.grzeslowski.openhab.supla.internal.server.traits.RegisterDeviceTrait;
 
 @NonNullByDefault
-public class GatewayDeviceHandler extends ServerAbstractDeviceHandler implements SuplaBridge, SuplaDevice {
+public class GatewayDeviceHandler extends ServerAbstractDeviceHandler implements ServerBridge, ServerDevice {
     private final AtomicInteger numberOfConnectedDevices = new AtomicInteger();
     private final Map<Integer, SubDeviceHandler> childHandlers = Collections.synchronizedMap(new HashMap<>());
     private Map<Integer, Integer> channelNumberToHandlerId = Map.of();
@@ -74,19 +74,19 @@ public class GatewayDeviceHandler extends ServerAbstractDeviceHandler implements
     }
 
     @Override
-    protected List<Class<? extends SuplaBridge>> findAllowedBridgeClasses() {
+    protected List<Class<? extends ServerBridge>> findAllowedBridgeClasses() {
         return List.of(ServerBridgeHandler.class);
     }
 
     @Override
     protected TimeoutConfiguration buildTimeoutConfiguration(
-            SuplaBridge localBridgeHandler, ServerDeviceHandlerConfiguration config) {
+            ServerBridge localBridgeHandler, ServerDeviceHandlerConfiguration config) {
         timeoutConfiguration = super.buildTimeoutConfiguration(localBridgeHandler, config);
         return timeoutConfiguration;
     }
 
     @Override
-    protected AuthData buildAuthData(SuplaBridge localBridgeHandler, ServerDeviceHandlerConfiguration config) {
+    protected AuthData buildAuthData(ServerBridge localBridgeHandler, ServerDeviceHandlerConfiguration config) {
         authData = super.buildAuthData(localBridgeHandler, config);
         return authData;
     }

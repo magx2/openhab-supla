@@ -30,14 +30,14 @@ import pl.grzeslowski.jsupla.protocol.api.types.FromServerProto;
 import pl.grzeslowski.openhab.supla.internal.server.ChannelUtil;
 import pl.grzeslowski.openhab.supla.internal.server.handler.trait.HandleCommand;
 import pl.grzeslowski.openhab.supla.internal.server.handler.trait.HandlerCommandTrait;
-import pl.grzeslowski.openhab.supla.internal.server.handler.trait.SuplaBridge;
-import pl.grzeslowski.openhab.supla.internal.server.handler.trait.SuplaDevice;
+import pl.grzeslowski.openhab.supla.internal.server.handler.trait.ServerBridge;
+import pl.grzeslowski.openhab.supla.internal.server.handler.trait.ServerDevice;
 import pl.grzeslowski.openhab.supla.internal.server.traits.DeviceChannel;
 import pl.grzeslowski.openhab.supla.internal.server.traits.DeviceChannelValue;
 import pl.grzeslowski.openhab.supla.internal.server.traits.RegisterDeviceTrait;
 
 @NonNullByDefault
-public class SingleDeviceHandler extends ServerAbstractDeviceHandler implements SuplaDevice {
+public class SingleDeviceHandler extends ServerAbstractDeviceHandler implements ServerDevice {
     @Getter
     private final Map<Integer, Integer> channelTypes = synchronizedMap(new HashMap<>());
 
@@ -106,7 +106,7 @@ public class SingleDeviceHandler extends ServerAbstractDeviceHandler implements 
     }
 
     @Override
-    protected List<Class<? extends SuplaBridge>> findAllowedBridgeClasses() {
+    protected List<Class<? extends ServerBridge>> findAllowedBridgeClasses() {
         return List.of(ServerBridgeHandler.class, GatewayDeviceHandler.class);
     }
 

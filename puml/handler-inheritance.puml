@@ -26,10 +26,10 @@ abstract class AbstractDeviceHandler <<SuplaCommon>>
 abstract class ServerAbstractDeviceHandler <<SuplaServer>>
 
 interface HandleCommand <<SuplaServer>>
-interface SuplaDevice <<SuplaServer>>
+interface ServerDevice <<SuplaServer>>
 interface SuplaThing <<SuplaServer>>
 interface SuplaThingRegistry <<SuplaServer>>
-interface SuplaBridge <<SuplaServer>>
+interface ServerBridge <<SuplaServer>>
 
 class GatewayDeviceHandler <<SuplaHandler>>
 class SingleDeviceHandler <<SuplaHandler>>
@@ -54,17 +54,17 @@ ServerAbstractDeviceHandler <|-- SingleDeviceHandler
 
 ' Supla trait implementations (device side)
 HandleCommand <|.. AbstractDeviceHandler
-HandleCommand <|-- SuplaDevice
-SuplaDevice <|.. SubDeviceHandler
-SuplaDevice <|.. SingleDeviceHandler
-SuplaDevice <|.. GatewayDeviceHandler
+HandleCommand <|-- ServerDevice
+ServerDevice <|.. SubDeviceHandler
+ServerDevice <|.. SingleDeviceHandler
+ServerDevice <|.. GatewayDeviceHandler
 SuplaThing <|.. ServerAbstractDeviceHandler
 
 ' Bridge handler relationships
 BaseBridgeHandler <|-- CloudBridgeHandler
 BaseBridgeHandler <|-- ServerBridgeHandler
-BridgeHandler <|-- SuplaBridge
-SuplaBridge <|.. GatewayDeviceHandler
-SuplaBridge <|.left. ServerBridgeHandler
+BridgeHandler <|-- ServerBridge
+ServerBridge <|.. GatewayDeviceHandler
+ServerBridge <|.left. ServerBridgeHandler
 SuplaThingRegistry <|.. ServerBridgeHandler
 @enduml

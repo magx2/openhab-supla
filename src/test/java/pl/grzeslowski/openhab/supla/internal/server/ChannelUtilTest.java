@@ -20,13 +20,13 @@ import org.openhab.core.thing.ChannelUID;
 import org.openhab.core.thing.Thing;
 import org.openhab.core.thing.binding.builder.ThingBuilder;
 import org.slf4j.Logger;
-import pl.grzeslowski.openhab.supla.internal.server.handler.trait.SuplaDevice;
+import pl.grzeslowski.openhab.supla.internal.server.handler.trait.ServerDevice;
 import pl.grzeslowski.openhab.supla.internal.server.traits.DeviceChannelValue;
 
 @ExtendWith(MockitoExtension.class)
 class ChannelUtilTest {
     @Mock
-    private SuplaDevice suplaDevice;
+    private ServerDevice serverDevice;
 
     @Mock
     private Logger logger;
@@ -44,10 +44,10 @@ class ChannelUtilTest {
     void setUp() {
         var channelTypes = new HashMap<Integer, Integer>();
 
-        lenient().when(suplaDevice.getLogger()).thenReturn(logger);
-        lenient().when(suplaDevice.getThing()).thenReturn(thing);
-        lenient().when(suplaDevice.getChannelTypes()).thenReturn(channelTypes);
-        lenient().when(suplaDevice.editThing()).thenReturn(thingBuilder);
+        lenient().when(serverDevice.getLogger()).thenReturn(logger);
+        lenient().when(serverDevice.getThing()).thenReturn(thing);
+        lenient().when(serverDevice.getChannelTypes()).thenReturn(channelTypes);
+        lenient().when(serverDevice.editThing()).thenReturn(thingBuilder);
         lenient().when(thingBuilder.withChannels(any(List.class))).thenReturn(thingBuilder);
     }
 
@@ -57,8 +57,8 @@ class ChannelUtilTest {
 
         channelUtil.updateStatus(channelValue);
 
-        verify(suplaDevice, never()).updateState(any(), any());
-        verify(suplaDevice, never()).saveState(any(), any());
+        verify(serverDevice, never()).updateState(any(), any());
+        verify(serverDevice, never()).saveState(any(), any());
     }
 
     @Test
@@ -107,23 +107,23 @@ class ChannelUtilTest {
 
     @Test
     void shouldDropStoredSenderEntryOnSuccess() {
-        var map = new HashMap<Integer, SuplaDevice.ChannelAndPreviousState>();
+        var map = new HashMap<Integer, ServerDevice.ChannelAndPreviousState>();
         var channelUID = new ChannelUID("supla:test:1:1");
-        map.put(5, new SuplaDevice.ChannelAndPreviousState(channelUID, null));
-        when(suplaDevice.getSenderIdToChannelUID()).thenReturn(map);
+        map.put(5, new ServerDevice.ChannelAndPreviousState(channelUID, null));
+        when(serverDevice.getSenderIdToChannelUID()).thenReturn(map);
         var newValueResult =
                 new pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaChannelNewValueResult((short) 0, 5, (byte) 1);
 
         channelUtil.consumeSuplaChannelNewValueResult(newValueResult);
 
         assertThat(map).isEmpty();
-        verify(suplaDevice, never()).handleRefreshCommand(any(ChannelUID.class));
+        verify(serverDevice, never()).handleRefreshCommand(any(ChannelUID.class));
     }
 
     @Test
     void shouldRefreshWhenSenderMissing() {
-        var map = new HashMap<Integer, SuplaDevice.ChannelAndPreviousState>();
-        when(suplaDevice.getSenderIdToChannelUID()).thenReturn(map);
+        var map = new HashMap<Integer, ServerDevice.ChannelAndPreviousState>();
+        when(serverDevice.getSenderIdToChannelUID()).thenReturn(map);
         var channelUID = new ChannelUID("supla:test:1:2");
         var channel = org.mockito.Mockito.mock(Channel.class);
         when(channel.getUID()).thenReturn(channelUID);
@@ -133,6 +133,6 @@ class ChannelUtilTest {
 
         channelUtil.consumeSuplaChannelNewValueResult(newValueResult);
 
-        verify(suplaDevice).handleRefreshCommand(channelUID);
+        verify(serverDevice).handleRefreshCommand(channelUID);
     }
 }

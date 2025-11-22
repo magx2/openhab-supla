@@ -16,7 +16,7 @@ import pl.grzeslowski.jsupla.protocol.api.types.FromServerProto;
 import pl.grzeslowski.openhab.supla.internal.server.cache.StateCache;
 
 @NonNullByDefault
-public interface SuplaDevice extends HandleCommand, StateCache {
+public interface ServerDevice extends HandleCommand, StateCache {
     Logger getLogger();
 
     Thing getThing();
@@ -28,7 +28,7 @@ public interface SuplaDevice extends HandleCommand, StateCache {
     void updateThing(Thing thing);
 
     @Nullable
-    SuplaBridge getBridgeHandler();
+    ServerBridge getBridgeHandler();
 
     AtomicInteger getSenderId();
 
