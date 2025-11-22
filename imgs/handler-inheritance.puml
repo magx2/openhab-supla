@@ -45,38 +45,38 @@ package "Bridge handlers" {
 }
 
 ' OpenHAB core relationships
-ThingHandler <|.. BaseThingHandler
-ThingHandler <|.. BridgeHandler
-BridgeHandler <|.. BaseBridgeHandler
+ThingHandler <|.down. BaseThingHandler
+ThingHandler <|.down. BridgeHandler
+BridgeHandler <|.down. BaseBridgeHandler
 
 ' Device handler relationships
-BaseThingHandler <|-- AbstractDeviceHandler
-AbstractDeviceHandler <|-- ServerAbstractDeviceHandler
-AbstractDeviceHandler <|-- SubDeviceHandler
-AbstractDeviceHandler <|-- CloudDeviceHandler
-ServerAbstractDeviceHandler <|-- GatewayDeviceHandler
-ServerAbstractDeviceHandler <|-- SingleDeviceHandler
+BaseThingHandler <|-down- AbstractDeviceHandler
+AbstractDeviceHandler <|-down- ServerAbstractDeviceHandler
+AbstractDeviceHandler <|-down- SubDeviceHandler
+AbstractDeviceHandler <|-down- CloudDeviceHandler
+ServerAbstractDeviceHandler <|-down- GatewayDeviceHandler
+ServerAbstractDeviceHandler <|-down- SingleDeviceHandler
 
 ' Supla trait implementations (device side)
-HandleCommand <|.. AbstractDeviceHandler
-HandleCommand <|.. SubDeviceHandler
-HandleCommand <|.. SingleDeviceHandler
-HandleCommand <|.. GatewayDeviceHandler
-HandleProto <|.. ServerAbstractDeviceHandler
-HandleProto <|.. SingleDeviceHandler
-HandleProto <|.. GatewayDeviceHandler
-HandleCommand <|-- SuplaDevice
-HandleProto <|-- SuplaDevice
-SuplaDevice <|.. SubDeviceHandler
-SuplaDevice <|.. SingleDeviceHandler
-SuplaDevice <|.. GatewayDeviceHandler
-SuplaThing <|.. ServerAbstractDeviceHandler
+HandleCommand <|.down. AbstractDeviceHandler
+HandleCommand <|.down. SubDeviceHandler
+HandleCommand <|.down. SingleDeviceHandler
+HandleCommand <|.down. GatewayDeviceHandler
+HandleProto <|.down. ServerAbstractDeviceHandler
+HandleProto <|.down. SingleDeviceHandler
+HandleProto <|.down. GatewayDeviceHandler
+HandleCommand <|-down- SuplaDevice
+HandleProto <|-down- SuplaDevice
+SuplaDevice <|.down. SubDeviceHandler
+SuplaDevice <|.down. SingleDeviceHandler
+SuplaDevice <|.down. GatewayDeviceHandler
+SuplaThing <|.down. ServerAbstractDeviceHandler
 
 ' Bridge handler relationships
-BaseBridgeHandler <|-- CloudBridgeHandler
-BaseBridgeHandler <|-- ServerBridgeHandler
-BridgeHandler <|.. SuplaBridge
-SuplaBridge <|.. GatewayDeviceHandler
-SuplaBridge <|.. ServerBridgeHandler
-SuplaThingRegistry <|.. ServerBridgeHandler
+BaseBridgeHandler <|-down- CloudBridgeHandler
+BaseBridgeHandler <|-down- ServerBridgeHandler
+BridgeHandler <|.down. SuplaBridge
+SuplaBridge <|.down. GatewayDeviceHandler
+SuplaBridge <|.down. ServerBridgeHandler
+SuplaThingRegistry <|.down. ServerBridgeHandler
 @enduml
