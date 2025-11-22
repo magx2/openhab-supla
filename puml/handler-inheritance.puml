@@ -45,32 +45,32 @@ ThingHandler <|.. BridgeHandler
 BridgeHandler <|.. BaseBridgeHandler
 
 ' Device handler relationships
-BaseThingHandler <|-down- AbstractDeviceHandler
+BaseThingHandler <|-- AbstractDeviceHandler
 AbstractDeviceHandler <|-down- ServerAbstractDeviceHandler
-AbstractDeviceHandler <|-down- SubDeviceHandler
-AbstractDeviceHandler <|-down- CloudDeviceHandler
-ServerAbstractDeviceHandler <|-down- GatewayDeviceHandler
-ServerAbstractDeviceHandler <|-down- SingleDeviceHandler
+AbstractDeviceHandler <|-- SubDeviceHandler
+AbstractDeviceHandler <|-- CloudDeviceHandler
+ServerAbstractDeviceHandler <|-- GatewayDeviceHandler
+ServerAbstractDeviceHandler <|-- SingleDeviceHandler
 
 ' Supla trait implementations (device side)
 HandleCommand <|.. AbstractDeviceHandler
 HandleCommand <|.. SubDeviceHandler
 HandleCommand <|.. SingleDeviceHandler
-HandleProto <|.. ServerAbstractDeviceHandler
-HandleProto <|.. SingleDeviceHandler
-HandleProto <|.. GatewayDeviceHandler
+HandleProto <|.up. ServerAbstractDeviceHandler
+HandleProto <|.up. SingleDeviceHandler
+HandleProto <|.up. GatewayDeviceHandler
 HandleCommand <|-- SuplaDevice
 HandleProto <|-- SuplaDevice
 SuplaDevice <|.. SubDeviceHandler
 SuplaDevice <|.. SingleDeviceHandler
 SuplaDevice <|.. GatewayDeviceHandler
-SuplaThing <|.. ServerAbstractDeviceHandler
+SuplaThing <|.up. ServerAbstractDeviceHandler
 
 ' Bridge handler relationships
 BaseBridgeHandler <|-down- CloudBridgeHandler
 BaseBridgeHandler <|-down- ServerBridgeHandler
 BridgeHandler <|.. SuplaBridge
 SuplaBridge <|.. GatewayDeviceHandler
-SuplaBridge <|.up. ServerBridgeHandler
+SuplaBridge <|.right. ServerBridgeHandler
 SuplaThingRegistry <|.up. ServerBridgeHandler
 @enduml
