@@ -16,9 +16,9 @@ import org.slf4j.Logger;
 import pl.grzeslowski.openhab.supla.internal.server.handler.trait.HandleCommand;
 
 @NonNullByDefault
-public abstract class AbstractDeviceHandler extends BaseThingHandler implements HandleCommand {
+public abstract class SuplaDevice extends BaseThingHandler implements HandleCommand {
 
-    public AbstractDeviceHandler(final Thing thing) {
+    public SuplaDevice(final Thing thing) {
         super(thing);
     }
 

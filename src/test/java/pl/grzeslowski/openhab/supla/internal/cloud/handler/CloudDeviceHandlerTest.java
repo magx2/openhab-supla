@@ -69,7 +69,7 @@ import pl.grzeslowski.openhab.supla.internal.cloud.executors.LedCommandExecutorF
 @SuppressWarnings({"WeakerAccess", "unused"})
 @ExtendWith({MockitoExtension.class, RandomBeansExtension.class})
 class CloudDeviceHandlerTest {
-    CloudDeviceHandler handler;
+    CloudDevice handler;
 
     @Mock
     Thing thing;
@@ -234,7 +234,7 @@ class CloudDeviceHandlerTest {
                     .orElseThrow(IllegalArgumentException::new);
         });
 
-        handler = new CloudDeviceHandler(thing, ledCommandExecutorFactory);
+        handler = new CloudDevice(thing, ledCommandExecutorFactory);
         writeField(handler, "callback", callback, true);
         doAnswer(__ -> {
                     writeField(handler, "thing", thing, true);

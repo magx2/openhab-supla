@@ -24,7 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import pl.grzeslowski.openhab.supla.internal.cloud.discovery.CloudDiscovery;
 import pl.grzeslowski.openhab.supla.internal.cloud.handler.CloudBridgeHandler;
-import pl.grzeslowski.openhab.supla.internal.cloud.handler.CloudDeviceHandler;
+import pl.grzeslowski.openhab.supla.internal.cloud.handler.CloudDevice;
 import pl.grzeslowski.openhab.supla.internal.server.discovery.ServerDiscoveryService;
 import pl.grzeslowski.openhab.supla.internal.server.handler.*;
 
@@ -85,7 +85,7 @@ public class SuplaHandlerFactory extends BaseThingHandlerFactory {
 
     @NonNull
     private ThingHandler newServerDeviceHandler(final Thing thing) {
-        return new SingleDeviceHandler(thing);
+        return new SingleDevice(thing);
     }
 
     @NonNull
@@ -108,7 +108,7 @@ public class SuplaHandlerFactory extends BaseThingHandlerFactory {
 
     @NonNull
     private ThingHandler newCloudDeviceHandler(final Thing thing) {
-        return new CloudDeviceHandler(thing);
+        return new CloudDevice(thing);
     }
 
     private synchronized ServiceRegistration<?> registerThingDiscovery(DiscoveryService discoveryService) {

@@ -25,7 +25,7 @@ import org.slf4j.LoggerFactory;
 import pl.grzeslowski.jsupla.protocol.api.structs.dcs.SetCaption;
 import pl.grzeslowski.jsupla.protocol.api.structs.ds.*;
 import pl.grzeslowski.jsupla.protocol.api.types.FromServerProto;
-import pl.grzeslowski.openhab.supla.internal.handler.AbstractDeviceHandler;
+import pl.grzeslowski.openhab.supla.internal.handler.SuplaDevice;
 import pl.grzeslowski.openhab.supla.internal.server.ChannelUtil;
 import pl.grzeslowski.openhab.supla.internal.server.cache.InMemoryStateCache;
 import pl.grzeslowski.openhab.supla.internal.server.cache.StateCache;
@@ -38,7 +38,7 @@ import pl.grzeslowski.openhab.supla.internal.server.traits.DeviceChannelValue;
 
 @NonNullByDefault
 @ToString(onlyExplicitlyIncluded = true)
-public class SubDeviceHandler extends AbstractDeviceHandler implements ServerDevice {
+public class SubDeviceHandler extends SuplaDevice implements ServerDevice {
     @Getter
     private final Map<Integer, Integer> channelTypes = synchronizedMap(new HashMap<>());
 
@@ -129,7 +129,7 @@ public class SubDeviceHandler extends AbstractDeviceHandler implements ServerDev
                 .map(Bridge::getHandler)
                 .filter(GatewayDeviceHandler.class::isInstance)
                 .map(GatewayDeviceHandler.class::cast)
-                .map(ServerAbstractDeviceHandler::getGuid);
+                .map(ServerSuplaDeviceHandler::getGuid);
         if (bridgeGuid.isEmpty()) {
             return null;
         }

@@ -30,7 +30,6 @@ import org.openhab.core.library.types.StringType;
 import org.openhab.core.thing.Bridge;
 import org.openhab.core.thing.ChannelUID;
 import org.openhab.core.thing.Thing;
-import org.openhab.core.thing.binding.BaseBridgeHandler;
 import org.openhab.core.thing.binding.ThingHandler;
 import org.openhab.core.types.Command;
 import org.openhab.core.types.RefreshType;
@@ -41,11 +40,12 @@ import pl.grzeslowski.openhab.supla.internal.ReadWriteMonad;
 import pl.grzeslowski.openhab.supla.internal.cloud.api.*;
 import pl.grzeslowski.openhab.supla.internal.handler.InitializationException;
 import pl.grzeslowski.openhab.supla.internal.handler.OfflineInitializationException;
+import pl.grzeslowski.openhab.supla.internal.handler.SuplaBridge;
 
 @NonNullByDefault
-public class CloudBridgeHandler extends BaseBridgeHandler implements IoDevicesCloudApi, ChannelsCloudApi {
+public class CloudBridgeHandler extends SuplaBridge implements IoDevicesCloudApi, ChannelsCloudApi {
     private final Logger logger = LoggerFactory.getLogger(CloudBridgeHandler.class);
-    private final ReadWriteMonad<Set<CloudDeviceHandler>> cloudDeviceHandlers = new ReadWriteMonad<>(new HashSet<>());
+    private final ReadWriteMonad<Set<CloudDevice>> cloudDeviceHandlers = new ReadWriteMonad<>(new HashSet<>());
 
     @Nullable
     private ScheduledFuture<?> scheduledFuture;
@@ -236,18 +236,18 @@ public class CloudBridgeHandler extends BaseBridgeHandler implements IoDevicesCl
     @Override
     public void childHandlerInitialized(ThingHandler childHandler, Thing childThing) {
         super.childHandlerInitialized(childHandler, childThing);
-        if (childHandler instanceof CloudDeviceHandler) {
+        if (childHandler instanceof CloudDevice) {
             logger.trace(
                     "Add `{}` to cloudDeviceHandlers", childHandler.getThing().getUID());
             cloudDeviceHandlers.doInWriteLock(
-                    cloudDeviceHandlers -> cloudDeviceHandlers.add((CloudDeviceHandler) childHandler));
+                    cloudDeviceHandlers -> cloudDeviceHandlers.add((CloudDevice) childHandler));
         }
     }
 
     @Override
     public void childHandlerDisposed(ThingHandler childHandler, Thing childThing) {
         super.childHandlerDisposed(childHandler, childThing);
-        if (childHandler instanceof CloudDeviceHandler) {
+        if (childHandler instanceof CloudDevice) {
             logger.trace(
                     "Remove `{}` to cloudDeviceHandlers",
                     childHandler.getThing().getUID());
@@ -257,8 +257,7 @@ public class CloudBridgeHandler extends BaseBridgeHandler implements IoDevicesCl
 
     private void refreshCloudDevices() {
         try {
-            cloudDeviceHandlers.doInReadLock(
-                    cloudDeviceHandlers -> cloudDeviceHandlers.forEach(CloudDeviceHandler::refresh));
+            cloudDeviceHandlers.doInReadLock(cloudDeviceHandlers -> cloudDeviceHandlers.forEach(CloudDevice::refresh));
         } catch (Exception e) {
             logger.error("Cannot refresh cloud devices!", e);
         }

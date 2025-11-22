@@ -60,19 +60,18 @@ import pl.grzeslowski.jsupla.protocol.api.structs.sdc.SuplaPingServerResult;
 import pl.grzeslowski.jsupla.protocol.api.structs.sdc.SuplaSetActivityTimeoutResult;
 import pl.grzeslowski.jsupla.protocol.api.structs.sdc.UserLocalTimeResult;
 import pl.grzeslowski.jsupla.protocol.api.types.ToServerProto;
+import pl.grzeslowski.jsupla.server.MessageHandler;
 import pl.grzeslowski.jsupla.server.SuplaWriter;
 import pl.grzeslowski.openhab.supla.internal.GuidLogger.GuidLogged;
-import pl.grzeslowski.openhab.supla.internal.handler.AbstractDeviceHandler;
 import pl.grzeslowski.openhab.supla.internal.handler.InitializationException;
 import pl.grzeslowski.openhab.supla.internal.handler.OfflineInitializationException;
+import pl.grzeslowski.openhab.supla.internal.handler.SuplaDevice;
 import pl.grzeslowski.openhab.supla.internal.server.SuplaServerDeviceActions;
 import pl.grzeslowski.openhab.supla.internal.server.cache.InMemoryStateCache;
 import pl.grzeslowski.openhab.supla.internal.server.cache.StateCache;
 import pl.grzeslowski.openhab.supla.internal.server.device_config.DeviceConfigResult;
 import pl.grzeslowski.openhab.supla.internal.server.device_config.DeviceConfigUtil;
-import pl.grzeslowski.openhab.supla.internal.server.handler.trait.HandleProto;
 import pl.grzeslowski.openhab.supla.internal.server.handler.trait.ServerBridge;
-import pl.grzeslowski.openhab.supla.internal.server.handler.trait.SuplaThing;
 import pl.grzeslowski.openhab.supla.internal.server.netty.OpenHabMessageHandler;
 import pl.grzeslowski.openhab.supla.internal.server.oh_config.AuthData;
 import pl.grzeslowski.openhab.supla.internal.server.oh_config.DeviceConfiguration;
@@ -83,12 +82,10 @@ import pl.grzeslowski.openhab.supla.internal.server.traits.RegisterDeviceTrait;
 import pl.grzeslowski.openhab.supla.internal.server.traits.RegisterEmailDeviceTrait;
 import pl.grzeslowski.openhab.supla.internal.server.traits.RegisterLocationDeviceTrait;
 
-/**
- * The {@link ServerAbstractDeviceHandler} is responsible for handling commands, which are sent to one of the channels.
- */
+/** The {@link ServerSuplaDeviceHandler} is responsible for handling commands, which are sent to one of the channels. */
 @NonNullByDefault
 @ToString(onlyExplicitlyIncluded = true)
-public abstract class ServerAbstractDeviceHandler extends AbstractDeviceHandler implements SuplaThing, HandleProto {
+public abstract class ServerSuplaDeviceHandler extends SuplaDevice implements MessageHandler {
     public static final byte ACTIVITY_TIMEOUT = (byte) 100;
     public static final String AVAILABLE_FIELDS = "AVAILABLE_FIELDS";
     private static final AtomicLong ID = new AtomicLong();
@@ -130,7 +127,7 @@ public abstract class ServerAbstractDeviceHandler extends AbstractDeviceHandler 
     @Nullable
     private OpenHabMessageHandler handler;
 
-    public ServerAbstractDeviceHandler(Thing thing) {
+    public ServerSuplaDeviceHandler(Thing thing) {
         super(thing);
     }
 
@@ -296,7 +293,6 @@ public abstract class ServerAbstractDeviceHandler extends AbstractDeviceHandler 
         dispose();
     }
 
-    @Override
     public boolean register(@NonNull RegisterDeviceTrait registerEntity, OpenHabMessageHandler handler) {
         updateStatus(OFFLINE, HANDLER_CONFIGURATION_PENDING, "Device is authorizing...");
         var oldHandler = this.handler;
@@ -375,7 +371,6 @@ public abstract class ServerAbstractDeviceHandler extends AbstractDeviceHandler 
     @GuidLogged
     protected abstract boolean afterRegister(RegisterDeviceTrait registerEntity);
 
-    @Override
     public final void consumeSuplaSetActivityTimeout(SuplaWriter writer) {
         var timeout = requireNonNull(deviceConfiguration).timeoutConfiguration();
         var data = new SuplaSetActivityTimeoutResult(
@@ -392,7 +387,6 @@ public abstract class ServerAbstractDeviceHandler extends AbstractDeviceHandler 
                 .scheduleWithFixedDelay(this::checkIfDeviceIsUp, timeout.timeout() * 2L, timeout.timeout(), SECONDS);
     }
 
-    @Override
     public final void consumeLocalTimeRequest(SuplaWriter writer) {
         // Get current local date and time
         var now = LocalDateTime.now();
@@ -418,7 +412,6 @@ public abstract class ServerAbstractDeviceHandler extends AbstractDeviceHandler 
         writer.write(proto);
     }
 
-    @Override
     public final void consumeSuplaPingServer(SuplaPingServer ping, SuplaWriter writer) {
         var epochSecond = now().getEpochSecond();
         var response = new SuplaPingServerResult(new SuplaTimeval(epochSecond, 0));
@@ -565,7 +558,6 @@ public abstract class ServerAbstractDeviceHandler extends AbstractDeviceHandler 
         return Set.of(SuplaServerDeviceActions.class);
     }
 
-    @Override
     public void consumeSetDeviceConfigResult(SetDeviceConfigResult value) {
         var result = DeviceConfigResult.findConfigResult(value.result());
         if (!result.isSuccess()) {
@@ -604,7 +596,6 @@ public abstract class ServerAbstractDeviceHandler extends AbstractDeviceHandler 
         return result;
     }
 
-    @Override
     public void consumeSetChannelConfigResult(SetChannelConfigResult value) {
         var result = DeviceConfigResult.findConfigResult(value.result());
         if (!result.isSuccess()) {
@@ -614,7 +605,6 @@ public abstract class ServerAbstractDeviceHandler extends AbstractDeviceHandler 
         }
     }
 
-    @Override
     public void consumeSetDeviceConfig(SetDeviceConfig value) {
         if (value.endOfDataFlag() == 0) {
             logger.warn("SetDeviceConfig has more data but I'm not supporting it! config={}", value);
@@ -693,4 +683,16 @@ public abstract class ServerAbstractDeviceHandler extends AbstractDeviceHandler 
         }
         super.handleCommand(channelUID, command);
     }
+
+    abstract void consumeDeviceChannelValueTrait(DeviceChannelValue trait);
+
+    abstract void consumeSuplaDeviceChannelExtendedValue(int channelNumber, int type, byte[] value);
+
+    abstract void consumeSetCaption(SetCaption value);
+
+    abstract void consumeChannelState(ChannelState value);
+
+    abstract void consumeSubDeviceDetails(SubdeviceDetails value);
+
+    abstract void consumeSuplaChannelNewValueResult(SuplaChannelNewValueResult value);
 }

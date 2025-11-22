@@ -41,9 +41,9 @@ import pl.grzeslowski.openhab.supla.internal.cloud.executors.LedCommandExecutorF
 import pl.grzeslowski.openhab.supla.internal.cloud.executors.SuplaLedCommandExecutorFactory;
 import pl.grzeslowski.openhab.supla.internal.cloud.functionswitch.CreateChannelFunctionSwitch;
 import pl.grzeslowski.openhab.supla.internal.cloud.functionswitch.FindStateFunctionSwitch;
-import pl.grzeslowski.openhab.supla.internal.handler.AbstractDeviceHandler;
 import pl.grzeslowski.openhab.supla.internal.handler.InitializationException;
 import pl.grzeslowski.openhab.supla.internal.handler.OfflineInitializationException;
+import pl.grzeslowski.openhab.supla.internal.handler.SuplaDevice;
 
 /**
  * This is handler for all Supla devices.
@@ -53,9 +53,9 @@ import pl.grzeslowski.openhab.supla.internal.handler.OfflineInitializationExcept
  * @author Martin Grześlowski - initial contributor
  */
 @NonNullByDefault
-public final class CloudDeviceHandler extends AbstractDeviceHandler {
+public final class CloudDevice extends SuplaDevice {
     @Getter
-    private Logger logger = LoggerFactory.getLogger(CloudDeviceHandler.class);
+    private Logger logger = LoggerFactory.getLogger(CloudDevice.class);
 
     private final LedCommandExecutorFactory ledCommandExecutorFactory;
 
@@ -71,12 +71,12 @@ public final class CloudDeviceHandler extends AbstractDeviceHandler {
     @Nullable
     private LedCommandExecutor ledCommandExecutor;
 
-    CloudDeviceHandler(Thing thing, LedCommandExecutorFactory ledCommandExecutorFactory) {
+    CloudDevice(Thing thing, LedCommandExecutorFactory ledCommandExecutorFactory) {
         super(thing);
         this.ledCommandExecutorFactory = ledCommandExecutorFactory;
     }
 
-    public CloudDeviceHandler(final Thing thing) {
+    public CloudDevice(final Thing thing) {
         this(thing, SuplaLedCommandExecutorFactory.FACTORY);
     }
 
@@ -101,7 +101,7 @@ public final class CloudDeviceHandler extends AbstractDeviceHandler {
         initApi(handler);
 
         var cloudIdString = String.valueOf(getConfig().get(SUPLA_DEVICE_CLOUD_ID));
-        logger = LoggerFactory.getLogger(CloudDeviceHandler.class.getName() + "." + cloudIdString);
+        logger = LoggerFactory.getLogger(CloudDevice.class.getName() + "." + cloudIdString);
         initCloudApi(cloudIdString);
         checkIfIsOnline();
         checkIfIsEnabled();
@@ -443,7 +443,7 @@ public final class CloudDeviceHandler extends AbstractDeviceHandler {
 
     @Override
     public void dispose() {
-        logger = LoggerFactory.getLogger(CloudDeviceHandler.class);
+        logger = LoggerFactory.getLogger(CloudDevice.class);
         super.dispose();
     }
 }
