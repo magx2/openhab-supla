@@ -41,7 +41,7 @@ class CloudDeviceHandler <<SuplaCloud>>
 
 ' OpenHAB core relationships
 ThingHandler <|.. BaseThingHandler
-ThingHandler <|.. BridgeHandler
+ThingHandler <|-- BridgeHandler
 BridgeHandler <|.. BaseBridgeHandler
 
 ' Device handler relationships
@@ -64,7 +64,7 @@ SuplaThing <|.. ServerAbstractDeviceHandler
 ' Bridge handler relationships
 BaseBridgeHandler <|-- CloudBridgeHandler
 BaseBridgeHandler <|-- ServerBridgeHandler
-BridgeHandler <|.. SuplaBridge
+BridgeHandler <|-- SuplaBridge
 SuplaBridge <|.. GatewayDeviceHandler
 SuplaBridge <|.. ServerBridgeHandler
 SuplaThingRegistry <|.. ServerBridgeHandler
