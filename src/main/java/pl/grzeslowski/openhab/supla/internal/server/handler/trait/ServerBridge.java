@@ -6,7 +6,7 @@ import pl.grzeslowski.openhab.supla.internal.server.oh_config.AuthData;
 import pl.grzeslowski.openhab.supla.internal.server.oh_config.ServerBridgeHandlerConfiguration;
 import pl.grzeslowski.openhab.supla.internal.server.oh_config.TimeoutConfiguration;
 
-public interface SuplaBridge extends BridgeHandler {
+public interface ServerBridge extends BridgeHandler {
     TimeoutConfiguration getTimeoutConfiguration();
 
     AuthData getAuthData();

@@ -42,7 +42,7 @@ import pl.grzeslowski.openhab.supla.internal.Documentation;
 import pl.grzeslowski.openhab.supla.internal.handler.InitializationException;
 import pl.grzeslowski.openhab.supla.internal.handler.OfflineInitializationException;
 import pl.grzeslowski.openhab.supla.internal.server.discovery.ServerDiscoveryService;
-import pl.grzeslowski.openhab.supla.internal.server.handler.trait.SuplaBridge;
+import pl.grzeslowski.openhab.supla.internal.server.handler.trait.ServerBridge;
 import pl.grzeslowski.openhab.supla.internal.server.handler.trait.SuplaThing;
 import pl.grzeslowski.openhab.supla.internal.server.handler.trait.SuplaThingRegistry;
 import pl.grzeslowski.openhab.supla.internal.server.netty.OpenHabMessageHandler;
@@ -51,7 +51,7 @@ import pl.grzeslowski.openhab.supla.internal.server.oh_config.ServerBridgeHandle
 import pl.grzeslowski.openhab.supla.internal.server.oh_config.TimeoutConfiguration;
 
 @NonNullByDefault
-public class ServerBridgeHandler extends BaseBridgeHandler implements SuplaThingRegistry, SuplaBridge {
+public class ServerBridgeHandler extends BaseBridgeHandler implements SuplaThingRegistry, ServerBridge {
     private static final int PROPER_AES_KEY_SIZE = 2147483647;
     private Logger logger = LoggerFactory.getLogger(ServerBridgeHandler.class);
 
@@ -110,7 +110,7 @@ public class ServerBridgeHandler extends BaseBridgeHandler implements SuplaThing
         if (config.getPort().intValue() <= 0) {
             throw new OfflineInitializationException(CONFIGURATION_ERROR, "You need to pass port!");
         }
-        authData = SuplaBridge.buildAuthData(config);
+        authData = ServerBridge.buildAuthData(config);
         port = config.getPort().intValue();
         var protocols =
                 stream(config.getProtocols().split(",")).map(String::trim).collect(toSet());
@@ -161,7 +161,7 @@ public class ServerBridgeHandler extends BaseBridgeHandler implements SuplaThing
             logger.warn("Cannot get disabled algorithms! {}", ex.getLocalizedMessage());
         }
 
-        timeoutConfiguration = SuplaBridge.buildTimeoutConfiguration(config);
+        timeoutConfiguration = ServerBridge.buildTimeoutConfiguration(config);
 
         server = new NettyServer(buildNettyConfig(port, protocols), this::messageHandlerFactory);
 

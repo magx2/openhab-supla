@@ -28,15 +28,15 @@ import pl.grzeslowski.jsupla.protocol.api.structs.sd.SuplaChannelNewValue;
 @NonNullByDefault
 @RequiredArgsConstructor
 public class HandlerCommandTrait implements HandleCommand {
-    private final SuplaDevice suplaDevice;
+    private final ServerDevice serverDevice;
 
     @Override
     public void handleRefreshCommand(ChannelUID channelUID) {
-        var state = suplaDevice.findState(channelUID);
+        var state = serverDevice.findState(channelUID);
         if (state == null) {
             return;
         }
-        suplaDevice.updateState(channelUID, state);
+        serverDevice.updateState(channelUID, state);
     }
 
     @Override
@@ -94,7 +94,7 @@ public class HandlerCommandTrait implements HandleCommand {
 
     @Override
     public void handleStopMoveTypeCommand(ChannelUID channelUID, StopMoveType command) {
-        suplaDevice
+        serverDevice
                 .getLogger()
                 .warn(
                         "Not handling `{}` ({}) on channel `{}`",
@@ -110,7 +110,7 @@ public class HandlerCommandTrait implements HandleCommand {
             handleHvacModeCommand(channelUID, command);
             return;
         }
-        suplaDevice
+        serverDevice
                 .getLogger()
                 .warn(
                         "Not handling `{}` ({}) on channel `{}`",
@@ -167,7 +167,7 @@ public class HandlerCommandTrait implements HandleCommand {
                                     false));
                 };
 
-        var previousMode = suplaDevice.findState(channelUID);
+        var previousMode = serverDevice.findState(channelUID);
         var future = sendCommandToSuplaServer(channelUID, value, command, previousMode);
     }
 
@@ -185,7 +185,7 @@ public class HandlerCommandTrait implements HandleCommand {
     private Double findTemperature(ChannelUID channelUID, String id) {
         return Optional.of(channelUID)
                 .map(uid -> siblingChannel(uid, id))
-                .map(suplaDevice::findState)
+                .map(serverDevice::findState)
                 .<QuantityType<?>>map(state -> (QuantityType<?>) state)
                 .filter(state -> state.getUnit().isCompatible(CELSIUS))
                 .map(state -> state.toUnit(CELSIUS))
@@ -236,7 +236,7 @@ public class HandlerCommandTrait implements HandleCommand {
             return;
         }
 
-        suplaDevice
+        serverDevice
                 .getLogger()
                 .warn(
                         "Not handling `{}` (unit={}, class={}) on channel `{}`",
@@ -255,21 +255,21 @@ public class HandlerCommandTrait implements HandleCommand {
         var channelNumber = maybeChannelNumber.get();
 
         var encode = ChannelTypeEncoderImpl.INSTANCE.encode(channelValue);
-        var senderId = suplaDevice.getSenderId().getAndIncrement();
-        suplaDevice
+        var senderId = serverDevice.getSenderId().getAndIncrement();
+        serverDevice
                 .getSenderIdToChannelUID()
-                .put(senderId, new SuplaDevice.ChannelAndPreviousState(channelUID, previousState));
+                .put(senderId, new ServerDevice.ChannelAndPreviousState(channelUID, previousState));
         var channelNewValue = new SuplaChannelNewValue(senderId, channelNumber, 100L, null, encode);
         try {
-            ChannelFuture future = suplaDevice.write(channelNewValue);
+            ChannelFuture future = serverDevice.write(channelNewValue);
             future.addListener(__ -> {
-                suplaDevice.getLogger().debug("Changed value of channel for {} command {}", channelUID, command);
-                suplaDevice.updateStatus(ONLINE);
+                serverDevice.getLogger().debug("Changed value of channel for {} command {}", channelUID, command);
+                serverDevice.updateStatus(ONLINE);
             });
             return future;
         } catch (Exception ex) {
             var msg = "Couldn't Change value of channel for %s command %s. ".formatted(channelUID, command);
-            suplaDevice.updateStatus(OFFLINE, COMMUNICATION_ERROR, msg + ex.getLocalizedMessage());
+            serverDevice.updateStatus(OFFLINE, COMMUNICATION_ERROR, msg + ex.getLocalizedMessage());
             throw ex;
         }
     }

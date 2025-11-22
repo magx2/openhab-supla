@@ -31,14 +31,14 @@ import pl.grzeslowski.openhab.supla.internal.server.cache.InMemoryStateCache;
 import pl.grzeslowski.openhab.supla.internal.server.cache.StateCache;
 import pl.grzeslowski.openhab.supla.internal.server.handler.trait.HandleCommand;
 import pl.grzeslowski.openhab.supla.internal.server.handler.trait.HandlerCommandTrait;
-import pl.grzeslowski.openhab.supla.internal.server.handler.trait.SuplaDevice;
+import pl.grzeslowski.openhab.supla.internal.server.handler.trait.ServerDevice;
 import pl.grzeslowski.openhab.supla.internal.server.oh_config.ServerSubDeviceHandlerConfiguration;
 import pl.grzeslowski.openhab.supla.internal.server.traits.DeviceChannel;
 import pl.grzeslowski.openhab.supla.internal.server.traits.DeviceChannelValue;
 
 @NonNullByDefault
 @ToString(onlyExplicitlyIncluded = true)
-public class SubDeviceHandler extends AbstractDeviceHandler implements SuplaDevice {
+public class SubDeviceHandler extends AbstractDeviceHandler implements ServerDevice {
     @Getter
     private final Map<Integer, Integer> channelTypes = synchronizedMap(new HashMap<>());
 
