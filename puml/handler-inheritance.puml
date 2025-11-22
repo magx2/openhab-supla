@@ -46,7 +46,7 @@ BridgeHandler <|.. BaseBridgeHandler
 
 ' Device handler relationships
 BaseThingHandler <|-- AbstractDeviceHandler
-AbstractDeviceHandler <|-down- ServerAbstractDeviceHandler
+AbstractDeviceHandler <|-- ServerAbstractDeviceHandler
 AbstractDeviceHandler <|-- SubDeviceHandler
 AbstractDeviceHandler <|-- CloudDeviceHandler
 ServerAbstractDeviceHandler <|-- GatewayDeviceHandler
@@ -54,19 +54,19 @@ ServerAbstractDeviceHandler <|-- SingleDeviceHandler
 
 ' Supla trait implementations (device side)
 HandleCommand <|.. AbstractDeviceHandler
-HandleProto <|.up. ServerAbstractDeviceHandler
+HandleProto <|.. ServerAbstractDeviceHandler
 HandleCommand <|-- SuplaDevice
 HandleProto <|-- SuplaDevice
 SuplaDevice <|.. SubDeviceHandler
 SuplaDevice <|.. SingleDeviceHandler
 SuplaDevice <|.. GatewayDeviceHandler
-SuplaThing <|.up. ServerAbstractDeviceHandler
+SuplaThing <|.. ServerAbstractDeviceHandler
 
 ' Bridge handler relationships
-BaseBridgeHandler <|-down- CloudBridgeHandler
-BaseBridgeHandler <|-down- ServerBridgeHandler
+BaseBridgeHandler <|-- CloudBridgeHandler
+BaseBridgeHandler <|-- ServerBridgeHandler
 BridgeHandler <|.. SuplaBridge
 SuplaBridge <|.. GatewayDeviceHandler
-SuplaBridge <|.right. ServerBridgeHandler
-SuplaThingRegistry <|.up. ServerBridgeHandler
+SuplaBridge <|.. ServerBridgeHandler
+SuplaThingRegistry <|.. ServerBridgeHandler
 @enduml
