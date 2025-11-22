@@ -22,13 +22,12 @@ interface BridgeHandler <<OpenHAB>>
 abstract class BaseThingHandler <<OpenHAB>>
 abstract class BaseBridgeHandler <<OpenHAB>>
 
-abstract class AbstractDeviceHandler <<SuplaCommon>>
-abstract class ServerAbstractDeviceHandler <<SuplaServer>>
+abstract class SuplaDevice <<SuplaCommon>>
+abstract class ServerSuplaDeviceHandler <<SuplaServer>>
+abstract class SuplaBridge <<SuplaCommon>>
 
 interface HandleCommand <<SuplaServer>>
 interface ServerDevice <<SuplaServer>>
-interface SuplaThing <<SuplaServer>>
-interface SuplaThingRegistry <<SuplaServer>>
 interface ServerBridge <<SuplaServer>>
 
 class GatewayDeviceHandler <<SuplaHandler>>
@@ -44,27 +43,28 @@ ThingHandler <|.. BaseThingHandler
 ThingHandler <|-- BridgeHandler
 BridgeHandler <|.. BaseBridgeHandler
 
+' Supla Common
+BaseBridgeHandler <|-- SuplaBridge
+
 ' Device handler relationships
-BaseThingHandler <|-- AbstractDeviceHandler
-AbstractDeviceHandler <|-- ServerAbstractDeviceHandler
-AbstractDeviceHandler <|-- SubDeviceHandler
-AbstractDeviceHandler <|-- CloudDeviceHandler
-ServerAbstractDeviceHandler <|-- GatewayDeviceHandler
-ServerAbstractDeviceHandler <|-- SingleDeviceHandler
+BaseThingHandler <|-- SuplaDevice
+SuplaDevice <|-- ServerSuplaDeviceHandler
+SuplaDevice <|-- SubDeviceHandler
+SuplaDevice <|-- CloudDeviceHandler
+ServerSuplaDeviceHandler <|-- GatewayDeviceHandler
+ServerSuplaDeviceHandler <|-- SingleDeviceHandler
 
 ' Supla trait implementations (device side)
-HandleCommand <|.. AbstractDeviceHandler
+HandleCommand <|.. SuplaDevice
 HandleCommand <|-- ServerDevice
 ServerDevice <|.. SubDeviceHandler
 ServerDevice <|.. SingleDeviceHandler
 ServerDevice <|.. GatewayDeviceHandler
-SuplaThing <|.. ServerAbstractDeviceHandler
 
 ' Bridge handler relationships
-BaseBridgeHandler <|-- CloudBridgeHandler
-BaseBridgeHandler <|-- ServerBridgeHandler
+SuplaBridge <|-- CloudBridgeHandler
+SuplaBridge <|-- ServerBridgeHandler
 BridgeHandler <|-- ServerBridge
 ServerBridge <|.. GatewayDeviceHandler
-ServerBridge <|.left. ServerBridgeHandler
-SuplaThingRegistry <|.. ServerBridgeHandler
+ServerBridge <|.. ServerBridgeHandler
 @enduml

@@ -43,15 +43,13 @@ import pl.grzeslowski.openhab.supla.internal.handler.InitializationException;
 import pl.grzeslowski.openhab.supla.internal.handler.OfflineInitializationException;
 import pl.grzeslowski.openhab.supla.internal.server.discovery.ServerDiscoveryService;
 import pl.grzeslowski.openhab.supla.internal.server.handler.trait.ServerBridge;
-import pl.grzeslowski.openhab.supla.internal.server.handler.trait.SuplaThing;
-import pl.grzeslowski.openhab.supla.internal.server.handler.trait.SuplaThingRegistry;
 import pl.grzeslowski.openhab.supla.internal.server.netty.OpenHabMessageHandler;
 import pl.grzeslowski.openhab.supla.internal.server.oh_config.AuthData;
 import pl.grzeslowski.openhab.supla.internal.server.oh_config.ServerBridgeHandlerConfiguration;
 import pl.grzeslowski.openhab.supla.internal.server.oh_config.TimeoutConfiguration;
 
 @NonNullByDefault
-public class ServerBridgeHandler extends BaseBridgeHandler implements SuplaThingRegistry, ServerBridge {
+public class ServerBridgeHandler extends BaseBridgeHandler implements ServerBridge {
     private static final int PROPER_AES_KEY_SIZE = 2147483647;
     private Logger logger = LoggerFactory.getLogger(ServerBridgeHandler.class);
 
@@ -62,8 +60,7 @@ public class ServerBridgeHandler extends BaseBridgeHandler implements SuplaThing
 
     private final AtomicInteger numberOfConnectedDevices = new AtomicInteger();
 
-    private final Collection<ServerAbstractDeviceHandler> childHandlers =
-            Collections.synchronizedList(new ArrayList<>());
+    private final Collection<ServerSuplaDeviceHandler> childHandlers = Collections.synchronizedList(new ArrayList<>());
 
     @Getter
     @Nullable
@@ -185,11 +182,9 @@ public class ServerBridgeHandler extends BaseBridgeHandler implements SuplaThing
         return new OpenHabMessageHandler(this, serverDiscoveryService, ch);
     }
 
-    @Override
-    public Optional<SuplaThing> findSuplaThing(String guid) {
+    public Optional<ServerSuplaDeviceHandler> findSuplaThing(String guid) {
         return childHandlers.stream()
                 .filter(handler -> Objects.equals(handler.getGuid(), guid))
-                .map(SuplaThing.class::cast)
                 .findAny();
     }
 
@@ -257,7 +252,7 @@ public class ServerBridgeHandler extends BaseBridgeHandler implements SuplaThing
 
     @Override
     public void childHandlerInitialized(ThingHandler childHandler, Thing childThing) {
-        if (!(childHandler instanceof ServerAbstractDeviceHandler serverDevice)) {
+        if (!(childHandler instanceof ServerSuplaDeviceHandler serverDevice)) {
             logger.warn(
                     "Child handler ({}) is not instance of ServerAbstractDeviceHandler.",
                     childHandler.getClass().getSimpleName());
@@ -269,7 +264,7 @@ public class ServerBridgeHandler extends BaseBridgeHandler implements SuplaThing
 
     @Override
     public void childHandlerDisposed(ThingHandler childHandler, Thing childThing) {
-        if (!(childHandler instanceof ServerAbstractDeviceHandler serverDevice)) {
+        if (!(childHandler instanceof ServerSuplaDeviceHandler serverDevice)) {
             logger.warn(
                     "Child handler ({}) is not instance of ServerAbstractDeviceHandler.",
                     childHandler.getClass().getSimpleName());

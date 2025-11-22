@@ -18,8 +18,8 @@ import pl.grzeslowski.jsupla.server.MessageHandler;
 import pl.grzeslowski.jsupla.server.SuplaWriter;
 import pl.grzeslowski.openhab.supla.internal.GuidLogger.GuidLogged;
 import pl.grzeslowski.openhab.supla.internal.server.discovery.ServerDiscoveryService;
-import pl.grzeslowski.openhab.supla.internal.server.handler.trait.SuplaThing;
-import pl.grzeslowski.openhab.supla.internal.server.handler.trait.SuplaThingRegistry;
+import pl.grzeslowski.openhab.supla.internal.server.handler.ServerBridgeHandler;
+import pl.grzeslowski.openhab.supla.internal.server.handler.ServerSuplaDeviceHandler;
 import pl.grzeslowski.openhab.supla.internal.server.traits.RegisterDeviceTrait;
 
 @RequiredArgsConstructor
@@ -29,11 +29,11 @@ public final class OpenHabMessageHandler implements MessageHandler {
     private final long id = ID.incrementAndGet();
     private final Logger log = LoggerFactory.getLogger(OpenHabMessageHandler.class.getName() + "#" + id);
     private final Object handleLock = new Object();
-    private final AtomicReference<SuplaThing> currentThing = new AtomicReference<>();
+    private final AtomicReference<ServerSuplaDeviceHandler> currentThing = new AtomicReference<>();
     private final AtomicReference<SuplaWriter> writer = new AtomicReference<>();
     private final Set<String> discoveredThings = Collections.synchronizedSet(new HashSet<>());
 
-    private final SuplaThingRegistry registry;
+    private final ServerBridgeHandler registry;
     private final ServerDiscoveryService serverDiscoveryService;
     private final SocketChannel socketChannel;
 

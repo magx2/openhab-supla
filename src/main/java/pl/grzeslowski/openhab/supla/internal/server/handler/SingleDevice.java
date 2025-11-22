@@ -37,7 +37,7 @@ import pl.grzeslowski.openhab.supla.internal.server.traits.DeviceChannelValue;
 import pl.grzeslowski.openhab.supla.internal.server.traits.RegisterDeviceTrait;
 
 @NonNullByDefault
-public class SingleDeviceHandler extends ServerAbstractDeviceHandler implements ServerDevice {
+public class SingleDevice extends ServerSuplaDeviceHandler implements ServerDevice {
     @Getter
     private final Map<Integer, Integer> channelTypes = synchronizedMap(new HashMap<>());
 
@@ -52,7 +52,7 @@ public class SingleDeviceHandler extends ServerAbstractDeviceHandler implements 
     @Delegate(types = HandleCommand.class)
     private final HandlerCommandTrait handlerCommandTrait = new HandlerCommandTrait(this);
 
-    public SingleDeviceHandler(Thing thing) {
+    public SingleDevice(Thing thing) {
         super(thing);
     }
 

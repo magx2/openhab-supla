@@ -48,7 +48,7 @@ import pl.grzeslowski.openhab.supla.internal.server.traits.DeviceChannelValue;
 import pl.grzeslowski.openhab.supla.internal.server.traits.RegisterDeviceTrait;
 
 @NonNullByDefault
-public class GatewayDeviceHandler extends ServerAbstractDeviceHandler implements ServerBridge, ServerDevice {
+public class GatewayDeviceHandler extends ServerSuplaDeviceHandler implements ServerBridge, ServerDevice {
     private final AtomicInteger numberOfConnectedDevices = new AtomicInteger();
     private final Map<Integer, SubDeviceHandler> childHandlers = Collections.synchronizedMap(new HashMap<>());
     private Map<Integer, Integer> channelNumberToHandlerId = Map.of();
@@ -178,10 +178,10 @@ public class GatewayDeviceHandler extends ServerAbstractDeviceHandler implements
     @Override
     public void childHandlerInitialized(ThingHandler childHandler, Thing childThing) {
         attachGuid(findGuid(), () -> {
-            if (!(childHandler instanceof SubDeviceHandler subDevice)) {
+            if (!(childHandler instanceof SubDeviceHandler subDeviceHandler)) {
                 return;
             }
-            var subDeviceId = subDevice.getSubDeviceId();
+            var subDeviceId = subDeviceHandler.getSubDeviceId();
             if (childHandlers.containsKey(subDeviceId)) {
                 var existing = childHandlers.get(subDeviceId);
                 logger.warn(
@@ -190,15 +190,15 @@ public class GatewayDeviceHandler extends ServerAbstractDeviceHandler implements
                                 + "existing={}, subDevice={}",
                         subDeviceId,
                         existing,
-                        subDevice);
+                        subDeviceHandler);
             }
-            childHandlers.put(subDeviceId, subDevice);
+            childHandlers.put(subDeviceId, subDeviceHandler);
             if (discoveredIds.contains(subDeviceId)) {
                 discoveredIds.remove(subDeviceId);
                 serverDiscoveryService.removeSubDevice(subDeviceId);
             }
             if (!channels.isEmpty()) {
-                initChannels(subDevice);
+                initChannels(subDeviceHandler);
             }
         });
     }
@@ -207,11 +207,11 @@ public class GatewayDeviceHandler extends ServerAbstractDeviceHandler implements
     @Override
     public void childHandlerDisposed(ThingHandler childHandler, Thing childThing) {
         attachGuid(findGuid(), () -> {
-            if (!(childHandler instanceof SubDeviceHandler subDevice)) {
+            if (!(childHandler instanceof SubDeviceHandler subDeviceHandler)) {
                 return;
             }
-            var subDeviceId = subDevice.getSubDeviceId();
-            logger.debug("Remove Handler {}", subDevice);
+            var subDeviceId = subDeviceHandler.getSubDeviceId();
+            logger.debug("Remove Handler {}", subDeviceHandler);
             if (!childHandlers.containsKey(subDeviceId)) {
                 logger.warn("childHandlers do not contains sub device with ID {}!", subDeviceId);
                 return;
@@ -307,13 +307,13 @@ public class GatewayDeviceHandler extends ServerAbstractDeviceHandler implements
         var productCode = parseString(value.productCode());
         var serialNumber = parseString(value.serialNumber());
 
-        findSubDevice(subDeviceId).ifPresent(subDevice -> {
-            var builder = subDevice.editThing();
+        findSubDevice(subDeviceId).ifPresent(subDeviceHandler -> {
+            var builder = subDeviceHandler.editThing();
             builder.withLabel(name);
             builder.withProperty(SOFT_VERSION_PROPERTY, softVer);
             builder.withProperty(PRODUCT_CODE_PROPERTY, productCode);
             builder.withProperty(SERIAL_NUMBER_PROPERTY, serialNumber);
-            subDevice.updateThing(builder.build());
+            subDeviceHandler.updateThing(builder.build());
         });
     }
 

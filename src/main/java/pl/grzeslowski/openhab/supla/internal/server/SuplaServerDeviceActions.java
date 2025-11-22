@@ -26,7 +26,7 @@ import pl.grzeslowski.openhab.supla.internal.server.device_config.DeviceConfig;
 import pl.grzeslowski.openhab.supla.internal.server.device_config.DeviceConfigField;
 import pl.grzeslowski.openhab.supla.internal.server.device_config.DeviceConfigResult;
 import pl.grzeslowski.openhab.supla.internal.server.device_config.DeviceConfigUtil;
-import pl.grzeslowski.openhab.supla.internal.server.handler.ServerAbstractDeviceHandler;
+import pl.grzeslowski.openhab.supla.internal.server.handler.ServerSuplaDeviceHandler;
 
 @ThingActionsScope(name = BINDING_ID)
 @NonNullByDefault
@@ -34,11 +34,11 @@ import pl.grzeslowski.openhab.supla.internal.server.handler.ServerAbstractDevice
 public class SuplaServerDeviceActions implements ThingActions {
     @Getter
     @Nullable
-    private ServerAbstractDeviceHandler thingHandler;
+    private ServerSuplaDeviceHandler thingHandler;
 
     @Override
     public void setThingHandler(ThingHandler handler) {
-        if (!(handler instanceof ServerAbstractDeviceHandler suplaHandler)) {
+        if (!(handler instanceof ServerSuplaDeviceHandler suplaHandler)) {
             var handlerClass = Optional.of(handler)
                     .map(ThingHandler::getClass)
                     .map(Class::getSimpleName)
@@ -46,7 +46,7 @@ public class SuplaServerDeviceActions implements ThingActions {
             log.warn(
                     "Handler {} has wrong class, actualClass={}, expectedClass={}",
                     handlerClass,
-                    ServerAbstractDeviceHandler.class.getSimpleName());
+                    ServerSuplaDeviceHandler.class.getSimpleName());
             return;
         }
         this.thingHandler = suplaHandler;
