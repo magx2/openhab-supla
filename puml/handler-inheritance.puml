@@ -25,7 +25,6 @@ abstract class AbstractDeviceHandler <<SuplaCommon>>
 abstract class ServerAbstractDeviceHandler <<SuplaCommon>>
 
 interface HandleCommand <<SuplaServer>>
-interface HandleProto <<SuplaServer>>
 interface SuplaDevice <<SuplaServer>>
 interface SuplaThing <<SuplaServer>>
 interface SuplaThingRegistry <<SuplaServer>>
@@ -54,7 +53,6 @@ ServerAbstractDeviceHandler <|-- SingleDeviceHandler
 
 ' Supla trait implementations (device side)
 HandleCommand <|.. AbstractDeviceHandler
-HandleProto <|.. ServerAbstractDeviceHandler
 HandleCommand <|-- SuplaDevice
 SuplaDevice <|.. SubDeviceHandler
 SuplaDevice <|.. SingleDeviceHandler
