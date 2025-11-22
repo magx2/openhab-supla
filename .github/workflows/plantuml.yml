@@ -21,8 +21,20 @@ jobs:
 
       - name: Generate PNG diagrams
         run: |
+          shopt -s nullglob
+
           for file in imgs/*.puml; do
-            plantuml "$file"
+            if [[ ! -s "$file" ]]; then
+              echo "Skipping empty PlantUML file: $file"
+              continue
+            fi
+
+            if ! grep -q "@start" "$file"; then
+              echo "Skipping PlantUML file without diagram markers: $file"
+              continue
+            fi
+
+            plantuml -tpng "$file"
           done
 
       - name: Commit updated diagrams
