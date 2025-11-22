@@ -12,6 +12,7 @@ skinparam class {
 BackgroundColor<<OpenHAB>> HoneyDew
 BackgroundColor<<SuplaCloud>> Cornsilk
 BackgroundColor<<SuplaServer>> MistyRose
+BackgroundColor<<SuplaHandler>> Motivation
 BackgroundColor<<SuplaCommon>> GreenYellow
 }
 
@@ -30,10 +31,10 @@ interface SuplaThing <<SuplaServer>>
 interface SuplaThingRegistry <<SuplaServer>>
 interface SuplaBridge <<SuplaServer>>
 
-class GatewayDeviceHandler <<SuplaServer>>
-class SingleDeviceHandler <<SuplaServer>>
-class SubDeviceHandler <<SuplaServer>>
-class ServerBridgeHandler <<SuplaServer>>
+class GatewayDeviceHandler <<SuplaHandler>>
+class SingleDeviceHandler <<SuplaHandler>>
+class SubDeviceHandler <<SuplaHandler>>
+class ServerBridgeHandler <<SuplaHandler>>
 
 class CloudBridgeHandler <<SuplaCloud>>
 class CloudDeviceHandler <<SuplaCloud>>
