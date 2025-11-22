@@ -16,7 +16,7 @@ import pl.grzeslowski.jsupla.protocol.api.types.FromServerProto;
 import pl.grzeslowski.openhab.supla.internal.server.cache.StateCache;
 
 @NonNullByDefault
-public interface SuplaDevice extends HandleCommand, HandleProto, StateCache {
+public interface SuplaDevice extends HandleCommand, StateCache {
     Logger getLogger();
 
     Thing getThing();
