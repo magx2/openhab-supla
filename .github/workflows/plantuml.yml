@@ -3,11 +3,11 @@ name: Generate PlantUML images
 on:
   push:
     paths:
-      - "imgs/*.puml"
+      - "puml/*.puml"
       - ".github/workflows/plantuml.yml"
   pull_request:
     paths:
-      - "imgs/*.puml"
+      - "puml/*.puml"
       - ".github/workflows/plantuml.yml"
 
 jobs:
@@ -27,7 +27,7 @@ jobs:
         run: |
           shopt -s nullglob
 
-          for file in imgs/*.puml; do
+          for file in puml/*.puml; do
             if [[ ! -s "$file" ]]; then
               echo "Skipping empty PlantUML file: $file"
               continue
@@ -38,7 +38,7 @@ jobs:
               continue
             fi
 
-            plantuml -tpng "$file"
+            plantuml -tpng -o ../imgs "$file"
           done
 
       - name: Commit updated diagrams
