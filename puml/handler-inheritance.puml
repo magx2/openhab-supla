@@ -56,7 +56,6 @@ ServerAbstractDeviceHandler <|-- SingleDeviceHandler
 HandleCommand <|.. AbstractDeviceHandler
 HandleCommand <|.. SubDeviceHandler
 HandleCommand <|.. SingleDeviceHandler
-HandleCommand <|.. GatewayDeviceHandler
 HandleProto <|.. ServerAbstractDeviceHandler
 HandleProto <|.. SingleDeviceHandler
 HandleProto <|.. GatewayDeviceHandler
