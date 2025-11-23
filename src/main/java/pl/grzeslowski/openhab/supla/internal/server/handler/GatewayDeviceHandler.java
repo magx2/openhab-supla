@@ -20,7 +20,6 @@ import java.util.stream.Collectors;
 import lombok.Getter;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
-import org.javatuples.Pair;
 import org.openhab.core.common.ThreadPoolManager;
 import org.openhab.core.library.types.*;
 import org.openhab.core.thing.ChannelUID;
@@ -101,10 +100,11 @@ public class GatewayDeviceHandler extends ServerSuplaDeviceHandler implements Se
 
         channels = unmodifiableList(registerEntity.channels());
         childHandlers.values().forEach(this::initChannels);
+        record NumberAndSubDeviceId(Integer number, Integer subDeviceId) {}
         channelNumberToHandlerId = channels.stream()
                 .filter(c -> c.subDeviceId() != null)
-                .map(c -> new Pair<>(c.number(), c.subDeviceId()))
-                .collect(Collectors.toMap(Pair::getValue0, Pair::getValue1));
+                .map(c -> new NumberAndSubDeviceId(c.number(), c.subDeviceId()))
+                .collect(Collectors.toMap(NumberAndSubDeviceId::number, NumberAndSubDeviceId::subDeviceId));
 
         if (!channels.isEmpty()) {
             var scheduledPool =

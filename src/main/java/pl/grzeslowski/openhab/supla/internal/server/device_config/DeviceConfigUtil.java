@@ -15,7 +15,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.experimental.UtilityClass;
 import org.eclipse.jdt.annotation.NonNullByDefault;
-import org.javatuples.Pair;
 import pl.grzeslowski.jsupla.protocol.api.decoders.*;
 
 @UtilityClass
@@ -25,16 +24,17 @@ public class DeviceConfigUtil {
     public static final String SPLIT_CHAR = ":";
 
     public static Map<String, String> buildDeviceConfig(long fields, byte[] config) {
+        record OffsetAndMap(Integer offset, Map<String, String> map) {}
         var configMap = hasFields(fields).stream()
                 .reduce(
-                        Pair.with(0, new HashMap<String, String>()),
-                        (pair, field) -> {
-                            var result = decode(field, config, pair.getValue0());
-                            pair.getValue1().putAll(result.configMap);
-                            return new Pair<>(pair.getValue0() + result.usedBytes, pair.getValue1());
+                        new OffsetAndMap(0, new HashMap<>()),
+                        (offsetAndMap, field) -> {
+                            var result = decode(field, config, offsetAndMap.offset);
+                            offsetAndMap.map().putAll(result.configMap);
+                            return new OffsetAndMap(offsetAndMap.offset + result.usedBytes, offsetAndMap.map);
                         },
-                        (a, b) -> Pair.with(a.getValue0() + b.getValue0(), mergeMaps(a.getValue1(), b.getValue1())))
-                .getValue1();
+                        (a, b) -> new OffsetAndMap(a.offset + b.offset, mergeMaps(a.map, b.map)))
+                .map;
         return configMap.entrySet().stream()
                 .map(entry -> entry(PREFIX + entry.getKey(), entry.getValue()))
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
@@ -115,7 +115,7 @@ public class DeviceConfigUtil {
         }
     }
 
-    private static HashMap<String, String> mergeMaps(HashMap<String, String> value1, HashMap<String, String> value2) {
+    private static HashMap<String, String> mergeMaps(Map<String, String> value1, Map<String, String> value2) {
         var map = new HashMap<String, String>();
         map.putAll(value1);
         map.putAll(value2);

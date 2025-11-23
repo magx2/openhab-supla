@@ -15,7 +15,6 @@ import jakarta.annotation.Nullable;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.eclipse.jdt.annotation.NonNullByDefault;
-import org.javatuples.Pair;
 import org.openhab.core.library.types.*;
 import org.openhab.core.thing.ChannelGroupUID;
 import org.openhab.core.thing.ChannelUID;
@@ -30,6 +29,8 @@ import pl.grzeslowski.jsupla.protocol.api.structs.sd.SuplaChannelNewValue;
 public class HandlerCommandTrait implements HandleCommand {
     private final ServerDevice serverDevice;
 
+    private record ValueAndPrevState(ChannelValue value, State prev) {}
+
     @Override
     public void handleRefreshCommand(ChannelUID channelUID) {
         var state = serverDevice.findState(channelUID);
@@ -43,20 +44,20 @@ public class HandlerCommandTrait implements HandleCommand {
     public void handleOnOffCommand(ChannelUID channelUID, OnOffType command) {
         var toSend =
                 switch (command) {
-                    case ON -> new Pair<>(OnOff.ON, OnOffType.OFF);
-                    case OFF -> new Pair<>(OnOff.OFF, OnOffType.ON);
+                    case ON -> new ValueAndPrevState(OnOff.ON, OnOffType.OFF);
+                    case OFF -> new ValueAndPrevState(OnOff.OFF, OnOffType.ON);
                 };
-        sendCommandToSuplaServer(channelUID, toSend.getValue0(), command, toSend.getValue1());
+        sendCommandToSuplaServer(channelUID, toSend.value, command, toSend.prev);
     }
 
     @Override
     public void handleUpDownCommand(ChannelUID channelUID, UpDownType command) {
         var toSend =
                 switch (command) {
-                    case UP -> new Pair<>(OnOff.ON, OnOffType.OFF);
-                    case DOWN -> new Pair<>(OnOff.OFF, OnOffType.ON);
+                    case UP -> new ValueAndPrevState(OnOff.ON, OnOffType.OFF);
+                    case DOWN -> new ValueAndPrevState(OnOff.OFF, OnOffType.ON);
                 };
-        sendCommandToSuplaServer(channelUID, toSend.getValue0(), command, toSend.getValue1());
+        sendCommandToSuplaServer(channelUID, toSend.value, command, toSend.prev);
     }
 
     @SuppressWarnings("deprecation")
@@ -76,10 +77,10 @@ public class HandlerCommandTrait implements HandleCommand {
     public void handleOpenClosedCommand(ChannelUID channelUID, OpenClosedType command) {
         var toSend =
                 switch (command) {
-                    case OPEN -> new Pair<>(OnOff.ON, OnOffType.OFF);
-                    case CLOSED -> new Pair<>(OnOff.OFF, OnOffType.ON);
+                    case OPEN -> new ValueAndPrevState(OnOff.ON, OnOffType.OFF);
+                    case CLOSED -> new ValueAndPrevState(OnOff.OFF, OnOffType.ON);
                 };
-        sendCommandToSuplaServer(channelUID, toSend.getValue0(), command, toSend.getValue1());
+        sendCommandToSuplaServer(channelUID, toSend.value, command, toSend.prev);
     }
 
     @Override

@@ -17,7 +17,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
-import org.javatuples.Pair;
 import org.openhab.core.thing.Channel;
 import org.openhab.core.thing.ChannelUID;
 import org.openhab.core.thing.binding.builder.ChannelBuilder;
@@ -79,8 +78,9 @@ public class ChannelUtil {
         var channels = channelValueSwitch.doSwitch(clazz);
         invoker.getChannelTypes().put(deviceChannel.number(), deviceChannel.type());
         if (adjustLabel) {
-            return channels.map(channel -> new Pair<>(ChannelBuilder.create(channel), channel.getLabel()))
-                    .map(pair -> pair.getValue0().withLabel(("#%0" + digits + "d ").formatted(idx) + pair.getValue1()))
+            record ChannelAndLabel(ChannelBuilder builder, @Nullable String label) {}
+            return channels.map(channel -> new ChannelAndLabel(ChannelBuilder.create(channel), channel.getLabel()))
+                    .map(pair -> pair.builder().withLabel(("#%0" + digits + "d ").formatted(idx) + pair.label()))
                     .map(ChannelBuilder::build);
         }
         return channels;
