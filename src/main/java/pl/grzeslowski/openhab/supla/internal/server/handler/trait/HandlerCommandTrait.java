@@ -5,6 +5,7 @@ import static org.openhab.core.thing.ThingStatus.OFFLINE;
 import static org.openhab.core.thing.ThingStatus.ONLINE;
 import static org.openhab.core.thing.ThingStatusDetail.COMMUNICATION_ERROR;
 import static pl.grzeslowski.jsupla.protocol.api.channeltype.value.HvacValue.Mode.*;
+import static pl.grzeslowski.openhab.supla.internal.Localization.text;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ChannelIds.Hvac.*;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.Channels.HVAC_MODE_CHANNEL_ID;
 import static pl.grzeslowski.openhab.supla.internal.server.ChannelUtil.findSuplaChannelNumber;
@@ -269,8 +270,8 @@ public class HandlerCommandTrait implements HandleCommand {
             });
             return future;
         } catch (Exception ex) {
-            var msg = "Couldn't Change value of channel for %s command %s. ".formatted(channelUID, command);
-            serverDevice.updateStatus(OFFLINE, COMMUNICATION_ERROR, msg + ex.getLocalizedMessage());
+            var msg = text("supla.offline.channel-change-failed", channelUID, command, ex.getLocalizedMessage());
+            serverDevice.updateStatus(OFFLINE, COMMUNICATION_ERROR, msg);
             throw ex;
         }
     }

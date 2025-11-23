@@ -222,7 +222,7 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDevice implements Me
         }
         if (locationAuthData == null && emailAuthData == null) {
             throw new OfflineInitializationException(
-                    CONFIGURATION_ERROR, "You need to configure location authorization and/or email authorization!");
+                    CONFIGURATION_ERROR, text("supla.server.location-or-email-auth-missing"));
         }
         return new AuthData(locationAuthData, emailAuthData);
     }
@@ -408,15 +408,15 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDevice implements Me
         var locationAuthData = Optional.ofNullable(deviceConfiguration)
                 .map(DeviceConfiguration::authData)
                 .map(AuthData::locationAuthData)
-                .orElseThrow(() ->
-                        new OfflineInitializationException(CONFIGURATION_ERROR, "No location authorization data!"));
+                .orElseThrow(() -> new OfflineInitializationException(
+                        CONFIGURATION_ERROR, text("supla.server.location-auth-missing")));
         if (locationAuthData.serverAccessId() != accessId) {
             throw new OfflineInitializationException(
                     CONFIGURATION_ERROR,
-                    "Wrong access ID! Expected %s but got %s.".formatted(locationAuthData.serverAccessId(), accessId));
+                    text("supla.server.access-id-wrong", locationAuthData.serverAccessId(), accessId));
         }
         if (!isGoodPassword(locationAuthData.serverAccessIdPassword().toCharArray(), accessIdPassword)) {
-            throw new OfflineInitializationException(CONFIGURATION_ERROR, "Wrong location password!");
+            throw new OfflineInitializationException(CONFIGURATION_ERROR, text("supla.server.location-password-wrong"));
         }
     }
 
@@ -436,20 +436,19 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDevice implements Me
         var emailAuthData = Optional.ofNullable(deviceConfiguration)
                 .map(DeviceConfiguration::authData)
                 .map(AuthData::emailAuthData)
-                .orElseThrow(
-                        () -> new OfflineInitializationException(CONFIGURATION_ERROR, "No email authentication data!"));
+                .orElseThrow(() -> new OfflineInitializationException(
+                        CONFIGURATION_ERROR, text("supla.server.email-auth-missing")));
         if (!emailAuthData.email().equals(email)) {
             throw new OfflineInitializationException(
-                    CONFIGURATION_ERROR,
-                    "Wrong email! Expected %s but got %s.".formatted(email, emailAuthData.email()));
+                    CONFIGURATION_ERROR, text("supla.server.email-wrong", email, emailAuthData.email()));
         }
         var key = emailAuthData.authKey();
         if (key == null) {
-            throw new OfflineInitializationException(CONFIGURATION_ERROR, "Missing email auth key!");
+            throw new OfflineInitializationException(CONFIGURATION_ERROR, text("supla.server.email-auth-key-missing"));
         }
         var byteKey = hexToBytes(key);
         if (!Arrays.equals(byteKey, authKey)) {
-            throw new OfflineInitializationException(CONFIGURATION_ERROR, "Wrong email auth key!");
+            throw new OfflineInitializationException(CONFIGURATION_ERROR, text("supla.server.email-auth-key-wrong"));
         }
     }
 
