@@ -7,14 +7,6 @@ Cloud-based devices leverage Supla's robust cloud infrastructure for seamless co
 native devices operate directly within your local network, ensuring rapid response times and offline capabilities.
 Together, these options provide flexibility and reliability for all your smart home needs.
 
-## Handler Hierarchy
-
-The binding's bridge and device handlers build on OpenHAB core abstractions while implementing Supla-specific
-contracts. The diagram below summarizes these relationships and highlights where each class originates:
-
-![Handler Hierarchy](imgs/handler-inheritance.png)
-
-
 ## Certified Devices
 
 This binding has been tested and certified to work with a variety of Supla devices, ensuring reliable performance and
