@@ -8,6 +8,7 @@ import static org.openhab.core.thing.ThingStatus.ONLINE;
 import static org.openhab.core.thing.ThingStatusDetail.COMMUNICATION_ERROR;
 import static org.openhab.core.thing.ThingStatusDetail.CONFIGURATION_ERROR;
 import static org.openhab.core.types.RefreshType.REFRESH;
+import static pl.grzeslowski.openhab.supla.internal.Localization.text;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.CloudBridgeHandlerConstants.*;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.THREAD_POOL_NAME;
 
@@ -93,8 +94,7 @@ public class CloudBridgeHandler extends SuplaBridge implements IoDevicesCloudApi
             }
         } catch (Exception e) {
             throw new OfflineInitializationException(
-                    CONFIGURATION_ERROR,
-                    "Cannot create client to Supla Cloud! Probably oAuth token is incorrect! " + e.getMessage());
+                    CONFIGURATION_ERROR, text("supla.offline.client-creation-failed", e.getLocalizedMessage()));
         }
 
         // update channels
@@ -108,8 +108,7 @@ public class CloudBridgeHandler extends SuplaBridge implements IoDevicesCloudApi
         if (!supportedApiVersions.contains(apiVersion)) {
             throw new OfflineInitializationException(
                     CONFIGURATION_ERROR,
-                    "This API version `%s` is not supported! Supported api versions: [%s]."
-                            .formatted(apiVersion, String.join(", ", supportedApiVersions)));
+                    text("supla.offline.api-version-unsupported", apiVersion, String.join(", ", supportedApiVersions)));
         }
 
         var scheduledPool = ThreadPoolManager.getScheduledPool(THREAD_POOL_NAME);
@@ -132,7 +131,8 @@ public class CloudBridgeHandler extends SuplaBridge implements IoDevicesCloudApi
         try {
             return localServerCloudApi.getServerInfo();
         } catch (ApiException e) {
-            throw new OfflineInitializationException(COMMUNICATION_ERROR, "Cannot get server info! " + e.getMessage());
+            throw new OfflineInitializationException(
+                    COMMUNICATION_ERROR, text("supla.offline.server-info-error", e.getLocalizedMessage()));
         }
     }
 

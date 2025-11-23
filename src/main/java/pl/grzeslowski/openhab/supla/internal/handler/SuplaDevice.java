@@ -13,6 +13,7 @@ import org.openhab.core.thing.binding.BaseThingHandler;
 import org.openhab.core.types.Command;
 import org.openhab.core.types.RefreshType;
 import org.slf4j.Logger;
+import pl.grzeslowski.openhab.supla.internal.Localization;
 import pl.grzeslowski.openhab.supla.internal.server.handler.trait.HandleCommand;
 
 @NonNullByDefault
@@ -28,13 +29,13 @@ public abstract class SuplaDevice extends BaseThingHandler implements HandleComm
             try {
                 internalInitialize();
             } catch (InitializationException e) {
-                updateStatus(e.getStatus(), e.getStatusDetail(), e.getMessage());
+                updateStatus(e.getStatus(), e.getStatusDetail(), e.getLocalizedMessage());
             } catch (Exception e) {
                 getLogger().error("Error occurred while initializing Supla device!", e);
                 updateStatus(
                         OFFLINE,
                         CONFIGURATION_ERROR,
-                        "Error occurred while initializing Supla device! " + e.getLocalizedMessage());
+                        Localization.text("supla.offline.initialization-error", e.getLocalizedMessage()));
             }
         });
     }
