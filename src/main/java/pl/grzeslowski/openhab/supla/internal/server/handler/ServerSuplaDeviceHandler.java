@@ -251,11 +251,7 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDevice implements Me
             switch (entity) {
                 case SuplaPingServer ping -> consumeSuplaPingServer(ping, writer);
                 case SuplaSetActivityTimeout suplaSetActivityTimeout -> consumeSuplaSetActivityTimeout(writer);
-                case SuplaDeviceChannelValueA value -> consumeDeviceChannelValueTrait(
-                        DeviceChannelValue.fromProto(value));
-                case SuplaDeviceChannelValueB value -> consumeDeviceChannelValueTrait(
-                        DeviceChannelValue.fromProto(value));
-                case SuplaDeviceChannelValueC value -> consumeDeviceChannelValueTrait(
+                case SuplaDeviceChannelValue value -> consumeDeviceChannelValueTrait(
                         DeviceChannelValue.fromProto(value));
                 case SuplaDeviceChannelExtendedValue value -> {
                     var extendedValue = value.value();
