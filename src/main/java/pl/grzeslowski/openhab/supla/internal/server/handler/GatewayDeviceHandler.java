@@ -86,7 +86,8 @@ public class GatewayDeviceHandler extends ServerSuplaDeviceHandler implements Se
     }
 
     @Override
-    protected AuthData buildAuthData(ServerBridge localBridgeHandler, ServerDeviceHandlerConfiguration config) {
+    protected AuthData buildAuthData(ServerBridge localBridgeHandler, ServerDeviceHandlerConfiguration config)
+            throws OfflineInitializationException {
         authData = super.buildAuthData(localBridgeHandler, config);
         return authData;
     }
