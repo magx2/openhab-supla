@@ -111,13 +111,12 @@ public final class OpenHabMessageHandler implements MessageHandler {
             suplaThing.active(requireNonNull(writer.get(), "writer is null"));
             try {
                 suplaThing.register(entity, this);
+                currentThing.set(suplaThing);
             } catch (InitializationException ex) {
                 suplaThing.updateStatus(ex.getStatus(), ex.getStatusDetail(), ex.getMessage());
             } catch (Exception ex) {
                 suplaThing.updateStatus(ThingStatus.OFFLINE, COMMUNICATION_ERROR, ex.getLocalizedMessage());
             }
-            // correctly registered
-            currentThing.set(suplaThing);
         });
     }
 
