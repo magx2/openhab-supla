@@ -119,12 +119,6 @@
             <scope>compile</scope>
         </dependency>
         <dependency>
-            <groupId>org.javatuples</groupId>
-            <artifactId>javatuples</artifactId>
-            <version>1.2</version>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
             <groupId>jakarta.annotation</groupId>
             <artifactId>jakarta.annotation-api</artifactId>
             <version>2.1.1</version>
@@ -341,7 +335,6 @@ jsupla-*.jar;lib:=true,\
 javax*.jar;lib:=true,\
 jakarta.validation-api-*.jar;lib:=true,\
 okio-*.jar;lib:=true,\
-javatuples-*.jar;lib:=true,\
 protocol-*.jar;lib:=true,\
 server-*.jar;lib:=true,\
 jakarta.annotation*.jar;lib:=true,\
