@@ -63,8 +63,9 @@ public class SingleDevice extends ServerSuplaDeviceHandler implements ServerDevi
             updateStatus(
                     OFFLINE,
                     CONFIGURATION_ERROR,
-                    "Device should be created as %s. See %s for more information."
-                            .formatted(SUPLA_GATEWAY_DEVICE_TYPE.getId(), THING_BRIDGE));
+                    "@text/supla.status.server.device-should-be-created-as-gateway",
+                    SUPLA_GATEWAY_DEVICE_TYPE.getId(),
+                    THING_BRIDGE);
             return false;
         }
 
@@ -126,8 +127,9 @@ public class SingleDevice extends ServerSuplaDeviceHandler implements ServerDevi
     }
 
     @Override
-    public void updateStatus(ThingStatus thingStatus, ThingStatusDetail thingStatusDetail, String message) {
-        super.updateStatus(thingStatus, thingStatusDetail, message);
+    public void updateStatus(
+            ThingStatus thingStatus, ThingStatusDetail thingStatusDetail, String message, Object... messageArguments) {
+        super.updateStatus(thingStatus, thingStatusDetail, message, messageArguments);
     }
 
     @Override

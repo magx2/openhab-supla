@@ -15,7 +15,6 @@ import jakarta.annotation.Nullable;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.eclipse.jdt.annotation.NonNullByDefault;
-import org.javatuples.Pair;
 import org.openhab.core.library.types.*;
 import org.openhab.core.thing.ChannelGroupUID;
 import org.openhab.core.thing.ChannelUID;
@@ -24,6 +23,7 @@ import org.openhab.core.types.State;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.encoders.ChannelTypeEncoderImpl;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.value.*;
 import pl.grzeslowski.jsupla.protocol.api.structs.sd.SuplaChannelNewValue;
+import pl.grzeslowski.openhab.supla.internal.util.Pair;
 
 @NonNullByDefault
 @RequiredArgsConstructor
@@ -269,7 +269,13 @@ public class HandlerCommandTrait implements HandleCommand {
             return future;
         } catch (Exception ex) {
             var msg = "Couldn't Change value of channel for %s command %s. ".formatted(channelUID, command);
-            serverDevice.updateStatus(OFFLINE, COMMUNICATION_ERROR, msg + ex.getLocalizedMessage());
+            serverDevice.updateStatus(
+                    OFFLINE,
+                    COMMUNICATION_ERROR,
+                    "@text/supla.status.server.channel-change-error",
+                    channelUID,
+                    command,
+                    ex.getLocalizedMessage());
             throw ex;
         }
     }

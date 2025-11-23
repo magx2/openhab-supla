@@ -93,8 +93,7 @@ public class CloudBridgeHandler extends SuplaBridge implements IoDevicesCloudApi
             }
         } catch (Exception e) {
             throw new OfflineInitializationException(
-                    CONFIGURATION_ERROR,
-                    "Cannot create client to Supla Cloud! Probably oAuth token is incorrect! " + e.getMessage());
+                    CONFIGURATION_ERROR, "@text/supla.status.cloud.client-creation-error", e.getMessage());
         }
 
         // update channels
@@ -108,8 +107,9 @@ public class CloudBridgeHandler extends SuplaBridge implements IoDevicesCloudApi
         if (!supportedApiVersions.contains(apiVersion)) {
             throw new OfflineInitializationException(
                     CONFIGURATION_ERROR,
-                    "This API version `%s` is not supported! Supported api versions: [%s]."
-                            .formatted(apiVersion, String.join(", ", supportedApiVersions)));
+                    "@text/supla.status.cloud.api-version-not-supported",
+                    apiVersion,
+                    String.join(", ", supportedApiVersions));
         }
 
         var scheduledPool = ThreadPoolManager.getScheduledPool(THREAD_POOL_NAME);
@@ -132,7 +132,8 @@ public class CloudBridgeHandler extends SuplaBridge implements IoDevicesCloudApi
         try {
             return localServerCloudApi.getServerInfo();
         } catch (ApiException e) {
-            throw new OfflineInitializationException(COMMUNICATION_ERROR, "Cannot get server info! " + e.getMessage());
+            throw new OfflineInitializationException(
+                    COMMUNICATION_ERROR, "@text/supla.status.cloud.server-info-error", e.getMessage());
         }
     }
 

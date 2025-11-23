@@ -14,17 +14,25 @@ public class InitializationException extends Exception {
 
     private final ThingStatus status;
     private final ThingStatusDetail statusDetail;
+    private final Object[] descriptionArguments;
 
-    public InitializationException(ThingStatus status, ThingStatusDetail statusDetail, String description) {
+    public InitializationException(
+            ThingStatus status, ThingStatusDetail statusDetail, String description, Object... descriptionArguments) {
         super(description);
         this.status = status;
         this.statusDetail = statusDetail;
+        this.descriptionArguments = descriptionArguments;
     }
 
     public InitializationException(
-            ThingStatus status, ThingStatusDetail statusDetail, String description, Exception exception) {
+            ThingStatus status,
+            ThingStatusDetail statusDetail,
+            String description,
+            Exception exception,
+            Object... descriptionArguments) {
         super(description, exception);
         this.status = status;
         this.statusDetail = statusDetail;
+        this.descriptionArguments = descriptionArguments;
     }
 }

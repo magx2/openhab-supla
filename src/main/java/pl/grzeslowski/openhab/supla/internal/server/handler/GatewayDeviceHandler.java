@@ -20,7 +20,6 @@ import java.util.stream.Collectors;
 import lombok.Getter;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
-import org.javatuples.Pair;
 import org.openhab.core.common.ThreadPoolManager;
 import org.openhab.core.library.types.*;
 import org.openhab.core.thing.ChannelUID;
@@ -46,6 +45,7 @@ import pl.grzeslowski.openhab.supla.internal.server.oh_config.TimeoutConfigurati
 import pl.grzeslowski.openhab.supla.internal.server.traits.DeviceChannel;
 import pl.grzeslowski.openhab.supla.internal.server.traits.DeviceChannelValue;
 import pl.grzeslowski.openhab.supla.internal.server.traits.RegisterDeviceTrait;
+import pl.grzeslowski.openhab.supla.internal.util.Pair;
 
 @NonNullByDefault
 public class GatewayDeviceHandler extends ServerSuplaDeviceHandler implements ServerBridge, ServerDevice {
@@ -95,7 +95,7 @@ public class GatewayDeviceHandler extends ServerSuplaDeviceHandler implements Se
     protected boolean afterRegister(RegisterDeviceTrait registerEntity) {
         var flags = registerEntity.flags();
         if (!flags.calcfgSubdevicePairing()) {
-            updateStatus(OFFLINE, CONFIGURATION_ERROR, "This is not a gateway device!");
+            updateStatus(OFFLINE, CONFIGURATION_ERROR, "@text/supla.status.gateway.not-gateway-device");
             return false;
         }
 
@@ -377,8 +377,9 @@ public class GatewayDeviceHandler extends ServerSuplaDeviceHandler implements Se
     }
 
     @Override
-    public void updateStatus(ThingStatus thingStatus, ThingStatusDetail thingStatusDetail, String message) {
-        super.updateStatus(thingStatus, thingStatusDetail, message);
+    public void updateStatus(
+            ThingStatus thingStatus, ThingStatusDetail thingStatusDetail, String message, Object... messageArguments) {
+        super.updateStatus(thingStatus, thingStatusDetail, message, messageArguments);
     }
 
     @Override

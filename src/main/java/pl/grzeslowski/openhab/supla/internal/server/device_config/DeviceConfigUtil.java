@@ -15,8 +15,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.experimental.UtilityClass;
 import org.eclipse.jdt.annotation.NonNullByDefault;
-import org.javatuples.Pair;
 import pl.grzeslowski.jsupla.protocol.api.decoders.*;
+import pl.grzeslowski.openhab.supla.internal.util.Pair;
 
 @UtilityClass
 @NonNullByDefault

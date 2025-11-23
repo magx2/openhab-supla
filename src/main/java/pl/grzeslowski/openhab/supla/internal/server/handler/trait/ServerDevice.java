@@ -36,7 +36,8 @@ public interface ServerDevice extends HandleCommand, StateCache {
 
     void updateState(ChannelUID uid, State state);
 
-    void updateStatus(ThingStatus thingStatus, ThingStatusDetail thingStatusDetail, String message);
+    void updateStatus(
+            ThingStatus thingStatus, ThingStatusDetail thingStatusDetail, String message, Object... messageArguments);
 
     void updateStatus(ThingStatus thingStatus);
 
