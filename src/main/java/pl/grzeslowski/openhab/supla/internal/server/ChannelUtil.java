@@ -21,7 +21,6 @@ import org.javatuples.Pair;
 import org.openhab.core.thing.Channel;
 import org.openhab.core.thing.ChannelUID;
 import org.openhab.core.thing.binding.builder.ChannelBuilder;
-import org.openhab.core.types.State;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.decoders.ChannelTypeDecoder;
@@ -70,7 +69,7 @@ public class ChannelUtil {
         }
         deviceChannels.stream()
                 .flatMap(this::channelForUpdate)
-                .forEach(pair -> invoker.updateState(pair.getValue0(), pair.getValue1()));
+                .forEach(pair -> invoker.updateState(pair.uid(), pair.state()));
     }
 
     private Stream<Channel> createChannel(DeviceChannel deviceChannel, boolean adjustLabel, int idx, int digits) {
@@ -87,7 +86,7 @@ public class ChannelUtil {
         return channels;
     }
 
-    private Stream<Pair<ChannelUID, State>> channelForUpdate(DeviceChannel deviceChannel) {
+    private Stream<ChannelValueToState.ChannelState> channelForUpdate(DeviceChannel deviceChannel) {
         Class<? extends ChannelValue> clazz = ChannelTypeDecoder.INSTANCE.findClass(deviceChannel.type());
         if (clazz.isAssignableFrom(ElectricityMeterValue.class)) {
             return Stream.empty();
@@ -96,7 +95,7 @@ public class ChannelUtil {
                 deviceChannel.type(), deviceChannel.number(), deviceChannel.value(), deviceChannel.hvacValue());
     }
 
-    public Stream<Pair<ChannelUID, State>> findState(
+    public Stream<ChannelValueToState.ChannelState> findState(
             int type,
             int channelNumber,
             @Nullable @jakarta.annotation.Nullable byte[] value,
@@ -145,8 +144,8 @@ public class ChannelUtil {
     public void updateStatus(int channelNumber, int type, byte[] channelValue) {
         invoker.getLogger().debug("Updating status for channelNumber={}, type={}", channelNumber, type);
         findState(type, channelNumber, channelValue, null).forEach(pair -> {
-            var channelUID = pair.getValue0();
-            var state = pair.getValue1();
+            var channelUID = pair.uid();
+            var state = pair.state();
             invoker.getLogger()
                     .debug(
                             "Updating state for channel {}, channelNumber {}, type {}, state={}",

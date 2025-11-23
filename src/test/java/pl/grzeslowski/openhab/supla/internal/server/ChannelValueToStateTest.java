@@ -7,7 +7,6 @@ import static org.openhab.core.types.UnDefType.UNDEF;
 
 import java.math.BigDecimal;
 import java.util.List;
-import org.javatuples.Pair;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -24,6 +23,7 @@ import pl.grzeslowski.jsupla.protocol.api.channeltype.value.StoppableOpenClose;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.value.TemperatureAndHumidityValue;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.value.TemperatureValue;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.value.UnknownValue;
+import pl.grzeslowski.openhab.supla.internal.server.ChannelValueToState.ChannelState;
 
 @ExtendWith(MockitoExtension.class)
 class ChannelValueToStateTest {
@@ -53,7 +53,7 @@ class ChannelValueToStateTest {
         when(decimalValue.value()).thenReturn(BigDecimal.TEN);
 
         List<State> states =
-                converter.onDecimalValue(decimalValue).map(Pair::getValue1).toList();
+                converter.onDecimalValue(decimalValue).map(ChannelState::state).toList();
 
         assertThat(states).containsExactly(new DecimalType(BigDecimal.TEN));
     }
@@ -62,7 +62,8 @@ class ChannelValueToStateTest {
     void shouldReturnNullForMissingDecimal() {
         var converter = new ChannelValueToState(thingUID, 4);
 
-        List<State> states = converter.onDecimalValue(null).map(Pair::getValue1).toList();
+        List<State> states =
+                converter.onDecimalValue(null).map(ChannelState::state).toList();
 
         assertThat(states).containsExactly(NULL);
     }
@@ -76,8 +77,8 @@ class ChannelValueToStateTest {
         when(rgbValue.blue()).thenReturn(3);
 
         List<State> states = java.util.stream.Stream.concat(
-                        converter.onPercentValue(percentValue).map(Pair::getValue1),
-                        converter.onRgbValue(rgbValue).map(Pair::getValue1))
+                        converter.onPercentValue(percentValue).map(ChannelState::state),
+                        converter.onRgbValue(rgbValue).map(ChannelState::state))
                 .toList();
 
         assertThat(states).containsExactly(new PercentType(55), HSBType.fromRGB(1, 2, 3));
@@ -92,7 +93,7 @@ class ChannelValueToStateTest {
                 .onTemperatureValue(temperatureValue)
                 .findFirst()
                 .orElseThrow()
-                .getValue1();
+                .state();
 
         assertThat(state).isEqualTo(UNDEF);
     }
@@ -105,7 +106,7 @@ class ChannelValueToStateTest {
 
         List<State> states = converter
                 .onTemperatureAndHumidityValue(temperatureAndHumidityValue)
-                .map(Pair::getValue1)
+                .map(ChannelState::state)
                 .toList();
 
         assertThat(states)
@@ -122,7 +123,7 @@ class ChannelValueToStateTest {
                 .onStoppableOpenClose(StoppableOpenClose.STOP)
                 .findFirst()
                 .orElseThrow()
-                .getValue1();
+                .state();
 
         assertThat(state).isEqualTo(OpenClosedType.CLOSED);
     }
@@ -133,9 +134,9 @@ class ChannelValueToStateTest {
         when(unknownValue.message()).thenReturn("oops");
 
         List<State> nullStates =
-                converter.onUnknownValue(null).map(Pair::getValue1).toList();
+                converter.onUnknownValue(null).map(ChannelState::state).toList();
         List<State> messageStates =
-                converter.onUnknownValue(unknownValue).map(Pair::getValue1).toList();
+                converter.onUnknownValue(unknownValue).map(ChannelState::state).toList();
 
         assertThat(nullStates).containsExactly(NULL);
         assertThat(messageStates).containsExactly(new StringType("oops"));
@@ -147,7 +148,7 @@ class ChannelValueToStateTest {
 
         List<ChannelUID> uids = converter
                 .onTemperatureAndHumidityValue(null)
-                .map(Pair::getValue0)
+                .map(ChannelState::uid)
                 .toList();
 
         assertThat(uids)
