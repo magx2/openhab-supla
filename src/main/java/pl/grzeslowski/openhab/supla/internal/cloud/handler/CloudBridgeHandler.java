@@ -4,8 +4,8 @@ import static java.math.BigDecimal.ZERO;
 import static java.math.RoundingMode.HALF_UP;
 import static java.util.Objects.requireNonNull;
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.openhab.core.thing.ThingStatus.OFFLINE;
 import static org.openhab.core.thing.ThingStatus.ONLINE;
+import static org.openhab.core.thing.ThingStatusDetail.COMMUNICATION_ERROR;
 import static org.openhab.core.thing.ThingStatusDetail.CONFIGURATION_ERROR;
 import static org.openhab.core.types.RefreshType.REFRESH;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.CloudBridgeHandlerConstants.*;
@@ -15,11 +15,14 @@ import io.swagger.client.ApiException;
 import io.swagger.client.model.Channel;
 import io.swagger.client.model.ChannelExecuteActionRequest;
 import io.swagger.client.model.Device;
+import io.swagger.client.model.ServerInfo;
 import java.math.BigDecimal;
+import java.util.Base64;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ScheduledFuture;
+import lombok.Getter;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
 import org.openhab.core.common.ThreadPoolManager;
@@ -44,7 +47,9 @@ import pl.grzeslowski.openhab.supla.internal.handler.SuplaBridge;
 
 @NonNullByDefault
 public class CloudBridgeHandler extends SuplaBridge implements IoDevicesCloudApi, ChannelsCloudApi {
+    @Getter
     private final Logger logger = LoggerFactory.getLogger(CloudBridgeHandler.class);
+
     private final ReadWriteMonad<Set<CloudDevice>> cloudDeviceHandlers = new ReadWriteMonad<>(new HashSet<>());
 
     @Nullable
@@ -67,17 +72,7 @@ public class CloudBridgeHandler extends SuplaBridge implements IoDevicesCloudApi
     }
 
     @Override
-    public void initialize() {
-        try {
-            internalInitialize();
-        } catch (InitializationException e) {
-            updateStatus(e.getStatus(), e.getStatusDetail(), e.getMessage());
-        } catch (Exception ex) {
-            updateStatus(OFFLINE, CONFIGURATION_ERROR, "Cannot start server! " + ex.getMessage());
-        }
-    }
-
-    private void internalInitialize() throws Exception {
+    protected void internalInitialize() throws InitializationException {
         // init bridge api client
         var config = this.getConfigAs(CloudBridgeHandlerConfig.class);
 
@@ -108,8 +103,8 @@ public class CloudBridgeHandler extends SuplaBridge implements IoDevicesCloudApi
 
         // check if the current api is supported
         var apiVersion = ApiClientFactory.getApiVersion();
-        var serverInfo = localServerCloudApi.getServerInfo();
-        List<String> supportedApiVersions = serverInfo.getSupportedApiVersions();
+        var serverInfo = findServerInfo(localServerCloudApi);
+        var supportedApiVersions = serverInfo.getSupportedApiVersions();
         if (!supportedApiVersions.contains(apiVersion)) {
             throw new OfflineInitializationException(
                     CONFIGURATION_ERROR,
@@ -131,6 +126,25 @@ public class CloudBridgeHandler extends SuplaBridge implements IoDevicesCloudApi
 
         // done
         updateStatus(ONLINE);
+    }
+
+    private static ServerInfo findServerInfo(ServerCloudApi localServerCloudApi) throws InitializationException {
+        try {
+            return localServerCloudApi.getServerInfo();
+        } catch (ApiException e) {
+            throw new OfflineInitializationException(COMMUNICATION_ERROR, "Cannot get server info! " + e.getMessage());
+        }
+    }
+
+    @Override
+    protected @Nullable String findGuid() {
+        var config = this.getConfigAs(CloudBridgeHandlerConfig.class);
+        var split = config.getOAuthToken().split("\\.");
+        if (split.length != 2) {
+            return null;
+        }
+        var urlBase64 = split[1];
+        return new String(Base64.getDecoder().decode(urlBase64));
     }
 
     @Override

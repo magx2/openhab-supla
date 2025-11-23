@@ -3,12 +3,12 @@ package pl.grzeslowski.openhab.supla.internal.server.handler;
 import static java.util.Arrays.stream;
 import static java.util.stream.Collectors.toCollection;
 import static java.util.stream.Collectors.toSet;
-import static org.openhab.core.thing.ThingStatus.OFFLINE;
 import static org.openhab.core.thing.ThingStatus.ONLINE;
 import static org.openhab.core.thing.ThingStatusDetail.CONFIGURATION_ERROR;
+import static org.openhab.core.thing.ThingStatusDetail.HANDLER_INITIALIZING_ERROR;
 import static org.openhab.core.types.RefreshType.REFRESH;
 import static pl.grzeslowski.jsupla.server.NettyConfig.DEFAULT_TIMEOUT;
-import static pl.grzeslowski.openhab.supla.internal.GuidLogger.attachGuid;
+import static pl.grzeslowski.openhab.supla.internal.Documentation.SSL_PROBLEM;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.BINDING_ID;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.CONNECTED_DEVICES_CHANNEL_ID;
 
@@ -17,6 +17,7 @@ import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.SslProvider;
 import io.netty.handler.ssl.util.SelfSignedCertificate;
+import java.security.NoSuchAlgorithmException;
 import java.security.Security;
 import java.security.cert.CertificateException;
 import java.util.*;
@@ -30,7 +31,6 @@ import org.openhab.core.library.types.DecimalType;
 import org.openhab.core.thing.Bridge;
 import org.openhab.core.thing.ChannelUID;
 import org.openhab.core.thing.Thing;
-import org.openhab.core.thing.binding.BaseBridgeHandler;
 import org.openhab.core.thing.binding.ThingHandler;
 import org.openhab.core.types.Command;
 import org.slf4j.Logger;
@@ -41,6 +41,7 @@ import pl.grzeslowski.jsupla.server.NettyServer;
 import pl.grzeslowski.openhab.supla.internal.Documentation;
 import pl.grzeslowski.openhab.supla.internal.handler.InitializationException;
 import pl.grzeslowski.openhab.supla.internal.handler.OfflineInitializationException;
+import pl.grzeslowski.openhab.supla.internal.handler.SuplaBridge;
 import pl.grzeslowski.openhab.supla.internal.server.discovery.ServerDiscoveryService;
 import pl.grzeslowski.openhab.supla.internal.server.handler.trait.ServerBridge;
 import pl.grzeslowski.openhab.supla.internal.server.netty.OpenHabMessageHandler;
@@ -49,8 +50,10 @@ import pl.grzeslowski.openhab.supla.internal.server.oh_config.ServerBridgeHandle
 import pl.grzeslowski.openhab.supla.internal.server.oh_config.TimeoutConfiguration;
 
 @NonNullByDefault
-public class ServerBridgeHandler extends BaseBridgeHandler implements ServerBridge {
+public class ServerBridgeHandler extends SuplaBridge implements ServerBridge {
     private static final int PROPER_AES_KEY_SIZE = 2147483647;
+
+    @Getter
     private Logger logger = LoggerFactory.getLogger(ServerBridgeHandler.class);
 
     @Nullable
@@ -78,27 +81,7 @@ public class ServerBridgeHandler extends BaseBridgeHandler implements ServerBrid
     }
 
     @Override
-    public void initialize() {
-        attachGuid(findGuid(), () -> {
-            try {
-                internalInitialize();
-            } catch (InitializationException e) {
-                updateStatus(e.getStatus(), e.getStatusDetail(), e.getMessage());
-            } catch (CertificateException | SSLException ex) {
-                logger.debug("Problem with generating certificates! ", ex);
-                updateStatus(
-                        OFFLINE,
-                        CONFIGURATION_ERROR,
-                        "Problem with generating certificates! " + ex.getLocalizedMessage() + ". See: "
-                                + Documentation.SSL_PROBLEM);
-            } catch (Exception ex) {
-                logger.debug("Cannot start server! ", ex);
-                updateStatus(OFFLINE, CONFIGURATION_ERROR, "Cannot start server! " + ex.getLocalizedMessage());
-            }
-        });
-    }
-
-    private void internalInitialize() throws Exception {
+    protected void internalInitialize() throws InitializationException {
         var config = this.getConfigAs(ServerBridgeHandlerConfiguration.class);
         if (!config.isServerAuth() && !config.isEmailAuth()) {
             throw new OfflineInitializationException(
@@ -120,13 +103,21 @@ public class ServerBridgeHandler extends BaseBridgeHandler implements ServerBrid
         var scheduledPool = ThreadPoolManager.getScheduledPool(BINDING_ID + "." + port);
 
         if (config.isSsl()) {
-            var maxKeySize = javax.crypto.Cipher.getMaxAllowedKeyLength("AES");
-            if (maxKeySize < PROPER_AES_KEY_SIZE) {
-                logger.warn(
-                        "AES key size is too small, {} < {}! Probably you need to enable unlimited crypto. See: {}",
-                        maxKeySize,
-                        PROPER_AES_KEY_SIZE,
-                        Documentation.SSL_PROBLEM);
+            var algo = "AES";
+            try {
+                var maxKeySize = javax.crypto.Cipher.getMaxAllowedKeyLength(algo);
+                if (maxKeySize < PROPER_AES_KEY_SIZE) {
+                    logger.warn(
+                            "AES key size is too small, {} < {}! Probably you need to enable unlimited crypto. See: {}",
+                            maxKeySize,
+                            PROPER_AES_KEY_SIZE,
+                            SSL_PROBLEM);
+                }
+            } catch (NoSuchAlgorithmException ex) {
+                throw new OfflineInitializationException(
+                        HANDLER_INITIALIZING_ERROR,
+                        "Missing %s cryptographic algorithm! %s. See: %s"
+                                .formatted(algo, ex.getLocalizedMessage(), SSL_PROBLEM));
             }
         } else {
             logger.info("Disabling SSL is not supported");
@@ -160,7 +151,14 @@ public class ServerBridgeHandler extends BaseBridgeHandler implements ServerBrid
 
         timeoutConfiguration = ServerBridge.buildTimeoutConfiguration(config);
 
-        server = new NettyServer(buildNettyConfig(port, protocols), this::messageHandlerFactory);
+        try {
+            server = new NettyServer(buildNettyConfig(port, protocols), this::messageHandlerFactory);
+        } catch (CertificateException | SSLException ex) {
+            throw new OfflineInitializationException(
+                    HANDLER_INITIALIZING_ERROR,
+                    "Problem with generating certificates! %s. See: %s"
+                            .formatted(ex.getLocalizedMessage(), SSL_PROBLEM));
+        }
 
         logger.debug("jSuplaServer running on port {}", port);
         updateStatus(ONLINE);
@@ -168,7 +166,8 @@ public class ServerBridgeHandler extends BaseBridgeHandler implements ServerBrid
         updateConnectedDevices(0);
     }
 
-    private String findGuid() {
+    @Override
+    protected String findGuid() {
         if (port > 0) {
             return String.valueOf(port);
         }
