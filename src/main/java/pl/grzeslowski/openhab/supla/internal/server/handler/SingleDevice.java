@@ -16,12 +16,7 @@ import lombok.Getter;
 import lombok.experimental.Delegate;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
-import org.openhab.core.thing.ChannelUID;
 import org.openhab.core.thing.Thing;
-import org.openhab.core.thing.ThingStatus;
-import org.openhab.core.thing.ThingStatusDetail;
-import org.openhab.core.thing.binding.builder.ThingBuilder;
-import org.openhab.core.types.State;
 import pl.grzeslowski.jsupla.protocol.api.structs.dcs.SetCaption;
 import pl.grzeslowski.jsupla.protocol.api.structs.ds.SubdeviceDetails;
 import pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaChannelNewValueResult;
@@ -32,13 +27,12 @@ import pl.grzeslowski.openhab.supla.internal.server.ChannelUtil;
 import pl.grzeslowski.openhab.supla.internal.server.handler.trait.HandleCommand;
 import pl.grzeslowski.openhab.supla.internal.server.handler.trait.HandlerCommandTrait;
 import pl.grzeslowski.openhab.supla.internal.server.handler.trait.ServerBridge;
-import pl.grzeslowski.openhab.supla.internal.server.handler.trait.ServerDevice;
 import pl.grzeslowski.openhab.supla.internal.server.traits.DeviceChannel;
 import pl.grzeslowski.openhab.supla.internal.server.traits.DeviceChannelValue;
 import pl.grzeslowski.openhab.supla.internal.server.traits.RegisterDeviceTrait;
 
 @NonNullByDefault
-public class SingleDevice extends ServerSuplaDeviceHandler implements ServerDevice {
+public class SingleDevice extends ServerSuplaDeviceHandler {
     @Getter
     private final Map<Integer, Integer> channelTypes = synchronizedMap(new HashMap<>());
 
@@ -104,31 +98,6 @@ public class SingleDevice extends ServerSuplaDeviceHandler implements ServerDevi
     @Override
     protected List<Class<? extends ServerBridge>> findAllowedBridgeClasses() {
         return List.of(ServerBridgeHandler.class, GatewayDeviceHandler.class);
-    }
-
-    @Override
-    public void updateState(ChannelUID uid, State state) {
-        super.updateState(uid, state);
-    }
-
-    @Override
-    public ThingBuilder editThing() {
-        return super.editThing();
-    }
-
-    @Override
-    public void updateThing(Thing thing) {
-        super.updateThing(thing);
-    }
-
-    @Override
-    public void updateStatus(ThingStatus thingStatus, ThingStatusDetail thingStatusDetail, String message) {
-        super.updateStatus(thingStatus, thingStatusDetail, message);
-    }
-
-    @Override
-    public void updateStatus(ThingStatus thingStatus) {
-        super.updateStatus(thingStatus);
     }
 
     @Override

@@ -27,8 +27,6 @@ import org.openhab.core.thing.Thing;
 import org.openhab.core.thing.ThingStatus;
 import org.openhab.core.thing.ThingStatusDetail;
 import org.openhab.core.thing.binding.ThingHandler;
-import org.openhab.core.thing.binding.builder.ThingBuilder;
-import org.openhab.core.types.State;
 import pl.grzeslowski.jsupla.protocol.api.structs.dcs.SetCaption;
 import pl.grzeslowski.jsupla.protocol.api.structs.ds.SubdeviceDetails;
 import pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaChannelNewValueResult;
@@ -351,16 +349,6 @@ public class GatewayDeviceHandler extends ServerSuplaDeviceHandler implements Se
     }
 
     @Override
-    public ThingBuilder editThing() {
-        return super.editThing();
-    }
-
-    @Override
-    public void updateThing(Thing thing) {
-        super.updateThing(thing);
-    }
-
-    @Override
     public AtomicInteger getSenderId() {
         throw new UnsupportedOperationException("ServerGatewayDeviceHandler.getSenderId()");
     }
@@ -371,18 +359,8 @@ public class GatewayDeviceHandler extends ServerSuplaDeviceHandler implements Se
     }
 
     @Override
-    public void updateState(ChannelUID uid, State state) {
-        super.updateState(uid, state);
-    }
-
-    @Override
     public void updateStatus(ThingStatus thingStatus, ThingStatusDetail thingStatusDetail, String message) {
         super.updateStatus(thingStatus, thingStatusDetail, message);
-    }
-
-    @Override
-    public void updateStatus(ThingStatus thingStatus) {
-        super.updateStatus(thingStatus);
     }
 
     @Override

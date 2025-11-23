@@ -58,8 +58,7 @@ ServerSuplaDeviceHandler <|-- SingleDeviceHandler
 HandleCommand <|.. SuplaDevice
 HandleCommand <|-- ServerDevice
 ServerDevice <|.. SubDeviceHandler
-ServerDevice <|.. SingleDeviceHandler
-ServerDevice <|.. GatewayDeviceHandler
+ServerDevice <|.. ServerSuplaDeviceHandler
 
 ' Bridge handler relationships
 SuplaBridge <|-- CloudBridgeHandler

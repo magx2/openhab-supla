@@ -44,7 +44,9 @@ import org.openhab.core.thing.ChannelUID;
 import org.openhab.core.thing.Thing;
 import org.openhab.core.thing.ThingStatus;
 import org.openhab.core.thing.binding.ThingHandlerService;
+import org.openhab.core.thing.binding.builder.ThingBuilder;
 import org.openhab.core.types.Command;
+import org.openhab.core.types.State;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import pl.grzeslowski.jsupla.protocol.api.structs.SuplaTimeval;
@@ -71,6 +73,7 @@ import pl.grzeslowski.openhab.supla.internal.server.cache.StateCache;
 import pl.grzeslowski.openhab.supla.internal.server.device_config.DeviceConfigResult;
 import pl.grzeslowski.openhab.supla.internal.server.device_config.DeviceConfigUtil;
 import pl.grzeslowski.openhab.supla.internal.server.handler.trait.ServerBridge;
+import pl.grzeslowski.openhab.supla.internal.server.handler.trait.ServerDevice;
 import pl.grzeslowski.openhab.supla.internal.server.netty.OpenHabMessageHandler;
 import pl.grzeslowski.openhab.supla.internal.server.oh_config.AuthData;
 import pl.grzeslowski.openhab.supla.internal.server.oh_config.DeviceConfiguration;
@@ -84,7 +87,7 @@ import pl.grzeslowski.openhab.supla.internal.server.traits.RegisterLocationDevic
 /** The {@link ServerSuplaDeviceHandler} is responsible for handling commands, which are sent to one of the channels. */
 @NonNullByDefault
 @ToString(onlyExplicitlyIncluded = true)
-public abstract class ServerSuplaDeviceHandler extends SuplaDevice implements MessageHandler {
+public abstract class ServerSuplaDeviceHandler extends SuplaDevice implements MessageHandler, ServerDevice {
     public static final byte ACTIVITY_TIMEOUT = (byte) 100;
     public static final String AVAILABLE_FIELDS = "AVAILABLE_FIELDS";
     private static final AtomicLong ID = new AtomicLong();
@@ -658,4 +661,24 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDevice implements Me
     abstract void consumeSubDeviceDetails(SubdeviceDetails value);
 
     abstract void consumeSuplaChannelNewValueResult(SuplaChannelNewValueResult value);
+
+    @Override
+    public void updateState(ChannelUID uid, State state) {
+        super.updateState(uid, state);
+    }
+
+    @Override
+    public void updateStatus(ThingStatus thingStatus) {
+        super.updateStatus(thingStatus);
+    }
+
+    @Override
+    public ThingBuilder editThing() {
+        return super.editThing();
+    }
+
+    @Override
+    public void updateThing(Thing thing) {
+        super.updateThing(thing);
+    }
 }
