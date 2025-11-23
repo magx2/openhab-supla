@@ -9,14 +9,12 @@ import static java.util.stream.Collectors.joining;
 import static org.openhab.core.thing.ThingStatus.OFFLINE;
 import static org.openhab.core.thing.ThingStatus.ONLINE;
 import static org.openhab.core.thing.ThingStatusDetail.*;
-import static pl.grzeslowski.jsupla.protocol.api.ProtocolHelpers.parseString;
 import static pl.grzeslowski.jsupla.protocol.api.ResultCode.SUPLA_RESULTCODE_TRUE;
 import static pl.grzeslowski.jsupla.protocol.api.consts.ProtoConsts.SUPLA_PROTO_VERSION_MIN;
 import static pl.grzeslowski.openhab.supla.internal.GuidLogger.attachGuid;
 import static pl.grzeslowski.openhab.supla.internal.Localization.text;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.BINDING_ID;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ServerDevicesProperties.*;
-import static pl.grzeslowski.openhab.supla.internal.server.ByteArrayToHex.bytesToHex;
 import static pl.grzeslowski.openhab.supla.internal.server.ByteArrayToHex.hexToBytes;
 
 import io.netty.handler.timeout.ReadTimeoutException;
@@ -289,7 +287,8 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDevice implements Me
         dispose();
     }
 
-    public boolean register(@NonNull RegisterDeviceTrait registerEntity, OpenHabMessageHandler handler) {
+    public void register(@NonNull RegisterDeviceTrait registerEntity, OpenHabMessageHandler handler)
+            throws InitializationException {
         updateStatus(OFFLINE, HANDLER_CONFIGURATION_PENDING, text("supla.offline.device-authorizing"));
         var oldHandler = this.handler;
         if (oldHandler != null) {
@@ -304,11 +303,8 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDevice implements Me
 
         // auth
         logger.debug("Authorizing...");
-        authorized = authorize(registerEntity);
-        if (!authorized) {
-            updateStatus(OFFLINE, CONFIGURATION_ERROR, findNonAuthMessage(registerEntity));
-            return false;
-        }
+        authorize(registerEntity);
+        authorized = true;
         logger.debug("Authorized!");
         {
             var local = bridgeHandler;
@@ -326,45 +322,28 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDevice implements Me
             thing.setProperty(PRODUCT_ID_PROPERTY, valueOf(registerEntity.productId()));
         }
 
-        var register = afterRegister(registerEntity);
-        logger.debug("register={}", register);
-        if (register) {
-            var w = requireNonNull(getWriter().get(), "There is no writer!");
-            // TODO should I send version A or B?
-            w.write(new SuplaRegisterDeviceResultA(
-                    SUPLA_RESULTCODE_TRUE.getValue(), ACTIVITY_TIMEOUT, (byte) w.getVersion(), (byte)
-                            SUPLA_PROTO_VERSION_MIN));
-            // thing will have status ONLINE after receiving proto from the device (method `handle(ToServerProto)`)
-            updateStatus(ThingStatus.UNKNOWN, CONFIGURATION_PENDING, text("supla.offline.waiting-for-registration"));
-            lastMessageFromDevice.set(now().getEpochSecond());
-        }
-        return register;
+        afterRegister(registerEntity);
+        var w = requireNonNull(getWriter().get(), "There is no writer!");
+        // TODO should I send version A or B?
+        w.write(new SuplaRegisterDeviceResultA(
+                SUPLA_RESULTCODE_TRUE.getValue(), ACTIVITY_TIMEOUT, (byte) w.getVersion(), (byte)
+                        SUPLA_PROTO_VERSION_MIN));
+        // thing will have status ONLINE after receiving proto from the device (method `handle(ToServerProto)`)
+        updateStatus(ThingStatus.UNKNOWN, CONFIGURATION_PENDING, text("supla.offline.waiting-for-registration"));
+        lastMessageFromDevice.set(now().getEpochSecond());
     }
 
-    private static String findNonAuthMessage(RegisterDeviceTrait registerEntity) {
-        return switch (registerEntity) {
-            case RegisterLocationDeviceTrait registerDevice -> text(
-                    "supla.offline.authorization-failed-location",
-                    registerDevice.locationId(),
-                    parseString(registerDevice.locationPwd()));
-            case RegisterEmailDeviceTrait registerDevice -> text(
-                    "supla.offline.authorization-failed-email",
-                    registerDevice.email(),
-                    bytesToHex(registerDevice.authKey()));
-        };
-    }
-
-    private boolean authorize(RegisterDeviceTrait registerEntity) {
-        return switch (registerEntity) {
+    private void authorize(RegisterDeviceTrait registerEntity) throws InitializationException {
+        switch (registerEntity) {
             case RegisterLocationDeviceTrait registerDevice -> authorizeForLocation(
                     registerDevice.locationId(), registerDevice.locationPwd());
             case RegisterEmailDeviceTrait registerDevice -> authorizeForEmail(
                     registerDevice.email(), registerDevice.authKey());
-        };
+        }
     }
 
     @GuidLogged
-    protected abstract boolean afterRegister(RegisterDeviceTrait registerEntity);
+    protected abstract void afterRegister(RegisterDeviceTrait registerEntity) throws InitializationException;
 
     public final void consumeSuplaSetActivityTimeout(SuplaWriter writer) {
         var timeout = requireNonNull(deviceConfiguration).timeoutConfiguration();
@@ -424,25 +403,20 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDevice implements Me
         });
     }
 
-    private boolean authorizeForLocation(int accessId, byte[] accessIdPassword) {
-        var localDeviceConfiguration = deviceConfiguration;
-        if (localDeviceConfiguration == null) {
-            return false;
-        }
-        var locationAuthData = localDeviceConfiguration.authData().locationAuthData();
-        if (locationAuthData == null) {
-            // not using access id authorization
-            return false;
-        }
+    private void authorizeForLocation(int accessId, byte[] accessIdPassword) throws InitializationException {
+        var locationAuthData = Optional.ofNullable(deviceConfiguration)
+                .map(DeviceConfiguration::authData)
+                .map(AuthData::locationAuthData)
+                .orElseThrow(() ->
+                        new OfflineInitializationException(CONFIGURATION_ERROR, "No location authorization data!"));
         if (locationAuthData.serverAccessId() != accessId) {
-            logger.debug("Wrong accessId {} != {}", accessId, locationAuthData.serverAccessId());
-            return false;
+            throw new OfflineInitializationException(
+                    CONFIGURATION_ERROR,
+                    "Wrong access ID! Expected %s but got %s.".formatted(locationAuthData.serverAccessId(), accessId));
         }
         if (!isGoodPassword(locationAuthData.serverAccessIdPassword().toCharArray(), accessIdPassword)) {
-            logger.debug("Wrong accessIdPassword");
-            return false;
+            throw new OfflineInitializationException(CONFIGURATION_ERROR, "Wrong location password!");
         }
-        return true;
     }
 
     private boolean isGoodPassword(char[] password, byte[] givenPassword) {
@@ -457,31 +431,25 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDevice implements Me
         return true;
     }
 
-    private boolean authorizeForEmail(String email, byte[] authKey) {
-        var localDeviceConfiguration = deviceConfiguration;
-        if (localDeviceConfiguration == null) {
-            return false;
-        }
-        var emailAuthData = localDeviceConfiguration.authData().emailAuthData();
-        if (emailAuthData == null) {
-            // not using email authorization
-            return false;
-        }
+    private void authorizeForEmail(String email, byte[] authKey) throws InitializationException {
+        var emailAuthData = Optional.ofNullable(deviceConfiguration)
+                .map(DeviceConfiguration::authData)
+                .map(AuthData::emailAuthData)
+                .orElseThrow(
+                        () -> new OfflineInitializationException(CONFIGURATION_ERROR, "No email authentication data!"));
         if (!emailAuthData.email().equals(email)) {
-            logger.debug("Wrong email; {} != {}", email, emailAuthData.email());
-            return false;
+            throw new OfflineInitializationException(
+                    CONFIGURATION_ERROR,
+                    "Wrong email! Expected %s but got %s.".formatted(email, emailAuthData.email()));
         }
         var key = emailAuthData.authKey();
         if (key == null) {
-            logger.debug("Device is missing {} property", CONFIG_AUTH_PROPERTY);
-            return false;
+            throw new OfflineInitializationException(CONFIGURATION_ERROR, "Missing email auth key!");
         }
         var byteKey = hexToBytes(key);
         if (!Arrays.equals(byteKey, authKey)) {
-            logger.debug("Wrong auth key; {} != {}", bytesToHex(authKey), key);
-            return false;
+            throw new OfflineInitializationException(CONFIGURATION_ERROR, "Wrong email auth key!");
         }
-        return true;
     }
 
     private void checkIfDeviceIsUp() {

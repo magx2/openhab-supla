@@ -3,7 +3,6 @@ package pl.grzeslowski.openhab.supla.internal.server.handler;
 import static java.util.Collections.unmodifiableList;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static java.util.stream.Collectors.toUnmodifiableSet;
-import static org.openhab.core.thing.ThingStatus.OFFLINE;
 import static org.openhab.core.thing.ThingStatusDetail.CONFIGURATION_ERROR;
 import static pl.grzeslowski.jsupla.protocol.api.ProtocolHelpers.parseString;
 import static pl.grzeslowski.openhab.supla.internal.GuidLogger.attachGuid;
@@ -36,6 +35,7 @@ import pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaChannelNewValueResult;
 import pl.grzeslowski.jsupla.protocol.api.structs.dsc.ChannelState;
 import pl.grzeslowski.jsupla.protocol.api.types.FromServerProto;
 import pl.grzeslowski.openhab.supla.internal.GuidLogger;
+import pl.grzeslowski.openhab.supla.internal.handler.OfflineInitializationException;
 import pl.grzeslowski.openhab.supla.internal.server.ChannelUtil;
 import pl.grzeslowski.openhab.supla.internal.server.discovery.ServerDiscoveryService;
 import pl.grzeslowski.openhab.supla.internal.server.handler.trait.ServerBridge;
@@ -92,11 +92,10 @@ public class GatewayDeviceHandler extends ServerSuplaDeviceHandler implements Se
     }
 
     @Override
-    protected boolean afterRegister(RegisterDeviceTrait registerEntity) {
+    protected void afterRegister(RegisterDeviceTrait registerEntity) throws OfflineInitializationException {
         var flags = registerEntity.flags();
         if (!flags.calcfgSubdevicePairing()) {
-            updateStatus(OFFLINE, CONFIGURATION_ERROR, text("supla.offline.not-gateway"));
-            return false;
+            throw new OfflineInitializationException(CONFIGURATION_ERROR, text("supla.offline.not-gateway"));
         }
 
         channels = unmodifiableList(registerEntity.channels());
@@ -119,8 +118,6 @@ public class GatewayDeviceHandler extends ServerSuplaDeviceHandler implements Se
         if (!notSubDeviceChannels.isEmpty()) {
             logger.warn("Gateway has channels, but it is not supported by addon! channels={}", notSubDeviceChannels);
         }
-
-        return true;
     }
 
     private void initChannels(SubDeviceHandler subDeviceHandler) {
