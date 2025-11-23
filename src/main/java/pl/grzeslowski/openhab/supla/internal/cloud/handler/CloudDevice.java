@@ -85,8 +85,7 @@ public final class CloudDevice extends SuplaDevice {
         @Nullable final Bridge bridge = getBridge();
         if (bridge == null) {
             logger.debug("No bridge for thing with UID {}", thing.getUID());
-            throw new OfflineInitializationException(
-                    BRIDGE_UNINITIALIZED, "There is no bridge for this thing. Remove it and add it again.");
+            throw new OfflineInitializationException(BRIDGE_UNINITIALIZED, "@text/supla.status.no-bridge");
         }
         final @Nullable BridgeHandler bridgeHandler = bridge.getHandler();
         if (!(bridgeHandler instanceof CloudBridgeHandler handler)) {
@@ -96,7 +95,7 @@ public final class CloudDevice extends SuplaDevice {
                     bridgeHandler != null ? bridgeHandler.getClass().getSimpleName() : "<null>",
                     thing.getUID());
             throw new OfflineInitializationException(
-                    BRIDGE_UNINITIALIZED, "There is wrong type of bridge for cloud device!");
+                    BRIDGE_UNINITIALIZED, "@text/supla.status.cloud.wrong-bridge-type");
         }
         initApi(handler);
 
@@ -125,7 +124,9 @@ public final class CloudDevice extends SuplaDevice {
         } catch (NumberFormatException e) {
             throw new OfflineInitializationException(
                     CONFIGURATION_ERROR,
-                    "Cannot parse cloud ID `%s` to integer! %s".formatted(cloudIdString, e.getLocalizedMessage()));
+                    "@text/supla.status.cloud-id.parse-error",
+                    cloudIdString,
+                    e.getLocalizedMessage());
         }
     }
 
@@ -138,7 +139,7 @@ public final class CloudDevice extends SuplaDevice {
         try {
             var device = findDevice(singletonList("connected"));
             if (device.isConnected() == null || !device.isConnected()) {
-                throw new OfflineInitializationException(NONE, "This device is is not connected to Supla Cloud.");
+                throw new OfflineInitializationException(NONE, "@text/supla.status.cloud.device-not-connected");
             }
         } catch (Exception e) {
             if (e instanceof InitializationException iex) {
@@ -146,7 +147,7 @@ public final class CloudDevice extends SuplaDevice {
             }
             logger.debug("Error when loading IO device from Supla Cloud!", e);
             throw new OfflineInitializationException(
-                    COMMUNICATION_ERROR, "Error when loading IO device from Supla Cloud! " + e.getLocalizedMessage());
+                    COMMUNICATION_ERROR, "@text/supla.status.cloud.io-device-error", e.getLocalizedMessage());
         }
     }
 
@@ -157,7 +158,7 @@ public final class CloudDevice extends SuplaDevice {
     private void checkIfIsEnabled() throws Exception {
         final Device device = findDevice(emptyList());
         if (device.isEnabled() == null || !device.isEnabled()) {
-            throw new OfflineInitializationException(NONE, "This device is turned off in Supla Cloud.");
+            throw new OfflineInitializationException(NONE, "@text/supla.status.cloud.device-turned-off");
         }
     }
 
@@ -174,7 +175,7 @@ public final class CloudDevice extends SuplaDevice {
             updateChannels(channels);
         } catch (Exception e) {
             throw new OfflineInitializationException(
-                    COMMUNICATION_ERROR, "Error when loading IO device from Supla Cloud! " + e.getLocalizedMessage());
+                    COMMUNICATION_ERROR, "@text/supla.status.cloud.io-device-error", e.getLocalizedMessage());
         }
     }
 
@@ -426,13 +427,11 @@ public final class CloudDevice extends SuplaDevice {
             thing.getChannels().stream().map(Channel::getUID).forEach(channelUID -> handleCommand(channelUID, REFRESH));
         } catch (Exception e) {
             if (e instanceof InitializationException iex) {
-                updateStatus(iex.getStatus(), iex.getStatusDetail(), iex.getMessage());
+                updateStatus(iex.getStatus(), iex.getStatusDetail(), iex.getMessage(), iex.getDescriptionArguments());
             } else {
                 logger.error("Cannot check if device `{}` is online/enabled", thing.getUID(), e);
                 updateStatus(
-                        OFFLINE,
-                        COMMUNICATION_ERROR,
-                        "Cannot check if device %s is online/enabled".formatted(thing.getUID()));
+                        OFFLINE, COMMUNICATION_ERROR, "@text/supla.status.cloud.device-check-error", thing.getUID());
             }
         }
     }

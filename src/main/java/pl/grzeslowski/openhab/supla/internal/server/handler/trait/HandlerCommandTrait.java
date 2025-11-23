@@ -270,7 +270,13 @@ public class HandlerCommandTrait implements HandleCommand {
             return future;
         } catch (Exception ex) {
             var msg = "Couldn't Change value of channel for %s command %s. ".formatted(channelUID, command);
-            serverDevice.updateStatus(OFFLINE, COMMUNICATION_ERROR, msg + ex.getLocalizedMessage());
+            serverDevice.updateStatus(
+                    OFFLINE,
+                    COMMUNICATION_ERROR,
+                    "@text/supla.status.server.channel-change-error",
+                    channelUID,
+                    command,
+                    ex.getLocalizedMessage());
             throw ex;
         }
     }

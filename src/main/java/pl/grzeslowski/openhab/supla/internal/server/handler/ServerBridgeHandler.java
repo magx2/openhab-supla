@@ -85,17 +85,17 @@ public class ServerBridgeHandler extends SuplaBridge implements ServerBridge {
         var config = this.getConfigAs(ServerBridgeHandlerConfiguration.class);
         if (!config.isServerAuth() && !config.isEmailAuth()) {
             throw new OfflineInitializationException(
-                    CONFIGURATION_ERROR, "You need to pass either server auth or email auth!");
+                    CONFIGURATION_ERROR, "@text/supla.status.server.auth-config-missing");
         }
         if (config.getPort().intValue() <= 0) {
-            throw new OfflineInitializationException(CONFIGURATION_ERROR, "You need to pass port!");
+            throw new OfflineInitializationException(CONFIGURATION_ERROR, "@text/supla.status.server.port-missing");
         }
         authData = ServerBridge.buildAuthData(config);
         port = config.getPort().intValue();
         var protocols =
                 stream(config.getProtocols().split(",")).map(String::trim).collect(toSet());
         if (protocols.isEmpty()) {
-            throw new OfflineInitializationException(CONFIGURATION_ERROR, "You need to pass at least one protocol!");
+            throw new OfflineInitializationException(CONFIGURATION_ERROR, "@text/supla.status.server.protocol-missing");
         }
 
         logger = LoggerFactory.getLogger(ServerBridgeHandler.class.getName() + "." + port);
@@ -116,8 +116,10 @@ public class ServerBridgeHandler extends SuplaBridge implements ServerBridge {
             } catch (NoSuchAlgorithmException ex) {
                 throw new OfflineInitializationException(
                         HANDLER_INITIALIZING_ERROR,
-                        "Missing %s cryptographic algorithm! %s. See: %s"
-                                .formatted(algo, ex.getLocalizedMessage(), SSL_PROBLEM));
+                        "@text/supla.status.server.crypto-algorithm-missing",
+                        algo,
+                        ex.getLocalizedMessage(),
+                        SSL_PROBLEM);
             }
         } else {
             logger.info("Disabling SSL is not supported");
@@ -139,8 +141,9 @@ public class ServerBridgeHandler extends SuplaBridge implements ServerBridge {
                     var algorithms = String.join(", ", disabledAlgorithms);
                     throw new OfflineInitializationException(
                             CONFIGURATION_ERROR,
-                            "Those protocols are disabled in java.security: %s. See: %s"
-                                    .formatted(algorithms, Documentation.DISABLED_ALGORITHMS_PROBLEM));
+                            "@text/supla.status.server.protocols-disabled",
+                            algorithms,
+                            Documentation.DISABLED_ALGORITHMS_PROBLEM);
                 }
             } else {
                 logger.debug("jdk.tls.disabledAlgorithms is null, should not be a problem, carry on...");
@@ -156,8 +159,9 @@ public class ServerBridgeHandler extends SuplaBridge implements ServerBridge {
         } catch (CertificateException | SSLException ex) {
             throw new OfflineInitializationException(
                     HANDLER_INITIALIZING_ERROR,
-                    "Problem with generating certificates! %s. See: %s"
-                            .formatted(ex.getLocalizedMessage(), SSL_PROBLEM));
+                    "@text/supla.status.server.certificate-problem",
+                    ex.getLocalizedMessage(),
+                    SSL_PROBLEM);
         }
 
         logger.debug("jSuplaServer running on port {}", port);

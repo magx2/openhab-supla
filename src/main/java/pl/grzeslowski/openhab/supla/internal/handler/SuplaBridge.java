@@ -20,11 +20,14 @@ public abstract class SuplaBridge extends BaseBridgeHandler {
             try {
                 internalInitialize();
             } catch (InitializationException e) {
-                updateStatus(e.getStatus(), e.getStatusDetail(), e.getMessage());
+                updateStatus(e.getStatus(), e.getStatusDetail(), e.getMessage(), e.getDescriptionArguments());
             } catch (Exception e) {
                 getLogger().error("Error occurred while initializing!", e);
                 updateStatus(
-                        OFFLINE, CONFIGURATION_ERROR, "Error occurred while initializing! " + e.getLocalizedMessage());
+                        OFFLINE,
+                        CONFIGURATION_ERROR,
+                        "@text/supla.status.initialization.generic-error",
+                        e.getLocalizedMessage());
             }
         });
     }

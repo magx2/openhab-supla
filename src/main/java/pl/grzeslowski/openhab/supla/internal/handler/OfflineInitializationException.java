@@ -9,8 +9,9 @@ public class OfflineInitializationException extends InitializationException {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public OfflineInitializationException(ThingStatusDetail statusDetail, String description) {
-        super(OFFLINE, statusDetail, description);
+    public OfflineInitializationException(
+            ThingStatusDetail statusDetail, String description, Object... descriptionArguments) {
+        super(OFFLINE, statusDetail, description, descriptionArguments);
     }
 
     public OfflineInitializationException(ThingStatusDetail statusDetail, String description, Exception exception) {

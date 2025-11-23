@@ -94,7 +94,7 @@ public class GatewayDeviceHandler extends ServerSuplaDeviceHandler implements Se
     protected boolean afterRegister(RegisterDeviceTrait registerEntity) {
         var flags = registerEntity.flags();
         if (!flags.calcfgSubdevicePairing()) {
-            updateStatus(OFFLINE, CONFIGURATION_ERROR, "This is not a gateway device!");
+            updateStatus(OFFLINE, CONFIGURATION_ERROR, "@text/supla.status.gateway.not-gateway-device");
             return false;
         }
 
