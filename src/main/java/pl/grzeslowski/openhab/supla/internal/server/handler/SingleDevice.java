@@ -2,7 +2,6 @@ package pl.grzeslowski.openhab.supla.internal.server.handler;
 
 import static java.util.Collections.synchronizedMap;
 import static java.util.Objects.requireNonNull;
-import static org.openhab.core.thing.ThingStatus.OFFLINE;
 import static org.openhab.core.thing.ThingStatusDetail.CONFIGURATION_ERROR;
 import static pl.grzeslowski.openhab.supla.internal.Documentation.THING_BRIDGE;
 import static pl.grzeslowski.openhab.supla.internal.Localization.text;
@@ -28,6 +27,7 @@ import pl.grzeslowski.jsupla.protocol.api.structs.ds.SubdeviceDetails;
 import pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaChannelNewValueResult;
 import pl.grzeslowski.jsupla.protocol.api.structs.dsc.ChannelState;
 import pl.grzeslowski.jsupla.protocol.api.types.FromServerProto;
+import pl.grzeslowski.openhab.supla.internal.handler.OfflineInitializationException;
 import pl.grzeslowski.openhab.supla.internal.server.ChannelUtil;
 import pl.grzeslowski.openhab.supla.internal.server.handler.trait.HandleCommand;
 import pl.grzeslowski.openhab.supla.internal.server.handler.trait.HandlerCommandTrait;
@@ -58,19 +58,15 @@ public class SingleDevice extends ServerSuplaDeviceHandler implements ServerDevi
     }
 
     @Override
-    protected boolean afterRegister(RegisterDeviceTrait registerEntity) {
+    protected void afterRegister(RegisterDeviceTrait registerEntity) throws OfflineInitializationException {
         var flags = registerEntity.flags();
         if (flags.calcfgSubdevicePairing()) {
-            updateStatus(
-                    OFFLINE,
+            throw new OfflineInitializationException(
                     CONFIGURATION_ERROR,
                     text("supla.offline.should-be-gateway", SUPLA_GATEWAY_DEVICE_TYPE.getId(), THING_BRIDGE));
-            return false;
         }
 
         channelUtil.buildChannels(registerEntity.channels());
-
-        return true;
     }
 
     private void setChannels(List<DeviceChannel> deviceChannels) {}

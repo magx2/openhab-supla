@@ -1,6 +1,7 @@
 package pl.grzeslowski.openhab.supla.internal.server.netty;
 
 import static java.util.Objects.requireNonNull;
+import static org.openhab.core.thing.ThingStatusDetail.COMMUNICATION_ERROR;
 import static pl.grzeslowski.openhab.supla.internal.GuidLogger.attachGuid;
 
 import io.netty.channel.socket.SocketChannel;
@@ -11,12 +12,14 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import lombok.RequiredArgsConstructor;
+import org.openhab.core.thing.ThingStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import pl.grzeslowski.jsupla.protocol.api.types.ToServerProto;
 import pl.grzeslowski.jsupla.server.MessageHandler;
 import pl.grzeslowski.jsupla.server.SuplaWriter;
 import pl.grzeslowski.openhab.supla.internal.GuidLogger.GuidLogged;
+import pl.grzeslowski.openhab.supla.internal.handler.InitializationException;
 import pl.grzeslowski.openhab.supla.internal.server.discovery.ServerDiscoveryService;
 import pl.grzeslowski.openhab.supla.internal.server.handler.ServerBridgeHandler;
 import pl.grzeslowski.openhab.supla.internal.server.handler.ServerSuplaDeviceHandler;
@@ -106,10 +109,12 @@ public final class OpenHabMessageHandler implements MessageHandler {
             }
             var suplaThing = suplaThingOptional.get();
             suplaThing.active(requireNonNull(writer.get(), "writer is null"));
-            var registerResult = suplaThing.register(entity, this);
-            if (!registerResult) {
-                log.debug("Could not register device GUID={}", guid);
-                return;
+            try {
+                suplaThing.register(entity, this);
+            } catch (InitializationException ex) {
+                suplaThing.updateStatus(ex.getStatus(), ex.getStatusDetail(), ex.getMessage());
+            } catch (Exception ex) {
+                suplaThing.updateStatus(ThingStatus.OFFLINE, COMMUNICATION_ERROR, ex.getLocalizedMessage());
             }
             // correctly registered
             currentThing.set(suplaThing);
