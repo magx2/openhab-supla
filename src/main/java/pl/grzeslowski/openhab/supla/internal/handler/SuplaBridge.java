@@ -3,6 +3,7 @@ package pl.grzeslowski.openhab.supla.internal.handler;
 import static org.openhab.core.thing.ThingStatus.OFFLINE;
 import static org.openhab.core.thing.ThingStatusDetail.CONFIGURATION_ERROR;
 import static pl.grzeslowski.openhab.supla.internal.GuidLogger.attachGuid;
+import static pl.grzeslowski.openhab.supla.internal.Localization.text;
 
 import org.eclipse.jdt.annotation.Nullable;
 import org.openhab.core.thing.Bridge;
@@ -20,11 +21,13 @@ public abstract class SuplaBridge extends BaseBridgeHandler {
             try {
                 internalInitialize();
             } catch (InitializationException e) {
-                updateStatus(e.getStatus(), e.getStatusDetail(), e.getMessage());
+                updateStatus(e.getStatus(), e.getStatusDetail(), e.getLocalizedMessage());
             } catch (Exception e) {
                 getLogger().error("Error occurred while initializing!", e);
                 updateStatus(
-                        OFFLINE, CONFIGURATION_ERROR, "Error occurred while initializing! " + e.getLocalizedMessage());
+                        OFFLINE,
+                        CONFIGURATION_ERROR,
+                        text("supla.offline.initialization-generic", e.getLocalizedMessage()));
             }
         });
     }

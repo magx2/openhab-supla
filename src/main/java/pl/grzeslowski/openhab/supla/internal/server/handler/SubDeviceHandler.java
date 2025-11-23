@@ -5,6 +5,7 @@ import static java.util.Objects.requireNonNull;
 import static org.openhab.core.thing.ThingStatus.OFFLINE;
 import static org.openhab.core.thing.ThingStatus.ONLINE;
 import static org.openhab.core.thing.ThingStatusDetail.*;
+import static pl.grzeslowski.openhab.supla.internal.Localization.text;
 
 import io.netty.channel.ChannelFuture;
 import java.util.HashMap;
@@ -83,10 +84,7 @@ public class SubDeviceHandler extends SuplaDevice implements ServerDevice {
         {
             var bridge = getBridge();
             if (bridge == null) {
-                updateStatus(
-                        OFFLINE,
-                        BRIDGE_UNINITIALIZED,
-                        "There is no bridge for this thing. Remove it and add it again.");
+                updateStatus(OFFLINE, BRIDGE_UNINITIALIZED, text("supla.offline.no-bridge"));
                 return;
             }
             var rawBridgeHandler = bridge.getHandler();
@@ -100,8 +98,10 @@ public class SubDeviceHandler extends SuplaDevice implements ServerDevice {
                 updateStatus(
                         OFFLINE,
                         CONFIGURATION_ERROR,
-                        "Bridge has wrong type! Should be " + GatewayDeviceHandler.class.getSimpleName() + ", but was "
-                                + simpleName);
+                        text(
+                                "supla.server.bridge-type-wrong",
+                                "[" + GatewayDeviceHandler.class.getSimpleName() + "]",
+                                simpleName));
                 return;
             }
             this.bridgeHandler = localBridgeHandler;
@@ -111,13 +111,13 @@ public class SubDeviceHandler extends SuplaDevice implements ServerDevice {
             var config = getConfigAs(ServerSubDeviceHandlerConfiguration.class);
             subDeviceId = config.getId();
             if (subDeviceId < 1) {
-                updateStatus(OFFLINE, CONFIGURATION_ERROR, "There is no ID for this thing.");
+                updateStatus(OFFLINE, CONFIGURATION_ERROR, text("supla.offline.no-id"));
                 return;
             }
         } // config
         guid = requireNonNull(bridgeHandler).getGuid() + "." + subDeviceId;
         logger = LoggerFactory.getLogger("%s.%s".formatted(this.getClass().getName(), guid));
-        updateStatus(ThingStatus.UNKNOWN, CONFIGURATION_PENDING, "Waiting for gateway");
+        updateStatus(ThingStatus.UNKNOWN, CONFIGURATION_PENDING, text("supla.server.waiting-for-gateway"));
     }
 
     @Override
@@ -143,7 +143,7 @@ public class SubDeviceHandler extends SuplaDevice implements ServerDevice {
         this.channels = channels;
         channelUtil.buildChannels(channels);
         if (channels.isEmpty()) {
-            updateStatus(OFFLINE, CONFIGURATION_ERROR, "No channels.");
+            updateStatus(OFFLINE, CONFIGURATION_ERROR, text("supla.server.no-channels"));
         } else {
             updateStatus(ONLINE);
         }

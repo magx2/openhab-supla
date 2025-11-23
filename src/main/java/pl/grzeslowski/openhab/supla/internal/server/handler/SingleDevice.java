@@ -5,6 +5,7 @@ import static java.util.Objects.requireNonNull;
 import static org.openhab.core.thing.ThingStatus.OFFLINE;
 import static org.openhab.core.thing.ThingStatusDetail.CONFIGURATION_ERROR;
 import static pl.grzeslowski.openhab.supla.internal.Documentation.THING_BRIDGE;
+import static pl.grzeslowski.openhab.supla.internal.Localization.text;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.SUPLA_GATEWAY_DEVICE_TYPE;
 
 import io.netty.channel.ChannelFuture;
@@ -63,8 +64,7 @@ public class SingleDevice extends ServerSuplaDeviceHandler implements ServerDevi
             updateStatus(
                     OFFLINE,
                     CONFIGURATION_ERROR,
-                    "Device should be created as %s. See %s for more information."
-                            .formatted(SUPLA_GATEWAY_DEVICE_TYPE.getId(), THING_BRIDGE));
+                    text("supla.offline.should-be-gateway", SUPLA_GATEWAY_DEVICE_TYPE.getId(), THING_BRIDGE));
             return false;
         }
 

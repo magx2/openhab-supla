@@ -13,6 +13,7 @@ import static pl.grzeslowski.jsupla.protocol.api.ProtocolHelpers.parseString;
 import static pl.grzeslowski.jsupla.protocol.api.ResultCode.SUPLA_RESULTCODE_TRUE;
 import static pl.grzeslowski.jsupla.protocol.api.consts.ProtoConsts.SUPLA_PROTO_VERSION_MIN;
 import static pl.grzeslowski.openhab.supla.internal.GuidLogger.attachGuid;
+import static pl.grzeslowski.openhab.supla.internal.Localization.text;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.BINDING_ID;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ServerDevicesProperties.*;
 import static pl.grzeslowski.openhab.supla.internal.server.ByteArrayToHex.bytesToHex;
@@ -135,8 +136,7 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDevice implements Me
     protected void internalInitialize() throws InitializationException {
         var bridge = getBridge();
         if (bridge == null) {
-            throw new OfflineInitializationException(
-                    BRIDGE_UNINITIALIZED, "There is no bridge for this thing. Remove it and add it again.");
+            throw new OfflineInitializationException(BRIDGE_UNINITIALIZED, text("supla.offline.no-bridge"));
         }
         var rawBridgeHandler = bridge.getHandler();
         var bridgeClasses = findAllowedBridgeClasses();
@@ -152,8 +152,7 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDevice implements Me
             var allowedBridgeClasses =
                     bridgeClasses.stream().map(Class::getSimpleName).collect(joining(", ", "[", "]"));
             throw new OfflineInitializationException(
-                    CONFIGURATION_ERROR,
-                    "Bridge has wrong type! Should be one of:" + allowedBridgeClasses + ", but was " + simpleName);
+                    CONFIGURATION_ERROR, text("supla.server.bridge-type-wrong", allowedBridgeClasses, simpleName));
         }
         var localBridgeHandler = this.bridgeHandler = (ServerBridge) rawBridgeHandler;
 
@@ -161,7 +160,7 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDevice implements Me
         guid = config.getGuid();
         if (guid == null || guid.isEmpty()) {
             guid = null;
-            throw new OfflineInitializationException(CONFIGURATION_ERROR, "There is no guid for this thing.");
+            throw new OfflineInitializationException(CONFIGURATION_ERROR, text("supla.server.guid-missing"));
         }
         logger = LoggerFactory.getLogger(baseLogger() + "." + guid);
 
@@ -174,10 +173,7 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDevice implements Me
 
         clearDeviceConfig();
 
-        updateStatus(
-                ThingStatus.UNKNOWN,
-                HANDLER_CONFIGURATION_PENDING,
-                "Waiting for Supla device to connect with the server");
+        updateStatus(ThingStatus.UNKNOWN, HANDLER_CONFIGURATION_PENDING, text("supla.server.waiting-for-connection"));
     }
 
     @Override
@@ -277,7 +273,7 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDevice implements Me
         } catch (Exception ex) {
             logger.error("Error in message pipeline", ex);
             var message = ex.getLocalizedMessage();
-            updateStatus(OFFLINE, COMMUNICATION_ERROR, "Error in message pipeline. " + message);
+            updateStatus(OFFLINE, COMMUNICATION_ERROR, text("supla.offline.message-pipeline", message));
         }
     }
 
@@ -288,13 +284,13 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDevice implements Me
 
     @Override
     public void inactive() {
-        updateStatus(OFFLINE, COMMUNICATION_ERROR, "Channel disconnected");
+        updateStatus(OFFLINE, COMMUNICATION_ERROR, text("supla.offline.channel-disconnected"));
         this.writer.set(null);
         dispose();
     }
 
     public boolean register(@NonNull RegisterDeviceTrait registerEntity, OpenHabMessageHandler handler) {
-        updateStatus(OFFLINE, HANDLER_CONFIGURATION_PENDING, "Device is authorizing...");
+        updateStatus(OFFLINE, HANDLER_CONFIGURATION_PENDING, text("supla.offline.device-authorizing"));
         var oldHandler = this.handler;
         if (oldHandler != null) {
             logger.warn(
@@ -339,10 +335,7 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDevice implements Me
                     SUPLA_RESULTCODE_TRUE.getValue(), ACTIVITY_TIMEOUT, (byte) w.getVersion(), (byte)
                             SUPLA_PROTO_VERSION_MIN));
             // thing will have status ONLINE after receiving proto from the device (method `handle(ToServerProto)`)
-            updateStatus(
-                    ThingStatus.UNKNOWN,
-                    CONFIGURATION_PENDING,
-                    "Waiting for registration confirmation from the device...");
+            updateStatus(ThingStatus.UNKNOWN, CONFIGURATION_PENDING, text("supla.offline.waiting-for-registration"));
             lastMessageFromDevice.set(now().getEpochSecond());
         }
         return register;
@@ -350,12 +343,14 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDevice implements Me
 
     private static String findNonAuthMessage(RegisterDeviceTrait registerEntity) {
         return switch (registerEntity) {
-            case RegisterLocationDeviceTrait
-            registerDevice -> "Device authorization failed. Device tried to log in with locationId=%s and locationPassword=%s"
-                    .formatted(registerDevice.locationId(), parseString(registerDevice.locationPwd()));
-            case RegisterEmailDeviceTrait
-            registerDevice -> "Device authorization failed. Device tried to log in with email=%s and authKey=%s"
-                    .formatted(registerDevice.email(), bytesToHex(registerDevice.authKey()));
+            case RegisterLocationDeviceTrait registerDevice -> text(
+                    "supla.offline.authorization-failed-location",
+                    registerDevice.locationId(),
+                    parseString(registerDevice.locationPwd()));
+            case RegisterEmailDeviceTrait registerDevice -> text(
+                    "supla.offline.authorization-failed-email",
+                    registerDevice.email(),
+                    bytesToHex(registerDevice.authKey()));
         };
     }
 
@@ -502,10 +497,7 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDevice implements Me
             var lastPingDate = new Date(SECONDS.toMillis(lastPing));
             var formatter = new SimpleDateFormat("HH:mm:ss z");
             updateStatus(
-                    OFFLINE,
-                    COMMUNICATION_ERROR,
-                    "Device did not send ping message in last " + delta + " seconds. Last message was from "
-                            + formatter.format(lastPingDate));
+                    OFFLINE, COMMUNICATION_ERROR, text("supla.offline.no-ping", delta, formatter.format(lastPingDate)));
             disposePing();
         }
     }
@@ -656,15 +648,18 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDevice implements Me
                 switch (exception) {
                     case ReadTimeoutException readTimeoutException -> {
                         logger.warn("Got timeout from socket. Going offline");
-                        yield "Socket timeout";
+                        yield text("supla.offline.socket-timeout");
                     }
                     case SocketException socketException -> {
                         logger.warn("Got socket exception from socket. Going offline");
-                        yield "Socket exception. " + exception.getLocalizedMessage();
+                        yield text("supla.offline.socket-exception", exception.getLocalizedMessage());
                     }
                     default -> {
                         logger.warn("Got exception from socket. Going offline", exception);
-                        yield "%s: %s".formatted(exception.getClass().getSimpleName(), exception.getLocalizedMessage());
+                        yield text(
+                                "supla.offline.socket-generic",
+                                exception.getClass().getSimpleName(),
+                                exception.getLocalizedMessage());
                     }
                 };
         updateStatus(OFFLINE, COMMUNICATION_ERROR, text);

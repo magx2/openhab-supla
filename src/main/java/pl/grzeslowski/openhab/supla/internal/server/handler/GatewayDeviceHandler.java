@@ -7,6 +7,7 @@ import static org.openhab.core.thing.ThingStatus.OFFLINE;
 import static org.openhab.core.thing.ThingStatusDetail.CONFIGURATION_ERROR;
 import static pl.grzeslowski.jsupla.protocol.api.ProtocolHelpers.parseString;
 import static pl.grzeslowski.openhab.supla.internal.GuidLogger.attachGuid;
+import static pl.grzeslowski.openhab.supla.internal.Localization.text;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.GATEWAY_CONNECTED_DEVICES_CHANNEL_ID;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ServerDevicesProperties.*;
 import static pl.grzeslowski.openhab.supla.internal.server.ChannelUtil.findId;
@@ -94,7 +95,7 @@ public class GatewayDeviceHandler extends ServerSuplaDeviceHandler implements Se
     protected boolean afterRegister(RegisterDeviceTrait registerEntity) {
         var flags = registerEntity.flags();
         if (!flags.calcfgSubdevicePairing()) {
-            updateStatus(OFFLINE, CONFIGURATION_ERROR, "This is not a gateway device!");
+            updateStatus(OFFLINE, CONFIGURATION_ERROR, text("supla.offline.not-gateway"));
             return false;
         }
 
