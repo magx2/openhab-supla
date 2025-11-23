@@ -187,7 +187,8 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDevice implements Me
         return guid;
     }
 
-    protected AuthData buildAuthData(ServerBridge localBridgeHandler, ServerDeviceHandlerConfiguration config) {
+    protected AuthData buildAuthData(ServerBridge localBridgeHandler, ServerDeviceHandlerConfiguration config)
+            throws OfflineInitializationException {
         var bridgeAuthData = requireNonNull(localBridgeHandler.getAuthData(), "No auth data in bridge!");
         AuthData.@Nullable LocationAuthData locationAuthData;
         if (config.getServerAccessId() != null && config.getServerAccessIdPassword() != null) {
@@ -218,6 +219,10 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDevice implements Me
                 authKey = bridgeEmailAuthData.authKey();
             }
             emailAuthData = new AuthData.EmailAuthData(email, authKey);
+        }
+        if (locationAuthData == null && emailAuthData == null) {
+            throw new OfflineInitializationException(
+                    CONFIGURATION_ERROR, "You need to configure location authorization and/or email authorization!");
         }
         return new AuthData(locationAuthData, emailAuthData);
     }
