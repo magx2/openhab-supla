@@ -223,15 +223,8 @@ the following paths:
 ##### Docker 🐳
 
 1. Log in into container: `docker exec -it <docker-container-id> /bin/bash`
-2. Go to folder with `java.security`: `cd /usr/lib/jvm/java-1.21.0-openjdk-amd64/conf/security`
-3. Do a backup: `cp java.security java.security.bak`
-4. Check current settings: `cat java.security | grep jdk.tls.disabledAlgorithms`
-5. Replace
-it:
-`sed -i -E '/^jdk\.tls\.disabledAlgorithms=/ s/(,\s*)?(SSLv3|TLSv1\.1?|TLSv1)(,\s*)?//g' java.security`
-6. Check changed settings: `cat java.security | grep jdk.tls.disabledAlgorithms`
-7. Compare changes: `diff java.security java.security.bak`
-8. Exit and restart docker container
+2. Invoke: `curl -fsSL https://raw.githubusercontent.com/magx2/openhab-supla/refs/heads/master/bin/update-java-tls.sh | bash`
+3. Exit and restart docker container
 
 #### Restarting OpenHAB
 
