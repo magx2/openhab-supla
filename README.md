@@ -285,10 +285,12 @@ is actually a gateway device, you need to follow these steps to correct the setu
 
 First, open the configuration of the current thing, enable advanced options, and copy the `GUID` and `Auth Key`.
 ![GUID and Auth Key](imgs/guid-auth-key.png)
+
 Once you've saved this
 information, remove the thing. Next, add a new gateway bridge thing, and during the configuration, paste the `GUID`
 and `Auth Key` copied from the previous thing.
 ![Add Gateway Bridge](imgs/add-gateway-bridge.png)
+
 Once the Supla device connects, any sub-devices linked to the gateway should appear automatically in the inbox.
 
 ## Support ❤️
