@@ -5,7 +5,7 @@ set -euo pipefail
 # Colored logging functions
 # -----------------------------
 COLOR_RESET="\e[0m"
-COLOR_CYAN="\e[36m"
+COLOR_BLUE="\e[34m"
 COLOR_GREEN="\e[32m"
 COLOR_YELLOW="\e[33m"
 COLOR_RED="\e[31m"
@@ -25,38 +25,84 @@ BACKUP_FILE="${SEC_FILE}.bak"
 log_step "Switching to Java security directory: ${SEC_DIR}"
 cd "${SEC_DIR}" || { log_error "Failed to cd into ${SEC_DIR}"; exit 1; }
 
-# -----------------------------
-# Backup
-# -----------------------------
 if [[ ! -f "${SEC_FILE}" ]]; then
     log_error "Security file not found: ${SEC_FILE}"
     exit 1
 fi
 
+# -----------------------------
+# Backup
+# -----------------------------
 log_step "Creating backup"
 cp -p "${SEC_FILE}" "${BACKUP_FILE}"
 log_info "Backup created: ${BACKUP_FILE}"
 
 # -----------------------------
-# Read current value
+# Show current value
 # -----------------------------
-log_step "Current jdk.tls.disabledAlgorithms:"
-grep '^jdk.tls.disabledAlgorithms=' "${SEC_FILE}" || log_warn "Entry not found"
+log_step "Current jdk.tls.disabledAlgorithms line:"
+if ! grep '^jdk.tls.disabledAlgorithms=' "${SEC_FILE}"; then
+    log_warn "Entry jdk.tls.disabledAlgorithms not found"
+fi
 
 # -----------------------------
-# Apply update
+# Safely update algorithms
 # -----------------------------
-log_step "Updating jdk.tls.disabledAlgorithms (removing SSLv3 / TLSv1 / TLSv1.1)"
+log_step "Updating jdk.tls.disabledAlgorithms (removing SSLv3 / TLSv1 / TLSv1.1 without corrupting list)"
 
-sed -i -E '/^jdk\.tls\.disabledAlgorithms=/ s/(,\s*)?(SSLv3|TLSv1\.1?|TLSv1)(,\s*)?//g' "${SEC_FILE}"
+TMP_FILE="$(mktemp "${SEC_FILE}.XXXXXX")"
 
+awk -F= '
+BEGIN {
+    OFS="=";
+}
+# Process only the jdk.tls.disabledAlgorithms line
+/^jdk\.tls\.disabledAlgorithms=/ {
+    key = $1;
+    value = $2;
+
+    # Split by comma into algorithms
+    n = split(value, arr, ",");
+
+    out = "";
+    for (i = 1; i <= n; i++) {
+        alg = arr[i];
+
+        # trim leading/trailing spaces
+        gsub(/^[[:space:]]+|[[:space:]]+$/, "", alg);
+
+        # skip unwanted protocols
+        if (alg ~ /^(SSLv3|TLSv1\.1?|TLSv1)$/) {
+            continue;
+        }
+
+        # rebuild with ", " as separator
+        if (alg != "") {
+            if (out == "") {
+                out = alg;
+            } else {
+                out = out ", " alg;
+            }
+        }
+    }
+
+    print key, out;
+    next;
+}
+# All other lines unchanged
+{ print }
+' "${SEC_FILE}" > "${TMP_FILE}"
+
+mv "${TMP_FILE}" "${SEC_FILE}"
 log_info "Update applied successfully"
 
 # -----------------------------
 # Show updated line
 # -----------------------------
-log_step "Updated jdk.tls.disabledAlgorithms:"
-grep '^jdk.tls.disabledAlgorithms=' "${SEC_FILE}" || log_warn "Entry not found"
+log_step "Updated jdk.tls.disabledAlgorithms line:"
+if ! grep '^jdk.tls.disabledAlgorithms=' "${SEC_FILE}"; then
+    log_warn "Entry jdk.tls.disabledAlgorithms not found after update (unexpected)"
+fi
 
 # -----------------------------
 # Diff vs backup
