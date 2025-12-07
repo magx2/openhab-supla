@@ -26,8 +26,8 @@ log_step "Switching to Java security directory: ${SEC_DIR}"
 cd "${SEC_DIR}" || { log_error "Failed to cd into ${SEC_DIR}"; exit 1; }
 
 if [[ ! -f "${SEC_FILE}" ]]; then
-    log_error "Security file not found: ${SEC_FILE}"
-    exit 1
+	log_error "Security file not found: ${SEC_FILE}"
+	exit 1
 fi
 
 # -----------------------------
@@ -42,7 +42,7 @@ log_info "Backup created: ${BACKUP_FILE}"
 # -----------------------------
 log_step "Current jdk.tls.disabledAlgorithms line:"
 if ! grep '^jdk.tls.disabledAlgorithms=' "${SEC_FILE}"; then
-    log_warn "Entry jdk.tls.disabledAlgorithms not found"
+	log_warn "Entry jdk.tls.disabledAlgorithms not found"
 fi
 
 # -----------------------------
@@ -54,40 +54,40 @@ TMP_FILE="$(mktemp "${SEC_FILE}.XXXXXX")"
 
 awk -F= '
 BEGIN {
-    OFS="=";
+	OFS="=";
 }
 # Process only the jdk.tls.disabledAlgorithms line
 /^jdk\.tls\.disabledAlgorithms=/ {
-    key = $1;
-    value = $2;
+	key = $1;
+	value = $2;
 
-    # Split by comma into algorithms
-    n = split(value, arr, ",");
+	# Split by comma into algorithms
+	n = split(value, arr, ",");
 
-    out = "";
-    for (i = 1; i <= n; i++) {
-        alg = arr[i];
+	out = "";
+	for (i = 1; i <= n; i++) {
+		alg = arr[i];
 
-        # trim leading/trailing spaces
-        gsub(/^[[:space:]]+|[[:space:]]+$/, "", alg);
+		# trim leading/trailing spaces
+		gsub(/^[[:space:]]+|[[:space:]]+$/, "", alg);
 
-        # skip unwanted protocols
-        if (alg ~ /^(SSLv3|TLSv1\.1?|TLSv1)$/) {
-            continue;
-        }
+		# skip unwanted protocols
+		if (alg ~ /^(SSLv3|TLSv1\.1?|TLSv1)$/) {
+			continue;
+		}
 
-        # rebuild with ", " as separator
-        if (alg != "") {
-            if (out == "") {
-                out = alg;
-            } else {
-                out = out ", " alg;
-            }
-        }
-    }
+		# rebuild with ", " as separator
+		if (alg != "") {
+			if (out == "") {
+				out = alg;
+			} else {
+				out = out ", " alg;
+			}
+		}
+	}
 
-    print key, out;
-    next;
+	print key, out;
+	next;
 }
 # All other lines unchanged
 { print }
@@ -101,7 +101,7 @@ log_info "Update applied successfully"
 # -----------------------------
 log_step "Updated jdk.tls.disabledAlgorithms line:"
 if ! grep '^jdk.tls.disabledAlgorithms=' "${SEC_FILE}"; then
-    log_warn "Entry jdk.tls.disabledAlgorithms not found after update (unexpected)"
+	log_warn "Entry jdk.tls.disabledAlgorithms not found after update (unexpected)"
 fi
 
 # -----------------------------
@@ -109,9 +109,9 @@ fi
 # -----------------------------
 log_step "Comparing changes with backup:"
 if diff -u "${BACKUP_FILE}" "${SEC_FILE}"; then
-    log_warn "No changes detected (files identical?)"
+	log_warn "No changes detected (files identical?)"
 else
-    log_info "Differences shown above"
+	log_info "Differences shown above"
 fi
 
 log_step "Done."
