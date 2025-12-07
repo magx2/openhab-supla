@@ -5,7 +5,7 @@ set -euo pipefail
 # Colored logging functions
 # -----------------------------
 COLOR_RESET="\e[0m"
-COLOR_BLUE="\e[34m"
+COLOR_CYAN="\e[36m"
 COLOR_GREEN="\e[32m"
 COLOR_YELLOW="\e[33m"
 COLOR_RED="\e[31m"
