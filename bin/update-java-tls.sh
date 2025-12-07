@@ -5,12 +5,12 @@ set -euo pipefail
 # Colored logging functions
 # -----------------------------
 COLOR_RESET="\e[0m"
-COLOR_BLUE="\e[34m"
+COLOR_CYAN="\e[36m"
 COLOR_GREEN="\e[32m"
 COLOR_YELLOW="\e[33m"
 COLOR_RED="\e[31m"
 
-log_step()  { echo -e "${COLOR_BLUE}\n==> $1${COLOR_RESET}"; }
+log_step()  { echo -e "${COLOR_CYAN}[STEP]${COLOR_RESET} $1"; }
 log_info()  { echo -e "${COLOR_GREEN}[INFO]${COLOR_RESET} $1"; }
 log_warn()  { echo -e "${COLOR_YELLOW}[WARN]${COLOR_RESET} $1"; }
 log_error() { echo -e "${COLOR_RED}[ERROR]${COLOR_RESET} $1" >&2; }
