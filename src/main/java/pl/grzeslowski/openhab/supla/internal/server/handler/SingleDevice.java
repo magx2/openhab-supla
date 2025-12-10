@@ -27,7 +27,6 @@ import pl.grzeslowski.openhab.supla.internal.server.ChannelUtil;
 import pl.grzeslowski.openhab.supla.internal.server.handler.trait.HandleCommand;
 import pl.grzeslowski.openhab.supla.internal.server.handler.trait.HandlerCommandTrait;
 import pl.grzeslowski.openhab.supla.internal.server.handler.trait.ServerBridge;
-import pl.grzeslowski.openhab.supla.internal.server.traits.DeviceChannel;
 import pl.grzeslowski.openhab.supla.internal.server.traits.DeviceChannelValue;
 import pl.grzeslowski.openhab.supla.internal.server.traits.RegisterDeviceTrait;
 
@@ -62,8 +61,6 @@ public class SingleDevice extends ServerSuplaDeviceHandler {
 
         channelUtil.buildChannels(registerEntity.channels());
     }
-
-    private void setChannels(List<DeviceChannel> deviceChannels) {}
 
     @Override
     public void consumeDeviceChannelValueTrait(DeviceChannelValue trait) {
