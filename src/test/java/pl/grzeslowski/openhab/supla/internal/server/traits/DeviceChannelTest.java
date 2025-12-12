@@ -13,9 +13,9 @@ import pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaDeviceChannelE;
 class DeviceChannelTest {
     @Test
     void shouldRejectMissingValues() {
-        assertThatThrownBy(() -> new DeviceChannel(1, 2, SUPLA_CHANNELFNC_NONE, null, null, null))
+        assertThatThrownBy(() -> new DeviceChannel(1, 2, SUPLA_CHANNELFNC_NONE, null, null, null, null))
                 .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("value and hvacValue must not be null!");
+                .hasMessageContaining("value or hvacValue or action must not be null!");
     }
 
     @Test
@@ -86,7 +86,7 @@ class DeviceChannelTest {
                 null,
                 new HvacValue.Flags(
                         false, false, false, false, false, false, false, false, false, false, false, false, false));
-        DeviceChannel deviceChannel = new DeviceChannel(1, 2, SUPLA_CHANNELFNC_NONE, null, hvacValue, null);
+        DeviceChannel deviceChannel = new DeviceChannel(1, 2, SUPLA_CHANNELFNC_NONE, null, null, hvacValue, null);
 
         assertThat(deviceChannel.value()).isNull();
         assertThat(deviceChannel.hvacValue()).isEqualTo(hvacValue);

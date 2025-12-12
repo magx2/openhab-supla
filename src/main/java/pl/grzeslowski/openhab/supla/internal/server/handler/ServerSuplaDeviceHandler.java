@@ -10,7 +10,8 @@ import static org.openhab.core.thing.ThingStatus.OFFLINE;
 import static org.openhab.core.thing.ThingStatus.ONLINE;
 import static org.openhab.core.thing.ThingStatusDetail.*;
 import static pl.grzeslowski.jsupla.protocol.api.ResultCode.SUPLA_RESULTCODE_TRUE;
-import static pl.grzeslowski.jsupla.protocol.api.consts.ProtoConsts.SUPLA_PROTO_VERSION_MIN;
+import static pl.grzeslowski.jsupla.protocol.api.channeltype.value.ActionTrigger.Capabilities.*;
+import static pl.grzeslowski.jsupla.protocol.api.consts.ProtoConsts.*;
 import static pl.grzeslowski.openhab.supla.internal.GuidLogger.attachGuid;
 import static pl.grzeslowski.openhab.supla.internal.Localization.text;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.BINDING_ID;
@@ -33,6 +34,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.ToString;
@@ -49,6 +51,9 @@ import org.openhab.core.types.Command;
 import org.openhab.core.types.State;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import pl.grzeslowski.jsupla.protocol.api.ChannelFunction;
+import pl.grzeslowski.jsupla.protocol.api.encoders.ChannelConfigActionTriggerEncoder;
+import pl.grzeslowski.jsupla.protocol.api.structs.ChannelConfigActionTrigger;
 import pl.grzeslowski.jsupla.protocol.api.structs.SuplaTimeval;
 import pl.grzeslowski.jsupla.protocol.api.structs.dcs.LocalTimeRequest;
 import pl.grzeslowski.jsupla.protocol.api.structs.dcs.SetCaption;
@@ -56,6 +61,7 @@ import pl.grzeslowski.jsupla.protocol.api.structs.dcs.SuplaPingServer;
 import pl.grzeslowski.jsupla.protocol.api.structs.dcs.SuplaSetActivityTimeout;
 import pl.grzeslowski.jsupla.protocol.api.structs.ds.*;
 import pl.grzeslowski.jsupla.protocol.api.structs.dsc.ChannelState;
+import pl.grzeslowski.jsupla.protocol.api.structs.sd.ChannelConfig;
 import pl.grzeslowski.jsupla.protocol.api.structs.sd.SuplaRegisterDeviceResultA;
 import pl.grzeslowski.jsupla.protocol.api.structs.sdc.SuplaPingServerResult;
 import pl.grzeslowski.jsupla.protocol.api.structs.sdc.SuplaSetActivityTimeoutResult;
@@ -79,10 +85,7 @@ import pl.grzeslowski.openhab.supla.internal.server.oh_config.AuthData;
 import pl.grzeslowski.openhab.supla.internal.server.oh_config.DeviceConfiguration;
 import pl.grzeslowski.openhab.supla.internal.server.oh_config.ServerDeviceHandlerConfiguration;
 import pl.grzeslowski.openhab.supla.internal.server.oh_config.TimeoutConfiguration;
-import pl.grzeslowski.openhab.supla.internal.server.traits.DeviceChannelValue;
-import pl.grzeslowski.openhab.supla.internal.server.traits.RegisterDeviceTrait;
-import pl.grzeslowski.openhab.supla.internal.server.traits.RegisterEmailDeviceTrait;
-import pl.grzeslowski.openhab.supla.internal.server.traits.RegisterLocationDeviceTrait;
+import pl.grzeslowski.openhab.supla.internal.server.traits.*;
 
 /** The {@link ServerSuplaDeviceHandler} is responsible for handling commands, which are sent to one of the channels. */
 @NonNullByDefault
@@ -128,6 +131,12 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDevice implements Me
 
     @Nullable
     private OpenHabMessageHandler handler;
+
+    private Map<Integer, ActionChannelValue> actionChannels = Map.of();
+
+    record ActionChannelValue(
+            pl.grzeslowski.jsupla.protocol.api.channeltype.value.ActionTrigger actionTrigger,
+            ChannelFunction channelFunction) {}
 
     public ServerSuplaDeviceHandler(Thing thing) {
         super(thing);
@@ -269,7 +278,9 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDevice implements Me
                 case SetDeviceConfigResult value -> consumeSetDeviceConfigResult(value);
                 case SetDeviceConfig value -> consumeSetDeviceConfig(value);
                 case SetChannelConfigResult value -> consumeSetChannelConfigResult(value);
-                default -> logger.debug("Not supporting message: {}", entity);
+                case GetChannelConfigRequest value -> consumeGetChannelConfigRequest(value, writer);
+                case ActionTrigger value -> consumeActionTrigger(value);
+                default -> logger.warn("Not supporting message: {}", entity);
             }
             updateStatus(ONLINE);
         } catch (Exception ex) {
@@ -325,6 +336,11 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDevice implements Me
         if (registerEntity.productId() != null) {
             thing.setProperty(PRODUCT_ID_PROPERTY, valueOf(registerEntity.productId()));
         }
+
+        actionChannels = registerEntity.channels().stream()
+                .filter(c -> c.action() != null)
+                .collect(Collectors.toMap(
+                        DeviceChannel::number, c -> new ActionChannelValue(c.action(), c.channelFunction())));
 
         afterRegister(registerEntity);
         var w = requireNonNull(getWriter().get(), "There is no writer!");
@@ -588,6 +604,54 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDevice implements Me
         thing.getProperties().keySet().stream()
                 .filter(key -> key.startsWith(DeviceConfigUtil.PREFIX))
                 .forEach(key -> thing.setProperty(key, null));
+    }
+
+    private void consumeGetChannelConfigRequest(GetChannelConfigRequest value, SuplaWriter writer) {
+        var channelNumber = (int) value.channelNumber();
+        if (!actionChannels.containsKey(channelNumber)) {
+            logger.warn(
+                    "There is no Action Channel with number {}. Do not responding to GetChannelConfigRequest {}",
+                    channelNumber,
+                    value);
+            return;
+        }
+        var actionChannel = actionChannels.get(channelNumber);
+        var configProto = new ChannelConfigActionTrigger(toMask(actionChannel.actionTrigger.capabilities()));
+        var config = ChannelConfigActionTriggerEncoder.INSTANCE.encode(configProto);
+        var channelConfig = new ChannelConfig(
+                (short) channelNumber,
+                actionChannel.channelFunction.getValue(),
+                (short) SUPLA_CONFIG_TYPE_DEFAULT,
+                config.length,
+                config);
+        writer.write(channelConfig)
+                .addListener(f -> logger.debug(
+                        "Set ChannelConfig for channel {}: {}, capabilities={}, channelFunction={}, configProto={}",
+                        channelNumber,
+                        channelConfig,
+                        actionChannel.actionTrigger.capabilities(),
+                        actionChannel.channelFunction,
+                        configProto));
+    }
+
+    private void consumeActionTrigger(ActionTrigger value) {
+        var action = fromSingle(value.actionTrigger());
+        logger.debug("Received ActionTrigger for channel {} action={}", value.channelNumber(), action);
+
+        var thing = getThing();
+        ChannelUID channelId = new ChannelUID(thing.getUID(), valueOf(value.channelNumber()));
+        var channel = thing.getChannel(channelId);
+        if (channel == null) {
+            logger.warn(
+                    "Did not found channel for channelId={} when invoking action trigger {} with action {}",
+                    value.channelNumber(),
+                    value,
+                    action);
+            return;
+        }
+
+        // Fire the trigger event
+        triggerChannel(channel.getUID(), action.name());
     }
 
     @Nullable

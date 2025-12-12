@@ -17,6 +17,7 @@ import org.openhab.core.thing.ChannelGroupUID;
 import org.openhab.core.thing.ChannelUID;
 import org.openhab.core.thing.ThingUID;
 import org.openhab.core.thing.binding.builder.ChannelBuilder;
+import org.openhab.core.thing.type.ChannelKind;
 import org.openhab.core.thing.type.ChannelTypeUID;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.value.ChannelClassSwitch;
 import pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants;
@@ -390,6 +391,18 @@ public class ChannelCallback implements ChannelClassSwitch.Callback<Stream<Chann
                 .withLabel("Flag \"%s\"".formatted(flag))
                 .withType(channelTypeUID)
                 .build();
+    }
+
+    @Override
+    public Stream<Channel> onActionTrigger() {
+        var channelUid = createChannelUid();
+        var channelTypeUID = createChannelTypeUID(ACTION_TRIGGER_ID);
+
+        return Stream.of(ChannelBuilder.create(channelUid)
+                .withType(channelTypeUID)
+                .withLabel("Action Trigger")
+                .withKind(ChannelKind.TRIGGER)
+                .build());
     }
 
     @Override
