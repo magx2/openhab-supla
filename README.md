@@ -25,6 +25,7 @@ white and black.
 - [AURATON Switch ONE](https://www.auraton.pl/oferta/inteligentny-dom-smart/energia/auraton-switch-one-1) Switch One
 makes it convenient for you to control electrical devices. For example, to control the lighting of the entire house.
 Just download the Auraton Smart App after installation and Switch One will help you create a fully smart home.
+- [Zamel GKW-02](https://supla.zamel.com/product/regulator-temperatury-wi-fi-gkw-02/)  GKW-02 is an aesthetic (available in black and white) wall-mounted temperature controller with a 230 V power supply, ideal for controlling heating strips and valves. With the use of additional contactors or relays, it can also operate heating devices such as electric heating mats. The device integrates with the Supla mobile app, allowing for convenient setting of temperature, schedules and user preferences. The controller has three backlit touch fields that act as configurable action triggers, allowing you to activate programmed actions for other smart home components.
 - [Zamel MEW-01](https://supla.zamel.com/product/monitor-energii-elektrycznej-wi-fi-3fn-mew-01/) The highest standard of
 accuracy in electricity consumption monitoring available with tools for advanced data analysis. MEW-01 is designed for
 DIN-rail (TH35) mounting, occupies a width of two modules and offers the possibility of attaching an external antenna
