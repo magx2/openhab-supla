@@ -229,36 +229,12 @@
 		<state readOnly="true"/>
 	</channel-type>
 
-	<channel-type id="action-trigger">
-		<kind>TRIGGER</kind>
-		<label>Action trigger</label>
-		<description>
-			<![CDATA[
-			Emits action events such as:
-			<br>
-			Bistable:
-			<ol>
-				<li>TURN_ON</li>
-				<li>TURN_OFF</li>
-				<li>TOGGLE_x1</li>
-				<li>TOGGLE_x2</li>
-				<li>TOGGLE_x3</li>
-				<li>TOGGLE_x4</li>
-				<li>TOGGLE_x5</li>
-			</ol>
-			Monostable:
-			<ol>
-				<li>HOLD</li>
-				<li>SHORT_PRESS_x1</li>
-				<li>SHORT_PRESS_x2</li>
-				<li>SHORT_PRESS_x3</li>
-				<li>SHORT_PRESS_x4</li>
-				<li>SHORT_PRESS_x5</li>
-			</ol>
-			]]>
-		</description>
-		<category>Button</category>
-	</channel-type>
+		<channel-type id="action-trigger">
+				<kind>TRIGGER</kind>
+				<label>%channel-type.supla.action-trigger.label</label>
+				<description>%channel-type.supla.action-trigger.description</description>
+				<category>Button</category>
+		</channel-type>
 
 	<channel-type id="unknown-channel">
 		<item-type>String</item-type>
