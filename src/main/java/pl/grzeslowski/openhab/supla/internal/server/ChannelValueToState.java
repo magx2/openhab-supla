@@ -393,6 +393,12 @@ public class ChannelValueToState implements ChannelValueSwitch.Callback<Stream<C
     }
 
     @Override
+    public Stream<ChannelState> onActionTrigger(@Nullable ActionTrigger actionTriggerValue) {
+        // action triggers does not have state
+        return Stream.empty();
+    }
+
+    @Override
     public Stream<ChannelState> onUnknownValue(@Nullable final UnknownValue unknownValue) {
         val id = createChannelUid(channelNumber);
         if (unknownValue == null) {

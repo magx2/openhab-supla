@@ -92,19 +92,26 @@ public class ChannelUtil {
             return Stream.empty();
         }
         return findState(
-                deviceChannel.type(), deviceChannel.number(), deviceChannel.value(), deviceChannel.hvacValue());
+                deviceChannel.type(),
+                deviceChannel.number(),
+                deviceChannel.value(),
+                deviceChannel.action(),
+                deviceChannel.hvacValue());
     }
 
     public Stream<ChannelValueToState.ChannelState> findState(
             int type,
             int channelNumber,
             @Nullable @jakarta.annotation.Nullable byte[] value,
+            @jakarta.annotation.Nullable ActionTrigger actionTrigger,
             @jakarta.annotation.Nullable @Nullable HvacValue hvacValue) {
         val valueSwitch = new ChannelValueSwitch<>(
                 new ChannelValueToState(invoker.getThing().getUID(), channelNumber));
         ChannelValue channelValue;
         if (value != null) {
             channelValue = ChannelTypeDecoder.INSTANCE.decode(type, value);
+        } else if (actionTrigger != null) {
+            channelValue = actionTrigger;
         } else if (hvacValue != null) {
             channelValue = hvacValue;
         } else {
@@ -143,7 +150,7 @@ public class ChannelUtil {
 
     public void updateStatus(int channelNumber, int type, byte[] channelValue) {
         invoker.getLogger().debug("Updating status for channelNumber={}, type={}", channelNumber, type);
-        findState(type, channelNumber, channelValue, null).forEach(pair -> {
+        findState(type, channelNumber, channelValue, null, null).forEach(pair -> {
             var channelUID = pair.uid();
             var state = pair.state();
             invoker.getLogger()
