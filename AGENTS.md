@@ -10,12 +10,12 @@ The project integrates Supla devices (thermostats, switches, energy monitors) in
 
 - **`pom.xml`** - Maven build configuration (Java 21, OSGi bundle, Spotless formatting)
 - **`src/main/java/pl/grzeslowski/openhab/supla/internal/`** - Production code (~8,099 lines)
-  - `cloud/` - Cloud-based implementation (Supla Cloud API)
-  - `server/` - Native server implementation (direct protocol)
-  - `handler/` - Common handler abstractions
+- `cloud/` - Cloud-based implementation (Supla Cloud API)
+- `server/` - Native server implementation (direct protocol)
+- `handler/` - Common handler abstractions
 - **`src/main/resources/OH-INF/`** - OpenHAB metadata
-  - `thing/` - Thing type definitions (XML)
-  - `i18n/` - Localization (10 languages)
+- `thing/` - Thing type definitions (XML)
+- `i18n/` - Localization (10 languages)
 - **`src/test/java/`** - Test code (~2,149 lines, JUnit 5, Mockito, AssertJ)
 - **`.github/workflows/`** - CI/CD pipelines (spotless, build, release)
 - **`bin/`** - Utility scripts (e.g., TLS configuration)
@@ -168,11 +168,11 @@ logger.debug("Message with " + value); // ❌
 
 ### Architecture Boundaries
 - **Cloud package** (`internal.cloud.*`) uses Supla Cloud REST API
-  - Dependencies: `jsupla-api`, OkHttp, Gson
-  - **CANNOT** use: `jsupla-server`, Netty, protocol-java
+- Dependencies: `jsupla-api`, OkHttp, Gson
+- **CANNOT** use: `jsupla-server`, Netty, protocol-java
 - **Server package** (`internal.server.*`) uses native Supla protocol
-  - Dependencies: `jsupla-server`, Netty, protocol-java
-  - **CANNOT** use: `jsupla-api`, OkHttp
+- Dependencies: `jsupla-server`, Netty, protocol-java
+- **CANNOT** use: `jsupla-api`, OkHttp
 
 Violations cause `ArchUnitTest` failures.
 
@@ -220,14 +220,14 @@ Violations cause `ArchUnitTest` failures.
 
 ### GitHub Actions Workflows
 - **maven-main.yml** (on push to master):
-  - Runs `mvn spotless:apply` and auto-commits if needed
-  - Runs `mvn spotless:check verify`
-  - Fails if formatting was required
+- Runs `mvn spotless:apply` and auto-commits if needed
+- Runs `mvn spotless:check verify`
+- Fails if formatting was required
 - **maven-pr.yml** (on PRs):
-  - Runs `mvn spotless:check verify`
+- Runs `mvn spotless:check verify`
 - **release.yml** (manual):
-  - Runs `mvn release:prepare release:perform`
-  - Uploads JAR to GitHub releases
+- Runs `mvn release:prepare release:perform`
+- Uploads JAR to GitHub releases
 
 **Key takeaway**: Spotless formatting is enforced—unformatted code will fail CI.
 
