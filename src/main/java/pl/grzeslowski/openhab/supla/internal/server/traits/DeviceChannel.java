@@ -5,6 +5,7 @@ import static pl.grzeslowski.jsupla.protocol.api.ChannelFunction.SUPLA_CHANNELFN
 import static pl.grzeslowski.jsupla.protocol.api.ProtocolHelpers.toSignedInt;
 
 import jakarta.annotation.Nullable;
+import java.util.Arrays;
 import pl.grzeslowski.jsupla.protocol.api.ChannelFunction;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.decoders.HVACValueDecoderImpl;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.value.ActionTrigger;
@@ -109,5 +110,17 @@ public record DeviceChannel(
             return null;
         }
         return HVACValueDecoderImpl.INSTANCE.decode(hvacValue);
+    }
+
+    @Override
+    public String toString() {
+        return "DeviceChannel{" + "number="
+                + number + ", type="
+                + type + ", channelFunction="
+                + channelFunction + ", value="
+                + Arrays.toString(value) + ", action="
+                + action + ", hvacValue="
+                + hvacValue + ", subDeviceId="
+                + subDeviceId + '}';
     }
 }
