@@ -118,8 +118,6 @@ public class ServerBridgeHandler extends SuplaBridge implements ServerBridge {
                         HANDLER_INITIALIZING_ERROR,
                         text("supla.server.missing-algorithm", algo, ex.getLocalizedMessage(), SSL_PROBLEM));
             }
-        } else {
-            logger.info("Disabling SSL is not supported");
         }
 
         try {
@@ -153,7 +151,7 @@ public class ServerBridgeHandler extends SuplaBridge implements ServerBridge {
         timeoutConfiguration = ServerBridge.buildTimeoutConfiguration(config);
 
         try {
-            server = new NettyServer(buildNettyConfig(port, protocols), this::messageHandlerFactory);
+            server = new NettyServer(buildNettyConfig(port, protocols, config.isSsl()), this::messageHandlerFactory);
         } catch (CertificateException | SSLException ex) {
             throw new OfflineInitializationException(
                     HANDLER_INITIALIZING_ERROR,
@@ -209,8 +207,9 @@ public class ServerBridgeHandler extends SuplaBridge implements ServerBridge {
         updateState(CONNECTED_DEVICES_CHANNEL_ID, new DecimalType(numberOfConnectedDevices));
     }
 
-    private NettyConfig buildNettyConfig(int port, Set<String> protocols) throws CertificateException, SSLException {
-        return new NettyConfig(port, DEFAULT_TIMEOUT, buildSslContext(protocols));
+    private NettyConfig buildNettyConfig(int port, Set<String> protocols, boolean sslEnabled) throws CertificateException, SSLException {
+        var sslCtx=sslEnabled ? buildSslContext(protocols) : null;
+        return new NettyConfig(port, DEFAULT_TIMEOUT, sslCtx);
     }
 
     private SslContext buildSslContext(Set<String> protocols) throws CertificateException, SSLException {
