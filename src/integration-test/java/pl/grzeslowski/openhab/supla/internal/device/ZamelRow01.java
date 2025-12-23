@@ -14,7 +14,7 @@ import pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaDeviceChannelB;
 import pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaDeviceChannelValueA;
 import pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaRegisterDeviceB;
 import pl.grzeslowski.jsupla.protocol.api.structs.sd.SuplaRegisterDeviceResultA;
-import pl.grzeslowski.openhab.supla.internal.random.RandomExtension;
+import pl.grzeslowski.openhab.supla.internal.extension.random.RandomExtension;
 
 public class ZamelRow01 extends Device {
     private final int locationId;

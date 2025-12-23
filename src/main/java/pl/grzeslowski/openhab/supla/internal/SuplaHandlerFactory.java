@@ -41,7 +41,7 @@ public class SuplaHandlerFactory extends BaseThingHandlerFactory {
     }
 
     @Override
-    protected @Nullable ThingHandler createHandler(Thing thing) {
+    public @Nullable ThingHandler createHandler(Thing thing) {
         ThingTypeUID thingTypeUID = thing.getThingTypeUID();
 
         if (SUPLA_SERVER_DEVICE_TYPE.equals(thingTypeUID)) {

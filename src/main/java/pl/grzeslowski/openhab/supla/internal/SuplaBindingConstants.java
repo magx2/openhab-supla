@@ -14,13 +14,23 @@ public class SuplaBindingConstants {
     public static final String BINDING_ID = "supla";
     public static final int DEVICE_REGISTER_MAX_DELAY = (int) MINUTES.toSeconds(1);
 
+    // List of all Thing Type IDs
+    public static final String SUPLA_SERVER_DEVICE_TYPE_ID = "server-device";
+    public static final String SUPLA_SERVER_TYPE_ID = "server-bridge";
+    public static final String SUPLA_CLOUD_DEVICE_TYPE_ID = "cloud-device";
+    public static final String SUPLA_CLOUD_SERVER_TYPE_ID = "cloud-bridge";
+    public static final String SUPLA_GATEWAY_DEVICE_TYPE_ID = "gateway-device";
+    public static final String SUPLA_SUB_DEVICE_TYPE_ID = "sub-device-device";
+
     // List of all Thing Type UIDs
-    public static final ThingTypeUID SUPLA_SERVER_DEVICE_TYPE = new ThingTypeUID(BINDING_ID, "server-device");
-    public static final ThingTypeUID SUPLA_SERVER_TYPE = new ThingTypeUID(BINDING_ID, "server-bridge");
-    public static final ThingTypeUID SUPLA_CLOUD_DEVICE_TYPE = new ThingTypeUID(BINDING_ID, "cloud-device");
-    public static final ThingTypeUID SUPLA_CLOUD_SERVER_TYPE = new ThingTypeUID(BINDING_ID, "cloud-bridge");
-    public static final ThingTypeUID SUPLA_GATEWAY_DEVICE_TYPE = new ThingTypeUID(BINDING_ID, "gateway-device");
-    public static final ThingTypeUID SUPLA_SUB_DEVICE_TYPE = new ThingTypeUID(BINDING_ID, "sub-device-device");
+    public static final ThingTypeUID SUPLA_SERVER_DEVICE_TYPE =
+            new ThingTypeUID(BINDING_ID, SUPLA_SERVER_DEVICE_TYPE_ID);
+    public static final ThingTypeUID SUPLA_SERVER_TYPE = new ThingTypeUID(BINDING_ID, SUPLA_SERVER_TYPE_ID);
+    public static final ThingTypeUID SUPLA_CLOUD_DEVICE_TYPE = new ThingTypeUID(BINDING_ID, SUPLA_CLOUD_DEVICE_TYPE_ID);
+    public static final ThingTypeUID SUPLA_CLOUD_SERVER_TYPE = new ThingTypeUID(BINDING_ID, SUPLA_CLOUD_SERVER_TYPE_ID);
+    public static final ThingTypeUID SUPLA_GATEWAY_DEVICE_TYPE =
+            new ThingTypeUID(BINDING_ID, SUPLA_GATEWAY_DEVICE_TYPE_ID);
+    public static final ThingTypeUID SUPLA_SUB_DEVICE_TYPE = new ThingTypeUID(BINDING_ID, SUPLA_SUB_DEVICE_TYPE_ID);
 
     public static final Set<ThingTypeUID> SUPPORTED_THING_TYPES_UIDS = Set.of(
             SUPLA_SERVER_DEVICE_TYPE,
