@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jdt.annotation.Nullable;
 import org.openhab.core.config.core.ConfigDescription;
@@ -29,10 +30,13 @@ public class OpenHabDevice implements ThingHandlerCallback {
     private final Map<ChannelUID, State> channelStates = synchronizedMap(new HashMap<>());
 
     @Getter
+    @Setter
     @Nullable
     private Thing thing;
 
-    private final Bridge bridge;
+    @Getter
+    @Setter
+    private Bridge bridge;
 
     @Override
     public void stateUpdated(ChannelUID channelUID, State state) {

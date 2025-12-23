@@ -1,4 +1,4 @@
-package pl.grzeslowski.openhab.supla.internal.random;
+package pl.grzeslowski.openhab.supla.internal.extension.random;
 
 import static pl.grzeslowski.jsupla.protocol.api.consts.ProtoConsts.SUPLA_GUID_SIZE;
 import static pl.grzeslowski.jsupla.protocol.api.consts.ProtoConsts.SUPLA_LOCATION_PWD_MAXSIZE;
@@ -34,9 +34,16 @@ public class RandomExtension implements ParameterResolver {
     }
 
     public String randomLocationPassword() {
-        var len = random.nextInt(SUPLA_LOCATION_PWD_MAXSIZE) + 1;
-        var sb = new StringBuilder(len);
-        for (var idx = 0; idx < len; idx++) {
+        return randomString(random.nextInt(SUPLA_LOCATION_PWD_MAXSIZE) + 1);
+    }
+
+    public String randomString() {
+        return randomString(random.nextInt(5) + 5);
+    }
+
+    public String randomString(int length) {
+        var sb = new StringBuilder(length);
+        for (var idx = 0; idx < length; idx++) {
             sb.append(ALPHANUM.charAt(random.nextInt(ALPHANUM.length())));
         }
         return sb.toString();

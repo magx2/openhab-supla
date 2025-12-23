@@ -1,28 +1,18 @@
 package pl.grzeslowski.openhab.supla.internal;
 
-import static java.util.Objects.requireNonNull;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 import static org.openhab.core.thing.ThingStatus.OFFLINE;
 import static org.openhab.core.thing.ThingStatus.ONLINE;
 import static org.openhab.core.thing.ThingStatus.UNKNOWN;
 import static org.openhab.core.thing.ThingStatusDetail.*;
-import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.SUPLA_SERVER_DEVICE_TYPE;
-import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.SUPLA_SERVER_TYPE;
+import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.*;
 
 import io.github.glytching.junit.extension.random.Random;
 import io.github.glytching.junit.extension.random.RandomBeansExtension;
 import java.util.Map;
 import javax.validation.constraints.Min;
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.jdt.annotation.Nullable;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -31,79 +21,31 @@ import org.openhab.core.config.core.Configuration;
 import org.openhab.core.library.types.OnOffType;
 import org.openhab.core.thing.ThingStatusInfo;
 import org.openhab.core.thing.binding.builder.ThingStatusInfoBuilder;
-import org.openhab.core.thing.internal.BridgeImpl;
-import org.openhab.core.thing.internal.ThingImpl;
-import org.osgi.framework.*;
-import org.osgi.service.component.ComponentContext;
 import pl.grzeslowski.jsupla.protocol.api.structs.SuplaTimeval;
 import pl.grzeslowski.jsupla.protocol.api.structs.sd.SuplaRegisterDeviceResultA;
 import pl.grzeslowski.jsupla.protocol.api.structs.sdc.SuplaPingServerResult;
 import pl.grzeslowski.openhab.supla.internal.device.ZamelRow01;
-import pl.grzeslowski.openhab.supla.internal.random.Guid;
-import pl.grzeslowski.openhab.supla.internal.random.LocationPassword;
-import pl.grzeslowski.openhab.supla.internal.random.Port;
-import pl.grzeslowski.openhab.supla.internal.random.RandomExtension;
-import pl.grzeslowski.openhab.supla.internal.server.handler.ServerBridgeHandler;
+import pl.grzeslowski.openhab.supla.internal.extension.random.LocationPassword;
+import pl.grzeslowski.openhab.supla.internal.extension.random.Port;
+import pl.grzeslowski.openhab.supla.internal.extension.random.RandomExtension;
+import pl.grzeslowski.openhab.supla.internal.extension.supla.CreateHandler;
+import pl.grzeslowski.openhab.supla.internal.extension.supla.Ctx.BridgeCtx;
+import pl.grzeslowski.openhab.supla.internal.extension.supla.Ctx.ThingCtx;
+import pl.grzeslowski.openhab.supla.internal.extension.supla.SuplaExtension;
 
 @Slf4j
-@ExtendWith({MockitoExtension.class, RandomExtension.class, RandomBeansExtension.class})
+@ExtendWith({MockitoExtension.class, RandomExtension.class, RandomBeansExtension.class, SuplaExtension.class})
 public class MainIT {
-    final SuplaHandlerFactory factory = new SuplaHandlerFactory();
-
-    private @Nullable ServerBridgeHandler serverHandler;
-    private final BridgeImpl serverThing = new BridgeImpl(SUPLA_SERVER_TYPE, "2016");
-
-    @BeforeEach
-    void setUp() throws Exception {
-        setUpHandlerFactory();
-    }
-
-    @SuppressWarnings({"unchecked"})
-    private void setUpHandlerFactory() throws Exception {
-        var componentContext = mock(ComponentContext.class);
-        var bundleContext = mock(BundleContext.class);
-        var serviceRegistration = mock(ServiceRegistration.class);
-        var serviceReference = mock(ServiceReference.class);
-        var bundle = mock(Bundle.class);
-        var filter = mock(Filter.class);
-        when(componentContext.getBundleContext()).thenReturn(bundleContext);
-        when(bundleContext.createFilter(anyString())).thenReturn(filter);
-        when(bundleContext.getBundle()).thenReturn(bundle);
-        when(bundle.getBundleId()).thenReturn(1L);
-        when(bundleContext.registerService(anyString(), any(), any())).thenReturn(serviceRegistration);
-        when(serviceRegistration.getReference()).thenReturn(serviceReference);
-        var method = factory.getClass().getSuperclass().getDeclaredMethod("activate", ComponentContext.class);
-        method.setAccessible(true);
-        method.invoke(factory, componentContext);
-    }
-
-    private void setUpServerHandler(int port) {
-        var configuration = new Configuration(
-                Map.of("port", port, "ssl", false, "serverAccessId", 123, "serverAccessIdPassword", "none"));
-        serverThing.setConfiguration(configuration);
-        serverHandler = (ServerBridgeHandler) factory.createHandler(serverThing);
-        assertNotNull(serverHandler);
-        serverHandler.setCallback(OpenHabDevice.builder().build());
-        serverThing.setHandler(serverHandler);
-        serverHandler.initialize();
-    }
-
-    @AfterEach
-    void tearDown() {
-        if (serverHandler != null) {
-            serverHandler.dispose();
-        }
-    }
-
     @Test
-    @DisplayName("should ")
+    @DisplayName("should run tests for Zamel ROW-01")
     void zamelRow01(
-            @Guid String guid,
+            @CreateHandler(thingTypeId = SUPLA_SERVER_DEVICE_TYPE_ID) ThingCtx deviceCtx,
+            @CreateHandler(thingTypeId = SUPLA_SERVER_TYPE_ID) BridgeCtx serverCtx,
             @Port int port,
             @Random @Min(1) int serverAccessId,
             @LocationPassword String serverAccessIdPassword)
             throws Exception {
-        setUpServerHandler(port);
+        var guid = deviceCtx.thing().getUID().getId();
         log.info(
                 "Testing Zamel ROW-01 with GUID={}, "
                         + "using socket on port={}, "
@@ -113,26 +55,8 @@ public class MainIT {
                 port,
                 serverAccessId,
                 serverAccessIdPassword);
-        // THING
-        var deviceThing = new ThingImpl(SUPLA_SERVER_DEVICE_TYPE, guid);
-        var configuration = new Configuration(Map.of(
-                "guid", guid,
-                "serverAccessId", serverAccessId,
-                "serverAccessIdPassword", serverAccessIdPassword));
-        deviceThing.setConfiguration(configuration);
-        deviceThing.setBridgeUID(requireNonNull(serverHandler).getThing().getUID());
-        // HANDLER
-        var deviceHandler = factory.createHandler(deviceThing);
-        assertNotNull(deviceHandler);
-        var openHabDevice =
-                OpenHabDevice.builder().thing(deviceThing).bridge(serverThing).build();
-        deviceHandler.setCallback(openHabDevice);
-        log.info("Initializing server device handler");
-        deviceHandler.initialize();
-        requireNonNull(serverHandler).childHandlerInitialized(deviceHandler, deviceThing);
-        assertThat(openHabDevice.findThingStatus())
-                .isEqualTo(new ThingStatusInfo(
-                        UNKNOWN, HANDLER_CONFIGURATION_PENDING, "@text/supla.server.waiting-for-connection"));
+        serverInitialize(serverCtx, port);
+        deviceInitialize(deviceCtx, serverCtx, serverAccessId, serverAccessIdPassword, guid);
         // DEVICE
         try (var device = new ZamelRow01(guid, serverAccessId, serverAccessIdPassword)) {
             device.initialize("localhost", port);
@@ -140,16 +64,16 @@ public class MainIT {
             device.register();
             var registerResult = device.readRegisterDeviceResultA();
             assertThat(registerResult).isEqualTo(new SuplaRegisterDeviceResultA(3, (short) 100, (short) 5, (short) 1));
-            assertThat(openHabDevice.findThingStatus())
+            assertThat(deviceCtx.openHabDevice().findThingStatus())
                     .isEqualTo(new ThingStatusInfo(
                             UNKNOWN, CONFIGURATION_PENDING, "@text/supla.offline.waiting-for-registration"));
             // ping
             device.sendPing();
             assertThat(device.readPing()).isEqualTo(new SuplaPingServerResult(new SuplaTimeval(0, 0)));
-            await().untilAsserted(() -> assertThat(openHabDevice.findThingStatus())
+            await().untilAsserted(() -> assertThat(deviceCtx.openHabDevice().findThingStatus())
                     .isEqualTo(ThingStatusInfoBuilder.create(ONLINE, NONE).build()));
 
-            var channel = openHabDevice.findChannel();
+            var channel = deviceCtx.openHabDevice().findChannel();
             { // device updates it's state with OH
                 var previousState = device.isState();
                 device.toggleSwitch();
@@ -157,23 +81,49 @@ public class MainIT {
                 assertThat(currentState).isNotEqualTo(previousState);
                 log.info("Waiting for OH to propagate state change");
                 await().untilAsserted(() -> {
-                    var channelState = openHabDevice.findChannelState(channel);
+                    var channelState = deviceCtx.openHabDevice().findChannelState(channel);
                     assertThat(channelState).isEqualTo(OnOffType.from(currentState));
                 });
             }
             {
                 // OH updates it's state with the device
                 var previousState = device.isState();
-                deviceHandler.handleCommand(channel, OnOffType.from(!previousState));
+                deviceCtx.handler().handleCommand(channel, OnOffType.from(!previousState));
                 device.updateChannel();
                 assertThat(device.isState()).isNotEqualTo(previousState);
             }
         }
         // device is closed
         log.info("Waiting for the device to disconnect");
-        await().untilAsserted(() -> assertThat(openHabDevice.findThingStatus())
+        await().untilAsserted(() -> assertThat(deviceCtx.openHabDevice().findThingStatus())
                 .isEqualTo(
                         new ThingStatusInfo(OFFLINE, COMMUNICATION_ERROR, "@text/supla.offline.channel-disconnected")));
-        deviceHandler.dispose();
+    }
+
+    private static void serverInitialize(BridgeCtx serverCtx, int port) {
+        // configure server handler
+        var configuration = new Configuration(
+                Map.of("port", port, "ssl", false, "serverAccessId", 123, "serverAccessIdPassword", "none"));
+        serverCtx.thing().setConfiguration(configuration);
+        serverCtx.handler().initialize();
+    }
+
+    private static void deviceInitialize(
+            ThingCtx deviceCtx, BridgeCtx serverCtx, int serverAccessId, String serverAccessIdPassword, String guid) {
+        // configure device handler
+        var configuration = new Configuration(Map.of(
+                "guid", guid,
+                "serverAccessId", serverAccessId,
+                "serverAccessIdPassword", serverAccessIdPassword));
+        deviceCtx.thing().setConfiguration(configuration);
+        deviceCtx.thing().setBridgeUID(serverCtx.thing().getUID());
+        deviceCtx.openHabDevice().setBridge(serverCtx.thing());
+        deviceCtx.openHabDevice().setThing(deviceCtx.thing());
+        log.info("Initializing server device handler");
+        deviceCtx.handler().initialize();
+        serverCtx.handler().childHandlerInitialized(deviceCtx.handler(), deviceCtx.thing());
+        assertThat(deviceCtx.openHabDevice().findThingStatus())
+                .isEqualTo(new ThingStatusInfo(
+                        UNKNOWN, HANDLER_CONFIGURATION_PENDING, "@text/supla.server.waiting-for-connection"));
     }
 }
