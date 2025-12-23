@@ -113,8 +113,10 @@ public final class OpenHabMessageHandler implements MessageHandler {
                 suplaThing.register(entity, this);
                 currentThing.set(suplaThing);
             } catch (InitializationException ex) {
+                log.debug("Got InitializationException in `synchronizedHandle`", ex);
                 suplaThing.updateStatus(ex.getStatus(), ex.getStatusDetail(), ex.getMessage());
             } catch (Exception ex) {
+                log.debug("Got error in `synchronizedHandle`", ex);
                 suplaThing.updateStatus(ThingStatus.OFFLINE, COMMUNICATION_ERROR, ex.getLocalizedMessage());
             }
         });

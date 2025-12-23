@@ -31,6 +31,7 @@ public abstract class SuplaDevice extends BaseThingHandler implements HandleComm
             try {
                 internalInitialize();
             } catch (InitializationException e) {
+                getLogger().debug("InitializationException", e);
                 updateStatus(e.getStatus(), e.getStatusDetail(), e.getLocalizedMessage());
             } catch (Exception e) {
                 getLogger().error("Error occurred while initializing Supla device!", e);
