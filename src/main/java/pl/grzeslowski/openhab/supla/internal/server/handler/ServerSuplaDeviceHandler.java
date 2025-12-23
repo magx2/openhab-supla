@@ -441,10 +441,12 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDevice implements Me
 
     private boolean isGoodPassword(char[] password, byte[] givenPassword) {
         if (password.length > givenPassword.length) {
+            logger.debug("Given password has different length than expected one");
             return false;
         }
         for (int i = 0; i < password.length; i++) {
             if (password[i] != givenPassword[i]) {
+                logger.debug("There is a password missmatch on index {}", i);
                 return false;
             }
         }
