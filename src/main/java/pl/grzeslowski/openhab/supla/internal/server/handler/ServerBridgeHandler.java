@@ -207,8 +207,9 @@ public class ServerBridgeHandler extends SuplaBridge implements ServerBridge {
         updateState(CONNECTED_DEVICES_CHANNEL_ID, new DecimalType(numberOfConnectedDevices));
     }
 
-    private NettyConfig buildNettyConfig(int port, Set<String> protocols, boolean sslEnabled) throws CertificateException, SSLException {
-        var sslCtx=sslEnabled ? buildSslContext(protocols) : null;
+    private NettyConfig buildNettyConfig(int port, Set<String> protocols, boolean sslEnabled)
+            throws CertificateException, SSLException {
+        var sslCtx = sslEnabled ? buildSslContext(protocols) : null;
         return new NettyConfig(port, DEFAULT_TIMEOUT, sslCtx);
     }
 
