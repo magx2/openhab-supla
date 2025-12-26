@@ -6,6 +6,7 @@ import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.Channe
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -77,7 +78,14 @@ public class ChannelCallback implements ChannelClassSwitch.Callback<Stream<Chann
     @Nullable
     public Stream<Channel> onPercentValue() {
         log.debug("{} {} onPercentValue", thingUID, number);
-        return null;
+
+        var channelUid = createChannelUid();
+        var channelTypeUID = createChannelTypeUID(DIMMER_CHANNEL_ID);
+
+        return Stream.of(ChannelBuilder.create(channelUid, "Dimmer")
+                .withType(channelTypeUID)
+                .withDefaultTags(Set.of("Control", "Brightness"))
+                .build());
     }
 
     @Override
