@@ -2,6 +2,7 @@ package pl.grzeslowski.openhab.supla.internal.extension.random;
 
 import static java.math.RoundingMode.HALF_UP;
 import static java.util.Locale.ROOT;
+import static java.util.stream.Stream.generate;
 import static pl.grzeslowski.jsupla.protocol.api.consts.ProtoConsts.*;
 import static pl.grzeslowski.openhab.supla.internal.server.ByteArrayToHex.bytesToHex;
 
@@ -13,6 +14,7 @@ import org.junit.jupiter.api.extension.ParameterContext;
 import org.junit.jupiter.api.extension.ParameterResolutionException;
 import org.junit.jupiter.api.extension.ParameterResolver;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.value.HvacValue;
+import pl.grzeslowski.jsupla.protocol.api.channeltype.value.PercentValue;
 import pl.grzeslowski.openhab.supla.internal.device.HvacChannel;
 
 @Slf4j
@@ -84,6 +86,18 @@ public class RandomExtension implements ParameterResolver {
         var bytes = new byte[SUPLA_GUID_SIZE];
         random.nextBytes(bytes);
         return bytesToHex(bytes);
+    }
+
+    public PercentValue randomPercentage() {
+        return new PercentValue(random.nextInt(101));
+    }
+
+    public PercentValue randomPercentage(PercentValue value) {
+        return generate(this::randomPercentage)
+                .filter(p -> !p.equals(value))
+                .parallel()
+                .findAny()
+                .orElseThrow();
     }
 
     public String randomLocationPassword() {
