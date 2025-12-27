@@ -11,8 +11,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.Arrays;
 import lombok.Getter;
-import pl.grzeslowski.jsupla.protocol.api.ChannelType;
-import pl.grzeslowski.jsupla.protocol.api.channeltype.decoders.ChannelTypeDecoder;
+import pl.grzeslowski.jsupla.protocol.api.channeltype.decoders.HVACValueDecoderImpl;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.encoders.ThermometerTypeDoubleChannelEncoderImpl;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.value.TemperatureValue;
 import pl.grzeslowski.jsupla.protocol.api.structs.ActionTriggerProperties;
@@ -25,7 +24,9 @@ import pl.grzeslowski.openhab.supla.internal.extension.random.RandomExtension;
 public class ZamelGkw02 extends Device {
     private final ThermometerTypeDoubleChannelEncoderImpl thermometerTypeDoubleChannelEncoder =
             new ThermometerTypeDoubleChannelEncoderImpl();
-    private final HvacChannel hvac = RandomExtension.INSTANCE.randomHvac();
+
+    @Getter
+    private HvacChannel hvac = RandomExtension.INSTANCE.randomHvac();
 
     @Getter
     private BigDecimal temperature = RandomExtension.INSTANCE.randomTemperature();
@@ -152,26 +153,13 @@ public class ZamelGkw02 extends Device {
 
     @Override
     protected void updateChannel(short channelNumber, byte[] value) {
-        switch (channelNumber) {
-            case 0:
-                updateHvac(value);
-            case 1:
-                updateTemperature(value);
-            default:
-                throw new IllegalArgumentException("channelNumber has to be less than 2! Was " + channelNumber);
-        }
+        assertThat(channelNumber).isZero();
+        updateHvac(value);
     }
 
-    private void updateHvac(byte[] value) {}
-
-    private void updateTemperature(byte[] value) {
-        var decode = ChannelTypeDecoder.INSTANCE.decode(ChannelType.SUPLA_CHANNELTYPE_THERMOMETER, value);
-        switch (decode) {
-            case TemperatureValue(var temp) -> temperature = temp;
-            case null, default ->
-                throw new IllegalArgumentException(
-                        "Value is not a temperature! value=%s, decode=%s".formatted(Arrays.toString(value), decode));
-        }
+    private void updateHvac(byte[] value) {
+        var hvac = HVACValueDecoderImpl.INSTANCE.decode(value);
+        this.hvac = new HvacChannel(hvac);
     }
 
     private void trigger(
