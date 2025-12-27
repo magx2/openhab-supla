@@ -7,7 +7,6 @@ import static org.openhab.core.thing.ThingStatusDetail.COMMUNICATION_ERROR;
 import static pl.grzeslowski.jsupla.protocol.api.channeltype.value.HvacValue.Mode.*;
 import static pl.grzeslowski.openhab.supla.internal.Localization.text;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ChannelIds.Hvac.*;
-import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.Channels.HVAC_MODE_CHANNEL_ID;
 import static pl.grzeslowski.openhab.supla.internal.server.ChannelUtil.findSuplaChannelNumber;
 import static tech.units.indriya.unit.Units.CELSIUS;
 
@@ -108,7 +107,7 @@ public class HandlerCommandTrait implements HandleCommand {
     @Override
     public void handleStringCommand(ChannelUID channelUID, StringType command) {
         var id = channelUID.getIdWithoutGroup();
-        if (id.equals(HVAC_MODE_CHANNEL_ID)) {
+        if (id.equals(HVAC_MODE)) {
             handleHvacModeCommand(channelUID, command);
             return;
         }

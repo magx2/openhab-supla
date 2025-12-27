@@ -64,7 +64,7 @@ public class RandomExtension implements ParameterResolver {
 
         int style = random.nextInt(4);
         switch (style) {
-            case 0 -> local = base; // "mk"
+            case 0 -> local = base;
             case 1 -> local = base + "." + randomString(1);
             case 2 -> local = base + "." + WORDS[random.nextInt(WORDS.length)];
             default -> local = base + (10 + random.nextInt(90));

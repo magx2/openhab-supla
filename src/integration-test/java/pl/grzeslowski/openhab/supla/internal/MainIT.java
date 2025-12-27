@@ -12,6 +12,7 @@ import static tech.units.indriya.unit.Units.CELSIUS;
 
 import io.github.glytching.junit.extension.random.Random;
 import io.github.glytching.junit.extension.random.RandomBeansExtension;
+import java.math.BigDecimal;
 import java.util.Map;
 import javax.validation.constraints.Min;
 import lombok.extern.slf4j.Slf4j;
@@ -22,8 +23,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.openhab.core.config.core.Configuration;
 import org.openhab.core.library.types.OnOffType;
 import org.openhab.core.library.types.QuantityType;
+import org.openhab.core.library.types.StringType;
+import org.openhab.core.thing.ChannelUID;
 import org.openhab.core.thing.ThingStatusInfo;
 import org.openhab.core.thing.binding.builder.ThingStatusInfoBuilder;
+import pl.grzeslowski.jsupla.protocol.api.channeltype.value.HvacValue;
 import pl.grzeslowski.jsupla.protocol.api.structs.SuplaTimeval;
 import pl.grzeslowski.jsupla.protocol.api.structs.sd.SuplaRegisterDeviceResultA;
 import pl.grzeslowski.jsupla.protocol.api.structs.sdc.SuplaPingServerResult;
@@ -173,6 +177,20 @@ public class MainIT {
                     assertThat(trigger.channelUID().getId()).isEqualTo(String.valueOf(channelNumber + 2));
                     assertThat(trigger.event()).isEqualTo("HOLD");
                 }
+            }
+            { // OH updates HVAC / setPointTemperatureHeat
+                var channel = new ChannelUID("supla:server-device:%s:0#setPointTemperatureHeat".formatted(guid));
+                var newTemperature = BigDecimal.valueOf(100.0);
+                deviceCtx.handler().handleCommand(channel, new QuantityType<>(newTemperature, CELSIUS));
+                device.updateChannel();
+                assertThat(device.getHvac().getSetPointTemperatureHeat()).isEqualTo(newTemperature);
+            }
+            { // OH updates HVAC / mode
+                var channel = new ChannelUID("supla:server-device:%s:0#mode".formatted(guid));
+                var newMode = "OFF";
+                deviceCtx.handler().handleCommand(channel, StringType.valueOf(newMode));
+                device.updateChannel();
+                assertThat(device.getHvac().getMode()).isEqualTo(HvacValue.Mode.valueOf(newMode));
             }
         }
         // device is closed
