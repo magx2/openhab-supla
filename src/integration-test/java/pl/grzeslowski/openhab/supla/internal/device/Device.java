@@ -21,6 +21,7 @@ import pl.grzeslowski.jsupla.protocol.api.structs.SuplaDataPacket;
 import pl.grzeslowski.jsupla.protocol.api.structs.SuplaTimeval;
 import pl.grzeslowski.jsupla.protocol.api.structs.dcs.SuplaPingServer;
 import pl.grzeslowski.jsupla.protocol.api.structs.sd.SuplaChannelNewValue;
+import pl.grzeslowski.jsupla.protocol.api.structs.sd.SuplaRegisterDeviceResultA;
 import pl.grzeslowski.jsupla.protocol.api.structs.sdc.SuplaPingServerResult;
 import pl.grzeslowski.jsupla.protocol.api.types.FromServerProto;
 import pl.grzeslowski.jsupla.protocol.api.types.ToServerProto;
@@ -143,6 +144,12 @@ public abstract class Device implements AutoCloseable {
         }
     }
 
+    public SuplaRegisterDeviceResultA readRegisterDeviceResultA() throws IOException {
+        var read = read();
+        assertThat(read).isInstanceOf(SuplaRegisterDeviceResultA.class);
+        return (SuplaRegisterDeviceResultA) read;
+    }
+
     public void sendPing() throws IOException {
         send(new SuplaPingServer(new SuplaTimeval(now().getEpochSecond(), 0)));
     }
@@ -163,6 +170,8 @@ public abstract class Device implements AutoCloseable {
         var newValue = readChannelNewValue();
         updateChannel(newValue.channelNumber(), newValue.value());
     }
+
+    public abstract void register() throws IOException;
 
     protected abstract void updateChannel(short channelNumber, byte[] value);
 }

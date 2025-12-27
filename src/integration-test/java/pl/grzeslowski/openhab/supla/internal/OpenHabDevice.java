@@ -3,10 +3,9 @@ package pl.grzeslowski.openhab.supla.internal;
 import static java.util.Collections.synchronizedMap;
 import static java.util.Objects.requireNonNull;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
@@ -28,6 +27,10 @@ import org.openhab.core.types.TimeSeries;
 public class OpenHabDevice implements ThingHandlerCallback {
     private final Map<Thing, ThingStatusInfo> thingStatus = synchronizedMap(new HashMap<>());
     private final Map<ChannelUID, State> channelStates = synchronizedMap(new HashMap<>());
+    private final Queue<Trigger> triggers = new LinkedList<>();
+
+    @Setter
+    private String guid;
 
     @Getter
     @Setter
@@ -45,6 +48,18 @@ public class OpenHabDevice implements ThingHandlerCallback {
 
     public State findChannelState(ChannelUID channelUID) {
         return requireNonNull(channelStates.get(channelUID));
+    }
+
+    public State findChannelState(String channelId) {
+        return findChannelState(new ChannelUID("supla:server-device:%s:%s".formatted(requireNonNull(guid), channelId)));
+    }
+
+    public State findChannelState(int channelId) {
+        return findChannelState(String.valueOf(channelId));
+    }
+
+    public Map<ChannelUID, State> getChannelStates() {
+        return Map.copyOf(channelStates);
     }
 
     public ChannelUID findChannel() {
@@ -113,7 +128,11 @@ public class OpenHabDevice implements ThingHandlerCallback {
 
     @Override
     public void channelTriggered(Thing thing, ChannelUID channelUID, String event) {
-        throw new UnsupportedOperationException("OpenHabDevice.channelTriggered(thing, channelUID, event)");
+        triggers.offer(new Trigger(thing, channelUID, event));
+    }
+
+    public Trigger popTrigger() {
+        return await().until(triggers::poll, Objects::nonNull);
     }
 
     @Override
@@ -142,4 +161,6 @@ public class OpenHabDevice implements ThingHandlerCallback {
     public @Nullable Bridge getBridge(ThingUID bridgeUID) {
         return bridge;
     }
+
+    public record Trigger(Thing thing, ChannelUID channelUID, String event) {}
 }
