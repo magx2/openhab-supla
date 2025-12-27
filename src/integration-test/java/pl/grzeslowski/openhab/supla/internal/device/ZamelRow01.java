@@ -13,7 +13,6 @@ import org.checkerframework.checker.nullness.qual.NonNull;
 import pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaDeviceChannelB;
 import pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaDeviceChannelValueA;
 import pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaRegisterDeviceB;
-import pl.grzeslowski.jsupla.protocol.api.structs.sd.SuplaRegisterDeviceResultA;
 import pl.grzeslowski.openhab.supla.internal.extension.random.RandomExtension;
 
 public class ZamelRow01 extends Device {
@@ -31,6 +30,7 @@ public class ZamelRow01 extends Device {
         this.locationPwd = Arrays.copyOf(locationPwd.getBytes(UTF_8), SUPLA_LOCATION_PWD_MAXSIZE);
     }
 
+    @Override
     public void register() throws IOException {
         log.info("Registering Zamel ROW-01 device");
         var channel = new SuplaDeviceChannelB((short) 0, 2900, 96, 140, findValue());
@@ -51,12 +51,6 @@ public class ZamelRow01 extends Device {
                 (short) 1,
                 new SuplaDeviceChannelB[] {channel});
         send(proto);
-    }
-
-    public SuplaRegisterDeviceResultA readRegisterDeviceResultA() throws IOException {
-        var read = super.read();
-        assertThat(read).isInstanceOf(SuplaRegisterDeviceResultA.class);
-        return (SuplaRegisterDeviceResultA) read;
     }
 
     public synchronized void toggleSwitch() throws IOException {

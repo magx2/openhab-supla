@@ -4,8 +4,7 @@ import static java.util.Collections.synchronizedList;
 import static java.util.Objects.requireNonNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.SUPLA_SERVER_TYPE;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.SUPPORTED_THING_TYPES_UIDS;
 
@@ -60,12 +59,12 @@ public class SuplaExtension implements BeforeEachCallback, AfterEachCallback, Pa
         var serviceReference = mock(ServiceReference.class);
         var bundle = mock(Bundle.class);
         var filter = mock(Filter.class);
-        when(componentContext.getBundleContext()).thenReturn(bundleContext);
-        when(bundleContext.createFilter(anyString())).thenReturn(filter);
-        when(bundleContext.getBundle()).thenReturn(bundle);
-        when(bundle.getBundleId()).thenReturn(1L);
-        when(bundleContext.registerService(anyString(), any(), any())).thenReturn(serviceRegistration);
-        when(serviceRegistration.getReference()).thenReturn(serviceReference);
+        lenient().when(componentContext.getBundleContext()).thenReturn(bundleContext);
+        lenient().when(bundleContext.createFilter(anyString())).thenReturn(filter);
+        lenient().when(bundleContext.getBundle()).thenReturn(bundle);
+        lenient().when(bundle.getBundleId()).thenReturn(1L);
+        lenient().when(bundleContext.registerService(anyString(), any(), any())).thenReturn(serviceRegistration);
+        lenient().when(serviceRegistration.getReference()).thenReturn(serviceReference);
         var method = factory.getClass().getSuperclass().getDeclaredMethod("activate", ComponentContext.class);
         method.setAccessible(true);
         method.invoke(factory, componentContext);

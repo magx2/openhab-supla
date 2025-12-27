@@ -1,20 +1,26 @@
 package pl.grzeslowski.openhab.supla.internal.extension.random;
 
-import static pl.grzeslowski.jsupla.protocol.api.consts.ProtoConsts.SUPLA_GUID_SIZE;
-import static pl.grzeslowski.jsupla.protocol.api.consts.ProtoConsts.SUPLA_LOCATION_PWD_MAXSIZE;
+import static java.math.RoundingMode.HALF_UP;
+import static java.util.Locale.ROOT;
+import static pl.grzeslowski.jsupla.protocol.api.consts.ProtoConsts.*;
+import static pl.grzeslowski.openhab.supla.internal.server.ByteArrayToHex.bytesToHex;
 
+import java.math.BigDecimal;
 import java.util.Random;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.ParameterContext;
 import org.junit.jupiter.api.extension.ParameterResolutionException;
 import org.junit.jupiter.api.extension.ParameterResolver;
-import pl.grzeslowski.openhab.supla.internal.server.ByteArrayToHex;
+import pl.grzeslowski.jsupla.protocol.api.channeltype.value.HvacValue;
+import pl.grzeslowski.openhab.supla.internal.device.HvacChannel;
 
 @Slf4j
 public class RandomExtension implements ParameterResolver {
     public static RandomExtension INSTANCE;
     private static final String ALPHANUM = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    private static final String[] DOMAINS = {"gmail.com", "outlook.com", "icloud.com", "proton.me", "fastmail.com"};
+    private static final String[] WORDS = {"dev", "io", "ai", "lab", "ops", "fx", "pm", "cloud", "code", "tech"};
     private final Random random;
 
     public RandomExtension(long seed) {
@@ -27,10 +33,57 @@ public class RandomExtension implements ParameterResolver {
         this(System.currentTimeMillis());
     }
 
+    public BigDecimal randomTemperature() {
+        return BigDecimal.valueOf(random.nextDouble())
+                .multiply(BigDecimal.valueOf(20))
+                .add(BigDecimal.valueOf(15))
+                .setScale(14, HALF_UP);
+    }
+
+    public BigDecimal randomUpdateTemperature(BigDecimal temperature) {
+        var offset = BigDecimal.ZERO;
+        while (offset.compareTo(BigDecimal.ZERO) == 0) {
+            offset = temperature.multiply(BigDecimal.valueOf(random.nextGaussian()));
+        }
+        return temperature.add(offset).setScale(14, HALF_UP);
+    }
+
+    public HvacChannel randomHvac() {
+        return new HvacChannel(
+                true,
+                HvacValue.Mode.HEAT,
+                randomTemperature(),
+                null,
+                new HvacValue.Flags(
+                        true, false, false, false, false, false, false, false, false, false, false, false, false));
+    }
+
+    private String randomEmail() {
+        String base = randomString(2 + random.nextInt(4));
+        String local;
+
+        int style = random.nextInt(4);
+        switch (style) {
+            case 0 -> local = base; // "mk"
+            case 1 -> local = base + "." + randomString(1);
+            case 2 -> local = base + "." + WORDS[random.nextInt(WORDS.length)];
+            default -> local = base + (10 + random.nextInt(90));
+        }
+
+        String domain = DOMAINS[random.nextInt(DOMAINS.length)];
+        return local.toLowerCase(ROOT) + "@" + domain;
+    }
+
+    private String randomAuthKey() {
+        var bytes = new byte[SUPLA_AUTHKEY_SIZE];
+        random.nextBytes(bytes);
+        return bytesToHex(bytes);
+    }
+
     public String randomGuid() {
         var bytes = new byte[SUPLA_GUID_SIZE];
         random.nextBytes(bytes);
-        return ByteArrayToHex.bytesToHex(bytes);
+        return bytesToHex(bytes);
     }
 
     public String randomLocationPassword() {
@@ -65,6 +118,12 @@ public class RandomExtension implements ParameterResolver {
         if (parameterContext.isAnnotated(LocationPassword.class)) {
             return parameterContext.getParameter().getType() == String.class;
         }
+        if (parameterContext.isAnnotated(Email.class)) {
+            return parameterContext.getParameter().getType() == String.class;
+        }
+        if (parameterContext.isAnnotated(AuthKey.class)) {
+            return parameterContext.getParameter().getType() == String.class;
+        }
         return false;
     }
 
@@ -79,6 +138,12 @@ public class RandomExtension implements ParameterResolver {
         }
         if (parameterContext.isAnnotated(LocationPassword.class)) {
             return randomLocationPassword();
+        }
+        if (parameterContext.isAnnotated(Email.class)) {
+            return randomEmail();
+        }
+        if (parameterContext.isAnnotated(AuthKey.class)) {
+            return randomAuthKey();
         }
         return null;
     }
