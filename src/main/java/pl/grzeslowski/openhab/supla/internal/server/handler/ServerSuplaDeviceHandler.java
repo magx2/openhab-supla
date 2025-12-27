@@ -259,6 +259,7 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDevice implements Me
             logger.warn("The write channel is not active, messages should not be incoming!");
             return;
         }
+        lastMessageFromDevice.set(now().getEpochSecond());
         try {
             switch (entity) {
                 case SuplaPingServer ping -> consumeSuplaPingServer(ping, writer);
@@ -419,7 +420,6 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDevice implements Me
                     formatter.format(date),
                     response.now().tvSec(),
                     response.now().tvUsec());
-            lastMessageFromDevice.set(epochSecond);
         });
     }
 
