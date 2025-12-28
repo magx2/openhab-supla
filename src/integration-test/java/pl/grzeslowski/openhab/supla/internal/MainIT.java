@@ -13,10 +13,8 @@ import static pl.grzeslowski.openhab.supla.internal.extension.supla.SuplaExtensi
 import static pl.grzeslowski.openhab.supla.internal.extension.supla.SuplaExtension.serverInitialize;
 import static tech.units.indriya.unit.Units.CELSIUS;
 
-import io.github.glytching.junit.extension.random.Random;
 import io.github.glytching.junit.extension.random.RandomBeansExtension;
 import java.math.BigDecimal;
-import javax.validation.constraints.Min;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -49,7 +47,7 @@ public class MainIT {
             @CreateHandler(thingTypeId = SUPLA_SERVER_DEVICE_TYPE_ID) ThingCtx deviceCtx,
             @CreateHandler(thingTypeId = SUPLA_SERVER_TYPE_ID) BridgeCtx serverCtx,
             @Port int port,
-            @Random @Min(1) int serverAccessId,
+            @LocationId int serverAccessId,
             @LocationPassword String serverAccessIdPassword)
             throws Exception {
         var guid = deviceCtx.thing().getUID().getId();
