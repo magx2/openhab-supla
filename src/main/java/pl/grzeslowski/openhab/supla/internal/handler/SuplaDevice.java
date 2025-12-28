@@ -64,12 +64,13 @@ public abstract class SuplaDevice extends BaseThingHandler implements HandleComm
                     case StopMoveType stopMoveValue -> handleStopMoveTypeCommand(channelUID, stopMoveValue);
                     case StringType stringValue -> handleStringCommand(channelUID, stringValue);
                     case QuantityType<?> quantityType -> handleQuantityType(channelUID, quantityType);
-                    default -> getLogger()
-                            .warn(
-                                    "Does not know how to handle command `{}` ({}) on channel `{}`!",
-                                    command,
-                                    command.getClass().getSimpleName(),
-                                    channelUID);
+                    default ->
+                        getLogger()
+                                .warn(
+                                        "Does not know how to handle command `{}` ({}) on channel `{}`!",
+                                        command,
+                                        command.getClass().getSimpleName(),
+                                        channelUID);
                 }
             } catch (Exception ex) {
                 getLogger()

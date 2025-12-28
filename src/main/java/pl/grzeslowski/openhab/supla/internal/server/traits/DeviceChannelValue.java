@@ -12,14 +12,18 @@ import pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaDeviceChannelValueC;
  * @param offline If true then value is ignored
  * @param validityTimeSec uint
  */
-public record DeviceChannelValue(int channelNumber, byte[] value, boolean offline, @Nullable Long validityTimeSec) {
+public record DeviceChannelValue(
+        int channelNumber,
+        byte[] value,
+        boolean offline,
+        @Nullable Long validityTimeSec) {
     public static DeviceChannelValue fromProto(SuplaDeviceChannelValue proto) {
         return switch (proto) {
             case SuplaDeviceChannelValueA a -> new DeviceChannelValue(a.channelNumber(), a.value(), false, null);
-            case SuplaDeviceChannelValueB b -> new DeviceChannelValue(
-                    b.channelNumber(), b.value(), b.offline() != 0, null);
-            case SuplaDeviceChannelValueC c -> new DeviceChannelValue(
-                    c.channelNumber(), c.value(), c.offline() != 0, c.validityTimeSec());
+            case SuplaDeviceChannelValueB b ->
+                new DeviceChannelValue(b.channelNumber(), b.value(), b.offline() != 0, null);
+            case SuplaDeviceChannelValueC c ->
+                new DeviceChannelValue(c.channelNumber(), c.value(), c.offline() != 0, c.validityTimeSec());
         };
     }
 }

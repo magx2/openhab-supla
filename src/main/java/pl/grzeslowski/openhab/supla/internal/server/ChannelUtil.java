@@ -52,17 +52,13 @@ public class ChannelUtil {
                 var string = channels.stream()
                         .map(channel -> channel.getUID() + " -> " + channel.getChannelTypeUID())
                         .collect(Collectors.joining("\n - ", " - ", ""));
-                invoker.getLogger()
-                        .debug(
-                                """
+                invoker.getLogger().debug("""
                                         Registering channels:
                                          > Raw:
                                         {}
 
                                          > OpenHABs:
-                                        {}""",
-                                rawChannels,
-                                string);
+                                        {}""", rawChannels, string);
             }
             updateChannels(channels);
         }
@@ -78,7 +74,8 @@ public class ChannelUtil {
         var channels = channelValueSwitch.doSwitch(clazz);
         invoker.getChannelTypes().put(deviceChannel.number(), deviceChannel.type());
         if (adjustLabel) {
-            record ChannelAndLabel(ChannelBuilder builder, @Nullable String label) {}
+            record ChannelAndLabel(
+                    ChannelBuilder builder, @Nullable String label) {}
             return channels.map(channel -> new ChannelAndLabel(ChannelBuilder.create(channel), channel.getLabel()))
                     .map(pair -> pair.builder().withLabel(("#%0" + digits + "d ").formatted(idx) + pair.label()))
                     .map(ChannelBuilder::build);

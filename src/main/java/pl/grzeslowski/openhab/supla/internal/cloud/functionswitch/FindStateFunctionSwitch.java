@@ -85,12 +85,13 @@ public class FindStateFunctionSwitch implements ChannelFunctionDispatcher.Functi
         requireNonNull(channelType, "Additional type for channel " + channel + " cannot be null!");
         final Optional<ChannelState> state = of(channel).map(Channel::getState);
         return switch (channelType) {
-            case TEMPERATURE -> state.map(s -> findTemperature(s, channel.getParam2()))
-                    .map(DecimalType::new);
-            case HUMIDITY -> state.map(s -> findHumidity(s, channel.getParam2()))
-                    .map(DecimalType::new);
-            default -> throw new IllegalStateException(
-                    "Additional type " + channelType + " is not supported for HumidityAndTemperature channel");
+            case TEMPERATURE ->
+                state.map(s -> findTemperature(s, channel.getParam2())).map(DecimalType::new);
+            case HUMIDITY ->
+                state.map(s -> findHumidity(s, channel.getParam2())).map(DecimalType::new);
+            default ->
+                throw new IllegalStateException(
+                        "Additional type " + channelType + " is not supported for HumidityAndTemperature channel");
         };
     }
 
@@ -280,56 +281,68 @@ public class FindStateFunctionSwitch implements ChannelFunctionDispatcher.Functi
             return switch (channelType) {
                 case TOTAL_COST -> state.map(ChannelState::getTotalCost).map(DecimalType::new);
                 case PRICE_PER_UNIT -> state.map(ChannelState::getPricePerUnit).map(DecimalType::new);
-                    // total channels
-                case CURRENT -> phases.map(ElectricityMeterStatePhase::getCurrent)
-                        .reduce(of(new DecimalType()), this::accumulator, this::combiner);
-                case POWER_ACTIVE -> phases.map(ElectricityMeterStatePhase::getPowerActive)
-                        .reduce(of(new DecimalType()), this::accumulator, this::combiner);
-                case POWER_REACTIVE -> phases.map(ElectricityMeterStatePhase::getPowerReactive)
-                        .reduce(of(new DecimalType()), this::accumulator, this::combiner);
-                case POWER_APPARENT -> phases.map(ElectricityMeterStatePhase::getPowerApparent)
-                        .reduce(of(new DecimalType()), this::accumulator, this::combiner);
-                case TOTAL_FORWARD_ACTIVE_ENERGY -> phases.map(ElectricityMeterStatePhase::getTotalForwardActiveEnergy)
-                        .reduce(of(new DecimalType()), this::accumulator, this::combiner);
-                case TOTAL_REVERSED_ACTIVE_ENERGY -> phases.map(ElectricityMeterStatePhase::getTotalReverseActiveEnergy)
-                        .reduce(of(new DecimalType()), this::accumulator, this::combiner);
-                case TOTAL_FORWARD_REACTIVE_ENERGY -> phases.map(
-                                ElectricityMeterStatePhase::getTotalForwardReactiveEnergy)
-                        .reduce(of(new DecimalType()), this::accumulator, this::combiner);
-                case TOTAL_REVERSED_REACTIVE_ENERGY -> phases.map(
-                                ElectricityMeterStatePhase::getTotalReverseReactiveEnergy)
-                        .reduce(of(new DecimalType()), this::accumulator, this::combiner);
-                default -> throw new IllegalStateException(
-                        "Additional type " + channelType + " is not supported for ElectricityMeter channel");
+                // total channels
+                case CURRENT ->
+                    phases.map(ElectricityMeterStatePhase::getCurrent)
+                            .reduce(of(new DecimalType()), this::accumulator, this::combiner);
+                case POWER_ACTIVE ->
+                    phases.map(ElectricityMeterStatePhase::getPowerActive)
+                            .reduce(of(new DecimalType()), this::accumulator, this::combiner);
+                case POWER_REACTIVE ->
+                    phases.map(ElectricityMeterStatePhase::getPowerReactive)
+                            .reduce(of(new DecimalType()), this::accumulator, this::combiner);
+                case POWER_APPARENT ->
+                    phases.map(ElectricityMeterStatePhase::getPowerApparent)
+                            .reduce(of(new DecimalType()), this::accumulator, this::combiner);
+                case TOTAL_FORWARD_ACTIVE_ENERGY ->
+                    phases.map(ElectricityMeterStatePhase::getTotalForwardActiveEnergy)
+                            .reduce(of(new DecimalType()), this::accumulator, this::combiner);
+                case TOTAL_REVERSED_ACTIVE_ENERGY ->
+                    phases.map(ElectricityMeterStatePhase::getTotalReverseActiveEnergy)
+                            .reduce(of(new DecimalType()), this::accumulator, this::combiner);
+                case TOTAL_FORWARD_REACTIVE_ENERGY ->
+                    phases.map(ElectricityMeterStatePhase::getTotalForwardReactiveEnergy)
+                            .reduce(of(new DecimalType()), this::accumulator, this::combiner);
+                case TOTAL_REVERSED_REACTIVE_ENERGY ->
+                    phases.map(ElectricityMeterStatePhase::getTotalReverseReactiveEnergy)
+                            .reduce(of(new DecimalType()), this::accumulator, this::combiner);
+                default ->
+                    throw new IllegalStateException(
+                            "Additional type " + channelType + " is not supported for ElectricityMeter channel");
             };
         }
 
         var phase = state.map(ChannelState::getPhases).map(p -> p.get(idx - 1));
         return switch (channelType) {
-            case FREQUENCY -> phase.map(ElectricityMeterStatePhase::getFrequency)
-                    .map(DecimalType::new);
+            case FREQUENCY ->
+                phase.map(ElectricityMeterStatePhase::getFrequency).map(DecimalType::new);
             case VOLTAGE -> phase.map(ElectricityMeterStatePhase::getVoltage).map(DecimalType::new);
             case CURRENT -> phase.map(ElectricityMeterStatePhase::getCurrent).map(DecimalType::new);
-            case POWER_ACTIVE -> phase.map(ElectricityMeterStatePhase::getPowerActive)
-                    .map(DecimalType::new);
-            case POWER_REACTIVE -> phase.map(ElectricityMeterStatePhase::getPowerReactive)
-                    .map(DecimalType::new);
-            case POWER_APPARENT -> phase.map(ElectricityMeterStatePhase::getPowerApparent)
-                    .map(DecimalType::new);
-            case POWER_FACTOR -> phase.map(ElectricityMeterStatePhase::getPowerFactor)
-                    .map(DecimalType::new);
-            case PHASE_ANGLE -> phase.map(ElectricityMeterStatePhase::getPhaseAngle)
-                    .map(DecimalType::new);
-            case TOTAL_FORWARD_ACTIVE_ENERGY -> phase.map(ElectricityMeterStatePhase::getTotalForwardActiveEnergy)
-                    .map(DecimalType::new);
-            case TOTAL_REVERSED_ACTIVE_ENERGY -> phase.map(ElectricityMeterStatePhase::getTotalReverseActiveEnergy)
-                    .map(DecimalType::new);
-            case TOTAL_FORWARD_REACTIVE_ENERGY -> phase.map(ElectricityMeterStatePhase::getTotalForwardReactiveEnergy)
-                    .map(DecimalType::new);
-            case TOTAL_REVERSED_REACTIVE_ENERGY -> phase.map(ElectricityMeterStatePhase::getTotalReverseReactiveEnergy)
-                    .map(DecimalType::new);
-            default -> throw new IllegalStateException(
-                    "Additional type " + channelType + "_" + idx + " is not supported for ElectricityMeter channel");
+            case POWER_ACTIVE ->
+                phase.map(ElectricityMeterStatePhase::getPowerActive).map(DecimalType::new);
+            case POWER_REACTIVE ->
+                phase.map(ElectricityMeterStatePhase::getPowerReactive).map(DecimalType::new);
+            case POWER_APPARENT ->
+                phase.map(ElectricityMeterStatePhase::getPowerApparent).map(DecimalType::new);
+            case POWER_FACTOR ->
+                phase.map(ElectricityMeterStatePhase::getPowerFactor).map(DecimalType::new);
+            case PHASE_ANGLE ->
+                phase.map(ElectricityMeterStatePhase::getPhaseAngle).map(DecimalType::new);
+            case TOTAL_FORWARD_ACTIVE_ENERGY ->
+                phase.map(ElectricityMeterStatePhase::getTotalForwardActiveEnergy)
+                        .map(DecimalType::new);
+            case TOTAL_REVERSED_ACTIVE_ENERGY ->
+                phase.map(ElectricityMeterStatePhase::getTotalReverseActiveEnergy)
+                        .map(DecimalType::new);
+            case TOTAL_FORWARD_REACTIVE_ENERGY ->
+                phase.map(ElectricityMeterStatePhase::getTotalForwardReactiveEnergy)
+                        .map(DecimalType::new);
+            case TOTAL_REVERSED_REACTIVE_ENERGY ->
+                phase.map(ElectricityMeterStatePhase::getTotalReverseReactiveEnergy)
+                        .map(DecimalType::new);
+            default ->
+                throw new IllegalStateException("Additional type " + channelType + "_" + idx
+                        + " is not supported for ElectricityMeter channel");
         };
     }
 

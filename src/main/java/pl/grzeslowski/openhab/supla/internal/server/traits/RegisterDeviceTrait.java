@@ -22,82 +22,103 @@ public sealed interface RegisterDeviceTrait permits RegisterLocationDeviceTrait,
 
     public static RegisterDeviceTrait fromProto(SuplaRegisterDevice proto) {
         return switch (proto) {
-                // location
-            case SuplaRegisterDeviceA register -> new RegisterLocationDeviceTrait(
-                    parseHexString(register.guid()),
-                    parseString(register.name()),
-                    parseString(register.softVer()),
-                    null,
-                    null,
-                    new Flags(0),
-                    stream(register.channels()).map(DeviceChannel::fromProto).toList(),
-                    register.locationId(),
-                    register.locationPwd());
-            case SuplaRegisterDeviceB register -> new RegisterLocationDeviceTrait(
-                    parseHexString(register.guid()),
-                    parseString(register.name()),
-                    parseString(register.softVer()),
-                    null,
-                    null,
-                    new Flags(0),
-                    stream(register.channels()).map(DeviceChannel::fromProto).toList(),
-                    register.locationId(),
-                    register.locationPwd());
-            case SuplaRegisterDeviceC register -> new RegisterLocationDeviceTrait(
-                    parseHexString(register.guid()),
-                    parseString(register.name()),
-                    parseString(register.softVer()),
-                    null,
-                    null,
-                    new Flags(0),
-                    stream(register.channels()).map(DeviceChannel::fromProto).toList(),
-                    register.locationId(),
-                    register.locationPwd());
-                // email
-            case SuplaRegisterDeviceD register -> new RegisterEmailDeviceTrait(
-                    parseHexString(register.guid()),
-                    parseString(register.name()),
-                    parseString(register.softVer()),
-                    null,
-                    null,
-                    new Flags(0),
-                    stream(register.channels()).map(DeviceChannel::fromProto).toList(),
-                    parseString(register.email()),
-                    register.authKey(),
-                    parseString(register.serverName()));
-            case SuplaRegisterDeviceE register -> new RegisterEmailDeviceTrait(
-                    parseHexString(register.guid()),
-                    parseString(register.name()),
-                    parseString(register.softVer()),
-                    (int) register.manufacturerId(),
-                    (int) register.productId(),
-                    new Flags(register.flags()),
-                    stream(register.channels()).map(DeviceChannel::fromProto).toList(),
-                    parseString(register.email()),
-                    register.authKey(),
-                    parseString(register.serverName()));
-            case SuplaRegisterDeviceF register -> new RegisterEmailDeviceTrait(
-                    parseHexString(register.guid()),
-                    parseString(register.name()),
-                    parseString(register.softVer()),
-                    (int) register.manufacturerId(),
-                    (int) register.productId(),
-                    new Flags(register.flags()),
-                    stream(register.channels()).map(DeviceChannel::fromProto).toList(),
-                    parseString(register.email()),
-                    register.authKey(),
-                    parseString(register.serverName()));
-            case SuplaRegisterDeviceG register -> new RegisterEmailDeviceTrait(
-                    parseHexString(register.guid()),
-                    parseString(register.name()),
-                    parseString(register.softVer()),
-                    (int) register.manufacturerId(),
-                    (int) register.productId(),
-                    new Flags(register.flags()),
-                    stream(register.channels()).map(DeviceChannel::fromProto).toList(),
-                    parseString(register.email()),
-                    register.authKey(),
-                    parseString(register.serverName()));
+            // location
+            case SuplaRegisterDeviceA register ->
+                new RegisterLocationDeviceTrait(
+                        parseHexString(register.guid()),
+                        parseString(register.name()),
+                        parseString(register.softVer()),
+                        null,
+                        null,
+                        new Flags(0),
+                        stream(register.channels())
+                                .map(DeviceChannel::fromProto)
+                                .toList(),
+                        register.locationId(),
+                        register.locationPwd());
+            case SuplaRegisterDeviceB register ->
+                new RegisterLocationDeviceTrait(
+                        parseHexString(register.guid()),
+                        parseString(register.name()),
+                        parseString(register.softVer()),
+                        null,
+                        null,
+                        new Flags(0),
+                        stream(register.channels())
+                                .map(DeviceChannel::fromProto)
+                                .toList(),
+                        register.locationId(),
+                        register.locationPwd());
+            case SuplaRegisterDeviceC register ->
+                new RegisterLocationDeviceTrait(
+                        parseHexString(register.guid()),
+                        parseString(register.name()),
+                        parseString(register.softVer()),
+                        null,
+                        null,
+                        new Flags(0),
+                        stream(register.channels())
+                                .map(DeviceChannel::fromProto)
+                                .toList(),
+                        register.locationId(),
+                        register.locationPwd());
+            // email
+            case SuplaRegisterDeviceD register ->
+                new RegisterEmailDeviceTrait(
+                        parseHexString(register.guid()),
+                        parseString(register.name()),
+                        parseString(register.softVer()),
+                        null,
+                        null,
+                        new Flags(0),
+                        stream(register.channels())
+                                .map(DeviceChannel::fromProto)
+                                .toList(),
+                        parseString(register.email()),
+                        register.authKey(),
+                        parseString(register.serverName()));
+            case SuplaRegisterDeviceE register ->
+                new RegisterEmailDeviceTrait(
+                        parseHexString(register.guid()),
+                        parseString(register.name()),
+                        parseString(register.softVer()),
+                        (int) register.manufacturerId(),
+                        (int) register.productId(),
+                        new Flags(register.flags()),
+                        stream(register.channels())
+                                .map(DeviceChannel::fromProto)
+                                .toList(),
+                        parseString(register.email()),
+                        register.authKey(),
+                        parseString(register.serverName()));
+            case SuplaRegisterDeviceF register ->
+                new RegisterEmailDeviceTrait(
+                        parseHexString(register.guid()),
+                        parseString(register.name()),
+                        parseString(register.softVer()),
+                        (int) register.manufacturerId(),
+                        (int) register.productId(),
+                        new Flags(register.flags()),
+                        stream(register.channels())
+                                .map(DeviceChannel::fromProto)
+                                .toList(),
+                        parseString(register.email()),
+                        register.authKey(),
+                        parseString(register.serverName()));
+            case SuplaRegisterDeviceG register ->
+                new RegisterEmailDeviceTrait(
+                        parseHexString(register.guid()),
+                        parseString(register.name()),
+                        parseString(register.softVer()),
+                        (int) register.manufacturerId(),
+                        (int) register.productId(),
+                        new Flags(register.flags()),
+                        stream(register.channels())
+                                .map(DeviceChannel::fromProto)
+                                .toList(),
+                        parseString(register.email()),
+                        register.authKey(),
+                        parseString(register.serverName()));
         };
     }
 

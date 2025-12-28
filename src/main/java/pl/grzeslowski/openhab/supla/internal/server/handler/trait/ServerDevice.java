@@ -44,5 +44,6 @@ public interface ServerDevice extends HandleCommand, StateCache {
 
     String setProperty(String name, @Nullable String value);
 
-    public static record ChannelAndPreviousState(ChannelUID channelUID, @Nullable State previousState) {}
+    public static record ChannelAndPreviousState(
+            ChannelUID channelUID, @Nullable State previousState) {}
 }

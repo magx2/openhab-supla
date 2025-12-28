@@ -61,9 +61,10 @@ public class DeviceConfigUtil {
                     case "ButtonVolumeConfig" -> DeviceConfig.ButtonVolumeConfig::parse;
                     case "ScreenBrightnessConfig" -> DeviceConfig.ScreenBrightnessConfig::parse;
                     case "StatusLedConfig" -> DeviceConfig.StatusLedConfig::parse;
-                    default -> throw new IllegalArgumentException(
-                            "There is not device config with name %s. Visit %s to get more info how to set device config."
-                                    .formatted(className, SET_DEVICE_CONFIG));
+                    default ->
+                        throw new IllegalArgumentException(
+                                "There is not device config with name %s. Visit %s to get more info how to set device config."
+                                        .formatted(className, SET_DEVICE_CONFIG));
                 };
         return parse.apply(parseParams(parameters));
     }

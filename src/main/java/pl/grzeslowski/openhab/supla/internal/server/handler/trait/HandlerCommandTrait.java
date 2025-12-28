@@ -125,48 +125,54 @@ public class HandlerCommandTrait implements HandleCommand {
         var mode = valueOf(command.toString());
         var value =
                 switch (mode) {
-                    case NOT_SET -> throw new IllegalArgumentException(
-                            "Cannot set mode channel to NOT_SET. channelUID=" + channelUID);
-                    case OFF, DRY -> new HvacValue(
-                            true,
-                            mode,
-                            null,
-                            null,
-                            new HvacValue.Flags(
-                                    false, false, false, false, false, false, false, false, false, false, false, false,
-                                    false));
-                    case HEAT -> new HvacValue(
-                            true,
-                            HEAT,
-                            findHeatValue(channelUID),
-                            null,
-                            new HvacValue.Flags(
-                                    true, false, false, false, false, false, false, false, false, false, false, false,
-                                    false));
-                    case COOL -> new HvacValue(
-                            true,
-                            COOL,
-                            null,
-                            findCoolValue(channelUID),
-                            new HvacValue.Flags(
-                                    false, true, false, false, false, false, false, false, false, false, false, false,
-                                    false));
-                    case HEAT_COOL -> new HvacValue(
-                            true,
-                            HEAT_COOL,
-                            findHeatValue(channelUID),
-                            findCoolValue(channelUID),
-                            new HvacValue.Flags(
-                                    true, true, false, false, false, false, false, false, false, false, false, false,
-                                    false));
-                    case FAN_ONLY -> new HvacValue(
-                            true,
-                            FAN_ONLY,
-                            null,
-                            null,
-                            new HvacValue.Flags(
-                                    false, false, false, false, false, false, true, false, false, false, false, false,
-                                    false));
+                    case NOT_SET ->
+                        throw new IllegalArgumentException(
+                                "Cannot set mode channel to NOT_SET. channelUID=" + channelUID);
+                    case OFF, DRY ->
+                        new HvacValue(
+                                true,
+                                mode,
+                                null,
+                                null,
+                                new HvacValue.Flags(
+                                        false, false, false, false, false, false, false, false, false, false, false,
+                                        false, false));
+                    case HEAT ->
+                        new HvacValue(
+                                true,
+                                HEAT,
+                                findHeatValue(channelUID),
+                                null,
+                                new HvacValue.Flags(
+                                        true, false, false, false, false, false, false, false, false, false, false,
+                                        false, false));
+                    case COOL ->
+                        new HvacValue(
+                                true,
+                                COOL,
+                                null,
+                                findCoolValue(channelUID),
+                                new HvacValue.Flags(
+                                        false, true, false, false, false, false, false, false, false, false, false,
+                                        false, false));
+                    case HEAT_COOL ->
+                        new HvacValue(
+                                true,
+                                HEAT_COOL,
+                                findHeatValue(channelUID),
+                                findCoolValue(channelUID),
+                                new HvacValue.Flags(
+                                        true, true, false, false, false, false, false, false, false, false, false,
+                                        false, false));
+                    case FAN_ONLY ->
+                        new HvacValue(
+                                true,
+                                FAN_ONLY,
+                                null,
+                                null,
+                                new HvacValue.Flags(
+                                        false, false, false, false, false, false, true, false, false, false, false,
+                                        false, false));
                 };
 
         var previousMode = serverDevice.findState(channelUID);

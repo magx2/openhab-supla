@@ -103,7 +103,8 @@ public sealed interface DeviceConfig extends Comparable<DeviceConfig> {
         }
     }
 
-    public record HomeScreenOffDelayConfig(boolean enabled, @NonNull Duration duration) implements DeviceConfig {
+    public record HomeScreenOffDelayConfig(
+            boolean enabled, @NonNull Duration duration) implements DeviceConfig {
         @Override
         public DeviceConfigField field() {
             return HOME_SCREEN_OFF_DELAY;
@@ -138,8 +139,9 @@ public sealed interface DeviceConfig extends Comparable<DeviceConfig> {
     }
 
     public record DisableUserInterfaceConfig(
-            @NonNull UserInterface userInterface, @Nullable Integer minTemp, @Nullable Integer maxTemp)
-            implements DeviceConfig {
+            @NonNull UserInterface userInterface,
+            @Nullable Integer minTemp,
+            @Nullable Integer maxTemp) implements DeviceConfig {
         @Override
         public DeviceConfigField field() {
             return DISABLE_USER_INTERFACE;

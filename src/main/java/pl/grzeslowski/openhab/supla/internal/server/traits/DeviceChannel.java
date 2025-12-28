@@ -26,13 +26,16 @@ public record DeviceChannel(
         return switch (proto) {
             case SuplaDeviceChannelA r -> new DeviceChannel(r.number(), r.type(), r.value());
             case SuplaDeviceChannelB r -> new DeviceChannel(r.number(), r.type(), r.funcList(), r.value(), null, null);
-            case SuplaDeviceChannelC r -> new DeviceChannel(
-                    r.number(), r.type(), r.funcList(), r.value(), mapAction(r), mapHvacValue(r.hvacValue()), null);
-            case SuplaDeviceChannelD r -> new DeviceChannel(
-                    r.number(), r.type(), r.funcList(), r.value(), mapAction(r), mapHvacValue(r.hvacValue()), null);
-            case SuplaDeviceChannelE r -> new DeviceChannel(
-                    r.number(), r.type(), r.funcList(), r.value(), mapAction(r), mapHvacValue(r.hvacValue()), (int)
-                            r.subDeviceId());
+            case SuplaDeviceChannelC r ->
+                new DeviceChannel(
+                        r.number(), r.type(), r.funcList(), r.value(), mapAction(r), mapHvacValue(r.hvacValue()), null);
+            case SuplaDeviceChannelD r ->
+                new DeviceChannel(
+                        r.number(), r.type(), r.funcList(), r.value(), mapAction(r), mapHvacValue(r.hvacValue()), null);
+            case SuplaDeviceChannelE r ->
+                new DeviceChannel(
+                        r.number(), r.type(), r.funcList(), r.value(), mapAction(r), mapHvacValue(r.hvacValue()), (int)
+                                r.subDeviceId());
         };
     }
 

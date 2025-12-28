@@ -263,8 +263,8 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDevice implements Me
             switch (entity) {
                 case SuplaPingServer ping -> consumeSuplaPingServer(ping, writer);
                 case SuplaSetActivityTimeout suplaSetActivityTimeout -> consumeSuplaSetActivityTimeout(writer);
-                case SuplaDeviceChannelValue value -> consumeDeviceChannelValueTrait(
-                        DeviceChannelValue.fromProto(value));
+                case SuplaDeviceChannelValue value ->
+                    consumeDeviceChannelValueTrait(DeviceChannelValue.fromProto(value));
                 case SuplaDeviceChannelExtendedValue value -> {
                     var extendedValue = value.value();
                     consumeSuplaDeviceChannelExtendedValue(
@@ -355,10 +355,10 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDevice implements Me
 
     private void authorize(RegisterDeviceTrait registerEntity) throws InitializationException {
         switch (registerEntity) {
-            case RegisterLocationDeviceTrait registerDevice -> authorizeForLocation(
-                    registerDevice.locationId(), registerDevice.locationPwd());
-            case RegisterEmailDeviceTrait registerDevice -> authorizeForEmail(
-                    registerDevice.email(), registerDevice.authKey());
+            case RegisterLocationDeviceTrait registerDevice ->
+                authorizeForLocation(registerDevice.locationId(), registerDevice.locationPwd());
+            case RegisterEmailDeviceTrait registerDevice ->
+                authorizeForEmail(registerDevice.email(), registerDevice.authKey());
         }
     }
 
