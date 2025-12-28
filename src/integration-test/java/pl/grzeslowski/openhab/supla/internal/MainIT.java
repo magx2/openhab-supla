@@ -75,7 +75,9 @@ public class MainIT {
                             UNKNOWN, CONFIGURATION_PENDING, "@text/supla.offline.waiting-for-registration"));
             // ping
             device.sendPing();
-            assertThat(device.readPing()).isEqualTo(new SuplaPingServerResult(new SuplaTimeval(0, 0)));
+            var ping = device.readPing().now();
+            assertThat(ping.tvSec()).isGreaterThan(0);
+            assertThat(ping.tvUsec()).isEqualTo(0);
             await().untilAsserted(() -> assertThat(deviceCtx.openHabDevice().findThingStatus())
                     .isEqualTo(ThingStatusInfoBuilder.create(ONLINE, NONE).build()));
 
