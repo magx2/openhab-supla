@@ -100,6 +100,10 @@ public class RandomExtension implements ParameterResolver {
                 .orElseThrow();
     }
 
+    private int randomLocationId() {
+        return random.nextInt(1_000);
+    }
+
     public String randomLocationPassword() {
         return randomString(random.nextInt(SUPLA_LOCATION_PWD_MAXSIZE) + 1);
     }
@@ -129,6 +133,9 @@ public class RandomExtension implements ParameterResolver {
         if (parameterContext.isAnnotated(Port.class)) {
             return parameterContext.getParameter().getType() == int.class;
         }
+        if (parameterContext.isAnnotated(LocationId.class)) {
+            return parameterContext.getParameter().getType() == int.class;
+        }
         if (parameterContext.isAnnotated(LocationPassword.class)) {
             return parameterContext.getParameter().getType() == String.class;
         }
@@ -149,6 +156,9 @@ public class RandomExtension implements ParameterResolver {
         }
         if (parameterContext.isAnnotated(Port.class)) {
             return random.nextInt(0xFFFF) + 1;
+        }
+        if (parameterContext.isAnnotated(LocationId.class)) {
+            return randomLocationId();
         }
         if (parameterContext.isAnnotated(LocationPassword.class)) {
             return randomLocationPassword();
