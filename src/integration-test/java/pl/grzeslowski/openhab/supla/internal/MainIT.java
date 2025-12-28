@@ -8,19 +8,19 @@ import static org.openhab.core.thing.ThingStatus.UNKNOWN;
 import static org.openhab.core.thing.ThingStatusDetail.*;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.SUPLA_SERVER_DEVICE_TYPE_ID;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.SUPLA_SERVER_TYPE_ID;
+import static pl.grzeslowski.openhab.supla.internal.extension.supla.SuplaExtension.deviceInitialize;
+import static pl.grzeslowski.openhab.supla.internal.extension.supla.SuplaExtension.serverInitialize;
 import static tech.units.indriya.unit.Units.CELSIUS;
 
 import io.github.glytching.junit.extension.random.Random;
 import io.github.glytching.junit.extension.random.RandomBeansExtension;
 import java.math.BigDecimal;
-import java.util.Map;
 import javax.validation.constraints.Min;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.openhab.core.config.core.Configuration;
 import org.openhab.core.library.types.OnOffType;
 import org.openhab.core.library.types.QuantityType;
 import org.openhab.core.library.types.StringType;
@@ -28,9 +28,7 @@ import org.openhab.core.thing.ChannelUID;
 import org.openhab.core.thing.ThingStatusInfo;
 import org.openhab.core.thing.binding.builder.ThingStatusInfoBuilder;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.value.HvacValue;
-import pl.grzeslowski.jsupla.protocol.api.structs.SuplaTimeval;
 import pl.grzeslowski.jsupla.protocol.api.structs.sd.SuplaRegisterDeviceResultA;
-import pl.grzeslowski.jsupla.protocol.api.structs.sdc.SuplaPingServerResult;
 import pl.grzeslowski.openhab.supla.internal.device.ZamelGkw02;
 import pl.grzeslowski.openhab.supla.internal.device.ZamelRow01;
 import pl.grzeslowski.openhab.supla.internal.extension.random.*;
@@ -200,48 +198,5 @@ public class MainIT {
         await().untilAsserted(() -> assertThat(deviceCtx.openHabDevice().findThingStatus())
                 .isEqualTo(
                         new ThingStatusInfo(OFFLINE, COMMUNICATION_ERROR, "@text/supla.offline.channel-disconnected")));
-    }
-
-    private static void serverInitialize(BridgeCtx serverCtx, int port) {
-        // configure server handler
-        var configuration = new Configuration(
-                Map.of("port", port, "ssl", false, "serverAccessId", 123, "serverAccessIdPassword", "none"));
-        serverCtx.thing().setConfiguration(configuration);
-        serverCtx.handler().initialize();
-    }
-
-    private static void deviceInitialize(
-            ThingCtx deviceCtx, BridgeCtx serverCtx, int serverAccessId, String serverAccessIdPassword, String guid) {
-        // configure device handler
-        var configuration = Map.<String, Object>of(
-                "guid", guid,
-                "serverAccessId", serverAccessId,
-                "serverAccessIdPassword", serverAccessIdPassword);
-        deviceInitialize(deviceCtx, serverCtx, configuration, guid);
-    }
-
-    private static void deviceInitialize(
-            ThingCtx deviceCtx, BridgeCtx serverCtx, String email, String authKey, String guid) {
-        // configure device handler
-        var configuration = Map.<String, Object>of(
-                "guid", guid,
-                "email", email,
-                "authKey", authKey);
-        deviceInitialize(deviceCtx, serverCtx, configuration, guid);
-    }
-
-    private static void deviceInitialize(
-            ThingCtx deviceCtx, BridgeCtx serverCtx, Map<String, Object> configuration, String guid) {
-        deviceCtx.thing().setConfiguration(new Configuration(configuration));
-        deviceCtx.thing().setBridgeUID(serverCtx.thing().getUID());
-        deviceCtx.openHabDevice().setGuid(guid);
-        deviceCtx.openHabDevice().setBridge(serverCtx.thing());
-        deviceCtx.openHabDevice().setThing(deviceCtx.thing());
-        log.info("Initializing server device handler");
-        deviceCtx.handler().initialize();
-        serverCtx.handler().childHandlerInitialized(deviceCtx.handler(), deviceCtx.thing());
-        assertThat(deviceCtx.openHabDevice().findThingStatus())
-                .isEqualTo(new ThingStatusInfo(
-                        UNKNOWN, HANDLER_CONFIGURATION_PENDING, "@text/supla.server.waiting-for-connection"));
     }
 }

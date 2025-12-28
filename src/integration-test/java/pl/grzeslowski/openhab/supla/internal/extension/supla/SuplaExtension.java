@@ -2,16 +2,22 @@ package pl.grzeslowski.openhab.supla.internal.extension.supla;
 
 import static java.util.Collections.synchronizedList;
 import static java.util.Objects.requireNonNull;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
+import static org.openhab.core.thing.ThingStatus.UNKNOWN;
+import static org.openhab.core.thing.ThingStatusDetail.HANDLER_CONFIGURATION_PENDING;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.SUPLA_SERVER_TYPE;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.SUPPORTED_THING_TYPES_UIDS;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.extension.*;
+import org.openhab.core.config.core.Configuration;
+import org.openhab.core.thing.ThingStatusInfo;
 import org.openhab.core.thing.ThingTypeUID;
 import org.openhab.core.thing.binding.BridgeHandler;
 import org.openhab.core.thing.binding.ThingHandler;
@@ -115,5 +121,52 @@ public class SuplaExtension implements BeforeEachCallback, AfterEachCallback, Pa
             return new BridgeImpl(SUPLA_SERVER_TYPE, RandomExtension.INSTANCE.randomString());
         }
         return new ThingImpl(thingTypeUID, RandomExtension.INSTANCE.randomGuid());
+    }
+
+    public static void serverInitialize(Ctx.BridgeCtx serverCtx, int port) {
+        // configure server handler
+        var configuration = new Configuration(
+                Map.of("port", port, "ssl", false, "serverAccessId", 123, "serverAccessIdPassword", "none"));
+        serverCtx.thing().setConfiguration(configuration);
+        serverCtx.handler().initialize();
+    }
+
+    public static void deviceInitialize(
+            Ctx.ThingCtx deviceCtx,
+            Ctx.BridgeCtx serverCtx,
+            int serverAccessId,
+            String serverAccessIdPassword,
+            String guid) {
+        // configure device handler
+        var configuration = Map.<String, Object>of(
+                "guid", guid,
+                "serverAccessId", serverAccessId,
+                "serverAccessIdPassword", serverAccessIdPassword);
+        deviceInitialize(deviceCtx, serverCtx, configuration, guid);
+    }
+
+    public static void deviceInitialize(
+            Ctx.ThingCtx deviceCtx, Ctx.BridgeCtx serverCtx, String email, String authKey, String guid) {
+        // configure device handler
+        var configuration = Map.<String, Object>of(
+                "guid", guid,
+                "email", email,
+                "authKey", authKey);
+        deviceInitialize(deviceCtx, serverCtx, configuration, guid);
+    }
+
+    public static void deviceInitialize(
+            Ctx.ThingCtx deviceCtx, Ctx.BridgeCtx serverCtx, Map<String, Object> configuration, String guid) {
+        deviceCtx.thing().setConfiguration(new Configuration(configuration));
+        deviceCtx.thing().setBridgeUID(serverCtx.thing().getUID());
+        deviceCtx.openHabDevice().setGuid(guid);
+        deviceCtx.openHabDevice().setBridge(serverCtx.thing());
+        deviceCtx.openHabDevice().setThing(deviceCtx.thing());
+        log.info("Initializing server device handler");
+        deviceCtx.handler().initialize();
+        serverCtx.handler().childHandlerInitialized(deviceCtx.handler(), deviceCtx.thing());
+        assertThat(deviceCtx.openHabDevice().findThingStatus())
+                .isEqualTo(new ThingStatusInfo(
+                        UNKNOWN, HANDLER_CONFIGURATION_PENDING, "@text/supla.server.waiting-for-connection"));
     }
 }
