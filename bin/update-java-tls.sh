@@ -39,71 +39,71 @@ function trim(s)     { gsub(/^[[:space:]]+|[[:space:]]+$/, "", s); return s }
 BEGIN { in=0; key=""; val="" }
 
 /^jdk\.tls\.disabledAlgorithms=/ {
-  in=1
-  split($0, parts, "=")
-  key=parts[1]
+in=1
+split($0, parts, "=")
+key=parts[1]
 
-  # take everything after first "=" (preserve "=" if ever appears later)
-  val = substr($0, index($0, "=")+1)
+# take everything after first "=" (preserve "=" if ever appears later)
+val = substr($0, index($0, "=")+1)
 
-  # if line ends with "\" then continue collecting
-  if ($0 ~ /\\[[:space:]]*$/) {
-    val = rtrim_bs(val)
-    next
-  } else {
-    in=2
-  }
+# if line ends with "\" then continue collecting
+if ($0 ~ /\\[[:space:]]*$/) {
+	val = rtrim_bs(val)
+	next
+} else {
+	in=2
+}
 }
 
 # Continuation lines for this property (only while collecting)
 /^[[:space:]]+/ {
-  if (in==1) {
-    line=$0
-    line=trim(line)
+if (in==1) {
+	line=$0
+	line=trim(line)
 
-    if ($0 ~ /\\[[:space:]]*$/) {
-      line=rtrim_bs(line)
-      val = val " " line
-      next
-    } else {
-      val = val " " line
-      in=2
-    }
-  }
+	if ($0 ~ /\\[[:space:]]*$/) {
+	line=rtrim_bs(line)
+	val = val " " line
+	next
+	} else {
+	val = val " " line
+	in=2
+	}
+}
 }
 
 # Once we have the full value, rewrite it and reset state
 {
-  if (in==2) {
-    n = split(val, arr, ",")
-    out=""
-    for (i=1; i<=n; i++) {
-      alg = trim(arr[i])
+if (in==2) {
+	n = split(val, arr, ",")
+	out=""
+	for (i=1; i<=n; i++) {
+	alg = trim(arr[i])
 
-      # remove exactly these tokens
-      if (alg == "SSLv3" || alg == "TLSv1" || alg == "TLSv1.1") continue
+	# remove exactly these tokens
+	if (alg == "SSLv3" || alg == "TLSv1" || alg == "TLSv1.1") continue
 
-      if (alg != "") out = (out=="" ? alg : out ", " alg)
-    }
+	if (alg != "") out = (out=="" ? alg : out ", " alg)
+	}
 
-    print key "=" out
-    in=0; key=""; val=""
-    # IMPORTANT: do not print current line if it was part of continuation; but here
-    # we are in the generic block. If current line is normal unrelated line, we must print it.
-    # So: if we just rewrote because of a single-line property (no continuation),
-    # we already consumed that line in the /^jdk.../ block by setting in=2 and falling through.
-    # To avoid double-printing, we need to skip printing the original line:
-    if ($0 ~ /^jdk\.tls\.disabledAlgorithms=/) next
-  }
+	print key "=" out
+	in=0; key=""; val=""
+	# IMPORTANT: do not print current line if it was part of continuation; but here
+	# we are in the generic block. If current line is normal unrelated line, we must print it.
+	# So: if we just rewrote because of a single-line property (no continuation),
+	# we already consumed that line in the /^jdk.../ block by setting in=2 and falling through.
+	# To avoid double-printing, we need to skip printing the original line:
+	if ($0 ~ /^jdk\.tls\.disabledAlgorithms=/) next
+}
 
-  # Skip any continuation lines that belong to the property (already consumed)
-  if (in==0 && $0 ~ /^[[:space:]]+/) {
-    # normal indented lines elsewhere should remain; we only want to skip
-    # if they immediately followed the property, but that’s already handled by state machine.
-    # So do nothing special.
-  }
+# Skip any continuation lines that belong to the property (already consumed)
+if (in==0 && $0 ~ /^[[:space:]]+/) {
+	# normal indented lines elsewhere should remain; we only want to skip
+	# if they immediately followed the property, but that’s already handled by state machine.
+	# So do nothing special.
+}
 
-  print
+print
 }
 ' "${SEC_FILE}" > "${TMP_FILE}"
 
@@ -115,16 +115,16 @@ grep -nE '^jdk\.tls\.disabledAlgorithms=' "${SEC_FILE}" || log_warn "Entry not f
 
 log_step "Comparing changes with backup:"
 if diff -u "${BACKUP_FILE}" "${SEC_FILE}"; then
-  log_warn "No changes detected (files identical?)"
+log_warn "No changes detected (files identical?)"
 else
-  log_info "Differences shown above"
+log_info "Differences shown above"
 fi
 
 log_step "Quick sanity check: java -version"
 java -version >/dev/null 2>&1 && log_info "JVM loads java.security OK" || {
-  log_error "JVM still fails to load java.security. Restoring backup."
-  cp -p "${BACKUP_FILE}" "${SEC_FILE}"
-  exit 1
+log_error "JVM still fails to load java.security. Restoring backup."
+cp -p "${BACKUP_FILE}" "${SEC_FILE}"
+exit 1
 }
 
 log_step "Done."
