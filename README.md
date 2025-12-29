@@ -225,7 +225,7 @@ the following paths:
 ##### Docker 🐳
 
 1. Log in into container: `docker exec -it <docker-container-id> /bin/bash`
-2. Invoke: `curl -fsSL -L "https://raw.githubusercontent.com/magx2/openhab-supla/master/bin/update-java-tls.sh?ts=$(date +%s)" | bash`
+2. Invoke: `curl -fsSL -L -H 'Cache-Control: no-cache' "https://raw.githubusercontent.com/magx2/openhab-supla/master/bin/update-java-tls.sh?ts=$(date +%s)" | bash`
 3. Exit and restart docker container
 
 #### Restarting OpenHAB
