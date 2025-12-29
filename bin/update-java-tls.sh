@@ -16,6 +16,7 @@ SEC_DIR="/usr/lib/jvm/java-1.21.0-openjdk-amd64/conf/security"
 SEC_FILE="${SEC_DIR}/java.security"
 BACKUP_FILE="${SEC_FILE}.bak"
 
+log_info "Version 1.0.0"
 log_step "Switching to Java security directory: ${SEC_DIR}"
 cd "${SEC_DIR}" || { log_error "Failed to cd into ${SEC_DIR}"; exit 1; }
 
