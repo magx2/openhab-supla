@@ -36,28 +36,27 @@ awk '
 function rtrim_bs(s) { sub(/[[:space:]]*\\[[:space:]]*$/, "", s); return s }
 function trim(s)     { gsub(/^[[:space:]]+|[[:space:]]+$/, "", s); return s }
 
-BEGIN { in=0; key=""; val="" }
+BEGIN { mode=0; key=""; val="" }
 
+# Start collecting the property (first line)
 /^jdk\.tls\.disabledAlgorithms=/ {
-in=1
+mode=1
 split($0, parts, "=")
 key=parts[1]
-
-# take everything after first "=" (preserve "=" if ever appears later)
 val = substr($0, index($0, "=")+1)
 
-# if line ends with "\" then continue collecting
+# If ends with "\" then keep collecting continuation lines
 if ($0 ~ /\\[[:space:]]*$/) {
 	val = rtrim_bs(val)
 	next
 } else {
-	in=2
+	mode=2
 }
 }
 
-# Continuation lines for this property (only while collecting)
+# Continuation lines (only while collecting)
 /^[[:space:]]+/ {
-if (in==1) {
+if (mode==1) {
 	line=$0
 	line=trim(line)
 
@@ -67,14 +66,14 @@ if (in==1) {
 	next
 	} else {
 	val = val " " line
-	in=2
+	mode=2
 	}
 }
 }
 
-# Once we have the full value, rewrite it and reset state
 {
-if (in==2) {
+# Once collected full value, rewrite the property exactly once
+if (mode==2) {
 	n = split(val, arr, ",")
 	out=""
 	for (i=1; i<=n; i++) {
@@ -87,20 +86,14 @@ if (in==2) {
 	}
 
 	print key "=" out
-	in=0; key=""; val=""
-	# IMPORTANT: do not print current line if it was part of continuation; but here
-	# we are in the generic block. If current line is normal unrelated line, we must print it.
-	# So: if we just rewrote because of a single-line property (no continuation),
-	# we already consumed that line in the /^jdk.../ block by setting in=2 and falling through.
-	# To avoid double-printing, we need to skip printing the original line:
-	if ($0 ~ /^jdk\.tls\.disabledAlgorithms=/) next
+	mode=3
 }
 
-# Skip any continuation lines that belong to the property (already consumed)
-if (in==0 && $0 ~ /^[[:space:]]+/) {
-	# normal indented lines elsewhere should remain; we only want to skip
-	# if they immediately followed the property, but that’s already handled by state machine.
-	# So do nothing special.
+# Skip original property line and its continuation lines (we already printed the rewritten one)
+if (mode==3) {
+	if ($0 ~ /^jdk\.tls\.disabledAlgorithms=/) next
+	if ($0 ~ /^[[:space:]]+/) next
+	mode=0
 }
 
 print
