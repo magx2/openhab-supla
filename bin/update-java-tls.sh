@@ -12,7 +12,7 @@ log_info()  { echo -e "${COLOR_GREEN}[INFO]${COLOR_RESET} $1"; }
 log_warn()  { echo -e "${COLOR_YELLOW}[WARN]${COLOR_RESET} $1"; }
 log_error() { echo -e "${COLOR_RED}[ERROR]${COLOR_RESET} $1" >&2; }
 
-log_info "Version 1.1.0"
+log_info "Version 1.1.1"
 
 # --- detect real java.security used by `java` ---
 JAVA_BIN="$(command -v java || true)"
@@ -131,6 +131,9 @@ for (i=1;i<=n;i++) {
 ' "${SEC_FILE}" > "${TMP_FILE}"
 
 mv "${TMP_FILE}" "${SEC_FILE}"
+# Ensure readable for non-root JVM users (openhab runs as 'openhab')
+chmod 0644 "${SEC_FILE}" || true
+chmod 0644 "${BACKUP_FILE}" || true
 log_info "Update applied successfully"
 
 log_step "Updated jdk.tls.disabledAlgorithms entry:"
