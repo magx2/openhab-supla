@@ -27,6 +27,7 @@ import org.openhab.core.thing.Thing;
 import org.openhab.core.thing.ThingStatus;
 import org.openhab.core.thing.ThingStatusDetail;
 import org.openhab.core.thing.binding.ThingHandler;
+import pl.grzeslowski.jsupla.protocol.api.ChannelType;
 import pl.grzeslowski.jsupla.protocol.api.structs.dcs.SetCaption;
 import pl.grzeslowski.jsupla.protocol.api.structs.ds.SubdeviceDetails;
 import pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaChannelNewValueResult;
@@ -253,7 +254,7 @@ public class GatewayDeviceHandler extends ServerSuplaDeviceHandler implements Se
 
     @GuidLogger.GuidLogged
     @Override
-    public void consumeSuplaDeviceChannelExtendedValue(int channelNumber, int type, byte[] value) {
+    public void consumeSuplaDeviceChannelExtendedValue(int channelNumber, ChannelType type, byte[] value) {
         attachGuid(findGuid(), () -> {
             var optional = findId(channelNumber, null).flatMap(this::findSubDevice);
             if (optional.isEmpty()) {
@@ -344,7 +345,7 @@ public class GatewayDeviceHandler extends ServerSuplaDeviceHandler implements Se
     }
 
     @Override
-    public Map<Integer, Integer> getChannelTypes() {
+    public Map<Integer, ChannelType> getChannelTypes() {
         throw new UnsupportedOperationException("ServerGatewayDeviceHandler.getChannelTypes()");
     }
 

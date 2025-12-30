@@ -22,6 +22,7 @@ import org.openhab.core.thing.ChannelUID;
 import org.openhab.core.thing.binding.builder.ChannelBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import pl.grzeslowski.jsupla.protocol.api.ChannelType;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.decoders.ChannelTypeDecoder;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.value.*;
 import pl.grzeslowski.jsupla.protocol.api.structs.dcs.SetCaption;
@@ -97,7 +98,7 @@ public class ChannelUtil {
     }
 
     public Stream<ChannelValueToState.ChannelState> findState(
-            int type,
+            ChannelType type,
             int channelNumber,
             @Nullable @jakarta.annotation.Nullable byte[] value,
             @jakarta.annotation.Nullable ActionTrigger actionTrigger,
@@ -145,7 +146,7 @@ public class ChannelUtil {
         updateStatus(trait.channelNumber(), type, trait.value());
     }
 
-    public void updateStatus(int channelNumber, int type, byte[] channelValue) {
+    public void updateStatus(int channelNumber, ChannelType type, byte[] channelValue) {
         invoker.getLogger().debug("Updating status for channelNumber={}, type={}", channelNumber, type);
         findState(type, channelNumber, channelValue, null, null).forEach(pair -> {
             var channelUID = pair.uid();
