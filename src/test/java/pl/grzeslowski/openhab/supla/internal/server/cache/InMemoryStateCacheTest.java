@@ -41,7 +41,7 @@ class InMemoryStateCacheTest {
         };
 
         cache.saveState(channelUID, state);
-        var found = cache.findState(channelUID);
+        var found = cache.findStateDeprecated(channelUID);
 
         assertThat(found).isEqualTo(state);
         verify(logger).debug("Saving state {}={}", channelUID, state);
@@ -53,7 +53,7 @@ class InMemoryStateCacheTest {
         ChannelUID channelUID = new ChannelUID("binding:thing:2:channel");
 
         cache.saveState(channelUID, null);
-        var found = cache.findState(channelUID);
+        var found = cache.findStateDeprecated(channelUID);
 
         assertThat(found).isNull();
         verify(logger).debug("Saving state {}={}", channelUID, null);

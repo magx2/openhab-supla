@@ -70,18 +70,21 @@ class ChannelValueToStateTest {
 
     @Test
     void shouldConvertPercentAndRgb() {
+        // given
+        var rgbValue = new RgbValue(55, 77, 1, 2, 3);
         var converter = new ChannelValueToState(thingUID, 6);
-        when(percentValue.value()).thenReturn(55);
-        when(rgbValue.red()).thenReturn(1);
-        when(rgbValue.green()).thenReturn(2);
-        when(rgbValue.blue()).thenReturn(3);
 
-        List<State> states = java.util.stream.Stream.concat(
-                        converter.onPercentValue(percentValue).map(ChannelState::state),
-                        converter.onRgbValue(rgbValue).map(ChannelState::state))
-                .toList();
+        // when
+        List<State> states =
+                converter.onRgbValue(rgbValue).map(ChannelState::state).toList();
 
-        assertThat(states).containsExactly(new PercentType(55), HSBType.fromRGB(1, 2, 3));
+        // then
+        var hsbType = HSBType.fromRGB(1, 2, 3);
+        var expected =
+                new HSBType(hsbType.getHue(), hsbType.getSaturation(), new PercentType(rgbValue.colorBrightness()));
+        assertThat(states).hasSize(2);
+        assertThat(states.get(0)).isEqualTo(expected);
+        assertThat(states.get(1)).isEqualTo(new PercentType(55));
     }
 
     @Test

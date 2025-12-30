@@ -3,6 +3,7 @@ package pl.grzeslowski.openhab.supla.internal.server;
 import static java.lang.String.valueOf;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ChannelIds.Hvac.*;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.Channels.*;
+import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ItemType.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,6 +23,7 @@ import org.openhab.core.thing.type.ChannelKind;
 import org.openhab.core.thing.type.ChannelTypeUID;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.value.ChannelClassSwitch;
 import pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants;
+import pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ChannelIds.RgbwLed;
 
 @NonNullByDefault
 @RequiredArgsConstructor
@@ -92,13 +94,22 @@ public class ChannelCallback implements ChannelClassSwitch.Callback<Stream<Chann
     @Nullable
     public Stream<Channel> onRgbValue() {
         log.debug("{} {} onRgbValue", thingUID, number);
-        final ChannelUID channelUid = createChannelUid();
-        final ChannelTypeUID channelTypeUID = createChannelTypeUID(RGB_CHANNEL_ID);
+        var groupUid = new ChannelGroupUID(thingUID, valueOf(number));
 
-        return Stream.of(ChannelBuilder.create(channelUid, "String") // TODO what type?
-                .withType(channelTypeUID)
-                .withLabel("Pick desired color")
-                .build());
+        var colorChannelUid = new ChannelUID(groupUid, RgbwLed.COLOR);
+        var brightnessChannelUid = new ChannelUID(groupUid, RgbwLed.BRIGHTNESS);
+
+        return Stream.of(
+                ChannelBuilder.create(colorChannelUid, COLOR)
+                        .withLabel("LED Color")
+                        .withType(createChannelTypeUID(RGB_CHANNEL_ID))
+                        .withDefaultTags(Set.of("Control", "Color"))
+                        .build(),
+                ChannelBuilder.create(brightnessChannelUid, DIMMER)
+                        .withLabel("LED Brightness")
+                        .withType(createChannelTypeUID(DIMMER_CHANNEL_ID))
+                        .withDefaultTags(Set.of("Control", "Brightness"))
+                        .build());
     }
 
     @Override

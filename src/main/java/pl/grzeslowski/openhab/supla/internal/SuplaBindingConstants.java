@@ -2,6 +2,7 @@ package pl.grzeslowski.openhab.supla.internal;
 
 import static java.util.concurrent.TimeUnit.MINUTES;
 
+import jakarta.annotation.Nullable;
 import java.util.Set;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.openhab.core.thing.ThingTypeUID;
@@ -119,5 +120,110 @@ public class SuplaBindingConstants {
             public static final String HVAC_SET_POINT_TEMPERATURE_HEAT = "setPointTemperatureHeat";
             public static final String HVAC_SET_POINT_TEMPERATURE_COOL = "setPointTemperatureCool";
         }
+
+        public static class RgbwLed {
+            public static final String COLOR = "rgbw_color";
+            public static final String BRIGHTNESS = "rgbw_brightness";
+        }
+    }
+
+    /**
+     * Documentation constants for Item Types used in channels.
+     *
+     * <p>https://www.openhab.org/docs/concepts/items.html
+     */
+    @SuppressWarnings("StaticMethodOnlyUsedInOneClass")
+    public interface ItemType {
+        /**
+         * Description: phone calls
+         *
+         * <p>Command Types: Refresh
+         */
+        static String IDENTIFY = "Identify";
+        /**
+         * Description: Color information (RGB)
+         *
+         * <p>Command Types: OnOff, IncreaseDecrease, Percent, HSB, Refresh
+         */
+        static String COLOR = "Color";
+        /**
+         * Description: Item storing status of e.g. door/window contacts
+         *
+         * <p>Command Types: OpenClosed, Refresh
+         */
+        static String CONTACT = "Contact";
+        /**
+         * Description: Stores date and time
+         *
+         * <p>Command Types: DateTime
+         */
+        static String DATE_TIME = "DateTime";
+        /**
+         * Description: Item carrying a percentage value for dimmers
+         *
+         * <p>Command Types: OnOff, IncreaseDecrease, Percent, Refresh
+         */
+        static String DIMMER = "Dimmer";
+        /**
+         * Description: Item to nest other Items / collect them in Groups
+         *
+         * <p>Command Types: -
+         */
+        static String GROUP = "Group";
+        /**
+         * Description: Holds the binary data of an image
+         *
+         * <p>Command Types: Refresh
+         */
+        static String IMAGE = "Image";
+        /**
+         * Description: Stores GPS coordinates
+         *
+         * <p>Command Types: Point, Refresh
+         */
+        static String LOCATION = "Location";
+
+        /**
+         * Description: Stores values in number format, takes an optional dimension suffix
+         *
+         * <p>{@code Number:<dimension>} like {@code Number}, additional dimension information for unit support
+         *
+         * <p>Command Types: Quantity, Refresh
+         */
+        static String number(@Nullable String dimension) {
+            if (dimension != null && !dimension.isBlank()) {
+                return "Number:" + dimension;
+            }
+            return "Number";
+        }
+
+        /** See: {@link #number(String)} */
+        static String number() {
+            return number(null);
+        }
+        /**
+         * Description: Allows to control players (e.g. audio players)
+         *
+         * <p>Command Types: PlayPause, NextPrevious, RewindFastforward, Refresh
+         */
+        static String PLAYER = "Player";
+        /**
+         * Description: Typically used for blinds
+         *
+         * <p>Command Types: UpDown, StopMove, Percent, Refresh
+         */
+        static String ROLLER_SHUTTER = "Rollershutter";
+        /**
+         * Description: Stores texts
+         *
+         * <p>Command Types: String, Refresh
+         */
+        static String STRING = "String";
+        /**
+         * Description: Typically used for lights (on/off)
+         *
+         * <p>Command Types: OnOff, Refresh
+         */
+        static String SWITCH = "Switch";
     }
 }

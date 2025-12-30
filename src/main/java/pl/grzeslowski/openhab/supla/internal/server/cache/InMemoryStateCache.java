@@ -16,7 +16,7 @@ public class InMemoryStateCache implements StateCache {
     private final Logger logger;
 
     @Override
-    public @Nullable State findState(ChannelUID uid) {
+    public @Nullable State findStateDeprecated(ChannelUID uid) {
         var state = stateCache.get(uid);
         logger.debug("Current state for {} is {}", uid, state);
         return state;

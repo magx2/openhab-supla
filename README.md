@@ -31,6 +31,7 @@ Just download the Auraton Smart App after installation and Switch One will help 
 accuracy in electricity consumption monitoring available with tools for advanced data analysis. MEW-01 is designed for
 DIN-rail (TH35) mounting, occupies a width of two modules and offers the possibility of attaching an external antenna
 for use also outside the switchgear.
+- [Zamel mSLW-01](https://supla.zamel.com/product/sterownik-led-rgbw-wi-fi/) The mSLW-01 device is an advanced RGBW LED mood lighting controller in a compact mini version. Designed for convenience and flexibility, it allows you to personalise and control lighting in any interior where LED lighting is used. Retaining all the features of the original SLW-01 controller, it offers a smaller and easier to install housing. In addition to RGB colour control, the mSLW-01 is equipped with an additional channel for controlling white LED lighting. The ideal controller for RGBW LED strips.
 - [Zamel ROW-01](https://supla.zamel.com/product/odbiornik-wi-fi-dopuszkowy-1-kanalowy-dwukierunkowy-row-01/) belongs to
 a family of smart home control products via wi-fi. The device uses SUPLA cloud technology. The ROW-01 module allows
 you to control lighting, turn on and off sockets and electrical appliances using a smartphone or tablet. The ROW-01

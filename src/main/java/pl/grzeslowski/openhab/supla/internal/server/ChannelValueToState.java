@@ -14,6 +14,7 @@ import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
 import org.openhab.core.library.types.*;
@@ -22,6 +23,7 @@ import org.openhab.core.thing.ChannelUID;
 import org.openhab.core.thing.ThingUID;
 import org.openhab.core.types.State;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.value.*;
+import pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ChannelIds.RgbwLed;
 
 @Slf4j
 @NonNullByDefault
@@ -78,11 +80,21 @@ public class ChannelValueToState implements ChannelValueSwitch.Callback<Stream<C
 
     @Override
     public Stream<ChannelState> onRgbValue(@Nullable final RgbValue rgbValue) {
-        val id = createChannelUid(channelNumber);
+        val groupUid = new ChannelGroupUID(thingUID, valueOf(channelNumber));
+        val rgbUid = new ChannelUID(groupUid, RgbwLed.COLOR);
+        val brightnessUid = new ChannelUID(groupUid, RgbwLed.BRIGHTNESS);
         if (rgbValue == null) {
-            return Stream.of(new ChannelState(id, NULL));
+            return Stream.of(new ChannelState(rgbUid, NULL), new ChannelState(brightnessUid, NULL));
         }
-        return Stream.of(new ChannelState(id, HSBType.fromRGB(rgbValue.red(), rgbValue.green(), rgbValue.blue())));
+        var hsbType = toHsbType(rgbValue);
+        return Stream.of(
+                new ChannelState(rgbUid, hsbType),
+                new ChannelState(brightnessUid, new PercentType(rgbValue.brightness())));
+    }
+
+    private static @NonNull HSBType toHsbType(@NonNull RgbValue rgbValue) {
+        var hsbType = HSBType.fromRGB(rgbValue.red(), rgbValue.green(), rgbValue.blue());
+        return new HSBType(hsbType.getHue(), hsbType.getSaturation(), new PercentType(rgbValue.colorBrightness()));
     }
 
     @Override
