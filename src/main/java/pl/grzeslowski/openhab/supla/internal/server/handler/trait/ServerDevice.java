@@ -12,6 +12,7 @@ import org.openhab.core.thing.ThingStatusDetail;
 import org.openhab.core.thing.binding.builder.ThingBuilder;
 import org.openhab.core.types.State;
 import org.slf4j.Logger;
+import pl.grzeslowski.jsupla.protocol.api.ChannelType;
 import pl.grzeslowski.jsupla.protocol.api.types.FromServerProto;
 import pl.grzeslowski.openhab.supla.internal.server.cache.StateCache;
 
@@ -21,7 +22,7 @@ public interface ServerDevice extends HandleCommand, StateCache {
 
     Thing getThing();
 
-    Map<Integer, Integer> getChannelTypes();
+    Map<Integer, ChannelType> getChannelTypes();
 
     ThingBuilder editThing();
 

@@ -20,6 +20,7 @@ import org.openhab.core.thing.ChannelUID;
 import org.openhab.core.thing.Thing;
 import org.openhab.core.thing.binding.builder.ThingBuilder;
 import org.slf4j.Logger;
+import pl.grzeslowski.jsupla.protocol.api.ChannelType;
 import pl.grzeslowski.openhab.supla.internal.server.handler.trait.ServerDevice;
 import pl.grzeslowski.openhab.supla.internal.server.traits.DeviceChannelValue;
 
@@ -42,7 +43,7 @@ class ChannelUtilTest {
 
     @BeforeEach
     void setUp() {
-        var channelTypes = new HashMap<Integer, Integer>();
+        var channelTypes = new HashMap<Integer, ChannelType>();
 
         lenient().when(serverDevice.getLogger()).thenReturn(logger);
         lenient().when(serverDevice.getThing()).thenReturn(thing);
@@ -125,7 +126,7 @@ class ChannelUtilTest {
         var map = new HashMap<Integer, ServerDevice.ChannelAndPreviousState>();
         when(serverDevice.getSenderIdToChannelUID()).thenReturn(map);
         var channelUID = new ChannelUID("supla:test:1:2");
-        var channel = org.mockito.Mockito.mock(Channel.class);
+        var channel = mock(Channel.class);
         when(channel.getUID()).thenReturn(channelUID);
         when(thing.getChannels()).thenReturn(new ArrayList<>(java.util.List.of(channel)));
         var newValueResult =
