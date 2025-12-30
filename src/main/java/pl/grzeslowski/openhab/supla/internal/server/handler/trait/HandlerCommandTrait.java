@@ -5,6 +5,8 @@ import static org.openhab.core.thing.ThingStatus.OFFLINE;
 import static org.openhab.core.thing.ThingStatus.ONLINE;
 import static org.openhab.core.thing.ThingStatusDetail.COMMUNICATION_ERROR;
 import static pl.grzeslowski.jsupla.protocol.api.channeltype.value.HvacValue.Mode.*;
+import static pl.grzeslowski.jsupla.protocol.api.channeltype.value.HvacValue.Mode.NOT_SET;
+import static pl.grzeslowski.jsupla.protocol.api.channeltype.value.RgbValue.Command.*;
 import static pl.grzeslowski.openhab.supla.internal.Localization.text;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ChannelIds.Hvac.*;
 import static pl.grzeslowski.openhab.supla.internal.server.ChannelUtil.findSuplaChannelNumber;
@@ -20,9 +22,11 @@ import org.openhab.core.thing.ChannelGroupUID;
 import org.openhab.core.thing.ChannelUID;
 import org.openhab.core.types.Command;
 import org.openhab.core.types.State;
+import org.openhab.core.util.ColorUtil;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.encoders.ChannelTypeEncoderImpl;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.value.*;
 import pl.grzeslowski.jsupla.protocol.api.structs.sd.SuplaChannelNewValue;
+import pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ChannelIds.RgbwLed;
 
 @NonNullByDefault
 @RequiredArgsConstructor
@@ -33,7 +37,7 @@ public class HandlerCommandTrait implements HandleCommand {
 
     @Override
     public void handleRefreshCommand(ChannelUID channelUID) {
-        var state = serverDevice.findState(channelUID);
+        var state = serverDevice.findStateDeprecated(channelUID);
         if (state == null) {
             return;
         }
@@ -60,17 +64,19 @@ public class HandlerCommandTrait implements HandleCommand {
         sendCommandToSuplaServer(channelUID, toSend.value, command, toSend.prev);
     }
 
-    @SuppressWarnings("deprecation")
     @Override
     public void handleHsbCommand(ChannelUID channelUID, HSBType command) {
-        RgbValue toSend = new RgbValue(
-                command.getBrightness().intValue(),
-                255, // TODO I don't know if this is
-                // correct
-                command.getRed().intValue(),
-                command.getGreen().intValue(),
-                command.getBlue().intValue());
-        sendCommandToSuplaServer(channelUID, toSend, command, null);
+        if (RgbwLed.COLOR.equals(channelUID.getIdWithoutGroup())) {
+            ledChangeRgb(channelUID, command);
+        } else {
+            serverDevice
+                    .getLogger()
+                    .warn(
+                            "Not handling `{}` ({}) on channel `{}`",
+                            command,
+                            command.getClass().getSimpleName(),
+                            channelUID);
+        }
     }
 
     @Override
@@ -85,7 +91,11 @@ public class HandlerCommandTrait implements HandleCommand {
 
     @Override
     public void handlePercentCommand(ChannelUID channelUID, PercentType command) {
-        sendCommandToSuplaServer(channelUID, new PercentValue(command.intValue()), command, null);
+        if (RgbwLed.BRIGHTNESS.equals(channelUID.getIdWithoutGroup())) {
+            ledChangeDim(channelUID, command);
+        } else {
+            sendCommandToSuplaServer(channelUID, new PercentValue(command.intValue()), command, null);
+        }
     }
 
     @Override
@@ -121,7 +131,7 @@ public class HandlerCommandTrait implements HandleCommand {
     }
 
     private void handleHvacModeCommand(ChannelUID channelUID, StringType command) {
-        var mode = valueOf(command.toString());
+        var mode = HvacValue.Mode.valueOf(command.toString());
         var value =
                 switch (mode) {
                     case NOT_SET ->
@@ -174,7 +184,7 @@ public class HandlerCommandTrait implements HandleCommand {
                                         false, false));
                 };
 
-        var previousMode = serverDevice.findState(channelUID);
+        var previousMode = serverDevice.findStateDeprecated(channelUID);
         var future = sendCommandToSuplaServer(channelUID, value, command, previousMode);
     }
 
@@ -192,7 +202,7 @@ public class HandlerCommandTrait implements HandleCommand {
     private Double findTemperature(ChannelUID channelUID, String id) {
         return Optional.of(channelUID)
                 .map(uid -> siblingChannel(uid, id))
-                .map(serverDevice::findState)
+                .map(serverDevice::findStateDeprecated)
                 .<QuantityType<?>>map(state -> (QuantityType<?>) state)
                 .filter(state -> state.getUnit().isCompatible(CELSIUS))
                 .map(state -> state.toUnit(CELSIUS))
@@ -253,6 +263,11 @@ public class HandlerCommandTrait implements HandleCommand {
                         channelUID);
     }
 
+    @SuppressWarnings("UnusedReturnValue")
+    private ChannelFuture sendCommandToSuplaServer(ChannelUID channelUID, ChannelValue channelValue, Command command) {
+        return sendCommandToSuplaServer(channelUID, channelValue, command, null);
+    }
+
     private ChannelFuture sendCommandToSuplaServer(
             ChannelUID channelUID, ChannelValue channelValue, Command command, @Nullable State previousState) {
         var maybeChannelNumber = findSuplaChannelNumber(channelUID);
@@ -280,4 +295,34 @@ public class HandlerCommandTrait implements HandleCommand {
             throw ex;
         }
     }
+
+    // ✅ LED
+    private void ledChangeRgb(ChannelUID channelUID, HSBType command) {
+        var brightnessChannelUid =
+                new ChannelUID(channelUID.getThingUID(), channelUID.getGroupId(), RgbwLed.BRIGHTNESS);
+        var brightness = serverDevice
+                .findState(brightnessChannelUid)
+                .filter(PercentType.class::isInstance)
+                .map(PercentType.class::cast)
+                .map(DecimalType::intValue)
+                .orElse(0);
+        {
+            var rgb = ColorUtil.hsbToRgb(command);
+            var rgbProto = new RgbValue(brightness, command.getBrightness().intValue(), rgb[0], rgb[1], rgb[2]);
+            serverDevice.getLogger().debug("Sending RGB command: {}", rgbProto);
+            sendCommandToSuplaServer(
+                    channelUID,
+                    rgbProto,
+                    command,
+                    serverDevice.findState(channelUID).orElse(null));
+        }
+    }
+
+    private void ledChangeDim(ChannelUID channelUID, PercentType command) {
+        var brightness = command.intValue();
+        var protoCommand = brightness > 0 ? TURN_ON_DIMMER : TURN_OFF_DIMMER;
+        var toSend = new RgbValue(brightness, 0, 0, 0, 0, protoCommand);
+        sendCommandToSuplaServer(channelUID, toSend, command);
+    }
+    // ❌ LED
 }

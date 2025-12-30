@@ -71,7 +71,7 @@ class HandlerCommandTraitTest {
                 return "state";
             }
         };
-        when(serverDevice.findState(channelUID)).thenReturn(state);
+        when(serverDevice.findStateDeprecated(channelUID)).thenReturn(state);
 
         handlerCommandTrait.handleRefreshCommand(channelUID);
 
@@ -81,7 +81,7 @@ class HandlerCommandTraitTest {
     @Test
     void shouldNotRefreshWhenStateMissing() {
         ChannelUID channelUID = new ChannelUID("binding:thing:sub:1");
-        when(serverDevice.findState(channelUID)).thenReturn(null);
+        when(serverDevice.findStateDeprecated(channelUID)).thenReturn(null);
 
         handlerCommandTrait.handleRefreshCommand(channelUID);
 
