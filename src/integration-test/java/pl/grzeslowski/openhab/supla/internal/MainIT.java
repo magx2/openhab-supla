@@ -20,17 +20,16 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.openhab.core.library.types.OnOffType;
-import org.openhab.core.library.types.PercentType;
-import org.openhab.core.library.types.QuantityType;
-import org.openhab.core.library.types.StringType;
+import org.openhab.core.library.types.*;
 import org.openhab.core.thing.ChannelUID;
 import org.openhab.core.thing.ThingStatusInfo;
 import org.openhab.core.thing.binding.builder.ThingStatusInfoBuilder;
+import org.openhab.core.util.ColorUtil;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.value.HvacValue;
 import pl.grzeslowski.jsupla.protocol.api.structs.sd.SuplaRegisterDeviceResultA;
 import pl.grzeslowski.openhab.supla.internal.device.ZamelDiw01;
 import pl.grzeslowski.openhab.supla.internal.device.ZamelGkw02;
+import pl.grzeslowski.openhab.supla.internal.device.ZamelMslw01;
 import pl.grzeslowski.openhab.supla.internal.device.ZamelRow01;
 import pl.grzeslowski.openhab.supla.internal.extension.random.*;
 import pl.grzeslowski.openhab.supla.internal.extension.supla.CreateHandler;
@@ -260,6 +259,124 @@ public class MainIT {
                                         .value()));
                 device.updateChannel();
                 assertThat(device.getValue()).isNotEqualTo(previousState);
+            }
+        }
+        // device is closed
+        log.info("Waiting for the device to disconnect");
+        await().untilAsserted(() -> assertThat(deviceCtx.openHabDevice().findThingStatus())
+                .isEqualTo(
+                        new ThingStatusInfo(OFFLINE, COMMUNICATION_ERROR, "@text/supla.offline.channel-disconnected")));
+    }
+
+    @Test
+    @DisplayName("should run tests for Zamel mSLW-01")
+    void zamelMslw01(
+            @CreateHandler(thingTypeId = SUPLA_SERVER_DEVICE_TYPE_ID) ThingCtx deviceCtx,
+            @CreateHandler(thingTypeId = SUPLA_SERVER_TYPE_ID) BridgeCtx serverCtx,
+            @Port int port,
+            @Email String email,
+            @AuthKey String authKey)
+            throws Exception {
+        var guid = deviceCtx.thing().getUID().getId();
+        log.info(
+                "Testing Zamel mSLW-01 with GUID={}, using socket on port={}, email={}, authKey={}",
+                guid,
+                port,
+                email,
+                authKey);
+        serverInitialize(serverCtx, port);
+        deviceInitialize(deviceCtx, serverCtx, email, authKey, guid);
+        // DEVICE
+        try (var device = new ZamelMslw01(guid, email, authKey)) {
+            device.initialize("localhost", port);
+            // register
+            device.register();
+            var registerResult = device.readRegisterDeviceResultA();
+            assertThat(registerResult).isEqualTo(new SuplaRegisterDeviceResultA(3, (short) 100, (short) 18, (short) 1));
+            assertThat(deviceCtx.openHabDevice().findThingStatus())
+                    .isEqualTo(new ThingStatusInfo(
+                            UNKNOWN, CONFIGURATION_PENDING, "@text/supla.offline.waiting-for-registration"));
+            // ping
+            device.sendPing();
+            var ping = device.readPing().now();
+            assertThat(ping.tvSec()).isGreaterThan(0);
+            assertThat(ping.tvUsec()).isEqualTo(0);
+            await().untilAsserted(() -> assertThat(deviceCtx.openHabDevice().findThingStatus())
+                    .isEqualTo(ThingStatusInfoBuilder.create(ONLINE, NONE).build()));
+
+            var channels = deviceCtx.openHabDevice().getChannelStates();
+            assertThat(channels).hasSize(2);
+
+            { // device updates RGB
+                var olgRgb = device.getRgbwValue();
+                device.rgbUpdated();
+                var currentRgb = device.getRgbwValue();
+                assertThat(currentRgb).isNotEqualTo(olgRgb);
+                log.info("Waiting for OH to propagate state change");
+                await().untilAsserted(() -> {
+                    var rgbwValue = device.getRgbwValue();
+                    {
+                        var rgbState = deviceCtx.openHabDevice().findChannelState("0", "rgbw_color");
+                        var hsb = ColorUtil.rgbToHsb(new int[] {rgbwValue.red(), rgbwValue.green(), rgbwValue.blue()});
+                        var expected = new HSBType(
+                                hsb.getHue(), hsb.getSaturation(), new PercentType(rgbwValue.colorBrightness()));
+                        assertThat(rgbState).isEqualTo(expected);
+                    }
+                    {
+                        var brightnessState = deviceCtx.openHabDevice().findChannelState("0", "rgbw_brightness");
+                        var expected = new PercentType(rgbwValue.brightness());
+                        assertThat(brightnessState).isEqualTo(expected);
+                    }
+                });
+            }
+            { // OH updates it's state with the device
+                { // OH Updates RGB color
+                    var previousState = device.getRgbwValue();
+                    var hsbType = RandomExtension.INSTANCE.randomHsb();
+                    deviceCtx
+                            .handler()
+                            .handleCommand(
+                                    new ChannelUID("supla:server-device:%s:0#rgbw_color".formatted(guid)), hsbType);
+                    device.updateChannel();
+
+                    var rgb = ColorUtil.hsbToRgb(hsbType);
+                    assertThat(device.getRgbwValue().red()).isEqualTo(rgb[0]);
+                    assertThat(device.getRgbwValue().green()).isEqualTo(rgb[1]);
+                    assertThat(device.getRgbwValue().blue()).isEqualTo(rgb[2]);
+                    assertThat(device.getRgbwValue().colorBrightness())
+                            .isEqualTo(hsbType.getBrightness().intValue());
+
+                    assertThat(device.getRgbwValue().brightness()).isEqualTo(previousState.brightness());
+                }
+                { // OH Updates brightness
+                    var previousState = device.getRgbwValue();
+                    var percentType = new PercentType(
+                            RandomExtension.INSTANCE.randomPercentage().value());
+                    deviceCtx
+                            .handler()
+                            .handleCommand(
+                                    new ChannelUID("supla:server-device:%s:0#rgbw_brightness".formatted(guid)),
+                                    percentType);
+                    device.updateChannel();
+
+                    assertThat(device.getRgbwValue().red()).isEqualTo(previousState.red());
+                    assertThat(device.getRgbwValue().green()).isEqualTo(previousState.green());
+                    assertThat(device.getRgbwValue().blue()).isEqualTo(previousState.blue());
+
+                    assertThat(device.getRgbwValue().brightness()).isEqualTo(percentType.intValue());
+                }
+            }
+            { // shortPress
+                device.shortPress();
+                var trigger = deviceCtx.openHabDevice().popTrigger();
+                assertThat(trigger.channelUID().getId()).isEqualTo(String.valueOf(1));
+                assertThat(trigger.event()).isEqualTo("SHORT_PRESS_x1");
+            }
+            { // hold
+                device.hold();
+                var trigger = deviceCtx.openHabDevice().popTrigger();
+                assertThat(trigger.channelUID().getId()).isEqualTo(String.valueOf(1));
+                assertThat(trigger.event()).isEqualTo("HOLD");
             }
         }
         // device is closed
