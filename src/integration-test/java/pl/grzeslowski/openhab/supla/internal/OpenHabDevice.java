@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
 import java.util.*;
+import java.util.stream.Collectors;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
@@ -47,11 +48,25 @@ public class OpenHabDevice implements ThingHandlerCallback {
     }
 
     public State findChannelState(ChannelUID channelUID) {
-        return requireNonNull(channelStates.get(channelUID));
+        var state = channelStates.get(channelUID);
+        assertThat(state)
+                .withFailMessage("Cannot find state for channelUID %s.\nAvailable channels: %s"
+                        .formatted(
+                                channelUID,
+                                channelStates.keySet().stream()
+                                        .map(Objects::toString)
+                                        .collect(Collectors.joining(",\n - ", "\n - ", "\n"))))
+                .isNotNull();
+        return state;
     }
 
     public State findChannelState(String channelId) {
         return findChannelState(new ChannelUID("supla:server-device:%s:%s".formatted(requireNonNull(guid), channelId)));
+    }
+
+    public State findChannelState(String channelId, String groupId) {
+        return findChannelState(
+                new ChannelUID("supla:server-device:%s:%s#%s".formatted(requireNonNull(guid), channelId, groupId)));
     }
 
     public State findChannelState(int channelId) {

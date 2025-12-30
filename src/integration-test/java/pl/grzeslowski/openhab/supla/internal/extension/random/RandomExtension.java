@@ -3,6 +3,7 @@ package pl.grzeslowski.openhab.supla.internal.extension.random;
 import static java.math.RoundingMode.HALF_UP;
 import static java.util.Locale.ROOT;
 import static java.util.stream.Stream.generate;
+import static pl.grzeslowski.jsupla.protocol.api.JavaConsts.UNSIGNED_BYTE_MAX;
 import static pl.grzeslowski.jsupla.protocol.api.consts.ProtoConsts.*;
 import static pl.grzeslowski.openhab.supla.internal.server.ByteArrayToHex.bytesToHex;
 
@@ -13,8 +14,12 @@ import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.ParameterContext;
 import org.junit.jupiter.api.extension.ParameterResolutionException;
 import org.junit.jupiter.api.extension.ParameterResolver;
+import org.openhab.core.library.types.DecimalType;
+import org.openhab.core.library.types.HSBType;
+import org.openhab.core.library.types.PercentType;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.value.HvacValue;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.value.PercentValue;
+import pl.grzeslowski.jsupla.protocol.api.channeltype.value.RgbValue;
 import pl.grzeslowski.openhab.supla.internal.device.HvacChannel;
 
 @Slf4j
@@ -90,6 +95,22 @@ public class RandomExtension implements ParameterResolver {
 
     public PercentValue randomPercentage() {
         return new PercentValue(random.nextInt(101));
+    }
+
+    public RgbValue randomRgbValue() {
+        return new RgbValue(
+                randomPercentage().value(),
+                randomPercentage().value(),
+                random.nextInt(UNSIGNED_BYTE_MAX + 1),
+                random.nextInt(UNSIGNED_BYTE_MAX + 1),
+                random.nextInt(UNSIGNED_BYTE_MAX + 1));
+    }
+
+    public HSBType randomHsb() {
+        return new HSBType(
+                new DecimalType(random.nextInt(361)),
+                new PercentType(random.nextInt(101)),
+                new PercentType(random.nextInt(101)));
     }
 
     public PercentValue randomPercentage(PercentValue value) {
