@@ -12,6 +12,7 @@ import io.netty.channel.ChannelFuture;
 import io.netty.channel.DefaultChannelPromise;
 import io.netty.channel.embedded.EmbeddedChannel;
 import java.util.HashMap;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -71,7 +72,7 @@ class HandlerCommandTraitTest {
                 return "state";
             }
         };
-        when(serverDevice.findStateDeprecated(channelUID)).thenReturn(state);
+        when(serverDevice.findState(channelUID)).thenReturn(Optional.of(state));
 
         handlerCommandTrait.handleRefreshCommand(channelUID);
 
@@ -81,7 +82,7 @@ class HandlerCommandTraitTest {
     @Test
     void shouldNotRefreshWhenStateMissing() {
         ChannelUID channelUID = new ChannelUID("binding:thing:sub:1");
-        when(serverDevice.findStateDeprecated(channelUID)).thenReturn(null);
+        when(serverDevice.findState(channelUID)).thenReturn(Optional.empty());
 
         handlerCommandTrait.handleRefreshCommand(channelUID);
 

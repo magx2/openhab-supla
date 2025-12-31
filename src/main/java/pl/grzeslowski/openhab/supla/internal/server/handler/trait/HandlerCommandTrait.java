@@ -37,11 +37,7 @@ public class HandlerCommandTrait implements HandleCommand {
 
     @Override
     public void handleRefreshCommand(ChannelUID channelUID) {
-        var state = serverDevice.findStateDeprecated(channelUID);
-        if (state == null) {
-            return;
-        }
-        serverDevice.updateState(channelUID, state);
+        serverDevice.findState(channelUID).ifPresent(state -> serverDevice.updateState(channelUID, state));
     }
 
     @Override
@@ -184,7 +180,7 @@ public class HandlerCommandTrait implements HandleCommand {
                                         false, false));
                 };
 
-        var previousMode = serverDevice.findStateDeprecated(channelUID);
+        var previousMode = serverDevice.findState(channelUID).orElse(null);
         var future = sendCommandToSuplaServer(channelUID, value, command, previousMode);
     }
 
@@ -202,7 +198,7 @@ public class HandlerCommandTrait implements HandleCommand {
     private Double findTemperature(ChannelUID channelUID, String id) {
         return Optional.of(channelUID)
                 .map(uid -> siblingChannel(uid, id))
-                .map(serverDevice::findStateDeprecated)
+                .flatMap(serverDevice::findState)
                 .<QuantityType<?>>map(state -> (QuantityType<?>) state)
                 .filter(state -> state.getUnit().isCompatible(CELSIUS))
                 .map(state -> state.toUnit(CELSIUS))
