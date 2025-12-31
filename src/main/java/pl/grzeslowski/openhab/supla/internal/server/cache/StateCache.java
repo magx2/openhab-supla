@@ -6,13 +6,7 @@ import org.openhab.core.thing.ChannelUID;
 import org.openhab.core.types.State;
 
 public interface StateCache {
-    @Nullable
-    @Deprecated
-    State findStateDeprecated(ChannelUID uid);
-
-    default Optional<State> findState(ChannelUID uid) {
-        return Optional.ofNullable(findStateDeprecated(uid));
-    }
+    Optional<State> findState(ChannelUID uid);
 
     void saveState(ChannelUID uid, @Nullable State state);
 }

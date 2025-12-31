@@ -4,6 +4,7 @@ import static java.util.Collections.synchronizedMap;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.eclipse.jdt.annotation.Nullable;
 import org.openhab.core.thing.ChannelUID;
@@ -16,10 +17,10 @@ public class InMemoryStateCache implements StateCache {
     private final Logger logger;
 
     @Override
-    public @Nullable State findStateDeprecated(ChannelUID uid) {
+    public Optional<State> findState(ChannelUID uid) {
         var state = stateCache.get(uid);
         logger.debug("Current state for {} is {}", uid, state);
-        return state;
+        return Optional.ofNullable(state);
     }
 
     @Override
