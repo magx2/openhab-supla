@@ -7,7 +7,9 @@ import static pl.grzeslowski.jsupla.protocol.api.JavaConsts.UNSIGNED_BYTE_MAX;
 import static pl.grzeslowski.jsupla.protocol.api.consts.ProtoConsts.*;
 import static pl.grzeslowski.openhab.supla.internal.server.ByteArrayToHex.bytesToHex;
 
+import java.io.IOException;
 import java.math.BigDecimal;
+import java.net.ServerSocket;
 import java.util.Random;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.extension.ExtensionContext;
@@ -145,6 +147,14 @@ public class RandomExtension implements ParameterResolver {
         return random.nextBoolean();
     }
 
+    private int openPort() {
+        try (var serverSocket = new ServerSocket(0)) {
+            return serverSocket.getLocalPort();
+        } catch (IOException exception) {
+            throw new ParameterResolutionException("Could not allocate open port", exception);
+        }
+    }
+
     @Override
     public boolean supportsParameter(ParameterContext parameterContext, ExtensionContext extensionContext)
             throws ParameterResolutionException {
@@ -176,7 +186,7 @@ public class RandomExtension implements ParameterResolver {
             return randomGuid();
         }
         if (parameterContext.isAnnotated(Port.class)) {
-            return random.nextInt(0xFFFF) + 1;
+            return openPort();
         }
         if (parameterContext.isAnnotated(LocationId.class)) {
             return randomLocationId();
