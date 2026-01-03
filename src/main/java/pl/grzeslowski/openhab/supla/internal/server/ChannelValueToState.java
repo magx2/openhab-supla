@@ -87,24 +87,20 @@ public class ChannelValueToState implements ChannelValueSwitch.Callback<Stream<C
         val groupUid = new ChannelGroupUID(thingUID, valueOf(deviceChannel.number()));
 
         var channels = new ArrayList<ChannelState>();
-
-        if (rgbwBitFunctions.contains(SUPLA_RGBW_BIT_FUNC_RGB_LIGHTING)
-                || rgbwBitFunctions.contains(SUPLA_RGBW_BIT_FUNC_DIMMER_AND_RGB_LIGHTING)
-                || rgbwBitFunctions.contains(SUPLA_RGBW_BIT_FUNC_DIMMER_CCT_AND_RGB)) {
+        var info = RgbChannelInfo.build(deviceChannel);
+        if (info.supportRgb()) {
             var rgbUid = new ChannelUID(groupUid, RgbwLed.COLOR);
             var state = maybeRgbValue.map(ChannelValueToState::toHsbType).orElse(NULL);
             channels.add(new ChannelState(rgbUid, state));
         }
-        if (rgbwBitFunctions.contains(SUPLA_RGBW_BIT_FUNC_DIMMER_AND_RGB_LIGHTING)
-                || rgbwBitFunctions.contains(SUPLA_RGBW_BIT_FUNC_DIMMER)) {
+        if (info.supportDimmer()) {
             var brightnessUid = new ChannelUID(groupUid, RgbwLed.BRIGHTNESS);
             var state = maybeRgbValue
                     .map(rgb -> (State) new PercentType(rgb.brightness()))
                     .orElse(NULL);
             channels.add(new ChannelState(brightnessUid, state));
         }
-        if (rgbwBitFunctions.contains(SUPLA_RGBW_BIT_FUNC_DIMMER_CCT)
-                || rgbwBitFunctions.contains(SUPLA_RGBW_BIT_FUNC_DIMMER_CCT_AND_RGB)) {
+        if (info.supportDimmerCct()) {
             var brightnessCctUid = new ChannelUID(groupUid, RgbwLed.BRIGHTNESS_CCT);
             var state = maybeRgbValue
                     .map(rgb -> (State) new PercentType(rgb.dimmerCct()))

@@ -1,6 +1,7 @@
 package pl.grzeslowski.openhab.supla.internal.server;
 
 import static java.lang.String.valueOf;
+import static pl.grzeslowski.jsupla.protocol.api.ChannelType.*;
 import static pl.grzeslowski.jsupla.protocol.api.RgbwBitFunction.*;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ChannelIds.Hvac.*;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.Channels.*;
@@ -97,14 +98,11 @@ public class ChannelCallback implements ChannelClassSwitch.Callback<Stream<Chann
     @Nullable
     public Stream<Channel> onRgbValue() {
         log.debug("{} {} onRgbValue", thingUID, deviceChannel);
-        var rgbwBitFunctions = deviceChannel.rgbwBitFunctions();
         var groupUid = new ChannelGroupUID(thingUID, valueOf(deviceChannel.number()));
 
         var channels = new ArrayList<Channel>();
-
-        if (rgbwBitFunctions.contains(SUPLA_RGBW_BIT_FUNC_RGB_LIGHTING)
-                || rgbwBitFunctions.contains(SUPLA_RGBW_BIT_FUNC_DIMMER_AND_RGB_LIGHTING)
-                || rgbwBitFunctions.contains(SUPLA_RGBW_BIT_FUNC_DIMMER_CCT_AND_RGB)) {
+        var info = RgbChannelInfo.build(deviceChannel);
+        if (info.supportRgb()) {
             var colorChannelUid = new ChannelUID(groupUid, RgbwLed.COLOR);
             channels.add(ChannelBuilder.create(colorChannelUid, COLOR)
                     .withLabel("LED Color")
@@ -112,8 +110,7 @@ public class ChannelCallback implements ChannelClassSwitch.Callback<Stream<Chann
                     .withDefaultTags(Set.of("Control", "Color"))
                     .build());
         }
-        if (rgbwBitFunctions.contains(SUPLA_RGBW_BIT_FUNC_DIMMER_AND_RGB_LIGHTING)
-                || rgbwBitFunctions.contains(SUPLA_RGBW_BIT_FUNC_DIMMER)) {
+        if (info.supportDimmer()) {
             var brightnessChannelUid = new ChannelUID(groupUid, RgbwLed.BRIGHTNESS);
             channels.add(ChannelBuilder.create(brightnessChannelUid, DIMMER)
                     .withLabel("White Brightness")
@@ -121,8 +118,7 @@ public class ChannelCallback implements ChannelClassSwitch.Callback<Stream<Chann
                     .withDefaultTags(Set.of("Control", "Brightness"))
                     .build());
         }
-        if (rgbwBitFunctions.contains(SUPLA_RGBW_BIT_FUNC_DIMMER_CCT)
-                || rgbwBitFunctions.contains(SUPLA_RGBW_BIT_FUNC_DIMMER_CCT_AND_RGB)) {
+        if (info.supportDimmerCct()) {
             var brightnessChannelUid = new ChannelUID(groupUid, RgbwLed.BRIGHTNESS_CCT);
             channels.add(ChannelBuilder.create(brightnessChannelUid, DIMMER)
                     .withLabel("CCT Brightness")
