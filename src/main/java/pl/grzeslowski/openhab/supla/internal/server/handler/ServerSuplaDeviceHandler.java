@@ -9,7 +9,6 @@ import static java.util.stream.Collectors.joining;
 import static org.openhab.core.thing.ThingStatus.OFFLINE;
 import static org.openhab.core.thing.ThingStatus.ONLINE;
 import static org.openhab.core.thing.ThingStatusDetail.*;
-import static pl.grzeslowski.jsupla.protocol.api.ChannelType.UNKNOWN;
 import static pl.grzeslowski.jsupla.protocol.api.ResultCode.SUPLA_RESULTCODE_TRUE;
 import static pl.grzeslowski.jsupla.protocol.api.channeltype.value.ActionTrigger.Capabilities.*;
 import static pl.grzeslowski.jsupla.protocol.api.consts.ProtoConsts.*;
@@ -272,7 +271,7 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDevice implements Me
                     var extendedValue = value.value();
                     consumeSuplaDeviceChannelExtendedValue(
                             value.channelNumber(),
-                            ChannelType.findByValue(extendedValue.type()).orElse(UNKNOWN),
+                            ChannelType.findByValue(extendedValue.type()).orElse(null),
                             extendedValue.value());
                 }
                 case LocalTimeRequest value -> consumeLocalTimeRequest(writer);
@@ -344,6 +343,7 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDevice implements Me
 
         actionChannels = registerEntity.channels().stream()
                 .filter(c -> c.action() != null)
+                .filter(c -> c.channelFunction() != null)
                 .collect(Collectors.toMap(
                         DeviceChannel::number, c -> new ActionChannelValue(c.action(), c.channelFunction())));
 
@@ -722,7 +722,7 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDevice implements Me
 
     abstract void consumeDeviceChannelValueTrait(DeviceChannelValue trait);
 
-    abstract void consumeSuplaDeviceChannelExtendedValue(int channelNumber, ChannelType type, byte[] value);
+    abstract void consumeSuplaDeviceChannelExtendedValue(int channelNumber, @Nullable ChannelType type, byte[] value);
 
     abstract void consumeSetCaption(SetCaption value);
 

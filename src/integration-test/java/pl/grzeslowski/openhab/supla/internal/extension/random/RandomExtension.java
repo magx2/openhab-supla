@@ -105,7 +105,8 @@ public class RandomExtension implements ParameterResolver {
                 randomPercentage().value(),
                 random.nextInt(UNSIGNED_BYTE_MAX + 1),
                 random.nextInt(UNSIGNED_BYTE_MAX + 1),
-                random.nextInt(UNSIGNED_BYTE_MAX + 1));
+                random.nextInt(UNSIGNED_BYTE_MAX + 1),
+                0);
     }
 
     public HSBType randomHsb() {
