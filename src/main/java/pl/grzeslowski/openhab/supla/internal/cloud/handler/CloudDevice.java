@@ -44,7 +44,7 @@ import pl.grzeslowski.openhab.supla.internal.cloud.functionswitch.CreateChannelF
 import pl.grzeslowski.openhab.supla.internal.cloud.functionswitch.FindStateFunctionSwitch;
 import pl.grzeslowski.openhab.supla.internal.handler.InitializationException;
 import pl.grzeslowski.openhab.supla.internal.handler.OfflineInitializationException;
-import pl.grzeslowski.openhab.supla.internal.handler.SuplaDevice;
+import pl.grzeslowski.openhab.supla.internal.handler.SuplaDeviceHandler;
 
 /**
  * This is handler for all Supla devices.
@@ -54,7 +54,7 @@ import pl.grzeslowski.openhab.supla.internal.handler.SuplaDevice;
  * @author Martin Grześlowski - initial contributor
  */
 @NonNullByDefault
-public final class CloudDevice extends SuplaDevice {
+public final class CloudDevice extends SuplaDeviceHandler {
     @Getter
     private Logger logger = LoggerFactory.getLogger(CloudDevice.class);
 

@@ -9,7 +9,9 @@ import static pl.grzeslowski.jsupla.protocol.api.ProtocolHelpers.*;
 import static pl.grzeslowski.jsupla.protocol.api.consts.ProtoConsts.*;
 
 import java.time.Duration;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -54,12 +56,12 @@ public class ChannelUtil {
                         .map(channel -> channel.getUID() + " -> " + channel.getChannelTypeUID())
                         .collect(Collectors.joining("\n - ", " - ", ""));
                 invoker.getLogger().debug("""
-                                        Registering channels:
-                                         > Raw:
-                                        {}
+                        Registering channels:
+                         > Raw:
+                        {}
 
-                                         > OpenHABs:
-                                        {}""", rawChannels, string);
+                         > OpenHABs:
+                        {}""", rawChannels, string);
             }
             updateChannels(channels);
         }
@@ -98,7 +100,7 @@ public class ChannelUtil {
     }
 
     public Stream<ChannelValueToState.ChannelState> findState(
-            ChannelType type,
+            @Nullable ChannelType type,
             int channelNumber,
             @Nullable @jakarta.annotation.Nullable byte[] value,
             @jakarta.annotation.Nullable ActionTrigger actionTrigger,
@@ -119,22 +121,25 @@ public class ChannelUtil {
     }
 
     public void updateChannels(List<Channel> channels) {
-        new ArrayList<>(channels).sort((o1, o2) -> comparing((Channel id) -> {
-                    try {
-                        var stringId = id.getUID().getId();
-                        if (stringId.contains(CHANNEL_GROUP_SEPARATOR)) {
-                            stringId = stringId.split(CHANNEL_GROUP_SEPARATOR)[0];
-                        }
-                        return Integer.parseInt(stringId);
-                    } catch (NumberFormatException e) {
-                        return Integer.MAX_VALUE;
-                    }
-                })
-                .compare(o1, o2));
+        var sortedChannels = channels.stream()
+                .sorted((o1, o2) -> comparing(ChannelUtil::channelKeyExtractor).compare(o1, o2))
+                .toList();
 
         var thingBuilder = invoker.editThing();
-        thingBuilder.withChannels(channels);
+        thingBuilder.withChannels(sortedChannels);
         invoker.updateThing(thingBuilder.build());
+    }
+
+    private static Integer channelKeyExtractor(Channel id) {
+        try {
+            var stringId = id.getUID().getId();
+            if (stringId.contains(CHANNEL_GROUP_SEPARATOR)) {
+                stringId = stringId.split(CHANNEL_GROUP_SEPARATOR)[0];
+            }
+            return Integer.parseInt(stringId);
+        } catch (NumberFormatException e) {
+            return Integer.MAX_VALUE;
+        }
     }
 
     public void updateStatus(DeviceChannelValue trait) {
@@ -146,7 +151,7 @@ public class ChannelUtil {
         updateStatus(trait.channelNumber(), type, trait.value());
     }
 
-    public void updateStatus(int channelNumber, ChannelType type, byte[] channelValue) {
+    public void updateStatus(int channelNumber, @Nullable ChannelType type, byte[] channelValue) {
         invoker.getLogger().debug("Updating status for channelNumber={}, type={}", channelNumber, type);
         findState(type, channelNumber, channelValue, null, null).forEach(pair -> {
             var channelUID = pair.uid();

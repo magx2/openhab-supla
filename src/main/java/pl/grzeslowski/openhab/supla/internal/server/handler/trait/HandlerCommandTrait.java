@@ -304,7 +304,7 @@ public class HandlerCommandTrait implements HandleCommand {
                 .orElse(0);
         {
             var rgb = ColorUtil.hsbToRgb(command);
-            var rgbProto = new RgbValue(brightness, command.getBrightness().intValue(), rgb[0], rgb[1], rgb[2]);
+            var rgbProto = new RgbValue(brightness, command.getBrightness().intValue(), rgb[0], rgb[1], rgb[2], 0);
             serverDevice.getLogger().debug("Sending RGB command: {}", rgbProto);
             sendCommandToSuplaServer(
                     channelUID,
@@ -317,7 +317,7 @@ public class HandlerCommandTrait implements HandleCommand {
     private void ledChangeDim(ChannelUID channelUID, PercentType command) {
         var brightness = command.intValue();
         var protoCommand = brightness > 0 ? TURN_ON_DIMMER : TURN_OFF_DIMMER;
-        var toSend = new RgbValue(brightness, 0, 0, 0, 0, protoCommand);
+        var toSend = new RgbValue(brightness, 0, 0, 0, 0, 0, protoCommand);
         sendCommandToSuplaServer(channelUID, toSend, command);
     }
     // ❌ LED

@@ -27,7 +27,7 @@ import pl.grzeslowski.jsupla.protocol.api.ChannelType;
 import pl.grzeslowski.jsupla.protocol.api.structs.dcs.SetCaption;
 import pl.grzeslowski.jsupla.protocol.api.structs.ds.*;
 import pl.grzeslowski.jsupla.protocol.api.types.FromServerProto;
-import pl.grzeslowski.openhab.supla.internal.handler.SuplaDevice;
+import pl.grzeslowski.openhab.supla.internal.handler.SuplaDeviceHandler;
 import pl.grzeslowski.openhab.supla.internal.server.ChannelUtil;
 import pl.grzeslowski.openhab.supla.internal.server.cache.InMemoryStateCache;
 import pl.grzeslowski.openhab.supla.internal.server.cache.StateCache;
@@ -40,7 +40,7 @@ import pl.grzeslowski.openhab.supla.internal.server.traits.DeviceChannelValue;
 
 @NonNullByDefault
 @ToString(onlyExplicitlyIncluded = true)
-public class SubDeviceHandler extends SuplaDevice implements ServerDevice {
+public class SubDeviceHandler extends SuplaDeviceHandler implements ServerDevice {
     @Getter
     private final Map<Integer, ChannelType> channelTypes = synchronizedMap(new HashMap<>());
 

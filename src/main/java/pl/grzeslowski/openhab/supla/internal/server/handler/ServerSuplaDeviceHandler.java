@@ -9,7 +9,6 @@ import static java.util.stream.Collectors.joining;
 import static org.openhab.core.thing.ThingStatus.OFFLINE;
 import static org.openhab.core.thing.ThingStatus.ONLINE;
 import static org.openhab.core.thing.ThingStatusDetail.*;
-import static pl.grzeslowski.jsupla.protocol.api.ChannelType.UNKNOWN;
 import static pl.grzeslowski.jsupla.protocol.api.ResultCode.SUPLA_RESULTCODE_TRUE;
 import static pl.grzeslowski.jsupla.protocol.api.channeltype.value.ActionTrigger.Capabilities.*;
 import static pl.grzeslowski.jsupla.protocol.api.consts.ProtoConsts.*;
@@ -74,7 +73,7 @@ import pl.grzeslowski.jsupla.server.SuplaWriter;
 import pl.grzeslowski.openhab.supla.internal.GuidLogger.GuidLogged;
 import pl.grzeslowski.openhab.supla.internal.handler.InitializationException;
 import pl.grzeslowski.openhab.supla.internal.handler.OfflineInitializationException;
-import pl.grzeslowski.openhab.supla.internal.handler.SuplaDevice;
+import pl.grzeslowski.openhab.supla.internal.handler.SuplaDeviceHandler;
 import pl.grzeslowski.openhab.supla.internal.server.SuplaServerDeviceActions;
 import pl.grzeslowski.openhab.supla.internal.server.cache.InMemoryStateCache;
 import pl.grzeslowski.openhab.supla.internal.server.cache.StateCache;
@@ -92,7 +91,7 @@ import pl.grzeslowski.openhab.supla.internal.server.traits.*;
 /** The {@link ServerSuplaDeviceHandler} is responsible for handling commands, which are sent to one of the channels. */
 @NonNullByDefault
 @ToString(onlyExplicitlyIncluded = true)
-public abstract class ServerSuplaDeviceHandler extends SuplaDevice implements MessageHandler, ServerDevice {
+public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler implements MessageHandler, ServerDevice {
     public static final byte ACTIVITY_TIMEOUT = (byte) 100;
     public static final String AVAILABLE_FIELDS = "AVAILABLE_FIELDS";
     private static final AtomicLong ID = new AtomicLong();
@@ -272,7 +271,7 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDevice implements Me
                     var extendedValue = value.value();
                     consumeSuplaDeviceChannelExtendedValue(
                             value.channelNumber(),
-                            ChannelType.findByValue(extendedValue.type()).orElse(UNKNOWN),
+                            ChannelType.findByValue(extendedValue.type()).orElse(null),
                             extendedValue.value());
                 }
                 case LocalTimeRequest value -> consumeLocalTimeRequest(writer);
@@ -344,6 +343,7 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDevice implements Me
 
         actionChannels = registerEntity.channels().stream()
                 .filter(c -> c.action() != null)
+                .filter(c -> c.channelFunction() != null)
                 .collect(Collectors.toMap(
                         DeviceChannel::number, c -> new ActionChannelValue(c.action(), c.channelFunction())));
 
@@ -722,7 +722,7 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDevice implements Me
 
     abstract void consumeDeviceChannelValueTrait(DeviceChannelValue trait);
 
-    abstract void consumeSuplaDeviceChannelExtendedValue(int channelNumber, ChannelType type, byte[] value);
+    abstract void consumeSuplaDeviceChannelExtendedValue(int channelNumber, @Nullable ChannelType type, byte[] value);
 
     abstract void consumeSetCaption(SetCaption value);
 
