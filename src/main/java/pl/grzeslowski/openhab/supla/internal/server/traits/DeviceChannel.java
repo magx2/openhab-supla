@@ -24,7 +24,7 @@ public record DeviceChannel(
         byte[] value,
         ActionTrigger action,
         HvacValue hvacValue,
-        Integer subDeviceId) {
+        @Nullable Integer subDeviceId) {
 
     public static DeviceChannel fromProto(SuplaDeviceChannel proto) {
         return switch (proto) {
@@ -60,8 +60,12 @@ public record DeviceChannel(
                         r.value(),
                         mapAction(r),
                         mapHvacValue(r.hvacValue()),
-                        (int) r.subDeviceId());
+                        findSubDeviceId(r.subDeviceId()));
         };
+    }
+
+    private static Integer findSubDeviceId(short subDeviceId) {
+        return subDeviceId > 0 ? (int) subDeviceId : null;
     }
 
     private static Set<ChannelFlag> findFlags(long flags) {
