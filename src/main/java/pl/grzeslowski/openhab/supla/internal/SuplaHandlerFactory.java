@@ -85,7 +85,7 @@ public class SuplaHandlerFactory extends BaseThingHandlerFactory {
 
     @NonNull
     private ThingHandler newServerDeviceHandler(final Thing thing) {
-        return new SingleDevice(thing);
+        return new SingleDeviceHandler(thing);
     }
 
     @NonNull
