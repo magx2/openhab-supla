@@ -4,20 +4,35 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 import static org.openhab.core.types.UnDefType.NULL;
 import static org.openhab.core.types.UnDefType.UNDEF;
+import static pl.grzeslowski.jsupla.protocol.api.RgbwBitFunction.SUPLA_RGBW_BIT_FUNC_DIMMER;
 import static pl.grzeslowski.jsupla.protocol.api.RgbwBitFunction.SUPLA_RGBW_BIT_FUNC_DIMMER_AND_RGB_LIGHTING;
+import static pl.grzeslowski.jsupla.protocol.api.RgbwBitFunction.SUPLA_RGBW_BIT_FUNC_DIMMER_CCT;
+import static pl.grzeslowski.jsupla.protocol.api.RgbwBitFunction.SUPLA_RGBW_BIT_FUNC_DIMMER_CCT_AND_RGB;
+import static pl.grzeslowski.jsupla.protocol.api.RgbwBitFunction.SUPLA_RGBW_BIT_FUNC_RGB_LIGHTING;
 
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Stream;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.openhab.core.library.types.*;
+import org.openhab.core.library.types.DecimalType;
+import org.openhab.core.library.types.HSBType;
+import org.openhab.core.library.types.OpenClosedType;
+import org.openhab.core.library.types.PercentType;
+import org.openhab.core.library.types.QuantityType;
+import org.openhab.core.library.types.StringType;
 import org.openhab.core.thing.ChannelGroupUID;
 import org.openhab.core.thing.ChannelUID;
 import org.openhab.core.thing.ThingUID;
 import org.openhab.core.types.State;
+import pl.grzeslowski.jsupla.protocol.api.RgbwBitFunction;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.value.DecimalValue;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.value.PercentValue;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.value.RgbValue;
@@ -25,21 +40,20 @@ import pl.grzeslowski.jsupla.protocol.api.channeltype.value.StoppableOpenClose;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.value.TemperatureAndHumidityValue;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.value.TemperatureValue;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.value.UnknownValue;
+import pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ChannelIds.RgbwLed;
 import pl.grzeslowski.openhab.supla.internal.server.ChannelValueToState.ChannelState;
 import pl.grzeslowski.openhab.supla.internal.server.traits.DeviceChannel;
 
 @ExtendWith(MockitoExtension.class)
 class ChannelValueToStateTest {
     private final ThingUID thingUID = new ThingUID("supla:test:1");
+    private final RgbValue rgbValue = new RgbValue(55, 10, 1, 2, 3, 77);
 
     @Mock
     private DecimalValue decimalValue;
 
     @Mock
     private PercentValue percentValue;
-
-    @Mock
-    private RgbValue rgbValue;
 
     @Mock
     private TemperatureValue temperatureValue;
@@ -49,6 +63,15 @@ class ChannelValueToStateTest {
 
     @Mock
     private UnknownValue unknownValue;
+
+    private static Stream<Arguments> onRgbValue() {
+        return Stream.of(
+                Arguments.of(SUPLA_RGBW_BIT_FUNC_RGB_LIGHTING, List.of(RgbwLed.COLOR)),
+                Arguments.of(SUPLA_RGBW_BIT_FUNC_DIMMER_AND_RGB_LIGHTING, List.of(RgbwLed.COLOR, RgbwLed.BRIGHTNESS)),
+                Arguments.of(SUPLA_RGBW_BIT_FUNC_DIMMER_CCT_AND_RGB, List.of(RgbwLed.COLOR, RgbwLed.BRIGHTNESS_CCT)),
+                Arguments.of(SUPLA_RGBW_BIT_FUNC_DIMMER, List.of(RgbwLed.BRIGHTNESS)),
+                Arguments.of(SUPLA_RGBW_BIT_FUNC_DIMMER_CCT, List.of(RgbwLed.BRIGHTNESS_CCT)));
+    }
 
     @Test
     void shouldConvertDecimalValue() {
@@ -65,6 +88,10 @@ class ChannelValueToStateTest {
         return new DeviceChannel(number, null, null, null, Set.of(), new byte[8], null, null, null);
     }
 
+    private DeviceChannel mockDeviceChannel(int number, RgbwBitFunction... functions) {
+        return new DeviceChannel(number, null, null, null, Set.of(functions), new byte[8], null, null, null);
+    }
+
     @Test
     void shouldReturnNullForMissingDecimal() {
         var converter = new ChannelValueToState(thingUID, mockDeviceChannel(4));
@@ -75,33 +102,78 @@ class ChannelValueToStateTest {
         assertThat(states).containsExactly(NULL);
     }
 
-    @Test
-    void shouldConvertPercentAndRgb() {
+    @DisplayName("should convert onRgbValue into proper channels")
+    @ParameterizedTest
+    @MethodSource
+    void onRgbValue(RgbwBitFunction bitFunction, List<String> expectedChannels) {
         // given
-        var rgbValue = new RgbValue(55, 77, 1, 2, 3, 0);
-        var deviceChannel = new DeviceChannel(
-                6,
-                null,
-                null,
-                null,
-                Set.of(SUPLA_RGBW_BIT_FUNC_DIMMER_AND_RGB_LIGHTING),
-                new byte[8],
-                null,
-                null,
-                null);
+        final int deviceChannelNumber = 6;
+        var deviceChannel = mockDeviceChannel(deviceChannelNumber, bitFunction);
+        var converter = new ChannelValueToState(thingUID, deviceChannel);
+        final var expectedChannelIds = expectedChannels.stream()
+                .map(channelId -> new ChannelUID(new ChannelGroupUID(thingUID, "" + deviceChannelNumber), channelId)
+                        .getAsString())
+                .toList();
+
+        // when
+        final List<ChannelState> channelStates = converter.onRgbValue(rgbValue).toList();
+
+        // then
+        assertThat(channelStates).hasSize(expectedChannels.size());
+        final List<String> channelIds = channelStates.stream()
+                .map(channelState -> channelState.uid().getAsString())
+                .toList();
+        assertThat(channelIds).containsExactlyInAnyOrderElementsOf(expectedChannelIds);
+    }
+
+    @DisplayName("should convert onRgbValue into proper states")
+    @ParameterizedTest
+    @MethodSource("onRgbValue")
+    void onRgbValueStates(RgbwBitFunction bitFunction, List<String> channels) {
+        // given
+        final int deviceChannelNumber = 6;
+        var deviceChannel = mockDeviceChannel(deviceChannelNumber, bitFunction);
         var converter = new ChannelValueToState(thingUID, deviceChannel);
 
         // when
-        List<State> states =
-                converter.onRgbValue(rgbValue).map(ChannelState::state).toList();
+        final List<ChannelState> channelStates = converter.onRgbValue(rgbValue).toList();
 
         // then
-        var hsbType = HSBType.fromRGB(1, 2, 3);
-        var expected =
-                new HSBType(hsbType.getHue(), hsbType.getSaturation(), new PercentType(rgbValue.colorBrightness()));
-        assertThat(states).hasSize(2);
-        assertThat(states.get(0)).isEqualTo(expected);
-        assertThat(states.get(1)).isEqualTo(new PercentType(55));
+        for (ChannelState channelState : channelStates) {
+            if (channelState
+                    .uid()
+                    .getAsString()
+                    .equals(new ChannelUID(new ChannelGroupUID(thingUID, "" + deviceChannelNumber), RgbwLed.COLOR)
+                            .getAsString())) {
+                var hsbType = HSBType.fromRGB(1, 2, 3);
+                var expected = new HSBType(
+                        hsbType.getHue(), hsbType.getSaturation(), new PercentType(rgbValue.colorBrightness()));
+                assertThat(channelState.state()).isEqualTo(expected);
+            } else if (channelState
+                    .uid()
+                    .getAsString()
+                    .equals(new ChannelUID(new ChannelGroupUID(thingUID, "" + deviceChannelNumber), RgbwLed.BRIGHTNESS)
+                            .getAsString())) {
+                assertThat(channelState.state()).isEqualTo(new PercentType(55));
+            } else if (channelState
+                    .uid()
+                    .getAsString()
+                    .equals(new ChannelUID(
+                                    new ChannelGroupUID(thingUID, "" + deviceChannelNumber), RgbwLed.BRIGHTNESS_CCT)
+                            .getAsString())) {
+                assertThat(channelState.state()).isEqualTo(new PercentType(77));
+            }
+        }
+    }
+
+    @Test
+    void shouldReturnNullForMissingRgb() {
+        var deviceChannel = mockDeviceChannel(6, SUPLA_RGBW_BIT_FUNC_DIMMER_AND_RGB_LIGHTING);
+        var converter = new ChannelValueToState(thingUID, deviceChannel);
+
+        List<State> states = converter.onRgbValue(null).map(ChannelState::state).toList();
+
+        assertThat(states).containsExactly(NULL, NULL);
     }
 
     @Test
