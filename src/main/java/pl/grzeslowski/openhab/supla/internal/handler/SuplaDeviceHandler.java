@@ -19,9 +19,9 @@ import pl.grzeslowski.openhab.supla.internal.Localization;
 import pl.grzeslowski.openhab.supla.internal.server.handler.trait.HandleCommand;
 
 @NonNullByDefault
-public abstract class SuplaDevice extends BaseThingHandler implements HandleCommand {
+public abstract class SuplaDeviceHandler extends BaseThingHandler implements HandleCommand {
 
-    public SuplaDevice(final Thing thing) {
+    public SuplaDeviceHandler(final Thing thing) {
         super(thing);
     }
 

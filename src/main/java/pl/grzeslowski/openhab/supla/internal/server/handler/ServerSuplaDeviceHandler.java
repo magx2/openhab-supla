@@ -73,7 +73,7 @@ import pl.grzeslowski.jsupla.server.SuplaWriter;
 import pl.grzeslowski.openhab.supla.internal.GuidLogger.GuidLogged;
 import pl.grzeslowski.openhab.supla.internal.handler.InitializationException;
 import pl.grzeslowski.openhab.supla.internal.handler.OfflineInitializationException;
-import pl.grzeslowski.openhab.supla.internal.handler.SuplaDevice;
+import pl.grzeslowski.openhab.supla.internal.handler.SuplaDeviceHandler;
 import pl.grzeslowski.openhab.supla.internal.server.SuplaServerDeviceActions;
 import pl.grzeslowski.openhab.supla.internal.server.cache.InMemoryStateCache;
 import pl.grzeslowski.openhab.supla.internal.server.cache.StateCache;
@@ -91,7 +91,7 @@ import pl.grzeslowski.openhab.supla.internal.server.traits.*;
 /** The {@link ServerSuplaDeviceHandler} is responsible for handling commands, which are sent to one of the channels. */
 @NonNullByDefault
 @ToString(onlyExplicitlyIncluded = true)
-public abstract class ServerSuplaDeviceHandler extends SuplaDevice implements MessageHandler, ServerDevice {
+public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler implements MessageHandler, ServerDevice {
     public static final byte ACTIVITY_TIMEOUT = (byte) 100;
     public static final String AVAILABLE_FIELDS = "AVAILABLE_FIELDS";
     private static final AtomicLong ID = new AtomicLong();
