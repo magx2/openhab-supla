@@ -98,7 +98,7 @@ public class ChannelUtil {
     }
 
     public Stream<ChannelValueToState.ChannelState> findState(
-            ChannelType type,
+            @Nullable ChannelType type,
             int channelNumber,
             @Nullable @jakarta.annotation.Nullable byte[] value,
             @jakarta.annotation.Nullable ActionTrigger actionTrigger,
@@ -146,7 +146,7 @@ public class ChannelUtil {
         updateStatus(trait.channelNumber(), type, trait.value());
     }
 
-    public void updateStatus(int channelNumber, ChannelType type, byte[] channelValue) {
+    public void updateStatus(int channelNumber, @Nullable ChannelType type, byte[] channelValue) {
         invoker.getLogger().debug("Updating status for channelNumber={}, type={}", channelNumber, type);
         findState(type, channelNumber, channelValue, null, null).forEach(pair -> {
             var channelUID = pair.uid();

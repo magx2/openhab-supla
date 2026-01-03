@@ -254,7 +254,7 @@ public class GatewayDeviceHandler extends ServerSuplaDeviceHandler implements Se
 
     @GuidLogger.GuidLogged
     @Override
-    public void consumeSuplaDeviceChannelExtendedValue(int channelNumber, ChannelType type, byte[] value) {
+    public void consumeSuplaDeviceChannelExtendedValue(int channelNumber, @Nullable ChannelType type, byte[] value) {
         attachGuid(findGuid(), () -> {
             var optional = findId(channelNumber, null).flatMap(this::findSubDevice);
             if (optional.isEmpty()) {

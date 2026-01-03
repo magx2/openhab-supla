@@ -36,7 +36,7 @@
         <dependency>
             <groupId>pl.grzeslowski.jSupla</groupId>
             <artifactId>server</artifactId>
-            <version>4.3.2</version>
+            <version>4.4.0</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
@@ -440,10 +440,10 @@ bcutil-jdk15on-*.jar;lib:=true
                         </includes>
                         <sortPom>
                             <predefinedSortOrder>recommended_2008_06</predefinedSortOrder>
-                            <sortDependencies />
-                            <sortDependencyManagement />
-                            <sortDependencyExclusions />
-                            <sortPlugins />
+                            <sortDependencies/>
+                            <sortDependencyManagement/>
+                            <sortDependencyExclusions/>
+                            <sortPlugins/>
                             <sortProperties>true</sortProperties>
                             <sortExecutions>true</sortExecutions>
                             <nrOfIndentSpace>4</nrOfIndentSpace>
@@ -469,8 +469,8 @@ bcutil-jdk15on-*.jar;lib:=true
                                 <exclude>*.http</exclude>
                                 <exclude>imgs/**</exclude>
                             </excludes>
-                            <trimTrailingWhitespace />
-                            <endWithNewline />
+                            <trimTrailingWhitespace/>
+                            <endWithNewline/>
                             <indent>
                                 <tabs>true</tabs>
                                 <spacesPerTab>4</spacesPerTab>
@@ -483,9 +483,9 @@ bcutil-jdk15on-*.jar;lib:=true
                             <include>src/test/java/**/*.java</include>
                             <include>src/integration-test/java/**/*.java</include>
                         </includes>
-                        <importOrder />
-                        <removeUnusedImports />
-                        <formatAnnotations />
+                        <importOrder/>
+                        <removeUnusedImports/>
+                        <formatAnnotations/>
                         <palantirJavaFormat>
                             <version>2.83.0</version>
                             <style>PALANTIR</style>

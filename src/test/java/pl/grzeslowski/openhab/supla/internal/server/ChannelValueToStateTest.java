@@ -71,7 +71,7 @@ class ChannelValueToStateTest {
     @Test
     void shouldConvertPercentAndRgb() {
         // given
-        var rgbValue = new RgbValue(55, 77, 1, 2, 3);
+        var rgbValue = new RgbValue(55, 77, 1, 2, 3, 0);
         var converter = new ChannelValueToState(thingUID, 6);
 
         // when
