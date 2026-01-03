@@ -1,9 +1,11 @@
 package pl.grzeslowski.openhab.supla.internal.server;
 
 import static java.lang.String.valueOf;
+import static pl.grzeslowski.jsupla.protocol.api.RgbwBitFunction.*;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ChannelIds.Hvac.*;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.Channels.*;
-import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ItemType.*;
+import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ItemType.COLOR;
+import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ItemType.DIMMER;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,16 +26,17 @@ import org.openhab.core.thing.type.ChannelTypeUID;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.value.ChannelClassSwitch;
 import pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants;
 import pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ChannelIds.RgbwLed;
+import pl.grzeslowski.openhab.supla.internal.server.traits.DeviceChannel;
 
 @NonNullByDefault
 @RequiredArgsConstructor
 @Slf4j
 public class ChannelCallback implements ChannelClassSwitch.Callback<Stream<Channel>> {
     private final ThingUID thingUID;
-    private final int number;
+    private final DeviceChannel deviceChannel;
 
     private ChannelUID createChannelUid() {
-        return new ChannelUID(thingUID, valueOf(number));
+        return new ChannelUID(thingUID, valueOf(deviceChannel.number()));
     }
 
     private ChannelTypeUID createChannelTypeUID(String id) {
@@ -43,7 +46,7 @@ public class ChannelCallback implements ChannelClassSwitch.Callback<Stream<Chann
     @Override
     @Nullable
     public Stream<Channel> onDecimalValue() {
-        log.debug("{} {} onDecimalValue", thingUID, number);
+        log.debug("{} {} onDecimalValue", thingUID, deviceChannel);
         final ChannelUID channelUid = createChannelUid();
         final ChannelTypeUID channelTypeUID = createChannelTypeUID(DECIMAL_CHANNEL_ID);
 
@@ -55,14 +58,14 @@ public class ChannelCallback implements ChannelClassSwitch.Callback<Stream<Chann
     @Override
     @Nullable
     public Stream<Channel> onOnOff() {
-        log.debug("{} {} onOnOff", thingUID, number);
+        log.debug("{} {} onOnOff", thingUID, deviceChannel);
         return switchChannel();
     }
 
     @Override
     @Nullable
     public Stream<Channel> onOpenClose() {
-        log.debug("{} {} onOpenClose", thingUID, number);
+        log.debug("{} {} onOpenClose", thingUID, deviceChannel);
         return switchChannel();
     }
 
@@ -79,7 +82,7 @@ public class ChannelCallback implements ChannelClassSwitch.Callback<Stream<Chann
     @Override
     @Nullable
     public Stream<Channel> onPercentValue() {
-        log.debug("{} {} onPercentValue", thingUID, number);
+        log.debug("{} {} onPercentValue", thingUID, deviceChannel);
 
         var channelUid = createChannelUid();
         var channelTypeUID = createChannelTypeUID(DIMMER_CHANNEL_ID);
@@ -93,29 +96,48 @@ public class ChannelCallback implements ChannelClassSwitch.Callback<Stream<Chann
     @Override
     @Nullable
     public Stream<Channel> onRgbValue() {
-        log.debug("{} {} onRgbValue", thingUID, number);
-        var groupUid = new ChannelGroupUID(thingUID, valueOf(number));
+        log.debug("{} {} onRgbValue", thingUID, deviceChannel);
+        var rgbwBitFunctions = deviceChannel.rgbwBitFunctions();
+        var groupUid = new ChannelGroupUID(thingUID, valueOf(deviceChannel.number()));
 
-        var colorChannelUid = new ChannelUID(groupUid, RgbwLed.COLOR);
-        var brightnessChannelUid = new ChannelUID(groupUid, RgbwLed.BRIGHTNESS);
+        var channels = new ArrayList<Channel>();
 
-        return Stream.of(
-                ChannelBuilder.create(colorChannelUid, COLOR)
-                        .withLabel("LED Color")
-                        .withType(createChannelTypeUID(RGB_CHANNEL_ID))
-                        .withDefaultTags(Set.of("Control", "Color"))
-                        .build(),
-                ChannelBuilder.create(brightnessChannelUid, DIMMER)
-                        .withLabel("LED Brightness")
-                        .withType(createChannelTypeUID(DIMMER_CHANNEL_ID))
-                        .withDefaultTags(Set.of("Control", "Brightness"))
-                        .build());
+        if (rgbwBitFunctions.contains(SUPLA_RGBW_BIT_FUNC_RGB_LIGHTING)
+                || rgbwBitFunctions.contains(SUPLA_RGBW_BIT_FUNC_DIMMER_AND_RGB_LIGHTING)
+                || rgbwBitFunctions.contains(SUPLA_RGBW_BIT_FUNC_DIMMER_CCT_AND_RGB)) {
+            var colorChannelUid = new ChannelUID(groupUid, RgbwLed.COLOR);
+            channels.add(ChannelBuilder.create(colorChannelUid, COLOR)
+                    .withLabel("LED Color")
+                    .withType(createChannelTypeUID(RGB_CHANNEL_ID))
+                    .withDefaultTags(Set.of("Control", "Color"))
+                    .build());
+        }
+        if (rgbwBitFunctions.contains(SUPLA_RGBW_BIT_FUNC_DIMMER_AND_RGB_LIGHTING)
+                || rgbwBitFunctions.contains(SUPLA_RGBW_BIT_FUNC_DIMMER)) {
+            var brightnessChannelUid = new ChannelUID(groupUid, RgbwLed.BRIGHTNESS);
+            channels.add(ChannelBuilder.create(brightnessChannelUid, DIMMER)
+                    .withLabel("White Brightness")
+                    .withType(createChannelTypeUID(DIMMER_CHANNEL_ID))
+                    .withDefaultTags(Set.of("Control", "Brightness"))
+                    .build());
+        }
+        if (rgbwBitFunctions.contains(SUPLA_RGBW_BIT_FUNC_DIMMER_CCT)
+                || rgbwBitFunctions.contains(SUPLA_RGBW_BIT_FUNC_DIMMER_CCT_AND_RGB)) {
+            var brightnessChannelUid = new ChannelUID(groupUid, RgbwLed.BRIGHTNESS_CCT);
+            channels.add(ChannelBuilder.create(brightnessChannelUid, DIMMER)
+                    .withLabel("CCT Brightness")
+                    .withType(createChannelTypeUID(DIMMER_CHANNEL_ID))
+                    .withDefaultTags(Set.of("Control", "Brightness"))
+                    .build());
+        }
+
+        return channels.stream();
     }
 
     @Override
     @Nullable
     public Stream<Channel> onStoppableOpenClose() {
-        log.debug("{} {} onStoppableOpenClose", thingUID, number);
+        log.debug("{} {} onStoppableOpenClose", thingUID, deviceChannel);
         final ChannelUID channelUid = createChannelUid();
         final ChannelTypeUID channelTypeUID = createChannelTypeUID(ROLLER_SHUTTER_CHANNEL_ID);
 
@@ -128,7 +150,7 @@ public class ChannelCallback implements ChannelClassSwitch.Callback<Stream<Chann
     @Override
     @Nullable
     public Stream<Channel> onTemperatureValue() {
-        log.debug("{} {} onTemperatureValue", thingUID, number);
+        log.debug("{} {} onTemperatureValue", thingUID, deviceChannel);
         final ChannelUID channelUid = createChannelUid();
         final ChannelTypeUID channelTypeUID = createChannelTypeUID(TEMPERATURE_CHANNEL_ID);
 
@@ -141,8 +163,8 @@ public class ChannelCallback implements ChannelClassSwitch.Callback<Stream<Chann
     @Override
     @Nullable
     public Stream<Channel> onTemperatureAndHumidityValue() {
-        log.debug("{} {} onTemperatureAndHumidityValue", thingUID, number);
-        val groupUid = new ChannelGroupUID(thingUID, valueOf(number));
+        log.debug("{} {} onTemperatureAndHumidityValue", thingUID, deviceChannel);
+        val groupUid = new ChannelGroupUID(thingUID, valueOf(deviceChannel.number()));
         val channels = new ArrayList<Channel>();
         {
             val channelUid = new ChannelUID(groupUid, "temperature");
@@ -165,8 +187,8 @@ public class ChannelCallback implements ChannelClassSwitch.Callback<Stream<Chann
 
     @Override
     public Stream<Channel> onElectricityMeter() {
-        log.debug("{} {} onElectricityMeter", thingUID, number);
-        val groupUid = new ChannelGroupUID(thingUID, valueOf(number));
+        log.debug("{} {} onElectricityMeter", thingUID, deviceChannel);
+        val groupUid = new ChannelGroupUID(thingUID, valueOf(deviceChannel.number()));
         val channels = new ArrayList<Channel>();
 
         // main
@@ -340,8 +362,8 @@ public class ChannelCallback implements ChannelClassSwitch.Callback<Stream<Chann
 
     @Override
     public Stream<Channel> onHvacValue() {
-        log.debug("{} {} onHvacValue", thingUID, number);
-        val groupUid = new ChannelGroupUID(thingUID, valueOf(number));
+        log.debug("{} {} onHvacValue", thingUID, deviceChannel);
+        val groupUid = new ChannelGroupUID(thingUID, valueOf(deviceChannel.number()));
         val channels = new ArrayList<Channel>();
         {
             val channelUid = new ChannelUID(groupUid, HVAC_ON);
@@ -427,7 +449,7 @@ public class ChannelCallback implements ChannelClassSwitch.Callback<Stream<Chann
     @Override
     @Nullable
     public Stream<Channel> onUnknownValue() {
-        log.debug("{} {} onUnknownValue", thingUID, number);
+        log.debug("{} {} onUnknownValue", thingUID, deviceChannel);
         val channelUid = createChannelUid();
         val channelTypeUID = createChannelTypeUID(UNKNOWN_CHANNEL_ID);
 

@@ -6,6 +6,7 @@ import static java.util.Optional.ofNullable;
 import static org.openhab.core.library.unit.SIUnits.CELSIUS;
 import static org.openhab.core.types.UnDefType.NULL;
 import static org.openhab.core.types.UnDefType.UNDEF;
+import static pl.grzeslowski.jsupla.protocol.api.RgbwBitFunction.*;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -24,6 +25,7 @@ import org.openhab.core.thing.ThingUID;
 import org.openhab.core.types.State;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.value.*;
 import pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ChannelIds.RgbwLed;
+import pl.grzeslowski.openhab.supla.internal.server.traits.DeviceChannel;
 
 @Slf4j
 @NonNullByDefault
@@ -32,13 +34,13 @@ public class ChannelValueToState implements ChannelValueSwitch.Callback<Stream<C
     public static final BigDecimal ONE_HUNDRED = BigDecimal.valueOf(100);
     private static final BigDecimal UNDEF_TEMPERATURE_VALUE = BigDecimal.valueOf(-275);
     private final ThingUID thingUID;
-    private final int channelNumber;
+    private final DeviceChannel deviceChannel;
 
     public record ChannelState(ChannelUID uid, State state) {}
 
     @Override
     public Stream<ChannelState> onDecimalValue(@Nullable final DecimalValue decimalValue) {
-        val id = createChannelUid(channelNumber);
+        val id = createChannelUid();
         if (decimalValue == null) {
             return Stream.of(new ChannelState(id, NULL));
         }
@@ -47,7 +49,7 @@ public class ChannelValueToState implements ChannelValueSwitch.Callback<Stream<C
 
     @Override
     public Stream<ChannelState> onOnOff(@Nullable final OnOff onOff) {
-        val id = createChannelUid(channelNumber);
+        val id = createChannelUid();
         if (onOff == null) {
             return Stream.of(new ChannelState(id, NULL));
         }
@@ -59,7 +61,7 @@ public class ChannelValueToState implements ChannelValueSwitch.Callback<Stream<C
 
     @Override
     public Stream<ChannelState> onOpenClose(@Nullable final OpenClose openClose) {
-        val id = createChannelUid(channelNumber);
+        val id = createChannelUid();
         if (openClose == null) {
             return Stream.of(new ChannelState(id, NULL));
         }
@@ -71,7 +73,7 @@ public class ChannelValueToState implements ChannelValueSwitch.Callback<Stream<C
 
     @Override
     public Stream<ChannelState> onPercentValue(@Nullable final PercentValue percentValue) {
-        val id = createChannelUid(channelNumber);
+        val id = createChannelUid();
         if (percentValue == null) {
             return Stream.of(new ChannelState(id, NULL));
         }
@@ -80,26 +82,47 @@ public class ChannelValueToState implements ChannelValueSwitch.Callback<Stream<C
 
     @Override
     public Stream<ChannelState> onRgbValue(@Nullable final RgbValue rgbValue) {
-        val groupUid = new ChannelGroupUID(thingUID, valueOf(channelNumber));
-        val rgbUid = new ChannelUID(groupUid, RgbwLed.COLOR);
-        val brightnessUid = new ChannelUID(groupUid, RgbwLed.BRIGHTNESS);
-        if (rgbValue == null) {
-            return Stream.of(new ChannelState(rgbUid, NULL), new ChannelState(brightnessUid, NULL));
+        var maybeRgbValue = ofNullable(rgbValue);
+        var rgbwBitFunctions = deviceChannel.rgbwBitFunctions();
+        val groupUid = new ChannelGroupUID(thingUID, valueOf(deviceChannel.number()));
+
+        var channels = new ArrayList<ChannelState>();
+
+        if (rgbwBitFunctions.contains(SUPLA_RGBW_BIT_FUNC_RGB_LIGHTING)
+                || rgbwBitFunctions.contains(SUPLA_RGBW_BIT_FUNC_DIMMER_AND_RGB_LIGHTING)
+                || rgbwBitFunctions.contains(SUPLA_RGBW_BIT_FUNC_DIMMER_CCT_AND_RGB)) {
+            var rgbUid = new ChannelUID(groupUid, RgbwLed.COLOR);
+            var state = maybeRgbValue.map(ChannelValueToState::toHsbType).orElse(NULL);
+            channels.add(new ChannelState(rgbUid, state));
         }
-        var hsbType = toHsbType(rgbValue);
-        return Stream.of(
-                new ChannelState(rgbUid, hsbType),
-                new ChannelState(brightnessUid, new PercentType(rgbValue.brightness())));
+        if (rgbwBitFunctions.contains(SUPLA_RGBW_BIT_FUNC_DIMMER_AND_RGB_LIGHTING)
+                || rgbwBitFunctions.contains(SUPLA_RGBW_BIT_FUNC_DIMMER)) {
+            var brightnessUid = new ChannelUID(groupUid, RgbwLed.BRIGHTNESS);
+            var state = maybeRgbValue
+                    .map(rgb -> (State) new PercentType(rgb.brightness()))
+                    .orElse(NULL);
+            channels.add(new ChannelState(brightnessUid, state));
+        }
+        if (rgbwBitFunctions.contains(SUPLA_RGBW_BIT_FUNC_DIMMER_CCT)
+                || rgbwBitFunctions.contains(SUPLA_RGBW_BIT_FUNC_DIMMER_CCT_AND_RGB)) {
+            var brightnessCctUid = new ChannelUID(groupUid, RgbwLed.BRIGHTNESS_CCT);
+            var state = maybeRgbValue
+                    .map(rgb -> (State) new PercentType(rgb.dimmerCct()))
+                    .orElse(NULL);
+            channels.add(new ChannelState(brightnessCctUid, state));
+        }
+
+        return channels.stream();
     }
 
-    private static @NonNull HSBType toHsbType(@NonNull RgbValue rgbValue) {
+    private static @NonNull State toHsbType(@NonNull RgbValue rgbValue) {
         var hsbType = HSBType.fromRGB(rgbValue.red(), rgbValue.green(), rgbValue.blue());
         return new HSBType(hsbType.getHue(), hsbType.getSaturation(), new PercentType(rgbValue.colorBrightness()));
     }
 
     @Override
     public Stream<ChannelState> onStoppableOpenClose(@Nullable final StoppableOpenClose stoppableOpenClose) {
-        val id = createChannelUid(channelNumber);
+        val id = createChannelUid();
         if (stoppableOpenClose == null) {
             return Stream.of(new ChannelState(id, NULL));
         }
@@ -111,7 +134,7 @@ public class ChannelValueToState implements ChannelValueSwitch.Callback<Stream<C
 
     @Override
     public Stream<ChannelState> onTemperatureValue(@Nullable final TemperatureValue temperatureValue) {
-        val id = createChannelUid(channelNumber);
+        val id = createChannelUid();
         if (temperatureValue == null) {
             return Stream.of(new ChannelState(id, NULL));
         }
@@ -132,7 +155,7 @@ public class ChannelValueToState implements ChannelValueSwitch.Callback<Stream<C
     @Override
     public Stream<ChannelState> onTemperatureAndHumidityValue(
             @Nullable final TemperatureAndHumidityValue temperatureAndHumidityValue) {
-        val groupUid = new ChannelGroupUID(thingUID, valueOf(channelNumber));
+        val groupUid = new ChannelGroupUID(thingUID, valueOf(deviceChannel.number()));
         val tempId = new ChannelUID(groupUid, "temperature");
         val humidityId = new ChannelUID(groupUid, "humidity");
         if (temperatureAndHumidityValue == null) {
@@ -156,7 +179,7 @@ public class ChannelValueToState implements ChannelValueSwitch.Callback<Stream<C
 
     @Override
     public Stream<ChannelState> onElectricityMeter(@Nullable ElectricityMeterValue electricityMeterValue) {
-        val groupUid = new ChannelGroupUID(thingUID, valueOf(channelNumber));
+        val groupUid = new ChannelGroupUID(thingUID, valueOf(deviceChannel.number()));
         val pairs = new ArrayList<ChannelState>();
         val optionalMeter = ofNullable(electricityMeterValue);
         {
@@ -300,7 +323,7 @@ public class ChannelValueToState implements ChannelValueSwitch.Callback<Stream<C
 
     @Override
     public Stream<ChannelState> onHvacValue(HvacValue channelValue) {
-        val groupUid = new ChannelGroupUID(thingUID, valueOf(channelNumber));
+        val groupUid = new ChannelGroupUID(thingUID, valueOf(deviceChannel.number()));
         val pairs = new ArrayList<ChannelState>();
         {
             val id = new ChannelUID(groupUid, "on");
@@ -412,7 +435,7 @@ public class ChannelValueToState implements ChannelValueSwitch.Callback<Stream<C
 
     @Override
     public Stream<ChannelState> onUnknownValue(@Nullable final UnknownValue unknownValue) {
-        val id = createChannelUid(channelNumber);
+        val id = createChannelUid();
         if (unknownValue == null) {
             return Stream.of(new ChannelState(id, NULL));
         }
@@ -420,7 +443,7 @@ public class ChannelValueToState implements ChannelValueSwitch.Callback<Stream<C
         return Stream.of(new ChannelState(id, StringType.valueOf(unknownValue.message())));
     }
 
-    private ChannelUID createChannelUid(int channelNumber) {
-        return new ChannelUID(thingUID, valueOf(channelNumber));
+    private ChannelUID createChannelUid() {
+        return new ChannelUID(thingUID, valueOf(deviceChannel.number()));
     }
 }

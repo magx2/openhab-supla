@@ -10,6 +10,7 @@ import java.util.Set;
 import pl.grzeslowski.jsupla.protocol.api.ChannelFlag;
 import pl.grzeslowski.jsupla.protocol.api.ChannelFunction;
 import pl.grzeslowski.jsupla.protocol.api.ChannelType;
+import pl.grzeslowski.jsupla.protocol.api.RgbwBitFunction;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.decoders.HVACValueDecoderImpl;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.value.ActionTrigger;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.value.HvacValue;
@@ -21,6 +22,7 @@ public record DeviceChannel(
         ChannelType type,
         Set<ChannelFlag> flags,
         @Nullable ChannelFunction channelFunction,
+        Set<RgbwBitFunction> rgbwBitFunctions,
         byte[] value,
         ActionTrigger action,
         HvacValue hvacValue,
@@ -57,6 +59,7 @@ public record DeviceChannel(
                         finChannelType(r.type()),
                         findFlags(r.flags()),
                         r.funcList(),
+                        r.rGBWFuncList(),
                         r.value(),
                         mapAction(r),
                         mapHvacValue(r.hvacValue()),
@@ -109,7 +112,7 @@ public record DeviceChannel(
 
     // Used by type A
     private DeviceChannel(int number, ChannelType type, byte[] value) {
-        this(number, type, Set.of(), (ChannelFunction) null, value, null, null, null);
+        this(number, type, Set.of(), null, Set.of(), value, null, null, null);
     }
 
     // Used by type B
@@ -120,10 +123,19 @@ public record DeviceChannel(
             @Nullable byte[] value,
             @Nullable HvacValue hvacValue,
             @Nullable Integer subDeviceId) {
-        this(number, type, Set.of(), findChannelFunction(channelFunction), value, null, hvacValue, subDeviceId);
+        this(
+                number,
+                type,
+                Set.of(),
+                findChannelFunction(channelFunction),
+                Set.of(),
+                value,
+                null,
+                hvacValue,
+                subDeviceId);
     }
 
-    // Used by type C, D, E
+    // Used by type C, D
     private DeviceChannel(
             int number,
             ChannelType type,
@@ -133,10 +145,42 @@ public record DeviceChannel(
             @Nullable ActionTrigger action,
             @Nullable HvacValue hvacValue,
             @Nullable Integer subDeviceId) {
-        this(number, type, flags, findChannelFunction(channelFunction), value, action, hvacValue, subDeviceId);
+        this(
+                number,
+                type,
+                flags,
+                findChannelFunction(channelFunction),
+                Set.of(),
+                value,
+                action,
+                hvacValue,
+                subDeviceId);
     }
 
-    private static ChannelFunction findChannelFunction(Integer channelFunction) {
+    // Used by type E
+    private DeviceChannel(
+            int number,
+            ChannelType type,
+            Set<ChannelFlag> flags,
+            @Nullable Integer channelFunction,
+            @Nullable Long rgbwBitFunctionMask,
+            @Nullable byte[] value,
+            @Nullable ActionTrigger action,
+            @Nullable HvacValue hvacValue,
+            @Nullable Integer subDeviceId) {
+        this(
+                number,
+                type,
+                flags,
+                findChannelFunction(channelFunction),
+                findRgbwBitFunctions(rgbwBitFunctionMask),
+                value,
+                action,
+                hvacValue,
+                subDeviceId);
+    }
+
+    private static ChannelFunction findChannelFunction(@Nullable Integer channelFunction) {
         if (channelFunction == null) {
             return SUPLA_CHANNELFNC_NONE;
         }
@@ -144,6 +188,13 @@ public record DeviceChannel(
                 .filter(cf -> cf.getValue() == channelFunction)
                 .findAny()
                 .orElse(SUPLA_CHANNELFNC_NONE);
+    }
+
+    private static Set<RgbwBitFunction> findRgbwBitFunctions(@Nullable Long mask) {
+        if (mask == null) {
+            return Set.of();
+        }
+        return RgbwBitFunction.findByMask(mask);
     }
 
     @Nullable

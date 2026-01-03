@@ -18,13 +18,14 @@ import org.openhab.core.thing.ChannelUID;
 import org.openhab.core.thing.ThingUID;
 import org.openhab.core.thing.type.ChannelTypeUID;
 import pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants;
+import pl.grzeslowski.openhab.supla.internal.server.traits.DeviceChannel;
 
 class ChannelCallbackTest {
     private final ThingUID thingUID = new ThingUID("supla:test:1");
 
     @Test
     void shouldCreateSwitchChannel() {
-        var callback = new ChannelCallback(thingUID, 5);
+        var callback = new ChannelCallback(thingUID, mockDeviceChannel(5));
 
         List<Channel> channels = callback.onOnOff().toList();
 
@@ -37,9 +38,13 @@ class ChannelCallbackTest {
         });
     }
 
+    private DeviceChannel mockDeviceChannel(int number) {
+        return new DeviceChannel(number, null, null, null, null, new byte[8], null, null, null);
+    }
+
     @Test
     void shouldCreateTemperatureAndHumidityGroup() {
-        var callback = new ChannelCallback(thingUID, 3);
+        var callback = new ChannelCallback(thingUID, mockDeviceChannel(3));
 
         List<Channel> channels = callback.onTemperatureAndHumidityValue().toList();
 
@@ -58,7 +63,7 @@ class ChannelCallbackTest {
 
     @Test
     void shouldCreateHvacChannels() {
-        var callback = new ChannelCallback(thingUID, 7);
+        var callback = new ChannelCallback(thingUID, mockDeviceChannel(7));
 
         List<Channel> channels = callback.onHvacValue().toList();
 
@@ -74,7 +79,7 @@ class ChannelCallbackTest {
 
     @Test
     void shouldCreateUnknownChannel() {
-        var callback = new ChannelCallback(thingUID, 10);
+        var callback = new ChannelCallback(thingUID, mockDeviceChannel(10));
 
         Channel channel = callback.onUnknownValue().findFirst().orElseThrow();
 
