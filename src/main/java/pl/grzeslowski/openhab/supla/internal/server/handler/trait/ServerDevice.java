@@ -2,7 +2,6 @@ package pl.grzeslowski.openhab.supla.internal.server.handler.trait;
 
 import io.netty.channel.ChannelFuture;
 import java.util.Map;
-import java.util.SortedSet;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
@@ -16,7 +15,6 @@ import org.slf4j.Logger;
 import pl.grzeslowski.jsupla.protocol.api.ChannelType;
 import pl.grzeslowski.jsupla.protocol.api.types.FromServerProto;
 import pl.grzeslowski.openhab.supla.internal.server.cache.StateCache;
-import pl.grzeslowski.openhab.supla.internal.server.nativesupla.NativeSuplaChannel;
 
 @NonNullByDefault
 public interface ServerDevice extends HandleCommand, StateCache {
@@ -49,6 +47,4 @@ public interface ServerDevice extends HandleCommand, StateCache {
 
     public static record ChannelAndPreviousState(
             ChannelUID channelUID, @Nullable State previousState) {}
-
-    SortedSet<NativeSuplaChannel> getNativeChannels();
 }
