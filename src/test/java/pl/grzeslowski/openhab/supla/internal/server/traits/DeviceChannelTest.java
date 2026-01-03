@@ -73,6 +73,7 @@ class DeviceChannelTest {
                 ChannelType.SUPLA_CHANNELTYPE_AM2302.getValue(),
                 SUPLA_CHANNELFNC_NONE.getValue(),
                 null,
+                null,
                 0,
                 0,
                 (short) 0,

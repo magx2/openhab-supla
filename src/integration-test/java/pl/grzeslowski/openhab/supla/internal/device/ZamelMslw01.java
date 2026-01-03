@@ -95,7 +95,8 @@ public class ZamelMslw01 extends Device {
                     this.rgbwValue.colorBrightness(),
                     this.rgbwValue.red(),
                     this.rgbwValue.green(),
-                    this.rgbwValue.blue());
+                    this.rgbwValue.blue(),
+                    0);
         } else {
             this.rgbwValue = rgbwValue;
         }

@@ -2,7 +2,6 @@ package pl.grzeslowski.openhab.supla.internal.server.traits;
 
 import static java.util.Arrays.stream;
 import static pl.grzeslowski.jsupla.protocol.api.ChannelFunction.SUPLA_CHANNELFNC_NONE;
-import static pl.grzeslowski.jsupla.protocol.api.ChannelType.UNKNOWN;
 import static pl.grzeslowski.jsupla.protocol.api.ProtocolHelpers.toSignedInt;
 
 import jakarta.annotation.Nullable;
@@ -21,7 +20,7 @@ public record DeviceChannel(
         int number,
         ChannelType type,
         Set<ChannelFlag> flags,
-        ChannelFunction channelFunction,
+        @Nullable ChannelFunction channelFunction,
         byte[] value,
         ActionTrigger action,
         HvacValue hvacValue,
@@ -66,11 +65,12 @@ public record DeviceChannel(
     }
 
     private static Set<ChannelFlag> findFlags(long flags) {
-        return ChannelFlag.findByValue(flags);
+        return ChannelFlag.findByMask(flags);
     }
 
+    @Nullable
     private static ChannelType finChannelType(int type) {
-        return ChannelType.findByValue(type).orElse(UNKNOWN);
+        return ChannelType.findByValue(type).orElse(null);
     }
 
     @Nullable
