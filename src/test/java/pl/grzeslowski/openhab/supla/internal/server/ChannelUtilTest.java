@@ -20,7 +20,6 @@ import org.openhab.core.thing.ChannelUID;
 import org.openhab.core.thing.Thing;
 import org.openhab.core.thing.binding.builder.ThingBuilder;
 import org.slf4j.Logger;
-import pl.grzeslowski.jsupla.protocol.api.ChannelType;
 import pl.grzeslowski.openhab.supla.internal.server.handler.trait.ServerDevice;
 import pl.grzeslowski.openhab.supla.internal.server.traits.DeviceChannelValue;
 
@@ -43,11 +42,8 @@ class ChannelUtilTest {
 
     @BeforeEach
     void setUp() {
-        var channelTypes = new HashMap<Integer, ChannelType>();
-
         lenient().when(serverDevice.getLogger()).thenReturn(logger);
         lenient().when(serverDevice.getThing()).thenReturn(thing);
-        lenient().when(serverDevice.getChannelTypes()).thenReturn(channelTypes);
         lenient().when(serverDevice.editThing()).thenReturn(thingBuilder);
         lenient().when(thingBuilder.withChannels(any(List.class))).thenReturn(thingBuilder);
     }

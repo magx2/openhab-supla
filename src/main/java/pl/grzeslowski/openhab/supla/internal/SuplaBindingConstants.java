@@ -124,6 +124,7 @@ public class SuplaBindingConstants {
         public static class RgbwLed {
             public static final String COLOR = "rgbw_color";
             public static final String BRIGHTNESS = "rgbw_brightness";
+            public static final String BRIGHTNESS_CCT = "rgbw_brightness_cct";
         }
     }
 

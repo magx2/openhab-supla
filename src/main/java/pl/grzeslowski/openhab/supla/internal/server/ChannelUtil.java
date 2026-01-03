@@ -3,15 +3,14 @@ package pl.grzeslowski.openhab.supla.internal.server;
 import static java.lang.Short.parseShort;
 import static java.lang.String.valueOf;
 import static java.util.Comparator.comparing;
+import static java.util.stream.Collectors.joining;
 import static org.openhab.core.thing.ChannelUID.CHANNEL_GROUP_SEPARATOR;
 import static org.openhab.core.types.UnDefType.UNDEF;
 import static pl.grzeslowski.jsupla.protocol.api.ProtocolHelpers.*;
 import static pl.grzeslowski.jsupla.protocol.api.consts.ProtoConsts.*;
 
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -24,7 +23,6 @@ import org.openhab.core.thing.ChannelUID;
 import org.openhab.core.thing.binding.builder.ChannelBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import pl.grzeslowski.jsupla.protocol.api.ChannelType;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.decoders.ChannelTypeDecoder;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.value.*;
 import pl.grzeslowski.jsupla.protocol.api.structs.dcs.SetCaption;
@@ -39,6 +37,7 @@ import pl.grzeslowski.openhab.supla.internal.server.traits.DeviceChannelValue;
 public class ChannelUtil {
     private static final Logger LOGGER = LoggerFactory.getLogger(ChannelUtil.class);
     private final ServerDevice invoker;
+    private final Map<Integer, DeviceChannel> deviceChannels = new java.util.concurrent.ConcurrentHashMap<>();
 
     public void buildChannels(List<DeviceChannel> deviceChannels) {
         {
@@ -49,12 +48,11 @@ public class ChannelUtil {
                     .flatMap(deviceChannel -> createChannel(deviceChannel, adjustLabel, idx.getAndIncrement(), digits))
                     .toList();
             if (invoker.getLogger().isDebugEnabled()) {
-                var rawChannels = deviceChannels.stream()
-                        .map(DeviceChannel::toString)
-                        .collect(Collectors.joining("\n - ", " - ", ""));
+                var rawChannels =
+                        deviceChannels.stream().map(DeviceChannel::toString).collect(joining("\n - ", " - ", ""));
                 var string = channels.stream()
                         .map(channel -> channel.getUID() + " -> " + channel.getChannelTypeUID())
-                        .collect(Collectors.joining("\n - ", " - ", ""));
+                        .collect(joining("\n - ", " - ", ""));
                 invoker.getLogger().debug("""
                         Registering channels:
                          > Raw:
@@ -71,11 +69,11 @@ public class ChannelUtil {
     }
 
     private Stream<Channel> createChannel(DeviceChannel deviceChannel, boolean adjustLabel, int idx, int digits) {
-        var channelCallback = new ChannelCallback(invoker.getThing().getUID(), deviceChannel.number());
+        deviceChannels.put(deviceChannel.number(), deviceChannel);
+        var channelCallback = new ChannelCallback(invoker.getThing().getUID(), deviceChannel);
         var channelValueSwitch = new ChannelClassSwitch<>(channelCallback);
         var clazz = ChannelTypeDecoder.INSTANCE.findClass(deviceChannel.type());
         var channels = channelValueSwitch.doSwitch(clazz);
-        invoker.getChannelTypes().put(deviceChannel.number(), deviceChannel.type());
         if (adjustLabel) {
             record ChannelAndLabel(
                     ChannelBuilder builder, @Nullable String label) {}
@@ -91,29 +89,24 @@ public class ChannelUtil {
         if (clazz.isAssignableFrom(ElectricityMeterValue.class)) {
             return Stream.empty();
         }
-        return findState(
-                deviceChannel.type(),
-                deviceChannel.number(),
-                deviceChannel.value(),
-                deviceChannel.action(),
-                deviceChannel.hvacValue());
+        return findState(deviceChannel);
+    }
+
+    public Stream<ChannelValueToState.ChannelState> findState(DeviceChannel deviceChannel) {
+        return findState(deviceChannel, deviceChannel.value());
     }
 
     public Stream<ChannelValueToState.ChannelState> findState(
-            @Nullable ChannelType type,
-            int channelNumber,
-            @Nullable @jakarta.annotation.Nullable byte[] value,
-            @jakarta.annotation.Nullable ActionTrigger actionTrigger,
-            @jakarta.annotation.Nullable @Nullable HvacValue hvacValue) {
+            DeviceChannel deviceChannel, @jakarta.annotation.Nullable byte[] value) {
         val valueSwitch = new ChannelValueSwitch<>(
-                new ChannelValueToState(invoker.getThing().getUID(), channelNumber));
+                new ChannelValueToState(invoker.getThing().getUID(), deviceChannel));
         ChannelValue channelValue;
         if (value != null) {
-            channelValue = ChannelTypeDecoder.INSTANCE.decode(type, value);
-        } else if (actionTrigger != null) {
-            channelValue = actionTrigger;
-        } else if (hvacValue != null) {
-            channelValue = hvacValue;
+            channelValue = ChannelTypeDecoder.INSTANCE.decode(deviceChannel.type(), value);
+        } else if (deviceChannel.action() != null) {
+            channelValue = deviceChannel.action();
+        } else if (deviceChannel.hvacValue() != null) {
+            channelValue = deviceChannel.hvacValue();
         } else {
             throw new IllegalArgumentException("value and hvacValue cannot be null!");
         }
@@ -147,21 +140,35 @@ public class ChannelUtil {
             invoker.getLogger().debug("Channel Value is offline, ignoring it. trait={}", trait);
             return;
         }
-        var type = invoker.getChannelTypes().get(trait.channelNumber());
-        updateStatus(trait.channelNumber(), type, trait.value());
+        updateStatus(trait.channelNumber(), trait.value());
     }
 
-    public void updateStatus(int channelNumber, @Nullable ChannelType type, byte[] channelValue) {
-        invoker.getLogger().debug("Updating status for channelNumber={}, type={}", channelNumber, type);
-        findState(type, channelNumber, channelValue, null, null).forEach(pair -> {
+    public void updateStatus(int channelNumber, byte[] channelValue) {
+        invoker.getLogger().debug("Updating status for channelNumber={}", channelNumber);
+        var deviceChannel = deviceChannels.get(channelNumber);
+        if (deviceChannel == null) {
+            if (invoker.getLogger().isWarnEnabled()) {
+                var collect = deviceChannels.isEmpty()
+                        ? "<none>"
+                        : deviceChannels.values().stream()
+                                .map(Objects::toString)
+                                .collect(joining("\n - ", "\n - ", ""));
+                invoker.getLogger()
+                        .warn(
+                                "There is no device channel for channel number {}. Cannot update status.\nExisting device channels: {}",
+                                channelNumber,
+                                collect);
+            }
+            return;
+        }
+        findState(deviceChannel, channelValue).forEach(pair -> {
             var channelUID = pair.uid();
             var state = pair.state();
             invoker.getLogger()
                     .debug(
-                            "Updating state for channel {}, channelNumber {}, type {}, state={}",
+                            "Updating state for channel {}, channelNumber {}, state={}",
                             channelUID,
                             channelNumber,
-                            type,
                             state);
             invoker.updateState(channelUID, state);
             invoker.saveState(channelUID, state);

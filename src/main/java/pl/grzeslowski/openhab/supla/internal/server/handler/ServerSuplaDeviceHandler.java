@@ -52,7 +52,6 @@ import org.openhab.core.types.State;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import pl.grzeslowski.jsupla.protocol.api.ChannelFunction;
-import pl.grzeslowski.jsupla.protocol.api.ChannelType;
 import pl.grzeslowski.jsupla.protocol.api.encoders.ChannelConfigActionTriggerEncoder;
 import pl.grzeslowski.jsupla.protocol.api.structs.ChannelConfigActionTrigger;
 import pl.grzeslowski.jsupla.protocol.api.structs.SuplaTimeval;
@@ -269,10 +268,7 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler implem
                     consumeDeviceChannelValueTrait(DeviceChannelValue.fromProto(value));
                 case SuplaDeviceChannelExtendedValue value -> {
                     var extendedValue = value.value();
-                    consumeSuplaDeviceChannelExtendedValue(
-                            value.channelNumber(),
-                            ChannelType.findByValue(extendedValue.type()).orElse(null),
-                            extendedValue.value());
+                    consumeSuplaDeviceChannelExtendedValue(value.channelNumber(), extendedValue.value());
                 }
                 case LocalTimeRequest value -> consumeLocalTimeRequest(writer);
                 case SetCaption value -> consumeSetCaption(value);
@@ -722,7 +718,7 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler implem
 
     abstract void consumeDeviceChannelValueTrait(DeviceChannelValue trait);
 
-    abstract void consumeSuplaDeviceChannelExtendedValue(int channelNumber, @Nullable ChannelType type, byte[] value);
+    abstract void consumeSuplaDeviceChannelExtendedValue(int channelNumber, byte[] value);
 
     abstract void consumeSetCaption(SetCaption value);
 

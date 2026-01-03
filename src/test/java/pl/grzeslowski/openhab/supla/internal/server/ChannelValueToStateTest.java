@@ -4,9 +4,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 import static org.openhab.core.types.UnDefType.NULL;
 import static org.openhab.core.types.UnDefType.UNDEF;
+import static pl.grzeslowski.jsupla.protocol.api.RgbwBitFunction.SUPLA_RGBW_BIT_FUNC_DIMMER_AND_RGB_LIGHTING;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -24,6 +26,7 @@ import pl.grzeslowski.jsupla.protocol.api.channeltype.value.TemperatureAndHumidi
 import pl.grzeslowski.jsupla.protocol.api.channeltype.value.TemperatureValue;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.value.UnknownValue;
 import pl.grzeslowski.openhab.supla.internal.server.ChannelValueToState.ChannelState;
+import pl.grzeslowski.openhab.supla.internal.server.traits.DeviceChannel;
 
 @ExtendWith(MockitoExtension.class)
 class ChannelValueToStateTest {
@@ -49,7 +52,7 @@ class ChannelValueToStateTest {
 
     @Test
     void shouldConvertDecimalValue() {
-        var converter = new ChannelValueToState(thingUID, 2);
+        var converter = new ChannelValueToState(thingUID, mockDeviceChannel(2));
         when(decimalValue.value()).thenReturn(BigDecimal.TEN);
 
         List<State> states =
@@ -58,9 +61,13 @@ class ChannelValueToStateTest {
         assertThat(states).containsExactly(new DecimalType(BigDecimal.TEN));
     }
 
+    private DeviceChannel mockDeviceChannel(int number) {
+        return new DeviceChannel(number, null, null, null, Set.of(), new byte[8], null, null, null);
+    }
+
     @Test
     void shouldReturnNullForMissingDecimal() {
-        var converter = new ChannelValueToState(thingUID, 4);
+        var converter = new ChannelValueToState(thingUID, mockDeviceChannel(4));
 
         List<State> states =
                 converter.onDecimalValue(null).map(ChannelState::state).toList();
@@ -72,7 +79,17 @@ class ChannelValueToStateTest {
     void shouldConvertPercentAndRgb() {
         // given
         var rgbValue = new RgbValue(55, 77, 1, 2, 3, 0);
-        var converter = new ChannelValueToState(thingUID, 6);
+        var deviceChannel = new DeviceChannel(
+                6,
+                null,
+                null,
+                null,
+                Set.of(SUPLA_RGBW_BIT_FUNC_DIMMER_AND_RGB_LIGHTING),
+                new byte[8],
+                null,
+                null,
+                null);
+        var converter = new ChannelValueToState(thingUID, deviceChannel);
 
         // when
         List<State> states =
@@ -89,7 +106,7 @@ class ChannelValueToStateTest {
 
     @Test
     void shouldReturnUndefForSpecialTemperatureValue() {
-        var converter = new ChannelValueToState(thingUID, 7);
+        var converter = new ChannelValueToState(thingUID, mockDeviceChannel(7));
         when(temperatureValue.temperature()).thenReturn(BigDecimal.valueOf(-275.0));
 
         State state = converter
@@ -103,7 +120,7 @@ class ChannelValueToStateTest {
 
     @Test
     void shouldMapTemperatureAndHumidityGroup() {
-        var converter = new ChannelValueToState(thingUID, 8);
+        var converter = new ChannelValueToState(thingUID, mockDeviceChannel(8));
         when(temperatureAndHumidityValue.temperature()).thenReturn(BigDecimal.valueOf(21.0));
         when(temperatureAndHumidityValue.humidity()).thenReturn(BigDecimal.valueOf(-1.0));
 
@@ -120,7 +137,7 @@ class ChannelValueToStateTest {
 
     @Test
     void shouldHandleStoppableOpenClose() {
-        var converter = new ChannelValueToState(thingUID, 9);
+        var converter = new ChannelValueToState(thingUID, mockDeviceChannel(9));
 
         State state = converter
                 .onStoppableOpenClose(StoppableOpenClose.STOP)
@@ -133,7 +150,7 @@ class ChannelValueToStateTest {
 
     @Test
     void shouldHandleUnknownValueNulls() {
-        var converter = new ChannelValueToState(thingUID, 5);
+        var converter = new ChannelValueToState(thingUID, mockDeviceChannel(5));
         when(unknownValue.message()).thenReturn("oops");
 
         List<State> nullStates =
@@ -147,7 +164,7 @@ class ChannelValueToStateTest {
 
     @Test
     void shouldReturnGroupedUidsForTemperatureAndHumidity() {
-        var converter = new ChannelValueToState(thingUID, 12);
+        var converter = new ChannelValueToState(thingUID, mockDeviceChannel(12));
 
         List<ChannelUID> uids = converter
                 .onTemperatureAndHumidityValue(null)

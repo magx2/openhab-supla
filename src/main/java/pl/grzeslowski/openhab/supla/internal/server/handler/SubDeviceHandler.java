@@ -23,7 +23,6 @@ import org.openhab.core.thing.binding.builder.ThingBuilder;
 import org.openhab.core.types.State;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import pl.grzeslowski.jsupla.protocol.api.ChannelType;
 import pl.grzeslowski.jsupla.protocol.api.structs.dcs.SetCaption;
 import pl.grzeslowski.jsupla.protocol.api.structs.ds.*;
 import pl.grzeslowski.jsupla.protocol.api.types.FromServerProto;
@@ -41,9 +40,6 @@ import pl.grzeslowski.openhab.supla.internal.server.traits.DeviceChannelValue;
 @NonNullByDefault
 @ToString(onlyExplicitlyIncluded = true)
 public class SubDeviceHandler extends SuplaDeviceHandler implements ServerDevice {
-    @Getter
-    private final Map<Integer, ChannelType> channelTypes = synchronizedMap(new HashMap<>());
-
     private final ChannelUtil channelUtil = new ChannelUtil(this);
 
     @Delegate(types = HandleCommand.class)
