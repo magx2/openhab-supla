@@ -7,6 +7,7 @@ import static pl.grzeslowski.jsupla.protocol.api.ChannelFunction.SUPLA_CHANNELFN
 import java.util.Set;
 import org.junit.jupiter.api.Test;
 import pl.grzeslowski.jsupla.protocol.api.ChannelType;
+import pl.grzeslowski.jsupla.protocol.api.HvacMode;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.value.HvacValue;
 import pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaDeviceChannelA;
 import pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaDeviceChannelB;
@@ -97,13 +98,7 @@ class DeviceChannelTest {
 
     @Test
     void shouldAcceptHvacWithoutValue() {
-        HvacValue hvacValue = new HvacValue(
-                true,
-                HvacValue.Mode.NOT_SET,
-                null,
-                null,
-                new HvacValue.Flags(
-                        false, false, false, false, false, false, false, false, false, false, false, false, false));
+        HvacValue hvacValue = new HvacValue(true, HvacMode.SUPLA_HVAC_MODE_NOT_SET, null, null, Set.of());
         DeviceChannel deviceChannel = new DeviceChannel(
                 1,
                 ChannelType.EV_TYPE_ELECTRICITY_METER_MEASUREMENT_V1,

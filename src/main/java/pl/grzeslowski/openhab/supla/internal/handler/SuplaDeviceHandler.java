@@ -60,7 +60,6 @@ public abstract class SuplaDeviceHandler extends BaseThingHandler implements Han
                     case HSBType hsBValue -> handleHsbCommand(channelUID, hsBValue);
                     case OpenClosedType openClosedValue -> handleOpenClosedCommand(channelUID, openClosedValue);
                     case PercentType percentValue -> handlePercentCommand(channelUID, percentValue);
-                    case DecimalType decimalValue -> handleDecimalCommand(channelUID, decimalValue);
                     case StopMoveType stopMoveValue -> handleStopMoveTypeCommand(channelUID, stopMoveValue);
                     case StringType stringValue -> handleStringCommand(channelUID, stringValue);
                     case QuantityType<?> quantityType -> handleQuantityType(channelUID, quantityType);

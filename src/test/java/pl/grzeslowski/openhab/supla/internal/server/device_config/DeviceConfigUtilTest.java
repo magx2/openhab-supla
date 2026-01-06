@@ -2,20 +2,23 @@ package pl.grzeslowski.openhab.supla.internal.server.device_config;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static pl.grzeslowski.openhab.supla.internal.server.device_config.DeviceConfigField.AUTOMATIC_TIME_SYNC;
-import static pl.grzeslowski.openhab.supla.internal.server.device_config.DeviceConfigField.STATUS_LED;
+import static pl.grzeslowski.jsupla.protocol.api.DeviceConfigField.SUPLA_DEVICE_CONFIG_FIELD_AUTOMATIC_TIME_SYNC;
+import static pl.grzeslowski.jsupla.protocol.api.DeviceConfigField.SUPLA_DEVICE_CONFIG_FIELD_STATUS_LED;
+import static pl.grzeslowski.jsupla.protocol.api.StatusLed.SUPLA_DEVCFG_STATUS_LED_OFF_WHEN_CONNECTED;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
+import pl.grzeslowski.jsupla.protocol.api.StatusLed;
 
 class DeviceConfigUtilTest {
     @Test
     void shouldBuildDeviceConfigMapFromFieldsAndBytes() throws IOException {
-        var statusLed = new DeviceConfig.StatusLedConfig(DeviceConfig.StatusLedConfig.StatusLed.OFF_WHEN_CONNECTED);
+        var statusLed = new DeviceConfig.StatusLedConfig(SUPLA_DEVCFG_STATUS_LED_OFF_WHEN_CONNECTED);
         var automaticTimeSync = new DeviceConfig.AutomaticTimeSyncConfig(true);
-        long fields = STATUS_LED.getMask() | AUTOMATIC_TIME_SYNC.getMask();
+        long fields = SUPLA_DEVICE_CONFIG_FIELD_STATUS_LED.getValue()
+                | SUPLA_DEVICE_CONFIG_FIELD_AUTOMATIC_TIME_SYNC.getValue();
 
         var output = new ByteArrayOutputStream();
         output.write(statusLed.encode());
@@ -24,8 +27,8 @@ class DeviceConfigUtilTest {
         Map<String, String> configMap = DeviceConfigUtil.buildDeviceConfig(fields, output.toByteArray());
 
         assertThat(configMap)
-                .containsEntry("DEVICE_CONFIG_STATUS_LED", "OFF_WHEN_CONNECTED")
-                .containsEntry("DEVICE_CONFIG_AUTOMATIC_TIME_SYNC", "enabled");
+                .containsEntry("SUPLA_DEVICE_CONFIG_FIELD_STATUS_LED", "SUPLA_DEVCFG_STATUS_LED_OFF_WHEN_CONNECTED")
+                .containsEntry("SUPLA_DEVICE_CONFIG_FIELD_AUTOMATIC_TIME_SYNC", "enabled");
     }
 
     @Test
@@ -52,7 +55,7 @@ class DeviceConfigUtilTest {
 
     @Test
     void shouldRejectInvalidEnumValue() {
-        assertThatThrownBy(() -> DeviceConfigUtil.parseEnum("INVALID", DeviceConfig.StatusLedConfig.StatusLed.class))
+        assertThatThrownBy(() -> DeviceConfigUtil.parseEnum("INVALID", StatusLed.class))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("Cannot parse enum");
     }
