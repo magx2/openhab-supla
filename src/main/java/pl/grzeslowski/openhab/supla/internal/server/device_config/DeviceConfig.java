@@ -1,9 +1,10 @@
 package pl.grzeslowski.openhab.supla.internal.server.device_config;
 
 import static java.util.Objects.requireNonNullElse;
+import static pl.grzeslowski.jsupla.protocol.api.DeviceConfigField.*;
+import static pl.grzeslowski.jsupla.protocol.api.DeviceConfigField.SUPLA_DEVICE_CONFIG_FIELD_HOME_SCREEN_OFF_DELAY_TYPE;
 import static pl.grzeslowski.jsupla.protocol.api.consts.ProtoConsts.*;
 import static pl.grzeslowski.openhab.supla.internal.server.device_config.DeviceConfig.DisableUserInterfaceConfig.UserInterface.PARTIAL;
-import static pl.grzeslowski.openhab.supla.internal.server.device_config.DeviceConfigField.*;
 import static pl.grzeslowski.openhab.supla.internal.server.device_config.DeviceConfigUtil.*;
 
 import jakarta.annotation.Nullable;
@@ -16,6 +17,8 @@ import javax.validation.constraints.Min;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.eclipse.jdt.annotation.NonNullByDefault;
+import pl.grzeslowski.jsupla.protocol.api.DeviceConfigField;
+import pl.grzeslowski.jsupla.protocol.api.StatusLed;
 import pl.grzeslowski.jsupla.protocol.api.encoders.*;
 import pl.grzeslowski.jsupla.protocol.api.structs.*;
 
@@ -33,7 +36,7 @@ public sealed interface DeviceConfig extends Comparable<DeviceConfig> {
     public record PowerStatusLedConfig(boolean disabled) implements DeviceConfig {
         @Override
         public DeviceConfigField field() {
-            return POWER_STATUS_LED;
+            return SUPLA_DEVICE_CONFIG_FIELD_POWER_STATUS_LED;
         }
 
         @Override
@@ -49,7 +52,7 @@ public sealed interface DeviceConfig extends Comparable<DeviceConfig> {
     public record HomeScreenOffDelayTypeConfig(@NonNull DelayType delayType) implements DeviceConfig {
         @Override
         public DeviceConfigField field() {
-            return HOME_SCREEN_OFF_DELAY_TYPE;
+            return SUPLA_DEVICE_CONFIG_FIELD_HOME_SCREEN_OFF_DELAY_TYPE;
         }
 
         @Override
@@ -72,7 +75,7 @@ public sealed interface DeviceConfig extends Comparable<DeviceConfig> {
     public record HomeScreenContentConfig(@NonNull List<HomeScreenContent> contents) implements DeviceConfig {
         @Override
         public DeviceConfigField field() {
-            return HOME_SCREEN_CONTENT;
+            return SUPLA_DEVICE_CONFIG_FIELD_HOME_SCREEN_CONTENT;
         }
 
         @Override
@@ -107,7 +110,7 @@ public sealed interface DeviceConfig extends Comparable<DeviceConfig> {
             boolean enabled, @NonNull Duration duration) implements DeviceConfig {
         @Override
         public DeviceConfigField field() {
-            return HOME_SCREEN_OFF_DELAY;
+            return SUPLA_DEVICE_CONFIG_FIELD_HOME_SCREEN_OFF_DELAY;
         }
 
         @Override
@@ -124,7 +127,7 @@ public sealed interface DeviceConfig extends Comparable<DeviceConfig> {
     public record AutomaticTimeSyncConfig(boolean enabled) implements DeviceConfig {
         @Override
         public DeviceConfigField field() {
-            return AUTOMATIC_TIME_SYNC;
+            return SUPLA_DEVICE_CONFIG_FIELD_AUTOMATIC_TIME_SYNC;
         }
 
         @Override
@@ -144,7 +147,7 @@ public sealed interface DeviceConfig extends Comparable<DeviceConfig> {
             @Nullable Integer maxTemp) implements DeviceConfig {
         @Override
         public DeviceConfigField field() {
-            return DISABLE_USER_INTERFACE;
+            return SUPLA_DEVICE_CONFIG_FIELD_DISABLE_USER_INTERFACE;
         }
 
         @Override
@@ -177,7 +180,7 @@ public sealed interface DeviceConfig extends Comparable<DeviceConfig> {
     public record ButtonVolumeConfig(@Min(0) @Max(100) int volume) implements DeviceConfig {
         @Override
         public DeviceConfigField field() {
-            return BUTTON_VOLUME;
+            return SUPLA_DEVICE_CONFIG_FIELD_BUTTON_VOLUME;
         }
 
         @Override
@@ -196,7 +199,7 @@ public sealed interface DeviceConfig extends Comparable<DeviceConfig> {
             implements DeviceConfig {
         @Override
         public DeviceConfigField field() {
-            return SCREEN_BRIGHTNESS;
+            return SUPLA_DEVICE_CONFIG_FIELD_SCREEN_BRIGHTNESS;
         }
 
         @Override
@@ -215,7 +218,7 @@ public sealed interface DeviceConfig extends Comparable<DeviceConfig> {
     public record StatusLedConfig(@NonNull StatusLed statusLed) implements DeviceConfig {
         @Override
         public DeviceConfigField field() {
-            return STATUS_LED;
+            return SUPLA_DEVICE_CONFIG_FIELD_STATUS_LED;
         }
 
         public static StatusLedConfig parse(List<String> parameters) {
@@ -224,15 +227,8 @@ public sealed interface DeviceConfig extends Comparable<DeviceConfig> {
 
         @Override
         public byte[] encode() {
-            return DeviceConfigStatusLedEncoder.INSTANCE.encode(new DeviceConfigStatusLed((short) statusLed.value));
-        }
-
-        @RequiredArgsConstructor
-        public static enum StatusLed {
-            ON_WHEN_CONNECTED(SUPLA_DEVCFG_STATUS_LED_ON_WHEN_CONNECTED),
-            OFF_WHEN_CONNECTED(SUPLA_DEVCFG_STATUS_LED_OFF_WHEN_CONNECTED),
-            ALWAYS_OFF(SUPLA_DEVCFG_STATUS_LED_ALWAYS_OFF);
-            private final int value;
+            return DeviceConfigStatusLedEncoder.INSTANCE.encode(
+                    new DeviceConfigStatusLed((short) statusLed.getValue()));
         }
     }
 

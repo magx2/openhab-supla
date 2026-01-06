@@ -2,14 +2,15 @@ package pl.grzeslowski.openhab.supla.internal.device;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
+import static pl.grzeslowski.jsupla.protocol.api.ChannelType.SUPLA_CHANNELTYPE_DIMMER;
 import static pl.grzeslowski.jsupla.protocol.api.consts.ProtoConsts.SUPLA_EMAIL_MAXSIZE;
 import static pl.grzeslowski.openhab.supla.internal.server.ByteArrayToHex.hexToBytes;
 
 import java.io.IOException;
 import java.util.Arrays;
 import lombok.Getter;
-import pl.grzeslowski.jsupla.protocol.api.channeltype.decoders.PercentageTypeDecoder;
-import pl.grzeslowski.jsupla.protocol.api.channeltype.encoders.PercentageTypeEncoder;
+import pl.grzeslowski.jsupla.protocol.api.channeltype.decoders.ChannelTypeDecoder;
+import pl.grzeslowski.jsupla.protocol.api.channeltype.encoders.ChannelTypeEncoder;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.value.PercentValue;
 import pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaDeviceChannelC;
 import pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaDeviceChannelValueA;
@@ -17,8 +18,8 @@ import pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaRegisterDeviceE;
 import pl.grzeslowski.openhab.supla.internal.extension.random.RandomExtension;
 
 public class ZamelDiw01 extends Device {
-    private final PercentageTypeEncoder encoder = new PercentageTypeEncoder();
-    private final PercentageTypeDecoder decoder = new PercentageTypeDecoder();
+    private final ChannelTypeEncoder encoder = ChannelTypeEncoder.INSTANCE;
+    private final ChannelTypeDecoder decoder = ChannelTypeDecoder.INSTANCE;
 
     private final byte[] email;
     private final byte[] authKey;
@@ -66,7 +67,7 @@ public class ZamelDiw01 extends Device {
     @Override
     protected void updateChannel(short channelNumber, byte[] value) {
         assertThat(channelNumber).isZero();
-        this.value = decoder.decode(value);
+        this.value = (PercentValue) decoder.decode(SUPLA_CHANNELTYPE_DIMMER, value);
     }
 
     public void dim() throws IOException {

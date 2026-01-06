@@ -104,6 +104,10 @@ public class SuplaBindingConstants {
         public static final String DIMMER_CHANNEL_ID = "dimmer-channel";
         public static final String TOGGLE_GAT_CHANNEL_ID = "toggle-gate-channel";
         public static final String STRING_CHANNEL_ID = "string-channel";
+        public static final String PRESSURE_CHANNEL_ID = "pressure-channel";
+        public static final String RAIN_CHANNEL_ID = "rain-channel";
+        public static final String WEIGHT_CHANNEL_ID = "weight-channel";
+        public static final String WIND_CHANNEL_ID = "wind-channel";
         public static final String ACTION_TRIGGER_ID = "action-trigger";
         public static final String UNKNOWN_CHANNEL_ID = "unknown-channel";
         // hvac
@@ -183,6 +187,12 @@ public class SuplaBindingConstants {
          * <p>Command Types: Point, Refresh
          */
         static String LOCATION = "Location";
+
+        static String NUMBER = number();
+
+        static String NUMBER_TEMPERATURE = number("Temperature");
+
+        static String NUMBER_DIMENSIONLESS = number("Dimensionless");
 
         /**
          * Description: Stores values in number format, takes an optional dimension suffix

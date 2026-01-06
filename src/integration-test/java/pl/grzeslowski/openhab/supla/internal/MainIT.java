@@ -15,6 +15,7 @@ import static tech.units.indriya.unit.Units.CELSIUS;
 
 import io.github.glytching.junit.extension.random.RandomBeansExtension;
 import java.math.BigDecimal;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -25,7 +26,8 @@ import org.openhab.core.thing.ChannelUID;
 import org.openhab.core.thing.ThingStatusInfo;
 import org.openhab.core.thing.binding.builder.ThingStatusInfoBuilder;
 import org.openhab.core.util.ColorUtil;
-import pl.grzeslowski.jsupla.protocol.api.channeltype.value.HvacValue;
+import pl.grzeslowski.jsupla.protocol.api.ChannelFlag;
+import pl.grzeslowski.jsupla.protocol.api.HvacMode;
 import pl.grzeslowski.jsupla.protocol.api.structs.sd.SuplaRegisterDeviceResultA;
 import pl.grzeslowski.openhab.supla.internal.device.ZamelDiw01;
 import pl.grzeslowski.openhab.supla.internal.device.ZamelGkw02;
@@ -190,7 +192,7 @@ public class MainIT {
                 var newMode = "OFF";
                 deviceCtx.handler().handleCommand(channel, StringType.valueOf(newMode));
                 device.updateChannel();
-                assertThat(device.getHvac().getMode()).isEqualTo(HvacValue.Mode.valueOf(newMode));
+                assertThat(device.getHvac().getMode()).isEqualTo(HvacMode.valueOf(newMode));
             }
         }
         // device is closed

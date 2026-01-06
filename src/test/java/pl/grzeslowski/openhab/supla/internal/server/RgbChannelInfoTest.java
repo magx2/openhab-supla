@@ -42,6 +42,7 @@ class RgbChannelInfoTest {
                 );
     }
     // Test cases for when rgbwBitFunctions is empty
+    @SuppressWarnings("deprecation")
     private static Stream<Arguments> testCasesWhenRgbwBitFunctionsEmpty() {
         return Stream.of(
                 Arguments.of(SUPLA_CHANNELTYPE_RGBLEDCONTROLLER, true, false, false),

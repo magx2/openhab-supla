@@ -199,6 +199,49 @@
 				<state readOnly="true" pattern="%.1f %unit%"/>
 		</channel-type>
 
+	<channel-type id="pressure-channel">
+		<item-type>Number:Pressure</item-type>
+		<label>%channel-type.supla.pressure-channel.label</label>
+		<category>Pressure</category>
+		<tags>
+			<tag>Pressure</tag>
+			<tag>Measurement</tag>
+		</tags>
+		<state readOnly="true" pattern="%.1f %unit%"/>
+	</channel-type>
+
+	<channel-type id="rain-channel">
+		<item-type>Number:Length</item-type>
+		<label>%channel-type.supla.rain-channel.label</label>
+		<category>Rain</category>
+		<tags>
+			<tag>Rain</tag>
+			<tag>Measurement</tag>
+		</tags>
+		<state readOnly="true" pattern="%.1f %unit%"/>
+	</channel-type>
+
+	<channel-type id="weight-channel">
+		<item-type>Number:Mass</item-type>
+		<label>%channel-type.supla.weight-channel.label</label>
+		<category>Weight</category>
+		<tags>
+			<tag>Measurement</tag>
+		</tags>
+		<state readOnly="true" pattern="%.1f %unit%"/>
+	</channel-type>
+
+	<channel-type id="wind-channel">
+		<item-type>Number:Speed</item-type>
+		<label>%channel-type.supla.wind-channel.label</label>
+		<category>Wind</category>
+		<tags>
+			<tag>Wind</tag>
+			<tag>Measurement</tag>
+		</tags>
+		<state readOnly="true" pattern="%.1f %unit%"/>
+	</channel-type>
+
 		<channel-type id="humidity-channel">
 				<item-type unitHint="%">Number:Dimensionless</item-type>
 				<label>%channel-type.supla.humidity-channel.label</label>

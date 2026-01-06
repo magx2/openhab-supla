@@ -11,7 +11,7 @@ import pl.grzeslowski.jsupla.protocol.api.ChannelFlag;
 import pl.grzeslowski.jsupla.protocol.api.ChannelFunction;
 import pl.grzeslowski.jsupla.protocol.api.ChannelType;
 import pl.grzeslowski.jsupla.protocol.api.RgbwBitFunction;
-import pl.grzeslowski.jsupla.protocol.api.channeltype.decoders.HVACValueDecoderImpl;
+import pl.grzeslowski.jsupla.protocol.api.channeltype.decoders.HvacTypeDecoder;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.value.ActionTrigger;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.value.HvacValue;
 import pl.grzeslowski.jsupla.protocol.api.structs.HVACValue;
@@ -202,7 +202,7 @@ public record DeviceChannel(
         if (hvacValue == null) {
             return null;
         }
-        return HVACValueDecoderImpl.INSTANCE.decode(hvacValue);
+        return HvacTypeDecoder.INSTANCE.decode(hvacValue);
     }
 
     @Override

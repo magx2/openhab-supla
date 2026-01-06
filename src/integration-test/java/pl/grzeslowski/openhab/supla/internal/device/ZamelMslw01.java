@@ -14,7 +14,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import lombok.Getter;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.decoders.ChannelTypeDecoder;
-import pl.grzeslowski.jsupla.protocol.api.channeltype.encoders.ColorTypeChannelEncoderImpl;
+import pl.grzeslowski.jsupla.protocol.api.channeltype.encoders.ChannelTypeEncoder;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.value.ActionTrigger.Capabilities;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.value.RgbValue;
 import pl.grzeslowski.jsupla.protocol.api.structs.ActionTriggerProperties;
@@ -25,7 +25,7 @@ import pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaRegisterDeviceE;
 import pl.grzeslowski.openhab.supla.internal.extension.random.RandomExtension;
 
 public class ZamelMslw01 extends Device {
-    private final ColorTypeChannelEncoderImpl encoder = new ColorTypeChannelEncoderImpl();
+    private final ChannelTypeEncoder encoder = ChannelTypeEncoder.INSTANCE;
     private final byte[] email;
     private final byte[] authKey;
 

@@ -4,8 +4,9 @@ import static java.util.Objects.requireNonNull;
 import static org.openhab.core.thing.ThingStatus.OFFLINE;
 import static org.openhab.core.thing.ThingStatus.ONLINE;
 import static org.openhab.core.thing.ThingStatusDetail.COMMUNICATION_ERROR;
-import static pl.grzeslowski.jsupla.protocol.api.channeltype.value.HvacValue.Mode.*;
-import static pl.grzeslowski.jsupla.protocol.api.channeltype.value.HvacValue.Mode.NOT_SET;
+import static pl.grzeslowski.jsupla.protocol.api.HvacFlag.SUPLA_HVAC_VALUE_FLAG_SETPOINT_TEMP_COOL_SET;
+import static pl.grzeslowski.jsupla.protocol.api.HvacFlag.SUPLA_HVAC_VALUE_FLAG_SETPOINT_TEMP_HEAT_SET;
+import static pl.grzeslowski.jsupla.protocol.api.HvacMode.*;
 import static pl.grzeslowski.jsupla.protocol.api.channeltype.value.RgbValue.Command.*;
 import static pl.grzeslowski.openhab.supla.internal.Localization.text;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ChannelIds.Hvac.*;
@@ -14,7 +15,9 @@ import static tech.units.indriya.unit.Units.CELSIUS;
 
 import io.netty.channel.ChannelFuture;
 import jakarta.annotation.Nullable;
+import java.math.BigDecimal;
 import java.util.Optional;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.openhab.core.library.types.*;
@@ -23,7 +26,9 @@ import org.openhab.core.thing.ChannelUID;
 import org.openhab.core.types.Command;
 import org.openhab.core.types.State;
 import org.openhab.core.util.ColorUtil;
-import pl.grzeslowski.jsupla.protocol.api.channeltype.encoders.ChannelTypeEncoderImpl;
+import pl.grzeslowski.jsupla.protocol.api.HvacFlag;
+import pl.grzeslowski.jsupla.protocol.api.HvacMode;
+import pl.grzeslowski.jsupla.protocol.api.channeltype.encoders.ChannelTypeEncoder;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.value.*;
 import pl.grzeslowski.jsupla.protocol.api.structs.sd.SuplaChannelNewValue;
 import pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ChannelIds.RgbwLed;
@@ -44,8 +49,8 @@ public class HandlerCommandTrait implements HandleCommand {
     public void handleOnOffCommand(ChannelUID channelUID, OnOffType command) {
         var toSend =
                 switch (command) {
-                    case ON -> new ValueAndPrevState(OnOff.ON, OnOffType.OFF);
-                    case OFF -> new ValueAndPrevState(OnOff.OFF, OnOffType.ON);
+                    case ON -> new ValueAndPrevState(OnOffValue.ON, OnOffType.OFF);
+                    case OFF -> new ValueAndPrevState(OnOffValue.OFF, OnOffType.ON);
                 };
         sendCommandToSuplaServer(channelUID, toSend.value, command, toSend.prev);
     }
@@ -54,8 +59,28 @@ public class HandlerCommandTrait implements HandleCommand {
     public void handleUpDownCommand(ChannelUID channelUID, UpDownType command) {
         var toSend =
                 switch (command) {
-                    case UP -> new ValueAndPrevState(OnOff.ON, OnOffType.OFF);
-                    case DOWN -> new ValueAndPrevState(OnOff.OFF, OnOffType.ON);
+                    case UP -> new ValueAndPrevState(OnOffValue.ON, OnOffType.OFF);
+                    case DOWN -> new ValueAndPrevState(OnOffValue.OFF, OnOffType.ON);
+                };
+        sendCommandToSuplaServer(channelUID, toSend.value, command, toSend.prev);
+    }
+
+    @Override
+    public void handleOpenClosedCommand(ChannelUID channelUID, OpenClosedType command) {
+        var toSend =
+                switch (command) {
+                    case OPEN -> new ValueAndPrevState(OnOffValue.ON, OnOffType.OFF);
+                    case CLOSED -> new ValueAndPrevState(OnOffValue.OFF, OnOffType.ON);
+                };
+        sendCommandToSuplaServer(channelUID, toSend.value, command, toSend.prev);
+    }
+
+    @Override
+    public void handleStopMoveTypeCommand(ChannelUID channelUID, StopMoveType command) {
+        var toSend =
+                switch (command) {
+                    case MOVE -> new ValueAndPrevState(OnOffValue.ON, OnOffType.OFF);
+                    case STOP -> new ValueAndPrevState(OnOffValue.OFF, OnOffType.ON);
                 };
         sendCommandToSuplaServer(channelUID, toSend.value, command, toSend.prev);
     }
@@ -76,16 +101,6 @@ public class HandlerCommandTrait implements HandleCommand {
     }
 
     @Override
-    public void handleOpenClosedCommand(ChannelUID channelUID, OpenClosedType command) {
-        var toSend =
-                switch (command) {
-                    case OPEN -> new ValueAndPrevState(OnOff.ON, OnOffType.OFF);
-                    case CLOSED -> new ValueAndPrevState(OnOff.OFF, OnOffType.ON);
-                };
-        sendCommandToSuplaServer(channelUID, toSend.value, command, toSend.prev);
-    }
-
-    @Override
     public void handlePercentCommand(ChannelUID channelUID, PercentType command) {
         if (RgbwLed.BRIGHTNESS.equals(channelUID.getIdWithoutGroup())) {
             ledChangeDim(channelUID, command);
@@ -94,22 +109,6 @@ public class HandlerCommandTrait implements HandleCommand {
         } else {
             sendCommandToSuplaServer(channelUID, new PercentValue(command.intValue()), command, null);
         }
-    }
-
-    @Override
-    public void handleDecimalCommand(ChannelUID channelUID, DecimalType command) {
-        sendCommandToSuplaServer(channelUID, new DecimalValue(command.toBigDecimal()), command, null);
-    }
-
-    @Override
-    public void handleStopMoveTypeCommand(ChannelUID channelUID, StopMoveType command) {
-        serverDevice
-                .getLogger()
-                .warn(
-                        "Not handling `{}` ({}) on channel `{}`",
-                        command,
-                        command.getClass().getSimpleName(),
-                        channelUID);
     }
 
     @Override
@@ -129,57 +128,42 @@ public class HandlerCommandTrait implements HandleCommand {
     }
 
     private void handleHvacModeCommand(ChannelUID channelUID, StringType command) {
-        var mode = HvacValue.Mode.valueOf(command.toString());
+        var mode = HvacMode.valueOf(command.toString());
         var value =
                 switch (mode) {
-                    case NOT_SET ->
+                    case SUPLA_HVAC_MODE_NOT_SET ->
                         throw new IllegalArgumentException(
                                 "Cannot set mode channel to NOT_SET. channelUID=" + channelUID);
-                    case OFF, DRY ->
+                    case SUPLA_HVAC_MODE_OFF, SUPLA_HVAC_MODE_DRY -> new HvacValue(true, mode, null, null, Set.of());
+                    case SUPLA_HVAC_MODE_HEAT ->
                         new HvacValue(
                                 true,
-                                mode,
-                                null,
-                                null,
-                                new HvacValue.Flags(
-                                        false, false, false, false, false, false, false, false, false, false, false,
-                                        false, false));
-                    case HEAT ->
-                        new HvacValue(
-                                true,
-                                HEAT,
+                                SUPLA_HVAC_MODE_HEAT,
                                 findHeatValue(channelUID),
                                 null,
-                                new HvacValue.Flags(
-                                        true, false, false, false, false, false, false, false, false, false, false,
-                                        false, false));
-                    case COOL ->
+                                Set.of(SUPLA_HVAC_VALUE_FLAG_SETPOINT_TEMP_HEAT_SET));
+                    case SUPLA_HVAC_MODE_COOL ->
                         new HvacValue(
                                 true,
-                                COOL,
+                                SUPLA_HVAC_MODE_COOL,
                                 null,
                                 findCoolValue(channelUID),
-                                new HvacValue.Flags(
-                                        false, true, false, false, false, false, false, false, false, false, false,
-                                        false, false));
-                    case HEAT_COOL ->
+                                Set.of(SUPLA_HVAC_VALUE_FLAG_SETPOINT_TEMP_COOL_SET));
+                    case SUPLA_HVAC_MODE_HEAT_COOL ->
                         new HvacValue(
                                 true,
-                                HEAT_COOL,
+                                SUPLA_HVAC_MODE_HEAT_COOL,
                                 findHeatValue(channelUID),
                                 findCoolValue(channelUID),
-                                new HvacValue.Flags(
-                                        true, true, false, false, false, false, false, false, false, false, false,
-                                        false, false));
-                    case FAN_ONLY ->
-                        new HvacValue(
-                                true,
-                                FAN_ONLY,
-                                null,
-                                null,
-                                new HvacValue.Flags(
-                                        false, false, false, false, false, false, true, false, false, false, false,
-                                        false, false));
+                                Set.of(
+                                        SUPLA_HVAC_VALUE_FLAG_SETPOINT_TEMP_HEAT_SET,
+                                        SUPLA_HVAC_VALUE_FLAG_SETPOINT_TEMP_COOL_SET));
+                    case SUPLA_HVAC_MODE_FAN_ONLY ->
+                        new HvacValue(true, SUPLA_HVAC_MODE_FAN_ONLY, null, null, Set.of());
+                    case SUPLA_HVAC_MODE_CMD_TURN_ON,
+                            SUPLA_HVAC_MODE_CMD_WEEKLY_SCHEDULE,
+                            SUPLA_HVAC_MODE_CMD_SWITCH_TO_MANUAL ->
+                        throw new UnsupportedOperationException("Do not know how to handle " + mode);
                 };
 
         var previousMode = serverDevice.findState(channelUID).orElse(null);
@@ -187,24 +171,24 @@ public class HandlerCommandTrait implements HandleCommand {
     }
 
     @Nullable
-    private Double findHeatValue(ChannelUID channelUID) {
+    private BigDecimal findHeatValue(ChannelUID channelUID) {
         return findTemperature(channelUID, HVAC_SET_POINT_TEMPERATURE_HEAT);
     }
 
     @Nullable
-    private Double findCoolValue(ChannelUID channelUID) {
+    private BigDecimal findCoolValue(ChannelUID channelUID) {
         return findTemperature(channelUID, HVAC_SET_POINT_TEMPERATURE_COOL);
     }
 
     @Nullable
-    private Double findTemperature(ChannelUID channelUID, String id) {
+    private BigDecimal findTemperature(ChannelUID channelUID, String id) {
         return Optional.of(channelUID)
                 .map(uid -> siblingChannel(uid, id))
                 .flatMap(serverDevice::findState)
                 .<QuantityType<?>>map(state -> (QuantityType<?>) state)
                 .filter(state -> state.getUnit().isCompatible(CELSIUS))
                 .map(state -> state.toUnit(CELSIUS))
-                .map(QuantityType::doubleValue)
+                .map(QuantityType::toBigDecimal)
                 .orElse(null);
     }
 
@@ -219,25 +203,23 @@ public class HandlerCommandTrait implements HandleCommand {
         if ((id.equals(HVAC_SET_POINT_TEMPERATURE_HEAT) || id.equals(HVAC_SET_POINT_TEMPERATURE_COOL))
                 && unit.isCompatible(CELSIUS)) {
             var celsiusQuantity = requireNonNull(command.toUnit(CELSIUS));
-            var celsiusValue = celsiusQuantity.doubleValue();
+            var celsiusValue = celsiusQuantity.toBigDecimal();
 
             var on = true;
-            Double setPointHeat;
-            Double setPointCool;
-            HvacValue.Flags flags;
+            BigDecimal setPointHeat;
+            BigDecimal setPointCool;
+            Set<HvacFlag> flags;
             if (id.equals(HVAC_SET_POINT_TEMPERATURE_HEAT)) {
                 setPointHeat = celsiusValue;
                 setPointCool = null;
-                flags = new HvacValue.Flags(
-                        true, false, false, false, false, false, false, false, false, false, false, false, false);
+                flags = Set.of(SUPLA_HVAC_VALUE_FLAG_SETPOINT_TEMP_HEAT_SET);
             } else {
                 setPointHeat = null;
                 setPointCool = celsiusValue;
-                flags = new HvacValue.Flags(
-                        false, true, false, false, false, false, false, false, false, false, false, false, false);
+                flags = Set.of(SUPLA_HVAC_VALUE_FLAG_SETPOINT_TEMP_COOL_SET);
             }
 
-            var value = new HvacValue(on, NOT_SET, setPointHeat, setPointCool, flags);
+            var value = new HvacValue(on, SUPLA_HVAC_MODE_NOT_SET, setPointHeat, setPointCool, flags);
             var future = sendCommandToSuplaServer(channelUID, value, command, null);
             future.addListener(__ -> {
                 var groupId = channelUID.getGroupId();
@@ -274,7 +256,7 @@ public class HandlerCommandTrait implements HandleCommand {
         }
         var channelNumber = maybeChannelNumber.get();
 
-        var encode = ChannelTypeEncoderImpl.INSTANCE.encode(channelValue);
+        var encode = ChannelTypeEncoder.INSTANCE.encode(channelValue);
         var senderId = serverDevice.getSenderId().getAndIncrement();
         serverDevice
                 .getSenderIdToChannelUID()
