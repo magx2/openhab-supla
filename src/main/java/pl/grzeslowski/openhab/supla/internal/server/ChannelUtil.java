@@ -6,6 +6,8 @@ import static java.util.Comparator.comparing;
 import static java.util.stream.Collectors.joining;
 import static org.openhab.core.thing.ChannelUID.CHANNEL_GROUP_SEPARATOR;
 import static org.openhab.core.types.UnDefType.UNDEF;
+import static pl.grzeslowski.jsupla.protocol.api.ChannelStateField.*;
+import static pl.grzeslowski.jsupla.protocol.api.LastConnectionResetCause.*;
 import static pl.grzeslowski.jsupla.protocol.api.ProtocolHelpers.*;
 import static pl.grzeslowski.jsupla.protocol.api.consts.ProtoConsts.*;
 
@@ -23,6 +25,8 @@ import org.openhab.core.thing.ChannelUID;
 import org.openhab.core.thing.binding.builder.ChannelBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import pl.grzeslowski.jsupla.protocol.api.ChannelStateField;
+import pl.grzeslowski.jsupla.protocol.api.LastConnectionResetCause;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.decoders.ChannelTypeDecoder;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.value.*;
 import pl.grzeslowski.jsupla.protocol.api.structs.dcs.SetCaption;
@@ -98,8 +102,7 @@ public class ChannelUtil {
 
     public Stream<ChannelValueToState.ChannelState> findState(
             DeviceChannel deviceChannel, @jakarta.annotation.Nullable byte[] value) {
-        val valueSwitch = new ChannelValueSwitch<>(
-                new ChannelValueToState(invoker.getThing().getUID(), deviceChannel));
+        val valueSwitch = new ChannelValueToState(invoker.getThing().getUID(), deviceChannel);
         ChannelValue channelValue;
         if (value != null) {
             channelValue = ChannelTypeDecoder.INSTANCE.decode(deviceChannel.type(), value);
@@ -110,7 +113,7 @@ public class ChannelUtil {
         } else {
             throw new IllegalArgumentException("value and hvacValue cannot be null!");
         }
-        return valueSwitch.doSwitch(channelValue);
+        return valueSwitch.switchOn(channelValue);
     }
 
     public void updateChannels(List<Channel> channels) {
@@ -281,7 +284,7 @@ public class ChannelUtil {
     }
 
     public void consumeChannelState(ChannelState value) {
-        var fields = value.fields();
+        var fields = ChannelStateField.findByMask(value.fields());
         setField(fields, SUPLA_CHANNELSTATE_FIELD_IPV4, "IPV4", parseIpv4(value.iPv4()));
         setField(fields, SUPLA_CHANNELSTATE_FIELD_MAC, "MAC", parseMac(value.mAC()));
         setField(fields, SUPLA_CHANNELSTATE_FIELD_BATTERYLEVEL, "Battery Level", value.batteryLevel() + "%");
@@ -306,14 +309,7 @@ public class ChannelUtil {
         setField(fields, SUPLA_CHANNELSTATE_FIELD_BATTERYHEALTH, "Battery Health", value.batteryHealth());
         setField(fields, SUPLA_CHANNELSTATE_FIELD_BRIDGENODEONLINE, "Bridge Node Online", value.bridgeNodeOnline());
 
-        var lastConnectionResetCause =
-                switch (value.lastConnectionResetCause()) {
-                    case 0 -> "UNKNOWN";
-                    case 1 -> "ACTIVITY_TIMEOUT";
-                    case 2 -> "WIFI_CONNECTION_LOST";
-                    case 3 -> "SERVER_CONNECTION_LOST";
-                    default -> "UNKNOWN(%s)".formatted(value.lastConnectionResetCause());
-                };
+        var lastConnectionResetCause = LastConnectionResetCause.findByValue(value.lastConnectionResetCause()).map(Enum::name).orElse("UNKNOWN(%s)".formatted(value.lastConnectionResetCause()));
         setField(
                 fields,
                 SUPLA_CHANNELSTATE_FIELD_LASTCONNECTIONRESETCAUSE,
@@ -339,8 +335,8 @@ public class ChannelUtil {
         }
     }
 
-    private void setField(int fields, int mask, String key, Object value) {
-        if ((fields & mask) == 0) {
+    private void setField(Set<ChannelStateField> fields, ChannelStateField mask, String key, Object value) {
+        if (!fields.contains(mask)) {
             return;
         }
         invoker.setProperty(key, valueOf(value));

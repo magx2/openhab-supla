@@ -3,10 +3,12 @@ package pl.grzeslowski.openhab.supla.internal.device;
 import jakarta.annotation.Nullable;
 import java.math.BigDecimal;
 import java.util.Optional;
+import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
+import pl.grzeslowski.jsupla.protocol.api.HvacFlag;
+import pl.grzeslowski.jsupla.protocol.api.HvacMode;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.value.HvacValue;
 import pl.grzeslowski.jsupla.protocol.api.structs.HVACValue;
 
@@ -15,7 +17,7 @@ import pl.grzeslowski.jsupla.protocol.api.structs.HVACValue;
 @Data
 public class HvacChannel {
     private boolean on;
-    private HvacValue.Mode mode;
+    private HvacMode mode;
 
     @Nullable
     private BigDecimal setPointTemperatureHeat;
@@ -23,30 +25,23 @@ public class HvacChannel {
     @Nullable
     private BigDecimal setPointTemperatureCool;
 
-    private HvacValue.Flags flags;
+    private Set<HvacFlag> flags;
 
     public HvacChannel(HvacValue hvac) {
         this.on = hvac.on();
         this.mode = hvac.mode();
-        this.setPointTemperatureHeat = mapTemp(hvac.setPointTemperatureHeat());
-        this.setPointTemperatureCool = mapTemp(hvac.setPointTemperatureCool());
+        this.setPointTemperatureHeat = hvac.setPointTemperatureHeat();
+        this.setPointTemperatureCool = hvac.setPointTemperatureCool();
         this.flags = hvac.flags();
     }
 
     public HVACValue toHvacValue() {
         return new HVACValue(
                 (short) 1,
-                (short) mode.getMask(),
+                (short) mode.getValue(),
                 mapTemp(setPointTemperatureHeat),
                 mapTemp(setPointTemperatureCool),
-                flags.toInt());
-    }
-
-    private BigDecimal mapTemp(@MonotonicNonNull Double temp) {
-        if (temp == null) {
-            return null;
-        }
-        return BigDecimal.valueOf(temp);
+                (int) HvacFlag.toMask(flags));
     }
 
     private short mapTemp(@Nullable BigDecimal temp) {

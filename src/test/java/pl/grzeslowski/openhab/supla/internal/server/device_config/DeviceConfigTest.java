@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.time.Duration;
 import java.util.List;
 import org.junit.jupiter.api.Test;
+import pl.grzeslowski.jsupla.protocol.api.StatusLed;
 
 class DeviceConfigTest {
     @Test
@@ -45,8 +46,8 @@ class DeviceConfigTest {
 
     @Test
     void shouldParseStatusLedConfig() {
-        var config = DeviceConfig.StatusLedConfig.parse(List.of("OFF_WHEN_CONNECTED"));
+        var config = DeviceConfig.StatusLedConfig.parse(List.of("SUPLA_DEVCFG_STATUS_LED_OFF_WHEN_CONNECTED"));
 
-        assertThat(config.statusLed()).isEqualTo(DeviceConfig.StatusLedConfig.StatusLed.OFF_WHEN_CONNECTED);
+        assertThat(config.statusLed()).isEqualTo(StatusLed.SUPLA_DEVCFG_STATUS_LED_OFF_WHEN_CONNECTED);
     }
 }

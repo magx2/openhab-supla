@@ -1,12 +1,11 @@
 package pl.grzeslowski.openhab.supla.internal.server;
 
 import static java.lang.String.valueOf;
-import static java.math.BigDecimal.ZERO;
+import static java.util.Arrays.stream;
 import static java.util.Optional.ofNullable;
 import static org.openhab.core.library.unit.SIUnits.CELSIUS;
 import static org.openhab.core.types.UnDefType.NULL;
 import static org.openhab.core.types.UnDefType.UNDEF;
-import static pl.grzeslowski.jsupla.protocol.api.RgbwBitFunction.*;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -23,14 +22,17 @@ import org.openhab.core.thing.ChannelGroupUID;
 import org.openhab.core.thing.ChannelUID;
 import org.openhab.core.thing.ThingUID;
 import org.openhab.core.types.State;
+import pl.grzeslowski.jsupla.protocol.api.HvacFlag;
+import pl.grzeslowski.jsupla.protocol.api.ThermostatValueFlag;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.value.*;
+import pl.grzeslowski.jsupla.protocol.api.channeltype.value.ActionTrigger;
 import pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ChannelIds.RgbwLed;
 import pl.grzeslowski.openhab.supla.internal.server.traits.DeviceChannel;
 
 @Slf4j
 @NonNullByDefault
 @RequiredArgsConstructor
-public class ChannelValueToState implements ChannelValueSwitch.Callback<Stream<ChannelValueToState.ChannelState>> {
+public class ChannelValueToState {
     public static final BigDecimal ONE_HUNDRED = BigDecimal.valueOf(100);
     private static final BigDecimal UNDEF_TEMPERATURE_VALUE = BigDecimal.valueOf(-275);
     private final ThingUID thingUID;
@@ -38,73 +40,96 @@ public class ChannelValueToState implements ChannelValueSwitch.Callback<Stream<C
 
     public record ChannelState(ChannelUID uid, State state) {}
 
-    @Override
-    public Stream<ChannelState> onDecimalValue(@Nullable final DecimalValue decimalValue) {
-        val id = createChannelUid();
-        if (decimalValue == null) {
-            return Stream.of(new ChannelState(id, NULL));
-        }
-        return Stream.of(new ChannelState(id, new DecimalType(decimalValue.value())));
+    public Stream<ChannelState> switchOn(@lombok.NonNull ChannelValue channelValue) {
+        return switch (channelValue) {
+            case ElectricityMeterValue value -> onElectricityMeter(value);
+            case HeatpolThermostatValue value -> onHeatpolThermostatValue(value);
+            case HumidityValue value -> onHumidityValue(value);
+            case HvacValue value -> onHvacValue(value);
+            case OnOffValue value -> onOnOff(value);
+            case PercentValue value -> onPercentValue(value);
+            case PressureValue value -> onPressureValue(value);
+            case RainValue value -> onRainValue(value);
+            case RgbValue value -> onRgbValue(value);
+            case TemperatureAndHumidityValue value -> onTemperatureAndHumidityValue(value);
+            case TemperatureDoubleValue value -> onTemperatureValue(value);
+            case TimerValue value -> onTimerValue(value);
+            case UnknownValue value -> onUnknownValue(value);
+            case WeightValue value -> onWeightValue(value);
+            case WindValue value -> onWindValue(value);
+            case ActionTrigger value -> onActionTrigger(value);
+        };
     }
 
-    @Override
-    public Stream<ChannelState> onOnOff(@Nullable final OnOff onOff) {
+    private Stream<ChannelState> onHeatpolThermostatValue(HeatpolThermostatValue value) {
+        var channelGroupUid = createChannelGroupUid();
+        var flagsStream = stream(ThermostatValueFlag.values()).map(flag -> {
+            var flagUid = new ChannelUID(channelGroupUid, "flag-" + flag.name());
+            var flagState = OnOffType.from(value.flags().contains(flag));
+            return new ChannelState(flagUid, flagState);
+        });
+        var basicStream = Stream.of(
+                new ChannelState(new ChannelUID(channelGroupUid, "on"), OnOffType.from(value.on())),
+                new ChannelState(
+                        new ChannelUID(channelGroupUid, "measuredTemperature"),
+                        new DecimalType(value.measuredTemperature())),
+                new ChannelState(
+                        new ChannelUID(channelGroupUid, "presetTemperature"),
+                        new DecimalType(value.presetTemperature())));
+        return Stream.concat(basicStream, flagsStream);
+    }
+
+    private Stream<ChannelState> onHumidityValue(HumidityValue value) {
+        return Stream.of(new ChannelState(createChannelUid(), new PercentType(value.humidity())));
+    }
+
+    private Stream<ChannelState> onPressureValue(PressureValue value) {
+        return Stream.of(new ChannelState(createChannelUid(), new DecimalType(value.value())));
+    }
+
+    private Stream<ChannelState> onRainValue(RainValue value) {
+        return Stream.of(new ChannelState(createChannelUid(), new DecimalType(value.value())));
+    }
+
+    private Stream<ChannelState> onWeightValue(WeightValue value) {
+        return Stream.of(new ChannelState(createChannelUid(), new DecimalType(value.value())));
+    }
+
+    private Stream<ChannelState> onWindValue(WindValue value) {
+        return Stream.of(new ChannelState(createChannelUid(), new DecimalType(value.value())));
+    }
+
+    private Stream<ChannelState> onOnOff(OnOffValue onOff) {
         val id = createChannelUid();
-        if (onOff == null) {
-            return Stream.of(new ChannelState(id, NULL));
-        }
         return switch (onOff) {
             case ON -> Stream.of(new ChannelState(id, OnOffType.ON));
             case OFF -> Stream.of(new ChannelState(id, OnOffType.OFF));
         };
     }
 
-    @Override
-    public Stream<ChannelState> onOpenClose(@Nullable final OpenClose openClose) {
-        val id = createChannelUid();
-        if (openClose == null) {
-            return Stream.of(new ChannelState(id, NULL));
-        }
-        return switch (openClose) {
-            case OPEN -> Stream.of(new ChannelState(id, OpenClosedType.OPEN));
-            case CLOSE -> Stream.of(new ChannelState(id, OpenClosedType.CLOSED));
-        };
+    private Stream<ChannelState> onPercentValue(PercentValue percentValue) {
+        return Stream.of(new ChannelState(createChannelUid(), new PercentType(percentValue.value())));
     }
 
-    @Override
-    public Stream<ChannelState> onPercentValue(@Nullable final PercentValue percentValue) {
-        val id = createChannelUid();
-        if (percentValue == null) {
-            return Stream.of(new ChannelState(id, NULL));
-        }
-        return Stream.of(new ChannelState(id, new PercentType(percentValue.value())));
-    }
-
-    @Override
-    public Stream<ChannelState> onRgbValue(@Nullable final RgbValue rgbValue) {
-        var maybeRgbValue = ofNullable(rgbValue);
+    private Stream<ChannelState> onRgbValue(RgbValue value) {
         var rgbwBitFunctions = deviceChannel.rgbwBitFunctions();
-        val groupUid = new ChannelGroupUID(thingUID, valueOf(deviceChannel.number()));
+        val groupUid = createChannelGroupUid();
 
         var channels = new ArrayList<ChannelState>();
         var info = RgbChannelInfo.build(deviceChannel);
         if (info.supportRgb()) {
             var rgbUid = new ChannelUID(groupUid, RgbwLed.COLOR);
-            var state = maybeRgbValue.map(ChannelValueToState::toHsbType).orElse(NULL);
+            var state = toHsbType(value);
             channels.add(new ChannelState(rgbUid, state));
         }
         if (info.supportDimmer()) {
             var brightnessUid = new ChannelUID(groupUid, RgbwLed.BRIGHTNESS);
-            var state = maybeRgbValue
-                    .map(rgb -> (State) new PercentType(rgb.brightness()))
-                    .orElse(NULL);
+            var state = (State) new PercentType(value.brightness());
             channels.add(new ChannelState(brightnessUid, state));
         }
         if (info.supportDimmerCct()) {
             var brightnessCctUid = new ChannelUID(groupUid, RgbwLed.BRIGHTNESS_CCT);
-            var state = maybeRgbValue
-                    .map(rgb -> (State) new PercentType(rgb.dimmerCct()))
-                    .orElse(NULL);
+            var state = new PercentType(value.dimmerCct());
             channels.add(new ChannelState(brightnessCctUid, state));
         }
 
@@ -116,66 +141,35 @@ public class ChannelValueToState implements ChannelValueSwitch.Callback<Stream<C
         return new HSBType(hsbType.getHue(), hsbType.getSaturation(), new PercentType(rgbValue.colorBrightness()));
     }
 
-    @Override
-    public Stream<ChannelState> onStoppableOpenClose(@Nullable final StoppableOpenClose stoppableOpenClose) {
-        val id = createChannelUid();
-        if (stoppableOpenClose == null) {
-            return Stream.of(new ChannelState(id, NULL));
-        }
-        return switch (stoppableOpenClose) {
-            case OPEN -> Stream.of(new ChannelState(id, OpenClosedType.OPEN));
-            case CLOSE, STOP -> Stream.of(new ChannelState(id, OpenClosedType.CLOSED));
-        };
+    private Stream<ChannelState> onTemperatureValue(TemperatureDoubleValue temperatureValue) {
+        return Stream.of(buildTemperatureChannel(createChannelUid(), temperatureValue.temperature()));
     }
 
-    @Override
-    public Stream<ChannelState> onTemperatureValue(@Nullable final TemperatureValue temperatureValue) {
-        val id = createChannelUid();
-        if (temperatureValue == null) {
-            return Stream.of(new ChannelState(id, NULL));
-        }
-        var temperature = temperatureValue.temperature();
+    private static ChannelState buildTemperatureChannel(ChannelUID id, BigDecimal temperature) {
         if (temperature.compareTo(UNDEF_TEMPERATURE_VALUE) == 0) {
-            return Stream.of(new ChannelState(id, UNDEF));
-        }
-        return Stream.of(buildTempPair(temperature, id));
-    }
-
-    private static ChannelState buildTempPair(BigDecimal temperature, ChannelUID id) {
-        if (temperature.equals(UNDEF_TEMPERATURE_VALUE)) {
             return new ChannelState(id, UNDEF);
         }
         return new ChannelState(id, new QuantityType<>(temperature, CELSIUS));
     }
 
-    @Override
-    public Stream<ChannelState> onTemperatureAndHumidityValue(
-            @Nullable final TemperatureAndHumidityValue temperatureAndHumidityValue) {
-        val groupUid = new ChannelGroupUID(thingUID, valueOf(deviceChannel.number()));
-        val tempId = new ChannelUID(groupUid, "temperature");
-        val humidityId = new ChannelUID(groupUid, "humidity");
-        if (temperatureAndHumidityValue == null) {
-            return Stream.of(new ChannelState(tempId, NULL), new ChannelState(humidityId, NULL));
-        }
+    private Stream<ChannelState> onTemperatureAndHumidityValue(
+            TemperatureAndHumidityValue temperatureAndHumidityValue) {
+        val groupUid = createChannelGroupUid();
+
+        var temperature = temperatureAndHumidityValue.temperature();
+        var humidity = temperatureAndHumidityValue
+                .humidity()
+                .map(HumidityValue::humidity)
+                .map(h -> (State) new PercentType(h))
+                .orElse(UNDEF);
+
         return Stream.of(
-                buildTempPair(temperatureAndHumidityValue.temperature(), tempId),
-                buildHumidityPair(temperatureAndHumidityValue, humidityId));
+                buildTemperatureChannel(new ChannelUID(groupUid, "temperature"), temperature),
+                new ChannelState(new ChannelUID(groupUid, "humidity"), humidity));
     }
 
-    private static ChannelState buildHumidityPair(
-            TemperatureAndHumidityValue temperatureAndHumidityValue, ChannelUID humidityId) {
-        var humidity = temperatureAndHumidityValue.humidity();
-        if (humidity.compareTo(BigDecimal.valueOf(-1)) <= 0) {
-            return new ChannelState(humidityId, UNDEF);
-        }
-        return new ChannelState(
-                humidityId,
-                new PercentType(humidity.multiply(ONE_HUNDRED).max(ZERO).min(ONE_HUNDRED)));
-    }
-
-    @Override
-    public Stream<ChannelState> onElectricityMeter(@Nullable ElectricityMeterValue electricityMeterValue) {
-        val groupUid = new ChannelGroupUID(thingUID, valueOf(deviceChannel.number()));
+    private Stream<ChannelState> onElectricityMeter(@Nullable ElectricityMeterValue electricityMeterValue) {
+        val groupUid = createChannelGroupUid();
         val pairs = new ArrayList<ChannelState>();
         val optionalMeter = ofNullable(electricityMeterValue);
         {
@@ -317,9 +311,8 @@ public class ChannelValueToState implements ChannelValueSwitch.Callback<Stream<C
         return pairs;
     }
 
-    @Override
-    public Stream<ChannelState> onHvacValue(HvacValue channelValue) {
-        val groupUid = new ChannelGroupUID(thingUID, valueOf(deviceChannel.number()));
+    private Stream<ChannelState> onHvacValue(HvacValue channelValue) {
+        val groupUid = createChannelGroupUid();
         val pairs = new ArrayList<ChannelState>();
         {
             val id = new ChannelUID(groupUid, "on");
@@ -347,99 +340,38 @@ public class ChannelValueToState implements ChannelValueSwitch.Callback<Stream<C
         } // setPointTemperatureCool
         {
             val flags = channelValue.flags();
-            {
-                val id = new ChannelUID(groupUid, "flags-setPointTempHeatSet");
-                val stateValue = OnOffType.from(flags.setPointTempHeatSet());
-                pairs.add(new ChannelState(id, stateValue));
-            } // setPointTempHeatSet
-            {
-                val id = new ChannelUID(groupUid, "flags-setPointTempCoolSet");
-                val stateValue = OnOffType.from(flags.setPointTempCoolSet());
-                pairs.add(new ChannelState(id, stateValue));
-            } // setPointTempCoolSet
-            {
-                val id = new ChannelUID(groupUid, "flags-heating");
-                val stateValue = OnOffType.from(flags.heating());
-                pairs.add(new ChannelState(id, stateValue));
-            } // heating
-            {
-                val id = new ChannelUID(groupUid, "flags-cooling");
-                val stateValue = OnOffType.from(flags.cooling());
-                pairs.add(new ChannelState(id, stateValue));
-            } // cooling
-            {
-                val id = new ChannelUID(groupUid, "flags-weeklySchedule");
-                val stateValue = OnOffType.from(flags.weeklySchedule());
-                pairs.add(new ChannelState(id, stateValue));
-            } // weeklySchedule
-            {
-                val id = new ChannelUID(groupUid, "flags-countdownTimer");
-                val stateValue = OnOffType.from(flags.countdownTimer());
-                pairs.add(new ChannelState(id, stateValue));
-            } // countdownTimer
-            {
-                val id = new ChannelUID(groupUid, "flags-fanEnabled");
-                val stateValue = OnOffType.from(flags.fanEnabled());
-                pairs.add(new ChannelState(id, stateValue));
-            } // fanEnabled
-            {
-                val id = new ChannelUID(groupUid, "flags-thermometerError");
-                val stateValue = OnOffType.from(flags.thermometerError());
-                pairs.add(new ChannelState(id, stateValue));
-            } // thermometerError
-            {
-                val id = new ChannelUID(groupUid, "flags-clockError");
-                val stateValue = OnOffType.from(flags.clockError());
-                pairs.add(new ChannelState(id, stateValue));
-            } // clockError
-            {
-                val id = new ChannelUID(groupUid, "flags-forcedOffBySensor");
-                val stateValue = OnOffType.from(flags.forcedOffBySensor());
-                pairs.add(new ChannelState(id, stateValue));
-            } // forcedOffBySensor
-            {
-                val id = new ChannelUID(groupUid, "flags-cool");
-                val stateValue = OnOffType.from(flags.cooling());
-                pairs.add(new ChannelState(id, stateValue));
-            } // cool
-            {
-                val id = new ChannelUID(groupUid, "flags-weeklyScheduleTemporalOverride");
-                val stateValue = OnOffType.from(flags.weeklyScheduleTemporalOverride());
-                pairs.add(new ChannelState(id, stateValue));
-            } // weeklyScheduleTemporalOverride
-            {
-                val id = new ChannelUID(groupUid, "flags-batteryCoverOpen");
-                val stateValue = OnOffType.from(flags.batteryCoverOpen());
-                pairs.add(new ChannelState(id, stateValue));
-            } // batteryCoverOpen
+            var flagChannelStates = stream(HvacFlag.values())
+                    .map(flag -> {
+                        val id = new ChannelUID(groupUid, "flag-" + flag.name());
+                        val stateValue = OnOffType.from(flags.contains(flag));
+                        return new ChannelState(id, stateValue);
+                    })
+                    .toList();
+            pairs.addAll(flagChannelStates);
         } // flags
         return pairs.stream();
     }
 
-    @Override
-    public Stream<ChannelState> onTimerValue(TimerValue channelValue) {
+    private Stream<ChannelState> onTimerValue(TimerValue channelValue) {
         // do not know what to do with this
         log.debug("Do not know how to handle timer={}", channelValue);
         return Stream.empty();
     }
 
-    @Override
-    public Stream<ChannelState> onActionTrigger(@Nullable ActionTrigger actionTriggerValue) {
+    private Stream<ChannelState> onActionTrigger(@Nullable ActionTrigger value) {
         // action triggers does not have state
         return Stream.empty();
     }
 
-    @Override
-    public Stream<ChannelState> onUnknownValue(@Nullable final UnknownValue unknownValue) {
-        val id = createChannelUid();
-        if (unknownValue == null) {
-            return Stream.of(new ChannelState(id, NULL));
-        }
-
-        return Stream.of(new ChannelState(id, StringType.valueOf(unknownValue.message())));
+    private Stream<ChannelState> onUnknownValue(UnknownValue unknownValue) {
+        return Stream.of(new ChannelState(createChannelUid(), StringType.valueOf(unknownValue.message())));
     }
 
     private ChannelUID createChannelUid() {
         return new ChannelUID(thingUID, valueOf(deviceChannel.number()));
+    }
+
+    private @NonNull ChannelGroupUID createChannelGroupUid() {
+        return new ChannelGroupUID(thingUID, valueOf(deviceChannel.number()));
     }
 }

@@ -184,6 +184,9 @@ public class SuplaBindingConstants {
          */
         static String LOCATION = "Location";
 
+        static String NUMBER_TEMPERATURE = number("Temperature");
+        static String NUMBER_DIMENSIONLESS = number("Dimensionless");
+
         /**
          * Description: Stores values in number format, takes an optional dimension suffix
          *

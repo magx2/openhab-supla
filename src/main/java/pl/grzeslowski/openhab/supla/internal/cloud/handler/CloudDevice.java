@@ -324,17 +324,6 @@ public final class CloudDevice extends SuplaDeviceHandler {
         }
     }
 
-    @Override
-    @SneakyThrows
-    public void handleDecimalCommand(final ChannelUID channelUID, final DecimalType command) {
-        // TODO handle this command
-        logger.warn(
-                "Not handling `{}` ({}) on channel `{}`",
-                command,
-                command.getClass().getSimpleName(),
-                channelUID);
-    }
-
     private void handleOneZeroCommand(
             final int channelId,
             final boolean firstOrSecond,

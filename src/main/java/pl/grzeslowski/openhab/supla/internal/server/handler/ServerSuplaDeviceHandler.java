@@ -10,7 +10,6 @@ import static org.openhab.core.thing.ThingStatus.OFFLINE;
 import static org.openhab.core.thing.ThingStatus.ONLINE;
 import static org.openhab.core.thing.ThingStatusDetail.*;
 import static pl.grzeslowski.jsupla.protocol.api.ResultCode.SUPLA_RESULTCODE_TRUE;
-import static pl.grzeslowski.jsupla.protocol.api.channeltype.value.ActionTrigger.Capabilities.*;
 import static pl.grzeslowski.jsupla.protocol.api.consts.ProtoConsts.*;
 import static pl.grzeslowski.openhab.supla.internal.GuidLogger.attachGuid;
 import static pl.grzeslowski.openhab.supla.internal.Localization.text;
@@ -52,6 +51,7 @@ import org.openhab.core.types.State;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import pl.grzeslowski.jsupla.protocol.api.ChannelFunction;
+import pl.grzeslowski.jsupla.protocol.api.channeltype.value.ActionTrigger.Capabilities;
 import pl.grzeslowski.jsupla.protocol.api.encoders.ChannelConfigActionTriggerEncoder;
 import pl.grzeslowski.jsupla.protocol.api.structs.ChannelConfigActionTrigger;
 import pl.grzeslowski.jsupla.protocol.api.structs.SuplaTimeval;
@@ -618,7 +618,8 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler implem
             return;
         }
         var actionChannel = actionChannels.get(channelNumber);
-        var configProto = new ChannelConfigActionTrigger(toMask(actionChannel.actionTrigger.capabilities()));
+        var configProto =
+                new ChannelConfigActionTrigger(Capabilities.toMask(actionChannel.actionTrigger.capabilities()));
         var config = ChannelConfigActionTriggerEncoder.INSTANCE.encode(configProto);
         var channelConfig = new ChannelConfig(
                 (short) channelNumber,
@@ -637,7 +638,7 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler implem
     }
 
     private void consumeActionTrigger(ActionTrigger value) {
-        var action = fromSingle(value.actionTrigger());
+        var action = Capabilities.fromSingle(value.actionTrigger());
         logger.debug("Received ActionTrigger for channel {} action={}", value.channelNumber(), action);
 
         var thing = getThing();

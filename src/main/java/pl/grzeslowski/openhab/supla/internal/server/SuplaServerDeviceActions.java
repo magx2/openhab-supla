@@ -21,9 +21,9 @@ import org.openhab.core.automation.annotation.RuleAction;
 import org.openhab.core.thing.binding.ThingActions;
 import org.openhab.core.thing.binding.ThingActionsScope;
 import org.openhab.core.thing.binding.ThingHandler;
+import pl.grzeslowski.jsupla.protocol.api.DeviceConfigField;
 import pl.grzeslowski.jsupla.protocol.api.structs.sd.SetDeviceConfig;
 import pl.grzeslowski.openhab.supla.internal.server.device_config.DeviceConfig;
-import pl.grzeslowski.openhab.supla.internal.server.device_config.DeviceConfigField;
 import pl.grzeslowski.openhab.supla.internal.server.device_config.DeviceConfigResult;
 import pl.grzeslowski.openhab.supla.internal.server.device_config.DeviceConfigUtil;
 import pl.grzeslowski.openhab.supla.internal.server.handler.ServerSuplaDeviceHandler;
@@ -85,7 +85,7 @@ public class SuplaServerDeviceActions implements ThingActions {
 
         var fields = BigInteger.valueOf(deviceConfig.stream()
                 .map(DeviceConfig::field)
-                .map(DeviceConfigField::getMask)
+                .map(DeviceConfigField::getValue)
                 .reduce(0L, (field, mask) -> field | mask));
 
         var message = new SetDeviceConfig(

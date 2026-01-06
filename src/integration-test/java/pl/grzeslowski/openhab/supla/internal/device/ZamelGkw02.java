@@ -11,9 +11,9 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.Arrays;
 import lombok.Getter;
-import pl.grzeslowski.jsupla.protocol.api.channeltype.decoders.HVACValueDecoderImpl;
-import pl.grzeslowski.jsupla.protocol.api.channeltype.encoders.ThermometerTypeDoubleChannelEncoderImpl;
-import pl.grzeslowski.jsupla.protocol.api.channeltype.value.TemperatureValue;
+import pl.grzeslowski.jsupla.protocol.api.channeltype.decoders.HvacTypeDecoder;
+import pl.grzeslowski.jsupla.protocol.api.channeltype.encoders.ChannelTypeEncoder;
+import pl.grzeslowski.jsupla.protocol.api.channeltype.value.TemperatureAndHumidityValue;
 import pl.grzeslowski.jsupla.protocol.api.structs.ActionTriggerProperties;
 import pl.grzeslowski.jsupla.protocol.api.structs.ds.ActionTrigger;
 import pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaDeviceChannelD;
@@ -22,8 +22,7 @@ import pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaRegisterDeviceF;
 import pl.grzeslowski.openhab.supla.internal.extension.random.RandomExtension;
 
 public class ZamelGkw02 extends Device {
-    private final ThermometerTypeDoubleChannelEncoderImpl thermometerTypeDoubleChannelEncoder =
-            new ThermometerTypeDoubleChannelEncoderImpl();
+    private final ChannelTypeEncoder encoder = ChannelTypeEncoder.INSTANCE;
 
     @Getter
     private HvacChannel hvac = RandomExtension.INSTANCE.randomHvac();
@@ -67,7 +66,7 @@ public class ZamelGkw02 extends Device {
                     134283264L,
                     (short) 0,
                     0L,
-                    thermometerTypeDoubleChannelEncoder.encode(new TemperatureValue(temperature)),
+                    encoder.encode(new TemperatureAndHumidityValue(temperature)),
                     null,
                     null,
                     (short) 0),
@@ -147,7 +146,7 @@ public class ZamelGkw02 extends Device {
                 (short) 1,
                 (short) SUPLA_CHANNEL_OFFLINE_FLAG_ONLINE,
                 0,
-                thermometerTypeDoubleChannelEncoder.encode(new TemperatureValue(temperature)));
+                encoder.encode(new TemperatureAndHumidityValue(temperature)));
         send(proto);
     }
 
@@ -158,7 +157,7 @@ public class ZamelGkw02 extends Device {
     }
 
     private void updateHvac(byte[] value) {
-        var hvac = HVACValueDecoderImpl.INSTANCE.decode(value);
+        var hvac = HvacTypeDecoder.INSTANCE.decode(value);
         this.hvac = new HvacChannel(hvac);
     }
 

@@ -160,9 +160,6 @@ public class GatewayDeviceHandler extends ServerSuplaDeviceHandler implements Se
     public void handlePercentCommand(ChannelUID channelUID, PercentType command) {}
 
     @Override
-    public void handleDecimalCommand(ChannelUID channelUID, DecimalType command) {}
-
-    @Override
     public void handleStopMoveTypeCommand(ChannelUID channelUID, StopMoveType command) {}
 
     @Override
