@@ -31,6 +31,7 @@ class RgbChannelInfoTest {
     private DeviceChannel mockDeviceChannel(ChannelType type, Set<RgbwBitFunction> rgbwBitFunctions) {
         return new DeviceChannel(
                 1, // number
+                false,
                 type,
                 Collections.emptySet(), // flags
                 null, // channelFunction
@@ -38,8 +39,10 @@ class RgbChannelInfoTest {
                 new byte[8], // value
                 null, // action
                 null, // hvacValue
-                null // subDeviceId
-                );
+                null, // subDeviceId
+                0,
+                Set.of(),
+                0);
     }
     // Test cases for when rgbwBitFunctions is empty
     @SuppressWarnings("deprecation")

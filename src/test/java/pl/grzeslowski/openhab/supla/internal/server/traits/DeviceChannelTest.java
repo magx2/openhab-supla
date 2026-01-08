@@ -19,6 +19,7 @@ class DeviceChannelTest {
     void shouldRejectMissingValues() {
         assertThatThrownBy(() -> new DeviceChannel(
                         1,
+                        false,
                         ChannelType.CALCFG_TYPE_THERMOSTAT_DETAILS_V1,
                         Set.of(),
                         SUPLA_CHANNELFNC_NONE,
@@ -26,7 +27,10 @@ class DeviceChannelTest {
                         null,
                         null,
                         null,
-                        null))
+                        null,
+                        0,
+                        Set.of(),
+                        0))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("value or hvacValue or action must not be null!");
     }
@@ -101,6 +105,7 @@ class DeviceChannelTest {
         HvacValue hvacValue = new HvacValue(true, HvacMode.SUPLA_HVAC_MODE_NOT_SET, null, null, Set.of());
         DeviceChannel deviceChannel = new DeviceChannel(
                 1,
+                false,
                 ChannelType.EV_TYPE_ELECTRICITY_METER_MEASUREMENT_V1,
                 Set.of(),
                 SUPLA_CHANNELFNC_NONE,
@@ -108,7 +113,10 @@ class DeviceChannelTest {
                 null,
                 null,
                 hvacValue,
-                null);
+                null,
+                0,
+                Set.of(),
+                0);
 
         assertThat(deviceChannel.value()).isNull();
         assertThat(deviceChannel.hvacValue()).isEqualTo(hvacValue);

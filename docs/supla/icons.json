@@ -1,0 +1,1957 @@
+[
+{
+	"filename": "0.svg",
+	"description": "NONE (id 0) icon",
+	"category": "function"
+},
+{
+	"filename": "10.svg",
+	"description": "CONTROLLINGTHEGATEWAYLOCK (id 10) icon",
+	"category": "function"
+},
+{
+	"filename": "100.svg",
+	"description": "OPENINGSENSOR_DOOR (id 100) icon",
+	"category": "function"
+},
+{
+	"filename": "1000.svg",
+	"description": "FLOOD_SENSOR (id 1000) icon",
+	"category": "function"
+},
+{
+	"filename": "1000-closed.svg",
+	"description": "FLOOD_SENSOR (id 1000) icon; state: closed",
+	"category": "function"
+},
+{
+	"filename": "100-closed.svg",
+	"description": "OPENINGSENSOR_DOOR (id 100) icon; state: closed",
+	"category": "function"
+},
+{
+	"filename": "1010.svg",
+	"description": "MOTION_SENSOR (id 1010) icon",
+	"category": "function"
+},
+{
+	"filename": "1010_1.svg",
+	"description": "MOTION_SENSOR (id 1010) icon; alternative icon index 1",
+	"category": "function"
+},
+{
+	"filename": "1010_1-closed.svg",
+	"description": "MOTION_SENSOR (id 1010) icon; alternative icon index 1; state: closed",
+	"category": "function"
+},
+{
+	"filename": "1010_2.svg",
+	"description": "MOTION_SENSOR (id 1010) icon; alternative icon index 2",
+	"category": "function"
+},
+{
+	"filename": "1010_2-closed.svg",
+	"description": "MOTION_SENSOR (id 1010) icon; alternative icon index 2; state: closed",
+	"category": "function"
+},
+{
+	"filename": "1010_3.svg",
+	"description": "MOTION_SENSOR (id 1010) icon; alternative icon index 3",
+	"category": "function"
+},
+{
+	"filename": "1010_3-closed.svg",
+	"description": "MOTION_SENSOR (id 1010) icon; alternative icon index 3; state: closed",
+	"category": "function"
+},
+{
+	"filename": "1010_4.svg",
+	"description": "MOTION_SENSOR (id 1010) icon; alternative icon index 4",
+	"category": "function"
+},
+{
+	"filename": "1010_4-closed.svg",
+	"description": "MOTION_SENSOR (id 1010) icon; alternative icon index 4; state: closed",
+	"category": "function"
+},
+{
+	"filename": "1010-closed.svg",
+	"description": "MOTION_SENSOR (id 1010) icon; state: closed",
+	"category": "function"
+},
+{
+	"filename": "1020.svg",
+	"description": "BINARY_SENSOR (id 1020) icon",
+	"category": "function"
+},
+{
+	"filename": "1020_1.svg",
+	"description": "BINARY_SENSOR (id 1020) icon; alternative icon index 1",
+	"category": "function"
+},
+{
+	"filename": "1020_1-closed.svg",
+	"description": "BINARY_SENSOR (id 1020) icon; alternative icon index 1; state: closed",
+	"category": "function"
+},
+{
+	"filename": "1020_2.svg",
+	"description": "BINARY_SENSOR (id 1020) icon; alternative icon index 2",
+	"category": "function"
+},
+{
+	"filename": "1020_2-closed.svg",
+	"description": "BINARY_SENSOR (id 1020) icon; alternative icon index 2; state: closed",
+	"category": "function"
+},
+{
+	"filename": "1020_3.svg",
+	"description": "BINARY_SENSOR (id 1020) icon; alternative icon index 3",
+	"category": "function"
+},
+{
+	"filename": "1020_3-closed.svg",
+	"description": "BINARY_SENSOR (id 1020) icon; alternative icon index 3; state: closed",
+	"category": "function"
+},
+{
+	"filename": "1020_4.svg",
+	"description": "BINARY_SENSOR (id 1020) icon; alternative icon index 4",
+	"category": "function"
+},
+{
+	"filename": "1020_4-closed.svg",
+	"description": "BINARY_SENSOR (id 1020) icon; alternative icon index 4; state: closed",
+	"category": "function"
+},
+{
+	"filename": "1020_5.svg",
+	"description": "BINARY_SENSOR (id 1020) icon; alternative icon index 5",
+	"category": "function"
+},
+{
+	"filename": "1020_5-closed.svg",
+	"description": "BINARY_SENSOR (id 1020) icon; alternative icon index 5; state: closed",
+	"category": "function"
+},
+{
+	"filename": "1020_6.svg",
+	"description": "BINARY_SENSOR (id 1020) icon; alternative icon index 6",
+	"category": "function"
+},
+{
+	"filename": "1020_6-closed.svg",
+	"description": "BINARY_SENSOR (id 1020) icon; alternative icon index 6; state: closed",
+	"category": "function"
+},
+{
+	"filename": "1020_7.svg",
+	"description": "BINARY_SENSOR (id 1020) icon; alternative icon index 7",
+	"category": "function"
+},
+{
+	"filename": "1020_7-closed.svg",
+	"description": "BINARY_SENSOR (id 1020) icon; alternative icon index 7; state: closed",
+	"category": "function"
+},
+{
+	"filename": "1020_8.svg",
+	"description": "BINARY_SENSOR (id 1020) icon; alternative icon index 8",
+	"category": "function"
+},
+{
+	"filename": "1020_8-closed.svg",
+	"description": "BINARY_SENSOR (id 1020) icon; alternative icon index 8; state: closed",
+	"category": "function"
+},
+{
+	"filename": "1020_9.svg",
+	"description": "BINARY_SENSOR (id 1020) icon; alternative icon index 9",
+	"category": "function"
+},
+{
+	"filename": "1020_9-closed.svg",
+	"description": "BINARY_SENSOR (id 1020) icon; alternative icon index 9; state: closed",
+	"category": "function"
+},
+{
+	"filename": "1020-closed.svg",
+	"description": "BINARY_SENSOR (id 1020) icon; state: closed",
+	"category": "function"
+},
+{
+	"filename": "10-closed.svg",
+	"description": "CONTROLLINGTHEGATEWAYLOCK (id 10) icon; state: closed",
+	"category": "function"
+},
+{
+	"filename": "110.svg",
+	"description": "CONTROLLINGTHEROLLERSHUTTER (id 110) icon",
+	"category": "function"
+},
+{
+	"filename": "110-closed.svg",
+	"description": "CONTROLLINGTHEROLLERSHUTTER (id 110) icon; state: closed",
+	"category": "function"
+},
+{
+	"filename": "115.svg",
+	"description": "CONTROLLINGTHEROOFWINDOW (id 115) icon",
+	"category": "function"
+},
+{
+	"filename": "115-closed.svg",
+	"description": "CONTROLLINGTHEROOFWINDOW (id 115) icon; state: closed",
+	"category": "function"
+},
+{
+	"filename": "120.svg",
+	"description": "OPENINGSENSOR_ROLLERSHUTTER (id 120) icon",
+	"category": "function"
+},
+{
+	"filename": "120-closed.svg",
+	"description": "OPENINGSENSOR_ROLLERSHUTTER (id 120) icon; state: closed",
+	"category": "function"
+},
+{
+	"filename": "125.svg",
+	"description": "OPENINGSENSOR_ROOFWINDOW (id 125) icon",
+	"category": "function"
+},
+{
+	"filename": "125-closed.svg",
+	"description": "OPENINGSENSOR_ROOFWINDOW (id 125) icon; state: closed",
+	"category": "function"
+},
+{
+	"filename": "130.svg",
+	"description": "POWERSWITCH (id 130) icon",
+	"category": "function"
+},
+{
+	"filename": "130_1.svg",
+	"description": "POWERSWITCH (id 130) icon; alternative icon index 1",
+	"category": "function"
+},
+{
+	"filename": "130_1-on.svg",
+	"description": "POWERSWITCH (id 130) icon; alternative icon index 1; state: on",
+	"category": "function"
+},
+{
+	"filename": "130_2.svg",
+	"description": "POWERSWITCH (id 130) icon; alternative icon index 2",
+	"category": "function"
+},
+{
+	"filename": "130_2-on.svg",
+	"description": "POWERSWITCH (id 130) icon; alternative icon index 2; state: on",
+	"category": "function"
+},
+{
+	"filename": "130_3.svg",
+	"description": "POWERSWITCH (id 130) icon; alternative icon index 3",
+	"category": "function"
+},
+{
+	"filename": "130_3-on.svg",
+	"description": "POWERSWITCH (id 130) icon; alternative icon index 3; state: on",
+	"category": "function"
+},
+{
+	"filename": "130_4.svg",
+	"description": "POWERSWITCH (id 130) icon; alternative icon index 4",
+	"category": "function"
+},
+{
+	"filename": "130_4-on.svg",
+	"description": "POWERSWITCH (id 130) icon; alternative icon index 4; state: on",
+	"category": "function"
+},
+{
+	"filename": "130_5.svg",
+	"description": "POWERSWITCH (id 130) icon; alternative icon index 5",
+	"category": "function"
+},
+{
+	"filename": "130_5-on.svg",
+	"description": "POWERSWITCH (id 130) icon; alternative icon index 5; state: on",
+	"category": "function"
+},
+{
+	"filename": "130_6.svg",
+	"description": "POWERSWITCH (id 130) icon; alternative icon index 6",
+	"category": "function"
+},
+{
+	"filename": "130_6-on.svg",
+	"description": "POWERSWITCH (id 130) icon; alternative icon index 6; state: on",
+	"category": "function"
+},
+{
+	"filename": "130_7.svg",
+	"description": "POWERSWITCH (id 130) icon; alternative icon index 7",
+	"category": "function"
+},
+{
+	"filename": "130_7-on.svg",
+	"description": "POWERSWITCH (id 130) icon; alternative icon index 7; state: on",
+	"category": "function"
+},
+{
+	"filename": "130-on.svg",
+	"description": "POWERSWITCH (id 130) icon; state: on",
+	"category": "function"
+},
+{
+	"filename": "140.svg",
+	"description": "LIGHTSWITCH (id 140) icon",
+	"category": "function"
+},
+{
+	"filename": "140_1.svg",
+	"description": "LIGHTSWITCH (id 140) icon; alternative icon index 1",
+	"category": "function"
+},
+{
+	"filename": "140_1-on.svg",
+	"description": "LIGHTSWITCH (id 140) icon; alternative icon index 1; state: on",
+	"category": "function"
+},
+{
+	"filename": "140_2.svg",
+	"description": "LIGHTSWITCH (id 140) icon; alternative icon index 2",
+	"category": "function"
+},
+{
+	"filename": "140_2-on.svg",
+	"description": "LIGHTSWITCH (id 140) icon; alternative icon index 2; state: on",
+	"category": "function"
+},
+{
+	"filename": "140-on.svg",
+	"description": "LIGHTSWITCH (id 140) icon; state: on",
+	"category": "function"
+},
+{
+	"filename": "180.svg",
+	"description": "DIMMER (id 180) icon",
+	"category": "function"
+},
+{
+	"filename": "180-on.svg",
+	"description": "DIMMER (id 180) icon; state: on",
+	"category": "function"
+},
+{
+	"filename": "190.svg",
+	"description": "RGBLIGHTING (id 190) icon",
+	"category": "function"
+},
+{
+	"filename": "190-on.svg",
+	"description": "RGBLIGHTING (id 190) icon; state: on",
+	"category": "function"
+},
+{
+	"filename": "20.svg",
+	"description": "CONTROLLINGTHEGATE (id 20) icon",
+	"category": "function"
+},
+{
+	"filename": "20_1.svg",
+	"description": "CONTROLLINGTHEGATE (id 20) icon; alternative icon index 1",
+	"category": "function"
+},
+{
+	"filename": "20_1-closed.svg",
+	"description": "CONTROLLINGTHEGATE (id 20) icon; alternative icon index 1; state: closed",
+	"category": "function"
+},
+{
+	"filename": "20_1-partial.svg",
+	"description": "CONTROLLINGTHEGATE (id 20) icon; alternative icon index 1; state: partially closed",
+	"category": "function"
+},
+{
+	"filename": "20_2.svg",
+	"description": "CONTROLLINGTHEGATE (id 20) icon; alternative icon index 2",
+	"category": "function"
+},
+{
+	"filename": "20_2-closed.svg",
+	"description": "CONTROLLINGTHEGATE (id 20) icon; alternative icon index 2; state: closed",
+	"category": "function"
+},
+{
+	"filename": "20_2-partial.svg",
+	"description": "CONTROLLINGTHEGATE (id 20) icon; alternative icon index 2; state: partially closed",
+	"category": "function"
+},
+{
+	"filename": "200.svg",
+	"description": "DIMMERANDRGBLIGHTING (id 200) icon",
+	"category": "function"
+},
+{
+	"filename": "2000.svg",
+	"description": "SCENE (id 2000) icon",
+	"category": "function"
+},
+{
+	"filename": "2000_1.svg",
+	"description": "SCENE (id 2000) icon; alternative icon index 1",
+	"category": "function"
+},
+{
+	"filename": "2000_10.svg",
+	"description": "SCENE (id 2000) icon; alternative icon index 10",
+	"category": "function"
+},
+{
+	"filename": "2000_11.svg",
+	"description": "SCENE (id 2000) icon; alternative icon index 11",
+	"category": "function"
+},
+{
+	"filename": "2000_12.svg",
+	"description": "SCENE (id 2000) icon; alternative icon index 12",
+	"category": "function"
+},
+{
+	"filename": "2000_13.svg",
+	"description": "SCENE (id 2000) icon; alternative icon index 13",
+	"category": "function"
+},
+{
+	"filename": "2000_14.svg",
+	"description": "SCENE (id 2000) icon; alternative icon index 14",
+	"category": "function"
+},
+{
+	"filename": "2000_15.svg",
+	"description": "SCENE (id 2000) icon; alternative icon index 15",
+	"category": "function"
+},
+{
+	"filename": "2000_16.svg",
+	"description": "SCENE (id 2000) icon; alternative icon index 16",
+	"category": "function"
+},
+{
+	"filename": "2000_17.svg",
+	"description": "SCENE (id 2000) icon; alternative icon index 17",
+	"category": "function"
+},
+{
+	"filename": "2000_18.svg",
+	"description": "SCENE (id 2000) icon; alternative icon index 18",
+	"category": "function"
+},
+{
+	"filename": "2000_19.svg",
+	"description": "SCENE (id 2000) icon; alternative icon index 19",
+	"category": "function"
+},
+{
+	"filename": "2000_2.svg",
+	"description": "SCENE (id 2000) icon; alternative icon index 2",
+	"category": "function"
+},
+{
+	"filename": "2000_3.svg",
+	"description": "SCENE (id 2000) icon; alternative icon index 3",
+	"category": "function"
+},
+{
+	"filename": "2000_4.svg",
+	"description": "SCENE (id 2000) icon; alternative icon index 4",
+	"category": "function"
+},
+{
+	"filename": "2000_5.svg",
+	"description": "SCENE (id 2000) icon; alternative icon index 5",
+	"category": "function"
+},
+{
+	"filename": "2000_6.svg",
+	"description": "SCENE (id 2000) icon; alternative icon index 6",
+	"category": "function"
+},
+{
+	"filename": "2000_7.svg",
+	"description": "SCENE (id 2000) icon; alternative icon index 7",
+	"category": "function"
+},
+{
+	"filename": "2000_8.svg",
+	"description": "SCENE (id 2000) icon; alternative icon index 8",
+	"category": "function"
+},
+{
+	"filename": "2000_9.svg",
+	"description": "SCENE (id 2000) icon; alternative icon index 9",
+	"category": "function"
+},
+{
+	"filename": "200-offoff.svg",
+	"description": "DIMMERANDRGBLIGHTING (id 200) icon; RGB/dimmer state: dim off, color off",
+	"category": "function"
+},
+{
+	"filename": "200-offon.svg",
+	"description": "DIMMERANDRGBLIGHTING (id 200) icon; RGB/dimmer state: dim off, color on",
+	"category": "function"
+},
+{
+	"filename": "200-onoff.svg",
+	"description": "DIMMERANDRGBLIGHTING (id 200) icon; RGB/dimmer state: dim on, color off",
+	"category": "function"
+},
+{
+	"filename": "200-onon.svg",
+	"description": "DIMMERANDRGBLIGHTING (id 200) icon; RGB/dimmer state: dim on, color on",
+	"category": "function"
+},
+{
+	"filename": "2010.svg",
+	"description": "SCHEDULE (id 2010) icon",
+	"category": "function"
+},
+{
+	"filename": "20-closed.svg",
+	"description": "CONTROLLINGTHEGATE (id 20) icon; state: closed",
+	"category": "function"
+},
+{
+	"filename": "20-partial.svg",
+	"description": "CONTROLLINGTHEGATE (id 20) icon; state: partially closed",
+	"category": "function"
+},
+{
+	"filename": "210.svg",
+	"description": "DEPTHSENSOR (id 210) icon",
+	"category": "function"
+},
+{
+	"filename": "220.svg",
+	"description": "DISTANCESENSOR (id 220) icon",
+	"category": "function"
+},
+{
+	"filename": "230.svg",
+	"description": "OPENINGSENSOR_WINDOW (id 230) icon",
+	"category": "function"
+},
+{
+	"filename": "230-closed.svg",
+	"description": "OPENINGSENSOR_WINDOW (id 230) icon; state: closed",
+	"category": "function"
+},
+{
+	"filename": "235.svg",
+	"description": "HOTELCARDSENSOR (id 235) icon",
+	"category": "function"
+},
+{
+	"filename": "235-closed.svg",
+	"description": "HOTELCARDSENSOR (id 235) icon; state: closed",
+	"category": "function"
+},
+{
+	"filename": "236.svg",
+	"description": "ALARM_ARMAMENT_SENSOR (id 236) icon",
+	"category": "function"
+},
+{
+	"filename": "236_1.svg",
+	"description": "ALARM_ARMAMENT_SENSOR (id 236) icon; alternative icon index 1",
+	"category": "function"
+},
+{
+	"filename": "236_1-closed.svg",
+	"description": "ALARM_ARMAMENT_SENSOR (id 236) icon; alternative icon index 1; state: closed",
+	"category": "function"
+},
+{
+	"filename": "236_2.svg",
+	"description": "ALARM_ARMAMENT_SENSOR (id 236) icon; alternative icon index 2",
+	"category": "function"
+},
+{
+	"filename": "236_2-closed.svg",
+	"description": "ALARM_ARMAMENT_SENSOR (id 236) icon; alternative icon index 2; state: closed",
+	"category": "function"
+},
+{
+	"filename": "236_3.svg",
+	"description": "ALARM_ARMAMENT_SENSOR (id 236) icon; alternative icon index 3",
+	"category": "function"
+},
+{
+	"filename": "236_3-closed.svg",
+	"description": "ALARM_ARMAMENT_SENSOR (id 236) icon; alternative icon index 3; state: closed",
+	"category": "function"
+},
+{
+	"filename": "236-closed.svg",
+	"description": "ALARM_ARMAMENT_SENSOR (id 236) icon; state: closed",
+	"category": "function"
+},
+{
+	"filename": "240.svg",
+	"description": "MAILSENSOR (id 240) icon",
+	"category": "function"
+},
+{
+	"filename": "240-closed.svg",
+	"description": "MAILSENSOR (id 240) icon; state: closed",
+	"category": "function"
+},
+{
+	"filename": "250.svg",
+	"description": "WINDSENSOR (id 250) icon",
+	"category": "function"
+},
+{
+	"filename": "260.svg",
+	"description": "PRESSURESENSOR (id 260) icon",
+	"category": "function"
+},
+{
+	"filename": "270.svg",
+	"description": "RAINSENSOR (id 270) icon",
+	"category": "function"
+},
+{
+	"filename": "280.svg",
+	"description": "WEIGHTSENSOR (id 280) icon",
+	"category": "function"
+},
+{
+	"filename": "290.svg",
+	"description": "WEATHER_STATION (id 290) icon",
+	"category": "function"
+},
+{
+	"filename": "30.svg",
+	"description": "CONTROLLINGTHEGARAGEDOOR (id 30) icon",
+	"category": "function"
+},
+{
+	"filename": "300.svg",
+	"description": "STAIRCASETIMER (id 300) icon",
+	"category": "function"
+},
+{
+	"filename": "300_1.svg",
+	"description": "STAIRCASETIMER (id 300) icon; alternative icon index 1",
+	"category": "function"
+},
+{
+	"filename": "300_1-on.svg",
+	"description": "STAIRCASETIMER (id 300) icon; alternative icon index 1; state: on",
+	"category": "function"
+},
+{
+	"filename": "300-on.svg",
+	"description": "STAIRCASETIMER (id 300) icon; state: on",
+	"category": "function"
+},
+{
+	"filename": "30-closed.svg",
+	"description": "CONTROLLINGTHEGARAGEDOOR (id 30) icon; state: closed",
+	"category": "function"
+},
+{
+	"filename": "30-partial.svg",
+	"description": "CONTROLLINGTHEGARAGEDOOR (id 30) icon; state: partially closed",
+	"category": "function"
+},
+{
+	"filename": "310.svg",
+	"description": "ELECTRICITYMETER (id 310) icon",
+	"category": "function"
+},
+{
+	"filename": "310_1.svg",
+	"description": "ELECTRICITYMETER (id 310) icon; alternative icon index 1",
+	"category": "function"
+},
+{
+	"filename": "315.svg",
+	"description": "IC_ELECTRICITYMETER (id 315) icon",
+	"category": "function"
+},
+{
+	"filename": "320.svg",
+	"description": "IC_GASMETER (id 320) icon",
+	"category": "function"
+},
+{
+	"filename": "330.svg",
+	"description": "IC_WATERMETER (id 330) icon",
+	"category": "function"
+},
+{
+	"filename": "340.svg",
+	"description": "IC_HEATMETER (id 340) icon",
+	"category": "function"
+},
+{
+	"filename": "40.svg",
+	"description": "THERMOMETER (id 40) icon",
+	"category": "function"
+},
+{
+	"filename": "40_1.svg",
+	"description": "THERMOMETER (id 40) icon; alternative icon index 1",
+	"category": "function"
+},
+{
+	"filename": "40_2.svg",
+	"description": "THERMOMETER (id 40) icon; alternative icon index 2",
+	"category": "function"
+},
+{
+	"filename": "40_3.svg",
+	"description": "THERMOMETER (id 40) icon; alternative icon index 3",
+	"category": "function"
+},
+{
+	"filename": "40_4.svg",
+	"description": "THERMOMETER (id 40) icon; alternative icon index 4",
+	"category": "function"
+},
+{
+	"filename": "40_5.svg",
+	"description": "THERMOMETER (id 40) icon; alternative icon index 5",
+	"category": "function"
+},
+{
+	"filename": "40_6.svg",
+	"description": "THERMOMETER (id 40) icon; alternative icon index 6",
+	"category": "function"
+},
+{
+	"filename": "40_7.svg",
+	"description": "THERMOMETER (id 40) icon; alternative icon index 7",
+	"category": "function"
+},
+{
+	"filename": "40_b.svg",
+	"description": "Named function icon '40_b'",
+	"category": "function"
+},
+{
+	"filename": "400.svg",
+	"description": "THERMOSTAT (id 400) icon",
+	"category": "function"
+},
+{
+	"filename": "400_1.svg",
+	"description": "THERMOSTAT (id 400) icon; alternative icon index 1",
+	"category": "function"
+},
+{
+	"filename": "400_1-on.svg",
+	"description": "THERMOSTAT (id 400) icon; alternative icon index 1; state: on",
+	"category": "function"
+},
+{
+	"filename": "400_2.svg",
+	"description": "THERMOSTAT (id 400) icon; alternative icon index 2",
+	"category": "function"
+},
+{
+	"filename": "400_2-on.svg",
+	"description": "THERMOSTAT (id 400) icon; alternative icon index 2; state: on",
+	"category": "function"
+},
+{
+	"filename": "400_3.svg",
+	"description": "THERMOSTAT (id 400) icon; alternative icon index 3",
+	"category": "function"
+},
+{
+	"filename": "400_3-on.svg",
+	"description": "THERMOSTAT (id 400) icon; alternative icon index 3; state: on",
+	"category": "function"
+},
+{
+	"filename": "400-on.svg",
+	"description": "THERMOSTAT (id 400) icon; state: on",
+	"category": "function"
+},
+{
+	"filename": "410.svg",
+	"description": "THERMOSTATHEATPOLHOMEPLUS (id 410) icon",
+	"category": "function"
+},
+{
+	"filename": "410_1.svg",
+	"description": "THERMOSTATHEATPOLHOMEPLUS (id 410) icon; alternative icon index 1",
+	"category": "function"
+},
+{
+	"filename": "410_1-on.svg",
+	"description": "THERMOSTATHEATPOLHOMEPLUS (id 410) icon; alternative icon index 1; state: on",
+	"category": "function"
+},
+{
+	"filename": "410_2.svg",
+	"description": "THERMOSTATHEATPOLHOMEPLUS (id 410) icon; alternative icon index 2",
+	"category": "function"
+},
+{
+	"filename": "410_2-on.svg",
+	"description": "THERMOSTATHEATPOLHOMEPLUS (id 410) icon; alternative icon index 2; state: on",
+	"category": "function"
+},
+{
+	"filename": "410_3.svg",
+	"description": "THERMOSTATHEATPOLHOMEPLUS (id 410) icon; alternative icon index 3",
+	"category": "function"
+},
+{
+	"filename": "410_3-on.svg",
+	"description": "THERMOSTATHEATPOLHOMEPLUS (id 410) icon; alternative icon index 3; state: on",
+	"category": "function"
+},
+{
+	"filename": "410-on.svg",
+	"description": "THERMOSTATHEATPOLHOMEPLUS (id 410) icon; state: on",
+	"category": "function"
+},
+{
+	"filename": "42.svg",
+	"description": "HUMIDITY (id 42) icon",
+	"category": "function"
+},
+{
+	"filename": "420.svg",
+	"description": "HVAC_THERMOSTAT (id 420) icon",
+	"category": "function"
+},
+{
+	"filename": "420-cool.svg",
+	"description": "HVAC_THERMOSTAT (id 420) icon; HVAC cool variant",
+	"category": "function"
+},
+{
+	"filename": "422.svg",
+	"description": "HVAC_THERMOSTAT_HEAT_COOL (id 422) icon",
+	"category": "function"
+},
+{
+	"filename": "423.svg",
+	"description": "HVAC_DRYER (id 423) icon",
+	"category": "function"
+},
+{
+	"filename": "424.svg",
+	"description": "HVAC_FAN (id 424) icon",
+	"category": "function"
+},
+{
+	"filename": "425.svg",
+	"description": "HVAC_THERMOSTAT_DIFFERENTIAL (id 425) icon",
+	"category": "function"
+},
+{
+	"filename": "426.svg",
+	"description": "HVAC_DOMESTIC_HOT_WATER (id 426) icon",
+	"category": "function"
+},
+{
+	"filename": "45.svg",
+	"description": "HUMIDITYANDTEMPERATURE (id 45) icon",
+	"category": "function"
+},
+{
+	"filename": "45_1.svg",
+	"description": "HUMIDITYANDTEMPERATURE (id 45) icon; alternative icon index 1",
+	"category": "function"
+},
+{
+	"filename": "45_1-hum.svg",
+	"description": "HUMIDITYANDTEMPERATURE (id 45) icon; alternative icon index 1; humidity variant for HUMIDITYANDTEMPERATURE dual icon",
+	"category": "function"
+},
+{
+	"filename": "45_2.svg",
+	"description": "HUMIDITYANDTEMPERATURE (id 45) icon; alternative icon index 2",
+	"category": "function"
+},
+{
+	"filename": "45_2-hum.svg",
+	"description": "HUMIDITYANDTEMPERATURE (id 45) icon; alternative icon index 2; humidity variant for HUMIDITYANDTEMPERATURE dual icon",
+	"category": "function"
+},
+{
+	"filename": "45_3.svg",
+	"description": "HUMIDITYANDTEMPERATURE (id 45) icon; alternative icon index 3",
+	"category": "function"
+},
+{
+	"filename": "45_3-hum.svg",
+	"description": "HUMIDITYANDTEMPERATURE (id 45) icon; alternative icon index 3; humidity variant for HUMIDITYANDTEMPERATURE dual icon",
+	"category": "function"
+},
+{
+	"filename": "45_4.svg",
+	"description": "HUMIDITYANDTEMPERATURE (id 45) icon; alternative icon index 4",
+	"category": "function"
+},
+{
+	"filename": "45_4-hum.svg",
+	"description": "HUMIDITYANDTEMPERATURE (id 45) icon; alternative icon index 4; humidity variant for HUMIDITYANDTEMPERATURE dual icon",
+	"category": "function"
+},
+{
+	"filename": "45_5.svg",
+	"description": "HUMIDITYANDTEMPERATURE (id 45) icon; alternative icon index 5",
+	"category": "function"
+},
+{
+	"filename": "45_5-hum.svg",
+	"description": "HUMIDITYANDTEMPERATURE (id 45) icon; alternative icon index 5; humidity variant for HUMIDITYANDTEMPERATURE dual icon",
+	"category": "function"
+},
+{
+	"filename": "45_6.svg",
+	"description": "HUMIDITYANDTEMPERATURE (id 45) icon; alternative icon index 6",
+	"category": "function"
+},
+{
+	"filename": "45_6-hum.svg",
+	"description": "HUMIDITYANDTEMPERATURE (id 45) icon; alternative icon index 6; humidity variant for HUMIDITYANDTEMPERATURE dual icon",
+	"category": "function"
+},
+{
+	"filename": "45_7.svg",
+	"description": "HUMIDITYANDTEMPERATURE (id 45) icon; alternative icon index 7",
+	"category": "function"
+},
+{
+	"filename": "45_7-hum.svg",
+	"description": "HUMIDITYANDTEMPERATURE (id 45) icon; alternative icon index 7; humidity variant for HUMIDITYANDTEMPERATURE dual icon",
+	"category": "function"
+},
+{
+	"filename": "45-hum.svg",
+	"description": "HUMIDITYANDTEMPERATURE (id 45) icon; humidity variant for HUMIDITYANDTEMPERATURE dual icon",
+	"category": "function"
+},
+{
+	"filename": "50.svg",
+	"description": "OPENINGSENSOR_GATEWAY (id 50) icon",
+	"category": "function"
+},
+{
+	"filename": "500.svg",
+	"description": "VALVEOPENCLOSE (id 500) icon",
+	"category": "function"
+},
+{
+	"filename": "500-closed.svg",
+	"description": "VALVEOPENCLOSE (id 500) icon; state: closed",
+	"category": "function"
+},
+{
+	"filename": "50-closed.svg",
+	"description": "OPENINGSENSOR_GATEWAY (id 50) icon; state: closed",
+	"category": "function"
+},
+{
+	"filename": "510.svg",
+	"description": "VALVEPERCENTAGE (id 510) icon",
+	"category": "function"
+},
+{
+	"filename": "510-closed.svg",
+	"description": "VALVEPERCENTAGE (id 510) icon; state: closed",
+	"category": "function"
+},
+{
+	"filename": "520.svg",
+	"description": "GENERAL_PURPOSE_MEASUREMENT (id 520) icon",
+	"category": "function"
+},
+{
+	"filename": "520_1.svg",
+	"description": "GENERAL_PURPOSE_MEASUREMENT (id 520) icon; alternative icon index 1",
+	"category": "function"
+},
+{
+	"filename": "520_10.svg",
+	"description": "GENERAL_PURPOSE_MEASUREMENT (id 520) icon; alternative icon index 10",
+	"category": "function"
+},
+{
+	"filename": "520_11.svg",
+	"description": "GENERAL_PURPOSE_MEASUREMENT (id 520) icon; alternative icon index 11",
+	"category": "function"
+},
+{
+	"filename": "520_12.svg",
+	"description": "GENERAL_PURPOSE_MEASUREMENT (id 520) icon; alternative icon index 12",
+	"category": "function"
+},
+{
+	"filename": "520_13.svg",
+	"description": "GENERAL_PURPOSE_MEASUREMENT (id 520) icon; alternative icon index 13",
+	"category": "function"
+},
+{
+	"filename": "520_14.svg",
+	"description": "GENERAL_PURPOSE_MEASUREMENT (id 520) icon; alternative icon index 14",
+	"category": "function"
+},
+{
+	"filename": "520_15.svg",
+	"description": "GENERAL_PURPOSE_MEASUREMENT (id 520) icon; alternative icon index 15",
+	"category": "function"
+},
+{
+	"filename": "520_16.svg",
+	"description": "GENERAL_PURPOSE_MEASUREMENT (id 520) icon; alternative icon index 16",
+	"category": "function"
+},
+{
+	"filename": "520_17.svg",
+	"description": "GENERAL_PURPOSE_MEASUREMENT (id 520) icon; alternative icon index 17",
+	"category": "function"
+},
+{
+	"filename": "520_18.svg",
+	"description": "GENERAL_PURPOSE_MEASUREMENT (id 520) icon; alternative icon index 18",
+	"category": "function"
+},
+{
+	"filename": "520_19.svg",
+	"description": "GENERAL_PURPOSE_MEASUREMENT (id 520) icon; alternative icon index 19",
+	"category": "function"
+},
+{
+	"filename": "520_2.svg",
+	"description": "GENERAL_PURPOSE_MEASUREMENT (id 520) icon; alternative icon index 2",
+	"category": "function"
+},
+{
+	"filename": "520_20.svg",
+	"description": "GENERAL_PURPOSE_MEASUREMENT (id 520) icon; alternative icon index 20",
+	"category": "function"
+},
+{
+	"filename": "520_21.svg",
+	"description": "GENERAL_PURPOSE_MEASUREMENT (id 520) icon; alternative icon index 21",
+	"category": "function"
+},
+{
+	"filename": "520_22.svg",
+	"description": "GENERAL_PURPOSE_MEASUREMENT (id 520) icon; alternative icon index 22",
+	"category": "function"
+},
+{
+	"filename": "520_23.svg",
+	"description": "GENERAL_PURPOSE_MEASUREMENT (id 520) icon; alternative icon index 23",
+	"category": "function"
+},
+{
+	"filename": "520_24.svg",
+	"description": "GENERAL_PURPOSE_MEASUREMENT (id 520) icon; alternative icon index 24",
+	"category": "function"
+},
+{
+	"filename": "520_25.svg",
+	"description": "GENERAL_PURPOSE_MEASUREMENT (id 520) icon; alternative icon index 25",
+	"category": "function"
+},
+{
+	"filename": "520_26.svg",
+	"description": "GENERAL_PURPOSE_MEASUREMENT (id 520) icon; alternative icon index 26",
+	"category": "function"
+},
+{
+	"filename": "520_27.svg",
+	"description": "GENERAL_PURPOSE_MEASUREMENT (id 520) icon; alternative icon index 27",
+	"category": "function"
+},
+{
+	"filename": "520_28.svg",
+	"description": "GENERAL_PURPOSE_MEASUREMENT (id 520) icon; alternative icon index 28",
+	"category": "function"
+},
+{
+	"filename": "520_29.svg",
+	"description": "GENERAL_PURPOSE_MEASUREMENT (id 520) icon; alternative icon index 29",
+	"category": "function"
+},
+{
+	"filename": "520_3.svg",
+	"description": "GENERAL_PURPOSE_MEASUREMENT (id 520) icon; alternative icon index 3",
+	"category": "function"
+},
+{
+	"filename": "520_30.svg",
+	"description": "GENERAL_PURPOSE_MEASUREMENT (id 520) icon; alternative icon index 30",
+	"category": "function"
+},
+{
+	"filename": "520_31.svg",
+	"description": "GENERAL_PURPOSE_MEASUREMENT (id 520) icon; alternative icon index 31",
+	"category": "function"
+},
+{
+	"filename": "520_32.svg",
+	"description": "GENERAL_PURPOSE_MEASUREMENT (id 520) icon; alternative icon index 32",
+	"category": "function"
+},
+{
+	"filename": "520_33.svg",
+	"description": "GENERAL_PURPOSE_MEASUREMENT (id 520) icon; alternative icon index 33",
+	"category": "function"
+},
+{
+	"filename": "520_34.svg",
+	"description": "GENERAL_PURPOSE_MEASUREMENT (id 520) icon; alternative icon index 34",
+	"category": "function"
+},
+{
+	"filename": "520_35.svg",
+	"description": "GENERAL_PURPOSE_MEASUREMENT (id 520) icon; alternative icon index 35",
+	"category": "function"
+},
+{
+	"filename": "520_36.svg",
+	"description": "GENERAL_PURPOSE_MEASUREMENT (id 520) icon; alternative icon index 36",
+	"category": "function"
+},
+{
+	"filename": "520_37.svg",
+	"description": "GENERAL_PURPOSE_MEASUREMENT (id 520) icon; alternative icon index 37",
+	"category": "function"
+},
+{
+	"filename": "520_38.svg",
+	"description": "GENERAL_PURPOSE_MEASUREMENT (id 520) icon; alternative icon index 38",
+	"category": "function"
+},
+{
+	"filename": "520_39.svg",
+	"description": "GENERAL_PURPOSE_MEASUREMENT (id 520) icon; alternative icon index 39",
+	"category": "function"
+},
+{
+	"filename": "520_4.svg",
+	"description": "GENERAL_PURPOSE_MEASUREMENT (id 520) icon; alternative icon index 4",
+	"category": "function"
+},
+{
+	"filename": "520_40.svg",
+	"description": "GENERAL_PURPOSE_MEASUREMENT (id 520) icon; alternative icon index 40",
+	"category": "function"
+},
+{
+	"filename": "520_41.svg",
+	"description": "GENERAL_PURPOSE_MEASUREMENT (id 520) icon; alternative icon index 41",
+	"category": "function"
+},
+{
+	"filename": "520_42.svg",
+	"description": "GENERAL_PURPOSE_MEASUREMENT (id 520) icon; alternative icon index 42",
+	"category": "function"
+},
+{
+	"filename": "520_43.svg",
+	"description": "GENERAL_PURPOSE_MEASUREMENT (id 520) icon; alternative icon index 43",
+	"category": "function"
+},
+{
+	"filename": "520_44.svg",
+	"description": "GENERAL_PURPOSE_MEASUREMENT (id 520) icon; alternative icon index 44",
+	"category": "function"
+},
+{
+	"filename": "520_45.svg",
+	"description": "GENERAL_PURPOSE_MEASUREMENT (id 520) icon; alternative icon index 45",
+	"category": "function"
+},
+{
+	"filename": "520_5.svg",
+	"description": "GENERAL_PURPOSE_MEASUREMENT (id 520) icon; alternative icon index 5",
+	"category": "function"
+},
+{
+	"filename": "520_6.svg",
+	"description": "GENERAL_PURPOSE_MEASUREMENT (id 520) icon; alternative icon index 6",
+	"category": "function"
+},
+{
+	"filename": "520_7.svg",
+	"description": "GENERAL_PURPOSE_MEASUREMENT (id 520) icon; alternative icon index 7",
+	"category": "function"
+},
+{
+	"filename": "520_8.svg",
+	"description": "GENERAL_PURPOSE_MEASUREMENT (id 520) icon; alternative icon index 8",
+	"category": "function"
+},
+{
+	"filename": "520_9.svg",
+	"description": "GENERAL_PURPOSE_MEASUREMENT (id 520) icon; alternative icon index 9",
+	"category": "function"
+},
+{
+	"filename": "530.svg",
+	"description": "GENERAL_PURPOSE_METER (id 530) icon",
+	"category": "function"
+},
+{
+	"filename": "530_1.svg",
+	"description": "GENERAL_PURPOSE_METER (id 530) icon; alternative icon index 1",
+	"category": "function"
+},
+{
+	"filename": "530_10.svg",
+	"description": "GENERAL_PURPOSE_METER (id 530) icon; alternative icon index 10",
+	"category": "function"
+},
+{
+	"filename": "530_11.svg",
+	"description": "GENERAL_PURPOSE_METER (id 530) icon; alternative icon index 11",
+	"category": "function"
+},
+{
+	"filename": "530_12.svg",
+	"description": "GENERAL_PURPOSE_METER (id 530) icon; alternative icon index 12",
+	"category": "function"
+},
+{
+	"filename": "530_13.svg",
+	"description": "GENERAL_PURPOSE_METER (id 530) icon; alternative icon index 13",
+	"category": "function"
+},
+{
+	"filename": "530_14.svg",
+	"description": "GENERAL_PURPOSE_METER (id 530) icon; alternative icon index 14",
+	"category": "function"
+},
+{
+	"filename": "530_2.svg",
+	"description": "GENERAL_PURPOSE_METER (id 530) icon; alternative icon index 2",
+	"category": "function"
+},
+{
+	"filename": "530_3.svg",
+	"description": "GENERAL_PURPOSE_METER (id 530) icon; alternative icon index 3",
+	"category": "function"
+},
+{
+	"filename": "530_4.svg",
+	"description": "GENERAL_PURPOSE_METER (id 530) icon; alternative icon index 4",
+	"category": "function"
+},
+{
+	"filename": "530_5.svg",
+	"description": "GENERAL_PURPOSE_METER (id 530) icon; alternative icon index 5",
+	"category": "function"
+},
+{
+	"filename": "530_6.svg",
+	"description": "GENERAL_PURPOSE_METER (id 530) icon; alternative icon index 6",
+	"category": "function"
+},
+{
+	"filename": "530_7.svg",
+	"description": "GENERAL_PURPOSE_METER (id 530) icon; alternative icon index 7",
+	"category": "function"
+},
+{
+	"filename": "530_8.svg",
+	"description": "GENERAL_PURPOSE_METER (id 530) icon; alternative icon index 8",
+	"category": "function"
+},
+{
+	"filename": "530_9.svg",
+	"description": "GENERAL_PURPOSE_METER (id 530) icon; alternative icon index 9",
+	"category": "function"
+},
+{
+	"filename": "60.svg",
+	"description": "OPENINGSENSOR_GATE (id 60) icon",
+	"category": "function"
+},
+{
+	"filename": "60_1.svg",
+	"description": "OPENINGSENSOR_GATE (id 60) icon; alternative icon index 1",
+	"category": "function"
+},
+{
+	"filename": "60_1-closed.svg",
+	"description": "OPENINGSENSOR_GATE (id 60) icon; alternative icon index 1; state: closed",
+	"category": "function"
+},
+{
+	"filename": "60_2.svg",
+	"description": "OPENINGSENSOR_GATE (id 60) icon; alternative icon index 2",
+	"category": "function"
+},
+{
+	"filename": "60_2-closed.svg",
+	"description": "OPENINGSENSOR_GATE (id 60) icon; alternative icon index 2; state: closed",
+	"category": "function"
+},
+{
+	"filename": "60-closed.svg",
+	"description": "OPENINGSENSOR_GATE (id 60) icon; state: closed",
+	"category": "function"
+},
+{
+	"filename": "70.svg",
+	"description": "OPENINGSENSOR_GARAGEDOOR (id 70) icon",
+	"category": "function"
+},
+{
+	"filename": "700.svg",
+	"description": "ACTION_TRIGGER (id 700) icon",
+	"category": "function"
+},
+{
+	"filename": "700_1.svg",
+	"description": "ACTION_TRIGGER (id 700) icon; alternative icon index 1",
+	"category": "function"
+},
+{
+	"filename": "700_10.svg",
+	"description": "ACTION_TRIGGER (id 700) icon; alternative icon index 10",
+	"category": "function"
+},
+{
+	"filename": "700_11.svg",
+	"description": "ACTION_TRIGGER (id 700) icon; alternative icon index 11",
+	"category": "function"
+},
+{
+	"filename": "700_12.svg",
+	"description": "ACTION_TRIGGER (id 700) icon; alternative icon index 12",
+	"category": "function"
+},
+{
+	"filename": "700_13.svg",
+	"description": "ACTION_TRIGGER (id 700) icon; alternative icon index 13",
+	"category": "function"
+},
+{
+	"filename": "700_14.svg",
+	"description": "ACTION_TRIGGER (id 700) icon; alternative icon index 14",
+	"category": "function"
+},
+{
+	"filename": "700_15.svg",
+	"description": "ACTION_TRIGGER (id 700) icon; alternative icon index 15",
+	"category": "function"
+},
+{
+	"filename": "700_16.svg",
+	"description": "ACTION_TRIGGER (id 700) icon; alternative icon index 16",
+	"category": "function"
+},
+{
+	"filename": "700_17.svg",
+	"description": "ACTION_TRIGGER (id 700) icon; alternative icon index 17",
+	"category": "function"
+},
+{
+	"filename": "700_18.svg",
+	"description": "ACTION_TRIGGER (id 700) icon; alternative icon index 18",
+	"category": "function"
+},
+{
+	"filename": "700_19.svg",
+	"description": "ACTION_TRIGGER (id 700) icon; alternative icon index 19",
+	"category": "function"
+},
+{
+	"filename": "700_2.svg",
+	"description": "ACTION_TRIGGER (id 700) icon; alternative icon index 2",
+	"category": "function"
+},
+{
+	"filename": "700_20.svg",
+	"description": "ACTION_TRIGGER (id 700) icon; alternative icon index 20",
+	"category": "function"
+},
+{
+	"filename": "700_21.svg",
+	"description": "ACTION_TRIGGER (id 700) icon; alternative icon index 21",
+	"category": "function"
+},
+{
+	"filename": "700_22.svg",
+	"description": "ACTION_TRIGGER (id 700) icon; alternative icon index 22",
+	"category": "function"
+},
+{
+	"filename": "700_23.svg",
+	"description": "ACTION_TRIGGER (id 700) icon; alternative icon index 23",
+	"category": "function"
+},
+{
+	"filename": "700_24.svg",
+	"description": "ACTION_TRIGGER (id 700) icon; alternative icon index 24",
+	"category": "function"
+},
+{
+	"filename": "700_25.svg",
+	"description": "ACTION_TRIGGER (id 700) icon; alternative icon index 25",
+	"category": "function"
+},
+{
+	"filename": "700_26.svg",
+	"description": "ACTION_TRIGGER (id 700) icon; alternative icon index 26",
+	"category": "function"
+},
+{
+	"filename": "700_27.svg",
+	"description": "ACTION_TRIGGER (id 700) icon; alternative icon index 27",
+	"category": "function"
+},
+{
+	"filename": "700_28.svg",
+	"description": "ACTION_TRIGGER (id 700) icon; alternative icon index 28",
+	"category": "function"
+},
+{
+	"filename": "700_29.svg",
+	"description": "ACTION_TRIGGER (id 700) icon; alternative icon index 29",
+	"category": "function"
+},
+{
+	"filename": "700_3.svg",
+	"description": "ACTION_TRIGGER (id 700) icon; alternative icon index 3",
+	"category": "function"
+},
+{
+	"filename": "700_30.svg",
+	"description": "ACTION_TRIGGER (id 700) icon; alternative icon index 30",
+	"category": "function"
+},
+{
+	"filename": "700_31.svg",
+	"description": "ACTION_TRIGGER (id 700) icon; alternative icon index 31",
+	"category": "function"
+},
+{
+	"filename": "700_32.svg",
+	"description": "ACTION_TRIGGER (id 700) icon; alternative icon index 32",
+	"category": "function"
+},
+{
+	"filename": "700_33.svg",
+	"description": "ACTION_TRIGGER (id 700) icon; alternative icon index 33",
+	"category": "function"
+},
+{
+	"filename": "700_34.svg",
+	"description": "ACTION_TRIGGER (id 700) icon; alternative icon index 34",
+	"category": "function"
+},
+{
+	"filename": "700_35.svg",
+	"description": "ACTION_TRIGGER (id 700) icon; alternative icon index 35",
+	"category": "function"
+},
+{
+	"filename": "700_36.svg",
+	"description": "ACTION_TRIGGER (id 700) icon; alternative icon index 36",
+	"category": "function"
+},
+{
+	"filename": "700_37.svg",
+	"description": "ACTION_TRIGGER (id 700) icon; alternative icon index 37",
+	"category": "function"
+},
+{
+	"filename": "700_38.svg",
+	"description": "ACTION_TRIGGER (id 700) icon; alternative icon index 38",
+	"category": "function"
+},
+{
+	"filename": "700_39.svg",
+	"description": "ACTION_TRIGGER (id 700) icon; alternative icon index 39",
+	"category": "function"
+},
+{
+	"filename": "700_4.svg",
+	"description": "ACTION_TRIGGER (id 700) icon; alternative icon index 4",
+	"category": "function"
+},
+{
+	"filename": "700_40.svg",
+	"description": "ACTION_TRIGGER (id 700) icon; alternative icon index 40",
+	"category": "function"
+},
+{
+	"filename": "700_41.svg",
+	"description": "ACTION_TRIGGER (id 700) icon; alternative icon index 41",
+	"category": "function"
+},
+{
+	"filename": "700_42.svg",
+	"description": "ACTION_TRIGGER (id 700) icon; alternative icon index 42",
+	"category": "function"
+},
+{
+	"filename": "700_43.svg",
+	"description": "ACTION_TRIGGER (id 700) icon; alternative icon index 43",
+	"category": "function"
+},
+{
+	"filename": "700_44.svg",
+	"description": "ACTION_TRIGGER (id 700) icon; alternative icon index 44",
+	"category": "function"
+},
+{
+	"filename": "700_45.svg",
+	"description": "ACTION_TRIGGER (id 700) icon; alternative icon index 45",
+	"category": "function"
+},
+{
+	"filename": "700_5.svg",
+	"description": "ACTION_TRIGGER (id 700) icon; alternative icon index 5",
+	"category": "function"
+},
+{
+	"filename": "700_6.svg",
+	"description": "ACTION_TRIGGER (id 700) icon; alternative icon index 6",
+	"category": "function"
+},
+{
+	"filename": "700_7.svg",
+	"description": "ACTION_TRIGGER (id 700) icon; alternative icon index 7",
+	"category": "function"
+},
+{
+	"filename": "700_8.svg",
+	"description": "ACTION_TRIGGER (id 700) icon; alternative icon index 8",
+	"category": "function"
+},
+{
+	"filename": "700_9.svg",
+	"description": "ACTION_TRIGGER (id 700) icon; alternative icon index 9",
+	"category": "function"
+},
+{
+	"filename": "70-closed.svg",
+	"description": "OPENINGSENSOR_GARAGEDOOR (id 70) icon; state: closed",
+	"category": "function"
+},
+{
+	"filename": "80.svg",
+	"description": "NOLIQUIDSENSOR (id 80) icon",
+	"category": "function"
+},
+{
+	"filename": "800.svg",
+	"description": "DIGIGLASS_HORIZONTAL (id 800) icon",
+	"category": "function"
+},
+{
+	"filename": "800_1.svg",
+	"description": "DIGIGLASS_HORIZONTAL (id 800) icon; alternative icon index 1",
+	"category": "function"
+},
+{
+	"filename": "800_1-transparent.svg",
+	"description": "DIGIGLASS_HORIZONTAL (id 800) icon; alternative icon index 1; state: transparent",
+	"category": "function"
+},
+{
+	"filename": "800-transparent.svg",
+	"description": "DIGIGLASS_HORIZONTAL (id 800) icon; state: transparent",
+	"category": "function"
+},
+{
+	"filename": "80-closed.svg",
+	"description": "NOLIQUIDSENSOR (id 80) icon; state: closed",
+	"category": "function"
+},
+{
+	"filename": "810.svg",
+	"description": "DIGIGLASS_VERTICAL (id 810) icon",
+	"category": "function"
+},
+{
+	"filename": "810_1.svg",
+	"description": "DIGIGLASS_VERTICAL (id 810) icon; alternative icon index 1",
+	"category": "function"
+},
+{
+	"filename": "810_1-transparent.svg",
+	"description": "DIGIGLASS_VERTICAL (id 810) icon; alternative icon index 1; state: transparent",
+	"category": "function"
+},
+{
+	"filename": "810-transparent.svg",
+	"description": "DIGIGLASS_VERTICAL (id 810) icon; state: transparent",
+	"category": "function"
+},
+{
+	"filename": "90.svg",
+	"description": "CONTROLLINGTHEDOORLOCK (id 90) icon",
+	"category": "function"
+},
+{
+	"filename": "900.svg",
+	"description": "CONTROLLINGTHEFACADEBLIND (id 900) icon",
+	"category": "function"
+},
+{
+	"filename": "900-closed.svg",
+	"description": "CONTROLLINGTHEFACADEBLIND (id 900) icon; state: closed",
+	"category": "function"
+},
+{
+	"filename": "90-closed.svg",
+	"description": "CONTROLLINGTHEDOORLOCK (id 90) icon; state: closed",
+	"category": "function"
+},
+{
+	"filename": "910.svg",
+	"description": "TERRACE_AWNING (id 910) icon",
+	"category": "function"
+},
+{
+	"filename": "910-closed.svg",
+	"description": "TERRACE_AWNING (id 910) icon; state: closed",
+	"category": "function"
+},
+{
+	"filename": "920.svg",
+	"description": "PROJECTOR_SCREEN (id 920) icon",
+	"category": "function"
+},
+{
+	"filename": "920-closed.svg",
+	"description": "PROJECTOR_SCREEN (id 920) icon; state: closed",
+	"category": "function"
+},
+{
+	"filename": "930.svg",
+	"description": "CURTAIN (id 930) icon",
+	"category": "function"
+},
+{
+	"filename": "930-closed.svg",
+	"description": "CURTAIN (id 930) icon; state: closed",
+	"category": "function"
+},
+{
+	"filename": "940.svg",
+	"description": "VERTICAL_BLIND (id 940) icon",
+	"category": "function"
+},
+{
+	"filename": "940-closed.svg",
+	"description": "VERTICAL_BLIND (id 940) icon; state: closed",
+	"category": "function"
+},
+{
+	"filename": "950.svg",
+	"description": "ROLLER_GARAGE_DOOR (id 950) icon",
+	"category": "function"
+},
+{
+	"filename": "950-closed.svg",
+	"description": "ROLLER_GARAGE_DOOR (id 950) icon; state: closed",
+	"category": "function"
+},
+{
+	"filename": "960.svg",
+	"description": "PUMPSWITCH (id 960) icon",
+	"category": "function"
+},
+{
+	"filename": "960-on.svg",
+	"description": "PUMPSWITCH (id 960) icon; state: on",
+	"category": "function"
+},
+{
+	"filename": "970.svg",
+	"description": "HEATORCOLDSOURCESWITCH (id 970) icon",
+	"category": "function"
+},
+{
+	"filename": "970_1.svg",
+	"description": "HEATORCOLDSOURCESWITCH (id 970) icon; alternative icon index 1",
+	"category": "function"
+},
+{
+	"filename": "970_1-on.svg",
+	"description": "HEATORCOLDSOURCESWITCH (id 970) icon; alternative icon index 1; state: on",
+	"category": "function"
+},
+{
+	"filename": "970_2.svg",
+	"description": "HEATORCOLDSOURCESWITCH (id 970) icon; alternative icon index 2",
+	"category": "function"
+},
+{
+	"filename": "970_2-on.svg",
+	"description": "HEATORCOLDSOURCESWITCH (id 970) icon; alternative icon index 2; state: on",
+	"category": "function"
+},
+{
+	"filename": "970_3.svg",
+	"description": "HEATORCOLDSOURCESWITCH (id 970) icon; alternative icon index 3",
+	"category": "function"
+},
+{
+	"filename": "970_3-on.svg",
+	"description": "HEATORCOLDSOURCESWITCH (id 970) icon; alternative icon index 3; state: on",
+	"category": "function"
+},
+{
+	"filename": "970_4.svg",
+	"description": "HEATORCOLDSOURCESWITCH (id 970) icon; alternative icon index 4",
+	"category": "function"
+},
+{
+	"filename": "970_4-on.svg",
+	"description": "HEATORCOLDSOURCESWITCH (id 970) icon; alternative icon index 4; state: on",
+	"category": "function"
+},
+{
+	"filename": "970_5.svg",
+	"description": "HEATORCOLDSOURCESWITCH (id 970) icon; alternative icon index 5",
+	"category": "function"
+},
+{
+	"filename": "970_5-on.svg",
+	"description": "HEATORCOLDSOURCESWITCH (id 970) icon; alternative icon index 5; state: on",
+	"category": "function"
+},
+{
+	"filename": "970-on.svg",
+	"description": "HEATORCOLDSOURCESWITCH (id 970) icon; state: on",
+	"category": "function"
+},
+{
+	"filename": "980.svg",
+	"description": "CONTAINER (id 980) icon",
+	"category": "function"
+},
+{
+	"filename": "980_1.svg",
+	"description": "CONTAINER (id 980) icon; alternative icon index 1",
+	"category": "function"
+},
+{
+	"filename": "980_1-full.svg",
+	"description": "CONTAINER (id 980) icon; alternative icon index 1; fill level: full",
+	"category": "function"
+},
+{
+	"filename": "980_1-half.svg",
+	"description": "CONTAINER (id 980) icon; alternative icon index 1; fill level: half",
+	"category": "function"
+},
+{
+	"filename": "980_2.svg",
+	"description": "CONTAINER (id 980) icon; alternative icon index 2",
+	"category": "function"
+},
+{
+	"filename": "980_2-full.svg",
+	"description": "CONTAINER (id 980) icon; alternative icon index 2; fill level: full",
+	"category": "function"
+},
+{
+	"filename": "980_2-half.svg",
+	"description": "CONTAINER (id 980) icon; alternative icon index 2; fill level: half",
+	"category": "function"
+},
+{
+	"filename": "980_3.svg",
+	"description": "CONTAINER (id 980) icon; alternative icon index 3",
+	"category": "function"
+},
+{
+	"filename": "980_3-full.svg",
+	"description": "CONTAINER (id 980) icon; alternative icon index 3; fill level: full",
+	"category": "function"
+},
+{
+	"filename": "980_3-half.svg",
+	"description": "CONTAINER (id 980) icon; alternative icon index 3; fill level: half",
+	"category": "function"
+},
+{
+	"filename": "980-full.svg",
+	"description": "CONTAINER (id 980) icon; fill level: full",
+	"category": "function"
+},
+{
+	"filename": "980-half.svg",
+	"description": "CONTAINER (id 980) icon; fill level: half",
+	"category": "function"
+},
+{
+	"filename": "981.svg",
+	"description": "SEPTIC_TANK (id 981) icon",
+	"category": "function"
+},
+{
+	"filename": "981_1.svg",
+	"description": "SEPTIC_TANK (id 981) icon; alternative icon index 1",
+	"category": "function"
+},
+{
+	"filename": "981_1-full.svg",
+	"description": "SEPTIC_TANK (id 981) icon; alternative icon index 1; fill level: full",
+	"category": "function"
+},
+{
+	"filename": "981_1-half.svg",
+	"description": "SEPTIC_TANK (id 981) icon; alternative icon index 1; fill level: half",
+	"category": "function"
+},
+{
+	"filename": "981-full.svg",
+	"description": "SEPTIC_TANK (id 981) icon; fill level: full",
+	"category": "function"
+},
+{
+	"filename": "981-half.svg",
+	"description": "SEPTIC_TANK (id 981) icon; fill level: half",
+	"category": "function"
+},
+{
+	"filename": "982.svg",
+	"description": "WATER_TANK (id 982) icon",
+	"category": "function"
+},
+{
+	"filename": "982_1.svg",
+	"description": "WATER_TANK (id 982) icon; alternative icon index 1",
+	"category": "function"
+},
+{
+	"filename": "982_1-full.svg",
+	"description": "WATER_TANK (id 982) icon; alternative icon index 1; fill level: full",
+	"category": "function"
+},
+{
+	"filename": "982_1-half.svg",
+	"description": "WATER_TANK (id 982) icon; alternative icon index 1; fill level: half",
+	"category": "function"
+},
+{
+	"filename": "982_2.svg",
+	"description": "WATER_TANK (id 982) icon; alternative icon index 2",
+	"category": "function"
+},
+{
+	"filename": "982_2-full.svg",
+	"description": "WATER_TANK (id 982) icon; alternative icon index 2; fill level: full",
+	"category": "function"
+},
+{
+	"filename": "982_2-half.svg",
+	"description": "WATER_TANK (id 982) icon; alternative icon index 2; fill level: half",
+	"category": "function"
+},
+{
+	"filename": "982_3.svg",
+	"description": "WATER_TANK (id 982) icon; alternative icon index 3",
+	"category": "function"
+},
+{
+	"filename": "982_3-full.svg",
+	"description": "WATER_TANK (id 982) icon; alternative icon index 3; fill level: full",
+	"category": "function"
+},
+{
+	"filename": "982_3-half.svg",
+	"description": "WATER_TANK (id 982) icon; alternative icon index 3; fill level: half",
+	"category": "function"
+},
+{
+	"filename": "982-full.svg",
+	"description": "WATER_TANK (id 982) icon; fill level: full",
+	"category": "function"
+},
+{
+	"filename": "982-half.svg",
+	"description": "WATER_TANK (id 982) icon; fill level: half",
+	"category": "function"
+},
+{
+	"filename": "990.svg",
+	"description": "CONTAINER_LEVEL_SENSOR (id 990) icon",
+	"category": "function"
+},
+{
+	"filename": "990-closed.svg",
+	"description": "CONTAINER_LEVEL_SENSOR (id 990) icon; state: closed",
+	"category": "function"
+},
+{
+	"filename": "curtains1.svg",
+	"description": "Curtains decorative icon variant 1",
+	"category": "function"
+},
+{
+	"filename": "curtains2.svg",
+	"description": "Curtains decorative icon variant 2",
+	"category": "function"
+},
+{
+	"filename": "curtains3.svg",
+	"description": "Curtains decorative icon variant 3",
+	"category": "function"
+},
+{
+	"filename": "curtains4.svg",
+	"description": "Curtains decorative icon variant 4",
+	"category": "function"
+},
+{
+	"filename": "curtains5.svg",
+	"description": "Curtains decorative icon variant 5",
+	"category": "function"
+},
+{
+	"filename": "sensor.svg",
+	"description": "Generic sensor icon",
+	"category": "function"
+},
+{
+	"filename": "moon.svg",
+	"description": "moon icon",
+	"category": "asset"
+},
+{
+	"filename": "scene.svg",
+	"description": "scene icon",
+	"category": "asset"
+},
+{
+	"filename": "sun.svg",
+	"description": "sun icon",
+	"category": "asset"
+},
+{
+	"filename": "sunrise.svg",
+	"description": "sunrise icon",
+	"category": "asset"
+},
+{
+	"filename": "sunset.svg",
+	"description": "sunset icon",
+	"category": "asset"
+}
+]
