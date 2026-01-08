@@ -47,11 +47,13 @@ class ChannelValueToStateTest {
     }
 
     private DeviceChannel mockDeviceChannel(int number) {
-        return new DeviceChannel(number, null, null, null, Set.of(), new byte[8], null, null, null);
+        return new DeviceChannel(
+                number, false, null, null, null, Set.of(), new byte[8], null, null, null, 0, Set.of(), 0);
     }
 
     private DeviceChannel mockDeviceChannel(int number, RgbwBitFunction... functions) {
-        return new DeviceChannel(number, null, null, null, Set.of(functions), new byte[8], null, null, null);
+        return new DeviceChannel(
+                number, false, null, null, null, Set.of(functions), new byte[8], null, null, null, 0, Set.of(), 0);
     }
 
     @DisplayName("should convert onRgbValue into proper channels")

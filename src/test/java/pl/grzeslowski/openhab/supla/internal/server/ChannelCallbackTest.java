@@ -11,6 +11,7 @@ import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.Channe
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.Channels.UNKNOWN_CHANNEL_ID;
 
 import java.util.List;
+import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.openhab.core.thing.Channel;
 import org.openhab.core.thing.ChannelGroupUID;
@@ -39,7 +40,7 @@ class ChannelCallbackTest {
     }
 
     private DeviceChannel mockDeviceChannel(int number) {
-        return new DeviceChannel(number, null, null, null, null, new byte[8], null, null, null);
+        return new DeviceChannel(number, false, null, null, null, null, new byte[8], null, null, null, 0, Set.of(), 0);
     }
 
     @Test

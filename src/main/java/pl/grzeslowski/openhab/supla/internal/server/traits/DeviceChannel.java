@@ -1,70 +1,75 @@
 package pl.grzeslowski.openhab.supla.internal.server.traits;
 
-import static java.util.Arrays.stream;
+import static java.util.Objects.requireNonNull;
 import static pl.grzeslowski.jsupla.protocol.api.ChannelFunction.SUPLA_CHANNELFNC_NONE;
+import static pl.grzeslowski.jsupla.protocol.api.Preconditions.unsignedByteSize;
 import static pl.grzeslowski.jsupla.protocol.api.ProtocolHelpers.toSignedInt;
 
 import jakarta.annotation.Nullable;
 import java.util.Arrays;
+import java.util.Optional;
 import java.util.Set;
-import pl.grzeslowski.jsupla.protocol.api.ChannelFlag;
-import pl.grzeslowski.jsupla.protocol.api.ChannelFunction;
-import pl.grzeslowski.jsupla.protocol.api.ChannelType;
-import pl.grzeslowski.jsupla.protocol.api.RgbwBitFunction;
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
+import lombok.extern.slf4j.Slf4j;
+import pl.grzeslowski.jsupla.protocol.api.*;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.decoders.HvacTypeDecoder;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.value.ActionTrigger;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.value.HvacValue;
 import pl.grzeslowski.jsupla.protocol.api.structs.HVACValue;
 import pl.grzeslowski.jsupla.protocol.api.structs.ds.*;
 
+/**
+ * @param number
+ * @param offline
+ * @param type
+ * @param flags
+ * @param channelFunction
+ * @param rgbwBitFunctions
+ * @param value
+ * @param action
+ * @param hvacValue
+ * @param subDeviceId
+ * @param valueValidityTimeSec
+ * @param functions
+ * @param defaultIcon see <a href="https://github.com/magx2/openhab-supla/blob/master/docs/supla/icons.md">icons.md</a>
+ *     for the documentation
+ */
+@Slf4j
 public record DeviceChannel(
         int number,
-        ChannelType type,
+        boolean offline,
+        @Nullable ChannelType type,
         Set<ChannelFlag> flags,
         @Nullable ChannelFunction channelFunction,
         Set<RgbwBitFunction> rgbwBitFunctions,
         byte[] value,
-        ActionTrigger action,
-        HvacValue hvacValue,
-        @Nullable Integer subDeviceId) {
+        @Nullable ActionTrigger action,
+        @Nullable HvacValue hvacValue,
+        @Nullable Integer subDeviceId,
+        @Min(0) long valueValidityTimeSec,
+        Set<BitFunction> functions,
+        @Min(0) @Max(255) int defaultIcon) {
 
+    // todo use codex to test this method
     public static DeviceChannel fromProto(SuplaDeviceChannel proto) {
         return switch (proto) {
-            case SuplaDeviceChannelA r -> new DeviceChannel(r.number(), finChannelType(r.type()), r.value());
-            case SuplaDeviceChannelB r ->
-                new DeviceChannel(r.number(), finChannelType(r.type()), r.funcList(), r.value(), null, null);
-            case SuplaDeviceChannelC r ->
-                new DeviceChannel(
-                        r.number(),
-                        finChannelType(r.type()),
-                        findFlags(r.flags()),
-                        r.funcList(),
-                        r.value(),
-                        mapAction(r),
-                        mapHvacValue(r.hvacValue()),
-                        null);
-            case SuplaDeviceChannelD r ->
-                new DeviceChannel(
-                        r.number(),
-                        finChannelType(r.type()),
-                        findFlags(r.flags()),
-                        r.funcList(),
-                        r.value(),
-                        mapAction(r),
-                        mapHvacValue(r.hvacValue()),
-                        null);
-            case SuplaDeviceChannelE r ->
-                new DeviceChannel(
-                        r.number(),
-                        finChannelType(r.type()),
-                        findFlags(r.flags()),
-                        r.funcList(),
-                        r.rGBWFuncList(),
-                        r.value(),
-                        mapAction(r),
-                        mapHvacValue(r.hvacValue()),
-                        findSubDeviceId(r.subDeviceId()));
+            case SuplaDeviceChannelA r -> a(r);
+            case SuplaDeviceChannelB r -> b(r);
+            case SuplaDeviceChannelC r -> c(r);
+            case SuplaDeviceChannelD r -> d(r);
+            case SuplaDeviceChannelE r -> e(r);
         };
+    }
+
+    public DeviceChannel {
+        if (value == null && hvacValue == null && action == null) {
+            throw new IllegalArgumentException("value or hvacValue or action must not be null!");
+        }
+        requireNonNull(flags);
+        requireNonNull(rgbwBitFunctions);
+        requireNonNull(functions);
+        unsignedByteSize(defaultIcon);
     }
 
     private static Integer findSubDeviceId(short subDeviceId) {
@@ -76,7 +81,7 @@ public record DeviceChannel(
     }
 
     @Nullable
-    private static ChannelType finChannelType(int type) {
+    private static ChannelType findChannelType(int type) {
         return ChannelType.findByValue(type).orElse(null);
     }
 
@@ -104,89 +109,98 @@ public record DeviceChannel(
         return new ActionTrigger(toSignedInt(r.actionTriggerCaps()));
     }
 
-    public DeviceChannel {
-        if (value == null && hvacValue == null && action == null) {
-            throw new IllegalArgumentException("value or hvacValue or action must not be null!");
-        }
-    }
-
-    // Used by type A
-    private DeviceChannel(int number, ChannelType type, byte[] value) {
-        this(number, type, Set.of(), null, Set.of(), value, null, null, null);
-    }
-
-    // Used by type B
-    private DeviceChannel(
-            int number,
-            ChannelType type,
-            @Nullable Integer channelFunction,
-            @Nullable byte[] value,
-            @Nullable HvacValue hvacValue,
-            @Nullable Integer subDeviceId) {
-        this(
-                number,
-                type,
+    private static DeviceChannel a(SuplaDeviceChannelA a) {
+        return new DeviceChannel(
+                a.number(),
+                false,
+                findChannelType(a.type()),
                 Set.of(),
-                findChannelFunction(channelFunction),
-                Set.of(),
-                value,
                 null,
-                hvacValue,
-                subDeviceId);
-    }
-
-    // Used by type C, D
-    private DeviceChannel(
-            int number,
-            ChannelType type,
-            Set<ChannelFlag> flags,
-            @Nullable Integer channelFunction,
-            @Nullable byte[] value,
-            @Nullable ActionTrigger action,
-            @Nullable HvacValue hvacValue,
-            @Nullable Integer subDeviceId) {
-        this(
-                number,
-                type,
-                flags,
-                findChannelFunction(channelFunction),
                 Set.of(),
-                value,
-                action,
-                hvacValue,
-                subDeviceId);
+                a.value(),
+                null,
+                null,
+                null,
+                0L,
+                Set.of(),
+                0);
     }
 
-    // Used by type E
-    private DeviceChannel(
-            int number,
-            ChannelType type,
-            Set<ChannelFlag> flags,
-            @Nullable Integer channelFunction,
-            @Nullable Long rgbwBitFunctionMask,
-            @Nullable byte[] value,
-            @Nullable ActionTrigger action,
-            @Nullable HvacValue hvacValue,
-            @Nullable Integer subDeviceId) {
-        this(
-                number,
-                type,
-                flags,
-                findChannelFunction(channelFunction),
-                findRgbwBitFunctions(rgbwBitFunctionMask),
-                value,
-                action,
-                hvacValue,
-                subDeviceId);
+    private static DeviceChannel b(SuplaDeviceChannelB b) {
+        return new DeviceChannel(
+                b.number(),
+                false,
+                findChannelType(b.type()),
+                Set.of(),
+                findChannelFunction(b.defaultValue()),
+                Set.of(),
+                b.value(),
+                null,
+                null,
+                null,
+                0L,
+                findBitFunction(b.funcList()),
+                0);
     }
 
-    private static ChannelFunction findChannelFunction(@Nullable Integer channelFunction) {
-        if (channelFunction == null) {
-            return SUPLA_CHANNELFNC_NONE;
-        }
-        return stream(ChannelFunction.values())
-                .filter(cf -> cf.getValue() == channelFunction)
-                .findAny()
+    private static DeviceChannel c(SuplaDeviceChannelC c) {
+        return new DeviceChannel(
+                c.number(),
+                false,
+                findChannelType(c.type()),
+                findFlags(c.flags()),
+                findChannelFunction(c.defaultValue()),
+                Set.of(),
+                c.value(),
+                mapAction(c),
+                mapHvacValue(c.hvacValue()),
+                null,
+                0L,
+                findBitFunction(c.funcList()),
+                0);
+    }
+
+    private static DeviceChannel d(SuplaDeviceChannelD d) {
+        return new DeviceChannel(
+                d.number(),
+                d.offline() > 0,
+                findChannelType(d.type()),
+                findFlags(d.flags()),
+                findChannelFunction(d.defaultValue()),
+                Set.of(),
+                d.value(),
+                mapAction(d),
+                mapHvacValue(d.hvacValue()),
+                null,
+                d.valueValidityTimeSec(),
+                findBitFunction(d.funcList()),
+                d.defaultIcon());
+    }
+
+    private static Set<BitFunction> findBitFunction(@Nullable Integer funcList) {
+        return Optional.ofNullable(funcList).map(BitFunction::findByMask).orElse(Set.of());
+    }
+
+    private static DeviceChannel e(SuplaDeviceChannelE e) {
+        return new DeviceChannel(
+                e.number(),
+                e.offline() > 0,
+                findChannelType(e.type()),
+                findFlags(e.flags()),
+                findChannelFunction(e.defaultValue()),
+                findRgbwBitFunctions(e.rGBWFuncList()),
+                e.value(),
+                mapAction(e),
+                mapHvacValue(e.hvacValue()),
+                findSubDeviceId(e.subDeviceId()),
+                e.valueValidityTimeSec(),
+                findBitFunction(e.funcList()),
+                e.defaultIcon());
+    }
+
+    private static ChannelFunction findChannelFunction(@Nullable Integer defaultValue) {
+        return Optional.ofNullable(defaultValue)
+                .flatMap(ChannelFunction::findByValue)
                 .orElse(SUPLA_CHANNELFNC_NONE);
     }
 
@@ -207,15 +221,20 @@ public record DeviceChannel(
 
     @Override
     public String toString() {
-        return "DeviceChannel{"
-                + "number=" + number
-                + ", type=" + type
-                + ", flags=" + flags
-                + ", channelFunction=" + channelFunction
-                + ", value=" + Arrays.toString(value)
-                + ", action=" + action
-                + ", hvacValue=" + hvacValue
-                + ", subDeviceId=" + subDeviceId
-                + '}';
+        return "DeviceChannel{" +
+               "number=" + number +
+               ", offline=" + offline +
+               ", type=" + type +
+               ", flags=" + flags +
+               ", channelFunction=" + channelFunction +
+               ", rgbwBitFunctions=" + rgbwBitFunctions +
+               ", value=" + Arrays.toString(value) +
+               ", action=" + action +
+               ", hvacValue=" + hvacValue +
+               ", subDeviceId=" + subDeviceId +
+               ", valueValidityTimeSec=" + valueValidityTimeSec +
+               ", functions=" + functions +
+               ", defaultIcon=" + defaultIcon +
+               '}';
     }
 }
