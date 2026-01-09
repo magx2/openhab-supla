@@ -4,6 +4,7 @@ import static java.util.Collections.unmodifiableList;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static java.util.stream.Collectors.toUnmodifiableSet;
 import static org.openhab.core.thing.ThingStatusDetail.CONFIGURATION_ERROR;
+import static pl.grzeslowski.jsupla.protocol.api.DeviceFlag.SUPLA_DEVICE_FLAG_CALCFG_SUBDEVICE_PAIRING;
 import static pl.grzeslowski.jsupla.protocol.api.ProtocolHelpers.parseString;
 import static pl.grzeslowski.openhab.supla.internal.GuidLogger.attachGuid;
 import static pl.grzeslowski.openhab.supla.internal.Localization.text;
@@ -93,7 +94,7 @@ public class GatewayDeviceHandler extends ServerSuplaDeviceHandler implements Se
     @Override
     protected void afterRegister(RegisterDeviceTrait registerEntity) throws OfflineInitializationException {
         var flags = registerEntity.flags();
-        if (!flags.calcfgSubdevicePairing()) {
+        if (!flags.contains(SUPLA_DEVICE_FLAG_CALCFG_SUBDEVICE_PAIRING)) {
             throw new OfflineInitializationException(CONFIGURATION_ERROR, text("supla.offline.not-gateway"));
         }
 

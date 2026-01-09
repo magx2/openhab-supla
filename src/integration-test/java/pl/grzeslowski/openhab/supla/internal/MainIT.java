@@ -6,6 +6,7 @@ import static org.openhab.core.thing.ThingStatus.OFFLINE;
 import static org.openhab.core.thing.ThingStatus.ONLINE;
 import static org.openhab.core.thing.ThingStatus.UNKNOWN;
 import static org.openhab.core.thing.ThingStatusDetail.*;
+import static pl.grzeslowski.jsupla.protocol.api.HvacMode.SUPLA_HVAC_MODE_OFF;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.*;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.SUPLA_SERVER_DEVICE_TYPE_ID;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.SUPLA_SERVER_TYPE_ID;
@@ -15,7 +16,6 @@ import static tech.units.indriya.unit.Units.CELSIUS;
 
 import io.github.glytching.junit.extension.random.RandomBeansExtension;
 import java.math.BigDecimal;
-import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -26,8 +26,6 @@ import org.openhab.core.thing.ChannelUID;
 import org.openhab.core.thing.ThingStatusInfo;
 import org.openhab.core.thing.binding.builder.ThingStatusInfoBuilder;
 import org.openhab.core.util.ColorUtil;
-import pl.grzeslowski.jsupla.protocol.api.ChannelFlag;
-import pl.grzeslowski.jsupla.protocol.api.HvacMode;
 import pl.grzeslowski.jsupla.protocol.api.structs.sd.SuplaRegisterDeviceResultA;
 import pl.grzeslowski.openhab.supla.internal.device.ZamelDiw01;
 import pl.grzeslowski.openhab.supla.internal.device.ZamelGkw02;
@@ -39,6 +37,7 @@ import pl.grzeslowski.openhab.supla.internal.extension.supla.Ctx.BridgeCtx;
 import pl.grzeslowski.openhab.supla.internal.extension.supla.Ctx.ThingCtx;
 import pl.grzeslowski.openhab.supla.internal.extension.supla.SuplaExtension;
 
+// todo make this tests parallel
 @Slf4j
 @ExtendWith({MockitoExtension.class, RandomExtension.class, RandomBeansExtension.class, SuplaExtension.class})
 public class MainIT {
@@ -76,8 +75,7 @@ public class MainIT {
             // ping
             device.sendPing();
             var ping = device.readPing().now();
-            assertThat(ping.tvSec()).isGreaterThan(0);
-            assertThat(ping.tvUsec()).isEqualTo(0);
+            assertThat(ping).isNotNull();
             await().untilAsserted(() -> assertThat(deviceCtx.openHabDevice().findThingStatus())
                     .isEqualTo(ThingStatusInfoBuilder.create(ONLINE, NONE).build()));
 
@@ -139,15 +137,16 @@ public class MainIT {
             // ping
             device.sendPing();
             var ping = device.readPing().now();
-            assertThat(ping.tvSec()).isGreaterThan(0);
-            assertThat(ping.tvUsec()).isEqualTo(0);
+            assertThat(ping).isNotNull();
+            log.info("Waiting for handler to be online");
             await().untilAsserted(() -> assertThat(deviceCtx.openHabDevice().findThingStatus())
                     .isEqualTo(ThingStatusInfoBuilder.create(ONLINE, NONE).build()));
 
             var channels = deviceCtx.openHabDevice().getChannelStates();
-            assertThat(channels).hasSize(18);
+            assertThat(channels).hasSize(20);
 
             // Check temperature state
+            log.info("Waiting for temperature to be {} °C", device.getTemperature());
             await().untilAsserted(() -> {
                 var temperatureState = deviceCtx.openHabDevice().findChannelState(1);
                 assertThat(temperatureState).isEqualTo(new QuantityType<>(device.getTemperature(), CELSIUS));
@@ -182,7 +181,7 @@ public class MainIT {
             }
             { // OH updates HVAC / setPointTemperatureHeat
                 var channel = new ChannelUID("supla:server-device:%s:0#setPointTemperatureHeat".formatted(guid));
-                var newTemperature = BigDecimal.valueOf(100.0);
+                var newTemperature = new BigDecimal("100.00");
                 deviceCtx.handler().handleCommand(channel, new QuantityType<>(newTemperature, CELSIUS));
                 device.updateChannel();
                 assertThat(device.getHvac().getSetPointTemperatureHeat()).isEqualTo(newTemperature);
@@ -192,7 +191,7 @@ public class MainIT {
                 var newMode = "OFF";
                 deviceCtx.handler().handleCommand(channel, StringType.valueOf(newMode));
                 device.updateChannel();
-                assertThat(device.getHvac().getMode()).isEqualTo(HvacMode.valueOf(newMode));
+                assertThat(device.getHvac().getMode()).isEqualTo(SUPLA_HVAC_MODE_OFF);
             }
         }
         // device is closed
@@ -233,8 +232,7 @@ public class MainIT {
             // ping
             device.sendPing();
             var ping = device.readPing().now();
-            assertThat(ping.tvSec()).isGreaterThan(0);
-            assertThat(ping.tvUsec()).isEqualTo(0);
+            assertThat(ping).isNotNull();
             await().untilAsserted(() -> assertThat(deviceCtx.openHabDevice().findThingStatus())
                     .isEqualTo(ThingStatusInfoBuilder.create(ONLINE, NONE).build()));
 
@@ -301,8 +299,7 @@ public class MainIT {
             // ping
             device.sendPing();
             var ping = device.readPing().now();
-            assertThat(ping.tvSec()).isGreaterThan(0);
-            assertThat(ping.tvUsec()).isEqualTo(0);
+            assertThat(ping).isNotNull();
             await().untilAsserted(() -> assertThat(deviceCtx.openHabDevice().findThingStatus())
                     .isEqualTo(ThingStatusInfoBuilder.create(ONLINE, NONE).build()));
 

@@ -7,6 +7,8 @@ import static pl.grzeslowski.jsupla.protocol.api.ProtocolHelpers.parseString;
 import jakarta.annotation.Nullable;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import pl.grzeslowski.jsupla.protocol.api.DeviceFlag;
 import pl.grzeslowski.jsupla.protocol.api.structs.ds.*;
 import pl.grzeslowski.jsupla.protocol.api.types.ToServerProto;
 
@@ -30,7 +32,7 @@ public sealed interface RegisterDeviceTrait permits RegisterLocationDeviceTrait,
                         parseString(register.softVer()),
                         null,
                         null,
-                        new Flags(0),
+                        Set.of(),
                         stream(register.channels())
                                 .map(DeviceChannel::fromProto)
                                 .toList(),
@@ -43,7 +45,7 @@ public sealed interface RegisterDeviceTrait permits RegisterLocationDeviceTrait,
                         parseString(register.softVer()),
                         null,
                         null,
-                        new Flags(0),
+                        Set.of(),
                         stream(register.channels())
                                 .map(DeviceChannel::fromProto)
                                 .toList(),
@@ -56,7 +58,7 @@ public sealed interface RegisterDeviceTrait permits RegisterLocationDeviceTrait,
                         parseString(register.softVer()),
                         null,
                         null,
-                        new Flags(0),
+                        Set.of(),
                         stream(register.channels())
                                 .map(DeviceChannel::fromProto)
                                 .toList(),
@@ -70,7 +72,7 @@ public sealed interface RegisterDeviceTrait permits RegisterLocationDeviceTrait,
                         parseString(register.softVer()),
                         null,
                         null,
-                        new Flags(0),
+                        Set.of(),
                         stream(register.channels())
                                 .map(DeviceChannel::fromProto)
                                 .toList(),
@@ -84,7 +86,7 @@ public sealed interface RegisterDeviceTrait permits RegisterLocationDeviceTrait,
                         parseString(register.softVer()),
                         (int) register.manufacturerId(),
                         (int) register.productId(),
-                        new Flags(register.flags()),
+                        DeviceFlag.findByMask(register.flags()),
                         stream(register.channels())
                                 .map(DeviceChannel::fromProto)
                                 .toList(),
@@ -98,7 +100,7 @@ public sealed interface RegisterDeviceTrait permits RegisterLocationDeviceTrait,
                         parseString(register.softVer()),
                         (int) register.manufacturerId(),
                         (int) register.productId(),
-                        new Flags(register.flags()),
+                        DeviceFlag.findByMask(register.flags()),
                         stream(register.channels())
                                 .map(DeviceChannel::fromProto)
                                 .toList(),
@@ -112,7 +114,7 @@ public sealed interface RegisterDeviceTrait permits RegisterLocationDeviceTrait,
                         parseString(register.softVer()),
                         (int) register.manufacturerId(),
                         (int) register.productId(),
-                        new Flags(register.flags()),
+                        DeviceFlag.findByMask(register.flags()),
                         stream(register.channels())
                                 .map(DeviceChannel::fromProto)
                                 .toList(),
@@ -134,7 +136,7 @@ public sealed interface RegisterDeviceTrait permits RegisterLocationDeviceTrait,
     @Nullable
     Integer productId();
 
-    Flags flags();
+    Set<DeviceFlag> flags();
 
     List<DeviceChannel> channels();
 }

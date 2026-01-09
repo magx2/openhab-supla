@@ -19,6 +19,7 @@ import java.math.BigDecimal;
 import java.util.Optional;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.openhab.core.library.types.*;
 import org.openhab.core.thing.ChannelGroupUID;
@@ -128,7 +129,7 @@ public class HandlerCommandTrait implements HandleCommand {
     }
 
     private void handleHvacModeCommand(ChannelUID channelUID, StringType command) {
-        var mode = HvacMode.valueOf(command.toString());
+        var mode = HvacMode.valueOf(addPrefix("SUPLA_HVAC_MODE_", command));
         var value =
                 switch (mode) {
                     case SUPLA_HVAC_MODE_NOT_SET ->
@@ -168,6 +169,11 @@ public class HandlerCommandTrait implements HandleCommand {
 
         var previousMode = serverDevice.findState(channelUID).orElse(null);
         var future = sendCommandToSuplaServer(channelUID, value, command, previousMode);
+    }
+
+    @SuppressWarnings("SameParameterValue")
+    private static @NonNull String addPrefix(String prefix, StringType command) {
+        return command.toString().startsWith(prefix) ? command.toString() : prefix + command;
     }
 
     @Nullable

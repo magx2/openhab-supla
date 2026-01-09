@@ -205,36 +205,31 @@ public record DeviceChannel(
     }
 
     private static Set<RgbwBitFunction> findRgbwBitFunctions(@Nullable Long mask) {
-        if (mask == null) {
-            return Set.of();
-        }
-        return RgbwBitFunction.findByMask(mask);
+        return Optional.ofNullable(mask).map(RgbwBitFunction::findByMask).orElse(Set.of());
     }
 
     @Nullable
     private static HvacValue mapHvacValue(@Nullable HVACValue hvacValue) {
-        if (hvacValue == null) {
-            return null;
-        }
-        return HvacTypeDecoder.INSTANCE.decode(hvacValue);
+        return Optional.ofNullable(hvacValue)
+                .map(HvacTypeDecoder.INSTANCE::decode)
+                .orElse(null);
     }
 
     @Override
     public String toString() {
-        return "DeviceChannel{" +
-               "number=" + number +
-               ", offline=" + offline +
-               ", type=" + type +
-               ", flags=" + flags +
-               ", channelFunction=" + channelFunction +
-               ", rgbwBitFunctions=" + rgbwBitFunctions +
-               ", value=" + Arrays.toString(value) +
-               ", action=" + action +
-               ", hvacValue=" + hvacValue +
-               ", subDeviceId=" + subDeviceId +
-               ", valueValidityTimeSec=" + valueValidityTimeSec +
-               ", functions=" + functions +
-               ", defaultIcon=" + defaultIcon +
-               '}';
+        return "DeviceChannel{" + "number="
+                + number + ", offline="
+                + offline + ", type="
+                + type + ", flags="
+                + flags + ", channelFunction="
+                + channelFunction + ", rgbwBitFunctions="
+                + rgbwBitFunctions + ", value="
+                + Arrays.toString(value) + ", action="
+                + action + ", hvacValue="
+                + hvacValue + ", subDeviceId="
+                + subDeviceId + ", valueValidityTimeSec="
+                + valueValidityTimeSec + ", functions="
+                + functions + ", defaultIcon="
+                + defaultIcon + '}';
     }
 }

@@ -1,6 +1,8 @@
 package pl.grzeslowski.openhab.supla.internal.server.traits;
 
 import java.util.List;
+import java.util.Set;
+import pl.grzeslowski.jsupla.protocol.api.DeviceFlag;
 
 public record RegisterEmailDeviceTrait(
         String guid,
@@ -8,7 +10,7 @@ public record RegisterEmailDeviceTrait(
         String softVer,
         Integer manufacturerId,
         Integer productId,
-        Flags flags,
+        Set<DeviceFlag> flags,
         List<DeviceChannel> channels,
         String email,
         byte[] authKey,

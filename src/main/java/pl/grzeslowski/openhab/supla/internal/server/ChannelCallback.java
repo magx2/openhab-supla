@@ -16,7 +16,6 @@ import lombok.val;
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.eclipse.jdt.annotation.NonNullByDefault;
-import org.eclipse.jdt.annotation.Nullable;
 import org.openhab.core.thing.Channel;
 import org.openhab.core.thing.ChannelGroupUID;
 import org.openhab.core.thing.ChannelUID;
@@ -47,7 +46,6 @@ public class ChannelCallback implements ChannelClassSwitch.Callback<Stream<Chann
     }
 
     @Override
-    @Nullable
     public Stream<Channel> onOnOff() {
         log.debug("{} {} onOnOff", thingUID, deviceChannel);
         return switchChannel();
@@ -64,7 +62,6 @@ public class ChannelCallback implements ChannelClassSwitch.Callback<Stream<Chann
     }
 
     @Override
-    @Nullable
     public Stream<Channel> onPercentValue() {
         log.debug("{} {} onPercentValue", thingUID, deviceChannel);
 
@@ -78,7 +75,6 @@ public class ChannelCallback implements ChannelClassSwitch.Callback<Stream<Chann
     }
 
     @Override
-    @Nullable
     public Stream<Channel> onRgbValue() {
         log.debug("{} {} onRgbValue", thingUID, deviceChannel);
         var groupUid = buildGroupUid();
@@ -126,7 +122,6 @@ public class ChannelCallback implements ChannelClassSwitch.Callback<Stream<Chann
     }
 
     @Override
-    @Nullable
     public Stream<Channel> onTemperatureDoubleValue() {
         log.debug("{} {} onTemperatureValue", thingUID, deviceChannel);
         final ChannelUID channelUid = createChannelUid();
@@ -139,7 +134,6 @@ public class ChannelCallback implements ChannelClassSwitch.Callback<Stream<Chann
     }
 
     @Override
-    @Nullable
     public Stream<Channel> onTemperatureAndHumidityValue() {
         log.debug("{} {} onTemperatureAndHumidityValue", thingUID, deviceChannel);
         val groupUid = buildGroupUid();
@@ -492,7 +486,6 @@ public class ChannelCallback implements ChannelClassSwitch.Callback<Stream<Chann
     }
 
     @Override
-    @Nullable
     public Stream<Channel> onUnknownValue() {
         log.debug("{} {} onUnknownValue", thingUID, deviceChannel);
         val channelUid = createChannelUid();

@@ -3,6 +3,7 @@ package pl.grzeslowski.openhab.supla.internal.server.handler;
 import static java.util.Collections.synchronizedMap;
 import static java.util.Objects.requireNonNull;
 import static org.openhab.core.thing.ThingStatusDetail.CONFIGURATION_ERROR;
+import static pl.grzeslowski.jsupla.protocol.api.DeviceFlag.SUPLA_DEVICE_FLAG_CALCFG_SUBDEVICE_PAIRING;
 import static pl.grzeslowski.openhab.supla.internal.Documentation.THING_BRIDGE;
 import static pl.grzeslowski.openhab.supla.internal.Localization.text;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.SUPLA_GATEWAY_DEVICE_TYPE;
@@ -50,7 +51,7 @@ public class SingleDeviceHandler extends ServerSuplaDeviceHandler {
     @Override
     protected void afterRegister(RegisterDeviceTrait registerEntity) throws OfflineInitializationException {
         var flags = registerEntity.flags();
-        if (flags.calcfgSubdevicePairing()) {
+        if (flags.contains(SUPLA_DEVICE_FLAG_CALCFG_SUBDEVICE_PAIRING)) {
             throw new OfflineInitializationException(
                     CONFIGURATION_ERROR,
                     text("supla.offline.should-be-gateway", SUPLA_GATEWAY_DEVICE_TYPE.getId(), THING_BRIDGE));
