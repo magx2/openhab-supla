@@ -13,7 +13,7 @@ import java.util.Arrays;
 import lombok.Getter;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.decoders.HvacTypeDecoder;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.encoders.ChannelTypeEncoder;
-import pl.grzeslowski.jsupla.protocol.api.channeltype.value.TemperatureAndHumidityValue;
+import pl.grzeslowski.jsupla.protocol.api.channeltype.value.TemperatureDoubleValue;
 import pl.grzeslowski.jsupla.protocol.api.structs.ActionTriggerProperties;
 import pl.grzeslowski.jsupla.protocol.api.structs.ds.ActionTrigger;
 import pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaDeviceChannelD;
@@ -28,7 +28,7 @@ public class ZamelGkw02 extends Device {
     private HvacChannel hvac = RandomExtension.INSTANCE.randomHvac();
 
     @Getter
-    private BigDecimal temperature = RandomExtension.INSTANCE.randomTemperature();
+    private BigDecimal temperature = BigDecimal.valueOf(21.64);
 
     private final byte[] email;
     private final byte[] authKey;
@@ -59,14 +59,14 @@ public class ZamelGkw02 extends Device {
                     (short) 0),
             new SuplaDeviceChannelD(
                     (short) 1,
-                    3034,
+                    3034, // SUPLA_CHANNELTYPE_THERMOMETER
                     0,
                     null,
-                    40,
-                    134283264L,
+                    40, // SUPLA_CHANNELFNC_THERMOMETER
+                    134283264L, // SUPLA_CHANNEL_FLAG_CHANNELSTATE, SUPLA_CHANNEL_FLAG_RUNTIME_CHANNEL_CONFIG_UPDATE
                     (short) 0,
                     0L,
-                    encoder.encode(new TemperatureAndHumidityValue(temperature)),
+                    new byte[] {-92, 112, 61, 10, -41, -93, 53, 64}, // Temp = 21,64
                     null,
                     null,
                     (short) 0),
@@ -146,7 +146,7 @@ public class ZamelGkw02 extends Device {
                 (short) 1,
                 (short) SUPLA_CHANNEL_OFFLINE_FLAG_ONLINE,
                 0,
-                encoder.encode(new TemperatureAndHumidityValue(temperature)));
+                encoder.encode(new TemperatureDoubleValue(temperature)));
         send(proto);
     }
 

@@ -147,7 +147,8 @@ public class ChannelUtil {
     }
 
     public void updateStatus(int channelNumber, byte[] channelValue) {
-        invoker.getLogger().debug("Updating status for channelNumber={}", channelNumber);
+        invoker.getLogger()
+                .debug("Updating status for channelNumber={}, value={}", channelNumber, Arrays.toString(channelValue));
         var deviceChannel = deviceChannels.get(channelNumber);
         if (deviceChannel == null) {
             if (invoker.getLogger().isWarnEnabled()) {
@@ -309,7 +310,9 @@ public class ChannelUtil {
         setField(fields, SUPLA_CHANNELSTATE_FIELD_BATTERYHEALTH, "Battery Health", value.batteryHealth());
         setField(fields, SUPLA_CHANNELSTATE_FIELD_BRIDGENODEONLINE, "Bridge Node Online", value.bridgeNodeOnline());
 
-        var lastConnectionResetCause = LastConnectionResetCause.findByValue(value.lastConnectionResetCause()).map(Enum::name).orElse("UNKNOWN(%s)".formatted(value.lastConnectionResetCause()));
+        var lastConnectionResetCause = LastConnectionResetCause.findByValue(value.lastConnectionResetCause())
+                .map(Enum::name)
+                .orElse("UNKNOWN(%s)".formatted(value.lastConnectionResetCause()));
         setField(
                 fields,
                 SUPLA_CHANNELSTATE_FIELD_LASTCONNECTIONRESETCAUSE,
