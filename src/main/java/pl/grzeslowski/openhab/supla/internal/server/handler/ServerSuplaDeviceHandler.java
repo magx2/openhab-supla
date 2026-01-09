@@ -9,18 +9,18 @@ import static java.util.stream.Collectors.joining;
 import static org.openhab.core.thing.ThingStatus.OFFLINE;
 import static org.openhab.core.thing.ThingStatus.ONLINE;
 import static org.openhab.core.thing.ThingStatusDetail.*;
+import static pl.grzeslowski.jsupla.protocol.api.DeviceFlag.SUPLA_DEVICE_FLAG_SLEEP_MODE_ENABLED;
 import static pl.grzeslowski.jsupla.protocol.api.ResultCode.SUPLA_RESULTCODE_TRUE;
-import static pl.grzeslowski.jsupla.protocol.api.consts.ProtoConsts.*;
+import static pl.grzeslowski.jsupla.protocol.api.consts.ProtoConsts.SUPLA_CONFIG_TYPE_DEFAULT;
+import static pl.grzeslowski.jsupla.protocol.api.consts.ProtoConsts.SUPLA_PROTO_VERSION_MIN;
 import static pl.grzeslowski.openhab.supla.internal.GuidLogger.attachGuid;
 import static pl.grzeslowski.openhab.supla.internal.Localization.text;
-import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.BINDING_ID;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ServerDevicesProperties.*;
 import static pl.grzeslowski.openhab.supla.internal.server.ByteArrayToHex.hexToBytes;
 
 import io.netty.handler.timeout.ReadTimeoutException;
 import java.math.BigInteger;
 import java.net.SocketException;
-import java.text.SimpleDateFormat;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -28,7 +28,6 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.format.TextStyle;
 import java.util.*;
-import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicLong;
@@ -40,7 +39,6 @@ import lombok.ToString;
 import lombok.experimental.Delegate;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
-import org.openhab.core.common.ThreadPoolManager;
 import org.openhab.core.thing.ChannelUID;
 import org.openhab.core.thing.Thing;
 import org.openhab.core.thing.ThingStatus;
@@ -90,7 +88,8 @@ import pl.grzeslowski.openhab.supla.internal.server.traits.*;
 /** The {@link ServerSuplaDeviceHandler} is responsible for handling commands, which are sent to one of the channels. */
 @NonNullByDefault
 @ToString(onlyExplicitlyIncluded = true)
-public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler implements MessageHandler, ServerDevice {
+public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler
+        implements MessageHandler, ServerDevice, Ping.DeviceStatusUpdater {
     public static final byte ACTIVITY_TIMEOUT = (byte) 100;
     public static final String AVAILABLE_FIELDS = "AVAILABLE_FIELDS";
     private static final AtomicLong ID = new AtomicLong();
@@ -99,6 +98,11 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler implem
 
     @Getter
     protected Logger logger = LoggerFactory.getLogger(baseLogger());
+
+    @Nullable
+    @Getter
+    @ToString.Include
+    private SuplaDevice suplaDevice;
 
     @ToString.Include
     @Nullable
@@ -112,10 +116,10 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler implem
     @ToString.Include
     private boolean authorized = false;
 
-    private final AtomicLong lastMessageFromDevice = new AtomicLong();
+    @ToString.Include
+    private volatile boolean sleeping = false;
 
-    @Nullable
-    private ScheduledFuture<?> pingSchedule;
+    private final Ping ping = new Ping(this);
 
     @Nullable
     @Getter
@@ -259,11 +263,12 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler implem
             logger.warn("The write channel is not active, messages should not be incoming!");
             return;
         }
-        lastMessageFromDevice.set(now().getEpochSecond());
+        ping.ping();
         try {
             switch (entity) {
                 case SuplaPingServer ping -> consumeSuplaPingServer(ping, writer);
-                case SuplaSetActivityTimeout suplaSetActivityTimeout -> consumeSuplaSetActivityTimeout(writer);
+                case SuplaSetActivityTimeout(var activityTimeout) ->
+                    consumeSuplaSetActivityTimeout(activityTimeout, writer);
                 case SuplaDeviceChannelValue value ->
                     consumeDeviceChannelValueTrait(DeviceChannelValue.fromProto(value));
                 case SuplaDeviceChannelExtendedValue value -> {
@@ -297,6 +302,15 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler implem
 
     @Override
     public void inactive() {
+        if (isSleepModeEnabled()) {
+            logger.debug("Channel is inactive but sleep mode is on, not transitioning to OFFLINE");
+            // still have to dispose handler,
+            // because when new connection arrive
+            // it will have new handler
+            disposeHandler();
+            sleeping = true;
+            return;
+        }
         updateStatus(OFFLINE, COMMUNICATION_ERROR, text("supla.offline.channel-disconnected"));
         this.writer.set(null);
         dispose();
@@ -304,7 +318,10 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler implem
 
     public void register(@NonNull RegisterDeviceTrait registerEntity, OpenHabMessageHandler handler)
             throws InitializationException {
-        updateStatus(OFFLINE, HANDLER_CONFIGURATION_PENDING, text("supla.offline.device-authorizing"));
+        if (!sleeping) {
+            logger.debug("Not changing status to OFFLINE, because sleep device woke up");
+            updateStatus(OFFLINE, HANDLER_CONFIGURATION_PENDING, text("supla.offline.device-authorizing"));
+        }
         var oldHandler = this.handler;
         if (oldHandler != null) {
             logger.warn(
@@ -317,9 +334,10 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler implem
         disposePing();
 
         // auth
-        logger.debug("Authorizing...");
+        logger.debug("Authorizing {}", registerEntity);
         authorize(registerEntity);
         authorized = true;
+        suplaDevice = SuplaDevice.of(registerEntity);
         logger.debug("Authorized!");
         {
             var local = bridgeHandler;
@@ -328,13 +346,14 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler implem
             }
         }
 
-        // set properties
-        thing.setProperty(SOFT_VERSION_PROPERTY, registerEntity.softVer());
-        if (registerEntity.manufacturerId() != null) {
-            thing.setProperty(MANUFACTURER_ID_PROPERTY, valueOf(registerEntity.manufacturerId()));
-        }
-        if (registerEntity.productId() != null) {
-            thing.setProperty(PRODUCT_ID_PROPERTY, valueOf(registerEntity.productId()));
+        { // set properties
+            thing.setProperty(SOFT_VERSION_PROPERTY, registerEntity.softVer());
+            if (registerEntity.manufacturerId() != null) {
+                thing.setProperty(MANUFACTURER_ID_PROPERTY, valueOf(registerEntity.manufacturerId()));
+            }
+            if (registerEntity.productId() != null) {
+                thing.setProperty(PRODUCT_ID_PROPERTY, valueOf(registerEntity.productId()));
+            }
         }
 
         actionChannels = registerEntity.channels().stream()
@@ -343,15 +362,31 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler implem
                 .collect(Collectors.toMap(
                         DeviceChannel::number, c -> new ActionChannelValue(c.action(), c.channelFunction())));
 
+        { // set properties for DeviceFlag
+            var flags = registerEntity.flags().stream().map(Enum::name).collect(joining(", ", "[", "]"));
+            setProperty("DEVICE_FLAGS", flags);
+            logger.debug("Setting device flags: {}", flags);
+        }
+
         afterRegister(registerEntity);
-        var w = requireNonNull(getWriter().get(), "There is no writer!");
-        // TODO should I send version A or B?
-        w.write(new SuplaRegisterDeviceResultA(
-                SUPLA_RESULTCODE_TRUE.getValue(), ACTIVITY_TIMEOUT, (byte) w.getVersion(), (byte)
-                        SUPLA_PROTO_VERSION_MIN));
-        // thing will have status ONLINE after receiving proto from the device (method `handle(ToServerProto)`)
-        updateStatus(ThingStatus.UNKNOWN, CONFIGURATION_PENDING, text("supla.offline.waiting-for-registration"));
-        lastMessageFromDevice.set(now().getEpochSecond());
+
+        {
+            var w = requireNonNull(getWriter().get(), "There is no writer!");
+            // TODO should I send version A or B?
+            w.write(new SuplaRegisterDeviceResultA(
+                    SUPLA_RESULTCODE_TRUE.getValue(), ACTIVITY_TIMEOUT, (byte) w.getVersion(), (byte)
+                            SUPLA_PROTO_VERSION_MIN));
+        }
+
+        if (!sleeping) {
+            logger.debug("Not changing status to UNKNOWN, becase sleep device woke up");
+            // thing will have status ONLINE after receiving proto from the device (method `handle(ToServerProto)`)
+            updateStatus(ThingStatus.UNKNOWN, CONFIGURATION_PENDING, text("supla.offline.waiting-for-registration"));
+            sleeping = false;
+        }
+
+        ping.start(requireNonNull(deviceConfiguration).timeoutConfiguration());
+        ping.ping();
     }
 
     private void authorize(RegisterDeviceTrait registerEntity) throws InitializationException {
@@ -366,20 +401,16 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler implem
     @GuidLogged
     protected abstract void afterRegister(RegisterDeviceTrait registerEntity) throws InitializationException;
 
-    public final void consumeSuplaSetActivityTimeout(SuplaWriter writer) {
+    public final void consumeSuplaSetActivityTimeout(short activityTimeout, SuplaWriter writer) {
         var timeout = requireNonNull(deviceConfiguration).timeoutConfiguration();
         var data = new SuplaSetActivityTimeoutResult(
                 (short) timeout.timeout(), (short) timeout.min(), (short) timeout.max());
         writer.write(data).addListener(f -> logger.trace("setActivityTimeout {}", data));
-        {
-            var local = pingSchedule;
-            if (local != null) {
-                logger.warn("Ping schedule was not set to null!");
-                local.cancel(true);
-            }
+
+        if (ping.isRunning()) {
+            ping.close();
         }
-        pingSchedule = ThreadPoolManager.getScheduledPool(BINDING_ID)
-                .scheduleWithFixedDelay(this::checkIfDeviceIsUp, timeout.timeout() * 2L, timeout.timeout(), SECONDS);
+        ping.start(timeout);
     }
 
     public final void consumeLocalTimeRequest(SuplaWriter writer) {
@@ -408,8 +439,7 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler implem
     }
 
     public final void consumeSuplaPingServer(SuplaPingServer ping, SuplaWriter writer) {
-        var epochSecond = now().getEpochSecond();
-        var response = new SuplaPingServerResult(new SuplaTimeval(epochSecond, 0));
+        var response = new SuplaPingServerResult(new SuplaTimeval(now().getEpochSecond(), 0));
         writer.write(response).addListener(f -> {
             var millis =
                     SECONDS.toMillis(response.now().tvSec()) + response.now().tvUsec();
@@ -429,7 +459,7 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler implem
                 .map(AuthData::locationAuthData)
                 .orElseThrow(() -> new OfflineInitializationException(
                         CONFIGURATION_ERROR, text("supla.server.location-auth-missing")));
-        if (locationAuthData.serverAccessId() != accessId) {
+        if (requireNonNull(locationAuthData).serverAccessId() != accessId) {
             throw new OfflineInitializationException(
                     CONFIGURATION_ERROR,
                     text("supla.server.access-id-wrong", locationAuthData.serverAccessId(), accessId));
@@ -459,7 +489,7 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler implem
                 .map(AuthData::emailAuthData)
                 .orElseThrow(() -> new OfflineInitializationException(
                         CONFIGURATION_ERROR, text("supla.server.email-auth-missing")));
-        if (!emailAuthData.email().equals(email)) {
+        if (!requireNonNull(emailAuthData).email().equals(email)) {
             throw new OfflineInitializationException(
                     CONFIGURATION_ERROR, text("supla.server.email-wrong", email, emailAuthData.email()));
         }
@@ -473,28 +503,6 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler implem
         }
     }
 
-    private void checkIfDeviceIsUp() {
-        var localDeviceConfiguration = deviceConfiguration;
-        if (localDeviceConfiguration == null) {
-            return;
-        }
-        var timeout = localDeviceConfiguration.timeoutConfiguration();
-        var now = now().getEpochSecond();
-        var lastPing = lastMessageFromDevice.get();
-        var delta = now - lastPing;
-        if (delta > timeout.max()) {
-            var lastPingDate = new Date(SECONDS.toMillis(lastPing));
-            var formatter = new SimpleDateFormat("HH:mm:ss z");
-            updateStatus(
-                    OFFLINE, COMMUNICATION_ERROR, text("supla.offline.no-ping", delta, formatter.format(lastPingDate)));
-            disposePing();
-        }
-    }
-
-    private ChannelUID createChannelUid(int channelNumber) {
-        return new ChannelUID(getThing().getUID(), valueOf(channelNumber));
-    }
-
     @GuidLogged
     @Override
     public void dispose() {
@@ -503,19 +511,15 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler implem
             disposePing();
             disposeHandler();
             disposeBridgeHandler();
-            writer.set(null);
             logger = LoggerFactory.getLogger(baseLogger());
             authorized = false;
         });
     }
 
     private void disposePing() {
-        var local = pingSchedule;
-        pingSchedule = null;
-        if (local != null) {
-            local.cancel(true);
+        if (ping.isRunning()) {
+            ping.close();
         }
-        lastMessageFromDevice.set(0);
     }
 
     private void disposeHandler() {
@@ -524,6 +528,7 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler implem
         if (localHandler != null) {
             localHandler.clear();
         }
+        writer.set(null);
     }
 
     private void disposeBridgeHandler() {
@@ -747,5 +752,22 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler implem
     @Override
     public void updateThing(Thing thing) {
         super.updateThing(thing);
+    }
+
+    /**
+     * Refer to <a
+     * href="https://github.com/magx2/openhab-supla/blob/master/docs/supla/SUPLA_DEVICE_FLAG_SLEEP_MODE_ENABLED.md">documentation</a>
+     * about sleep mode device flag
+     *
+     * @return true if sleep mode is enabled
+     */
+    @Override
+    public boolean isSleepModeEnabled() {
+        var local = suplaDevice;
+        if (local == null) {
+            logger.warn("Supla device is null!");
+            return false;
+        }
+        return local.flags().contains(SUPLA_DEVICE_FLAG_SLEEP_MODE_ENABLED);
     }
 }

@@ -40,7 +40,8 @@ class ChannelCallbackTest {
     }
 
     private DeviceChannel mockDeviceChannel(int number) {
-        return new DeviceChannel(number, false, null, null, null, null, new byte[8], null, null, null, 0, Set.of(), 0);
+        return new DeviceChannel(
+                number, false, null, Set.of(), null, Set.of(), new byte[8], null, null, null, 0, Set.of(), 0);
     }
 
     @Test
