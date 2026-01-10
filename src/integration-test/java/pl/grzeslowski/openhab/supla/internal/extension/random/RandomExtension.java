@@ -51,7 +51,7 @@ public class RandomExtension implements ParameterResolver {
                 .setScale(14, HALF_UP);
     }
 
-    public BigDecimal randomUpdateTemperature(BigDecimal temperature) {
+    public BigDecimal randomTemperature(BigDecimal temperature) {
         var offset = BigDecimal.ZERO;
         while (offset.compareTo(BigDecimal.ZERO) == 0) {
             offset = temperature.multiply(BigDecimal.valueOf(random.nextGaussian()));
@@ -121,6 +121,15 @@ public class RandomExtension implements ParameterResolver {
         return generate(this::randomPercentage)
                 .filter(p -> !p.equals(value))
                 .parallel()
+                .findAny()
+                .orElseThrow();
+    }
+
+    public BigDecimal randomPercentage(BigDecimal percentage) {
+        return generate(random::nextDouble)
+                .map(d -> d * 100)
+                .map(BigDecimal::valueOf)
+                .filter(bd -> bd.compareTo(percentage) != 0)
                 .findAny()
                 .orElseThrow();
     }
