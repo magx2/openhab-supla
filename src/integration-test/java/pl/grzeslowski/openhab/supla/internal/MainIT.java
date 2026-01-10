@@ -245,7 +245,7 @@ public class MainIT {
                 log.info("Waiting for OH to propagate state change");
                 await().untilAsserted(() -> {
                     var channelState = deviceCtx.openHabDevice().findChannelState(channel);
-                    assertThat(channelState).isEqualTo(new PercentType(currentState.value()));
+                    assertThat(channelState).isEqualTo(new QuantityType<>(currentState.value(), PERCENT));
                 });
             }
             { // OH updates it's state with the device
