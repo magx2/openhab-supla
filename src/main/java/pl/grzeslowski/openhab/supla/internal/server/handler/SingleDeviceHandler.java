@@ -107,4 +107,10 @@ public class SingleDeviceHandler extends ServerSuplaDeviceHandler {
     public String setProperty(String name, @Nullable String value) {
         return thing.setProperty(name, value);
     }
+
+    @Override
+    public void dispose() {
+        channelUtil.dispose();
+        super.dispose();
+    }
 }
