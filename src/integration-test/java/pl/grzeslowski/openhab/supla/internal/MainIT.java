@@ -6,6 +6,7 @@ import static org.openhab.core.thing.ThingStatus.OFFLINE;
 import static org.openhab.core.thing.ThingStatus.ONLINE;
 import static org.openhab.core.thing.ThingStatus.UNKNOWN;
 import static org.openhab.core.thing.ThingStatusDetail.*;
+import static org.openhab.core.types.UnDefType.UNDEF;
 import static pl.grzeslowski.jsupla.protocol.api.HvacMode.SUPLA_HVAC_MODE_OFF;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.SUPLA_SERVER_DEVICE_TYPE_ID;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.SUPLA_SERVER_TYPE_ID;
@@ -16,9 +17,11 @@ import static tech.units.indriya.unit.Units.PERCENT;
 
 import io.github.glytching.junit.extension.random.RandomBeansExtension;
 import java.math.BigDecimal;
+import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.openhab.core.library.types.*;
@@ -383,6 +386,7 @@ public class MainIT {
                         new ThingStatusInfo(OFFLINE, COMMUNICATION_ERROR, "@text/supla.offline.channel-disconnected")));
     }
 
+    @Timeout(value = 3, unit = TimeUnit.MINUTES)
     @Test
     @DisplayName("should run tests for Zamel THW-01")
     void zamelThw01(
@@ -449,6 +453,28 @@ public class MainIT {
                     var humidityState = deviceCtx.openHabDevice().findChannelState("0", "humidity");
                     assertThat(humidityState).isEqualTo(new QuantityType<>(device.getHumidity(), PERCENT));
                 });
+            }
+
+            { // device updates temperature & humidity with OH
+                // but value validity time expires
+                // which means channels should be UNDEF
+                device.temperatureAndHumidityUpdated();
+                log.info("Waiting for temperature channel to invalidate");
+                await().timeout(device.getValidityTime().multipliedBy(2))
+                        .pollInterval(timeout.min())
+                        .untilAsserted(() -> {
+                            device.ping();
+                            var temperatureState = deviceCtx.openHabDevice().findChannelState("0", "temperature");
+                            assertThat(temperatureState).isEqualTo(UNDEF);
+                        });
+                log.info("Waiting for humidity channel to invalidate");
+                await().timeout(device.getValidityTime().multipliedBy(2))
+                        .pollInterval(timeout.min())
+                        .untilAsserted(() -> {
+                            device.ping();
+                            var humidityState = deviceCtx.openHabDevice().findChannelState("0", "humidity");
+                            assertThat(humidityState).isEqualTo(UNDEF);
+                        });
             }
         }
         // device is closed

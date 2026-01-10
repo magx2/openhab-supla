@@ -155,6 +155,7 @@ public class SubDeviceHandler extends SuplaDeviceHandler implements ServerDevice
         }
         channels = List.of();
         logger = LoggerFactory.getLogger(this.getClass());
+        channelUtil.dispose();
     }
 
     @Override

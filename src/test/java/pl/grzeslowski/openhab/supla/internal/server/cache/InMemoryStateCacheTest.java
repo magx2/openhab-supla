@@ -8,6 +8,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.openhab.core.library.types.StringType;
 import org.openhab.core.thing.ChannelUID;
 import org.openhab.core.types.State;
 import org.slf4j.Logger;
@@ -20,43 +21,22 @@ class InMemoryStateCacheTest {
     @InjectMocks
     private InMemoryStateCache cache;
 
+    final ChannelUID uid = new ChannelUID("binding:thing:1:channel");
+    final State state = new StringType("some state");
+
     @Test
     void shouldStoreAndReturnState() {
-        ChannelUID channelUID = new ChannelUID("binding:thing:1:channel");
-        State state = new State() {
-            @Override
-            public <T extends State> T as(Class<T> type) {
-                return null;
-            }
-
-            @Override
-            public String format(String pattern) {
-                return "state";
-            }
-
-            @Override
-            public String toFullString() {
-                return "state";
-            }
-        };
-
-        cache.saveState(channelUID, state);
-        var found = cache.findState(channelUID);
+        cache.saveState(uid, state, null);
+        var found = cache.findState(uid);
 
         assertThat(found).hasValue(state);
-        verify(logger).debug("Saving state {}={}", channelUID, state);
-        verify(logger).debug("Current state for {} is {}", channelUID, state);
     }
 
     @Test
     void shouldAllowNullState() {
-        ChannelUID channelUID = new ChannelUID("binding:thing:2:channel");
-
-        cache.saveState(channelUID, null);
-        var found = cache.findState(channelUID);
+        cache.saveState(uid, null, null);
+        var found = cache.findState(uid);
 
         assertThat(found).isEmpty();
-        verify(logger).debug("Saving state {}={}", channelUID, null);
-        verify(logger).debug("Current state for {} is {}", channelUID, null);
     }
 }
