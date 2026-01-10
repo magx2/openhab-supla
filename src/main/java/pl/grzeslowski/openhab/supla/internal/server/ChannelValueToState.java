@@ -6,6 +6,7 @@ import static java.util.Optional.ofNullable;
 import static org.openhab.core.library.unit.SIUnits.CELSIUS;
 import static org.openhab.core.types.UnDefType.NULL;
 import static org.openhab.core.types.UnDefType.UNDEF;
+import static tech.units.indriya.unit.Units.PERCENT;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -80,7 +81,7 @@ public class ChannelValueToState {
     }
 
     private Stream<ChannelState> onHumidityValue(HumidityValue value) {
-        return Stream.of(new ChannelState(createChannelUid(), new PercentType(value.humidity())));
+        return Stream.of(new ChannelState(createChannelUid(), humidityToState(value)));
     }
 
     private Stream<ChannelState> onPressureValue(PressureValue value) {
@@ -108,7 +109,7 @@ public class ChannelValueToState {
     }
 
     private Stream<ChannelState> onPercentValue(PercentValue percentValue) {
-        return Stream.of(new ChannelState(createChannelUid(), new PercentType(percentValue.value())));
+        return Stream.of(new ChannelState(createChannelUid(), new QuantityType<>(percentValue.value(), PERCENT)));
     }
 
     private Stream<ChannelState> onRgbValue(RgbValue value) {
@@ -159,13 +160,16 @@ public class ChannelValueToState {
         var temperature = temperatureAndHumidityValue.temperature();
         var humidity = temperatureAndHumidityValue
                 .humidity()
-                .map(HumidityValue::humidity)
-                .map(h -> (State) new PercentType(h))
+                .map(this::humidityToState)
                 .orElse(UNDEF);
 
         return Stream.of(
                 buildTemperatureChannel(new ChannelUID(groupUid, "temperature"), temperature),
                 new ChannelState(new ChannelUID(groupUid, "humidity"), humidity));
+    }
+
+    private State humidityToState(HumidityValue value) {
+        return new QuantityType<>(value.humidity(), PERCENT);
     }
 
     private Stream<ChannelState> onElectricityMeter(@Nullable ElectricityMeterValue electricityMeterValue) {
