@@ -2,15 +2,19 @@ package pl.grzeslowski.openhab.supla.internal.server;
 
 import static java.lang.Short.parseShort;
 import static java.lang.String.valueOf;
+import static java.time.Instant.now;
 import static java.util.Comparator.comparing;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.stream.Collectors.joining;
 import static org.openhab.core.thing.ChannelUID.CHANNEL_GROUP_SEPARATOR;
 import static org.openhab.core.types.UnDefType.UNDEF;
+import static pl.grzeslowski.jsupla.protocol.api.ChannelStateField.*;
 import static pl.grzeslowski.jsupla.protocol.api.ProtocolHelpers.*;
-import static pl.grzeslowski.jsupla.protocol.api.consts.ProtoConsts.*;
+import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.BINDING_ID;
 
 import java.time.Duration;
 import java.util.*;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -18,13 +22,18 @@ import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
+import org.openhab.core.common.ThreadPoolManager;
 import org.openhab.core.thing.Channel;
 import org.openhab.core.thing.ChannelUID;
 import org.openhab.core.thing.binding.builder.ChannelBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import pl.grzeslowski.jsupla.protocol.api.ChannelStateField;
+import pl.grzeslowski.jsupla.protocol.api.LastConnectionResetCause;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.decoders.ChannelTypeDecoder;
-import pl.grzeslowski.jsupla.protocol.api.channeltype.value.*;
+import pl.grzeslowski.jsupla.protocol.api.channeltype.value.ChannelClassSwitch;
+import pl.grzeslowski.jsupla.protocol.api.channeltype.value.ChannelValue;
+import pl.grzeslowski.jsupla.protocol.api.channeltype.value.ElectricityMeterValue;
 import pl.grzeslowski.jsupla.protocol.api.structs.dcs.SetCaption;
 import pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaChannelNewValueResult;
 import pl.grzeslowski.jsupla.protocol.api.structs.dsc.ChannelState;
@@ -38,6 +47,7 @@ public class ChannelUtil {
     private static final Logger LOGGER = LoggerFactory.getLogger(ChannelUtil.class);
     private final ServerDevice invoker;
     private final Map<Integer, DeviceChannel> deviceChannels = new java.util.concurrent.ConcurrentHashMap<>();
+    private final List<ScheduledFuture<?>> schedules = new ArrayList<>();
 
     public void buildChannels(List<DeviceChannel> deviceChannels) {
         {
@@ -98,8 +108,7 @@ public class ChannelUtil {
 
     public Stream<ChannelValueToState.ChannelState> findState(
             DeviceChannel deviceChannel, @jakarta.annotation.Nullable byte[] value) {
-        val valueSwitch = new ChannelValueSwitch<>(
-                new ChannelValueToState(invoker.getThing().getUID(), deviceChannel));
+        val valueSwitch = new ChannelValueToState(invoker.getThing().getUID(), deviceChannel);
         ChannelValue channelValue;
         if (value != null) {
             channelValue = ChannelTypeDecoder.INSTANCE.decode(deviceChannel.type(), value);
@@ -110,7 +119,7 @@ public class ChannelUtil {
         } else {
             throw new IllegalArgumentException("value and hvacValue cannot be null!");
         }
-        return valueSwitch.doSwitch(channelValue);
+        return valueSwitch.switchOn(channelValue);
     }
 
     public void updateChannels(List<Channel> channels) {
@@ -140,11 +149,16 @@ public class ChannelUtil {
             invoker.getLogger().debug("Channel Value is offline, ignoring it. trait={}", trait);
             return;
         }
-        updateStatus(trait.channelNumber(), trait.value());
+        updateStatus(trait.channelNumber(), trait.value(), trait.validityTimeSec());
     }
 
     public void updateStatus(int channelNumber, byte[] channelValue) {
-        invoker.getLogger().debug("Updating status for channelNumber={}", channelNumber);
+        updateStatus(channelNumber, channelValue, null);
+    }
+
+    private void updateStatus(int channelNumber, byte[] channelValue, @Nullable Long validityTimeSec) {
+        invoker.getLogger()
+                .debug("Updating status for channelNumber={}, value={}", channelNumber, Arrays.toString(channelValue));
         var deviceChannel = deviceChannels.get(channelNumber);
         if (deviceChannel == null) {
             if (invoker.getLogger().isWarnEnabled()) {
@@ -171,7 +185,40 @@ public class ChannelUtil {
                             channelNumber,
                             state);
             invoker.updateState(channelUID, state);
-            invoker.saveState(channelUID, state);
+            var validityTime =
+                    (validityTimeSec != null && validityTimeSec > 0) ? Duration.ofSeconds(validityTimeSec) : null;
+            invoker.saveState(channelUID, state, validityTime);
+            if (validityTime != null) {
+                var now = now();
+                invoker.getLogger()
+                        .debug(
+                                "Setting thread to refresh channel {} in {} ({})",
+                                channelUID,
+                                validityTime,
+                                now.plus(validityTime));
+                synchronized (schedules) {
+                    var schedule = ThreadPoolManager.getScheduledPool(BINDING_ID)
+                            .schedule(
+                                    () -> {
+                                        invoker.getLogger()
+                                                .debug(
+                                                        "Refreshing channel {}, because validity time expired!",
+                                                        channelUID);
+                                        invoker.handleRefreshCommand(channelUID);
+                                    },
+                                    validityTime.toMillis(),
+                                    MILLISECONDS);
+                    schedules.add(schedule);
+                    // clean done schedules
+                    for (var iterator = schedules.iterator(); iterator.hasNext(); ) {
+                        var future = iterator.next();
+                        if (future.isDone() || future.isCancelled()) {
+                            invoker.getLogger().debug("Removing schedule {} because it's already done");
+                            iterator.remove();
+                        }
+                    }
+                }
+            }
         });
     }
 
@@ -281,7 +328,7 @@ public class ChannelUtil {
     }
 
     public void consumeChannelState(ChannelState value) {
-        var fields = value.fields();
+        var fields = ChannelStateField.findByMask(value.fields());
         setField(fields, SUPLA_CHANNELSTATE_FIELD_IPV4, "IPV4", parseIpv4(value.iPv4()));
         setField(fields, SUPLA_CHANNELSTATE_FIELD_MAC, "MAC", parseMac(value.mAC()));
         setField(fields, SUPLA_CHANNELSTATE_FIELD_BATTERYLEVEL, "Battery Level", value.batteryLevel() + "%");
@@ -306,14 +353,9 @@ public class ChannelUtil {
         setField(fields, SUPLA_CHANNELSTATE_FIELD_BATTERYHEALTH, "Battery Health", value.batteryHealth());
         setField(fields, SUPLA_CHANNELSTATE_FIELD_BRIDGENODEONLINE, "Bridge Node Online", value.bridgeNodeOnline());
 
-        var lastConnectionResetCause =
-                switch (value.lastConnectionResetCause()) {
-                    case 0 -> "UNKNOWN";
-                    case 1 -> "ACTIVITY_TIMEOUT";
-                    case 2 -> "WIFI_CONNECTION_LOST";
-                    case 3 -> "SERVER_CONNECTION_LOST";
-                    default -> "UNKNOWN(%s)".formatted(value.lastConnectionResetCause());
-                };
+        var lastConnectionResetCause = LastConnectionResetCause.findByValue(value.lastConnectionResetCause())
+                .map(Enum::name)
+                .orElse("UNKNOWN(%s)".formatted(value.lastConnectionResetCause()));
         setField(
                 fields,
                 SUPLA_CHANNELSTATE_FIELD_LASTCONNECTIONRESETCAUSE,
@@ -339,10 +381,31 @@ public class ChannelUtil {
         }
     }
 
-    private void setField(int fields, int mask, String key, Object value) {
-        if ((fields & mask) == 0) {
+    private void setField(Set<ChannelStateField> fields, ChannelStateField mask, String key, Object value) {
+        if (!fields.contains(mask)) {
             return;
         }
         invoker.setProperty(key, valueOf(value));
+    }
+
+    public void dispose() {
+        invoker.getLogger().debug("Disposing channel util");
+        synchronized (schedules) {
+            schedules.forEach(this::disposeSchedule);
+            schedules.clear();
+        }
+    }
+
+    private void disposeSchedule(ScheduledFuture<?> future) {
+        if (future.isDone()) {
+            invoker.getLogger().debug("Schedule {} was already done/cancelled", future);
+            return;
+        }
+        invoker.getLogger().debug("Disposing schedule {}", future);
+        try {
+            future.cancel(true);
+        } catch (Exception e) {
+            invoker.getLogger().warn("Got exception when cancelling schedule {}", future);
+        }
     }
 }

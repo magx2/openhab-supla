@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.ServerSocket;
 import java.util.Random;
+import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.ParameterContext;
@@ -19,7 +20,8 @@ import org.junit.jupiter.api.extension.ParameterResolver;
 import org.openhab.core.library.types.DecimalType;
 import org.openhab.core.library.types.HSBType;
 import org.openhab.core.library.types.PercentType;
-import pl.grzeslowski.jsupla.protocol.api.channeltype.value.HvacValue;
+import pl.grzeslowski.jsupla.protocol.api.HvacFlag;
+import pl.grzeslowski.jsupla.protocol.api.HvacMode;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.value.PercentValue;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.value.RgbValue;
 import pl.grzeslowski.openhab.supla.internal.device.HvacChannel;
@@ -49,7 +51,7 @@ public class RandomExtension implements ParameterResolver {
                 .setScale(14, HALF_UP);
     }
 
-    public BigDecimal randomUpdateTemperature(BigDecimal temperature) {
+    public BigDecimal randomTemperature(BigDecimal temperature) {
         var offset = BigDecimal.ZERO;
         while (offset.compareTo(BigDecimal.ZERO) == 0) {
             offset = temperature.multiply(BigDecimal.valueOf(random.nextGaussian()));
@@ -60,11 +62,10 @@ public class RandomExtension implements ParameterResolver {
     public HvacChannel randomHvac() {
         return new HvacChannel(
                 true,
-                HvacValue.Mode.HEAT,
+                HvacMode.SUPLA_HVAC_MODE_HEAT,
                 randomTemperature(),
                 null,
-                new HvacValue.Flags(
-                        true, false, false, false, false, false, false, false, false, false, false, false, false));
+                Set.of(HvacFlag.SUPLA_HVAC_VALUE_FLAG_SETPOINT_TEMP_HEAT_SET));
     }
 
     private String randomEmail() {
@@ -120,6 +121,15 @@ public class RandomExtension implements ParameterResolver {
         return generate(this::randomPercentage)
                 .filter(p -> !p.equals(value))
                 .parallel()
+                .findAny()
+                .orElseThrow();
+    }
+
+    public BigDecimal randomPercentage(BigDecimal humidity) {
+        return generate(random::nextDouble)
+                .map(d -> d * 100)
+                .map(BigDecimal::valueOf)
+                .filter(bd -> bd.compareTo(humidity) != 0)
                 .findAny()
                 .orElseThrow();
     }

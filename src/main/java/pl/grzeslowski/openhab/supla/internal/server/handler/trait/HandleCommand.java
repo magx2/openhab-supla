@@ -16,8 +16,6 @@ public interface HandleCommand {
 
     void handlePercentCommand(final ChannelUID channelUID, final PercentType command);
 
-    void handleDecimalCommand(final ChannelUID channelUID, final DecimalType command);
-
     void handleStopMoveTypeCommand(final ChannelUID channelUID, final StopMoveType command);
 
     void handleStringCommand(final ChannelUID channelUID, final StringType command);

@@ -72,17 +72,17 @@
 				<advanced>true</advanced>
 			</parameter>
 
-			<parameter name="timeout" type="integer">
+			<parameter name="timeout" type="text">
 				<label>Timeout</label>
 				<description/>
 				<advanced>true</advanced>
 			</parameter>
-			<parameter name="timeoutMin" type="integer">
+			<parameter name="timeoutMin" type="text">
 				<label>Timeout Min</label>
 				<description/>
 				<advanced>true</advanced>
 			</parameter>
-			<parameter name="timeoutMax" type="integer">
+			<parameter name="timeoutMax" type="text">
 				<label>Timeout Max</label>
 				<description/>
 				<advanced>true</advanced>
@@ -196,17 +196,22 @@
 				<item-type>Number:Temperature</item-type>
 				<label>%channel-type.supla.temperature-channel.label</label>
 				<category>Temperature</category>
+			<tags>
+				<tag>Temperature</tag>
+				<tag>Measurement</tag>
+			</tags>
 				<state readOnly="true" pattern="%.1f %unit%"/>
 		</channel-type>
 
 		<channel-type id="humidity-channel">
 				<item-type unitHint="%">Number:Dimensionless</item-type>
 				<label>%channel-type.supla.humidity-channel.label</label>
-				<tags>
+			<category>Humidity</category>
+			<tags>
 						<tag>Humidity</tag>
 						<tag>Measurement</tag>
 		</tags>
-		<state readOnly="true" pattern="%.1f %unit%"/>
+			<state readOnly="true" min="0" max="100" pattern="%.1f %unit%"/>
 	</channel-type>
 
 		<channel-type id="dimmer-channel">

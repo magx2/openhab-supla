@@ -7,6 +7,7 @@ import static pl.grzeslowski.jsupla.protocol.api.ChannelFunction.SUPLA_CHANNELFN
 import java.util.Set;
 import org.junit.jupiter.api.Test;
 import pl.grzeslowski.jsupla.protocol.api.ChannelType;
+import pl.grzeslowski.jsupla.protocol.api.HvacMode;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.value.HvacValue;
 import pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaDeviceChannelA;
 import pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaDeviceChannelB;
@@ -18,6 +19,7 @@ class DeviceChannelTest {
     void shouldRejectMissingValues() {
         assertThatThrownBy(() -> new DeviceChannel(
                         1,
+                        false,
                         ChannelType.CALCFG_TYPE_THERMOSTAT_DETAILS_V1,
                         Set.of(),
                         SUPLA_CHANNELFNC_NONE,
@@ -25,7 +27,10 @@ class DeviceChannelTest {
                         null,
                         null,
                         null,
-                        null))
+                        null,
+                        0,
+                        Set.of(),
+                        0))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("value or hvacValue or action must not be null!");
     }
@@ -97,15 +102,10 @@ class DeviceChannelTest {
 
     @Test
     void shouldAcceptHvacWithoutValue() {
-        HvacValue hvacValue = new HvacValue(
-                true,
-                HvacValue.Mode.NOT_SET,
-                null,
-                null,
-                new HvacValue.Flags(
-                        false, false, false, false, false, false, false, false, false, false, false, false, false));
+        HvacValue hvacValue = new HvacValue(true, HvacMode.SUPLA_HVAC_MODE_NOT_SET, null, null, Set.of());
         DeviceChannel deviceChannel = new DeviceChannel(
                 1,
+                false,
                 ChannelType.EV_TYPE_ELECTRICITY_METER_MEASUREMENT_V1,
                 Set.of(),
                 SUPLA_CHANNELFNC_NONE,
@@ -113,7 +113,10 @@ class DeviceChannelTest {
                 null,
                 null,
                 hvacValue,
-                null);
+                null,
+                0,
+                Set.of(),
+                0);
 
         assertThat(deviceChannel.value()).isNull();
         assertThat(deviceChannel.hvacValue()).isEqualTo(hvacValue);

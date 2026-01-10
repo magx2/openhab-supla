@@ -11,9 +11,9 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.Arrays;
 import lombok.Getter;
-import pl.grzeslowski.jsupla.protocol.api.channeltype.decoders.HVACValueDecoderImpl;
-import pl.grzeslowski.jsupla.protocol.api.channeltype.encoders.ThermometerTypeDoubleChannelEncoderImpl;
-import pl.grzeslowski.jsupla.protocol.api.channeltype.value.TemperatureValue;
+import pl.grzeslowski.jsupla.protocol.api.channeltype.decoders.HvacTypeDecoder;
+import pl.grzeslowski.jsupla.protocol.api.channeltype.encoders.ChannelTypeEncoder;
+import pl.grzeslowski.jsupla.protocol.api.channeltype.value.TemperatureDoubleValue;
 import pl.grzeslowski.jsupla.protocol.api.structs.ActionTriggerProperties;
 import pl.grzeslowski.jsupla.protocol.api.structs.ds.ActionTrigger;
 import pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaDeviceChannelD;
@@ -22,14 +22,13 @@ import pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaRegisterDeviceF;
 import pl.grzeslowski.openhab.supla.internal.extension.random.RandomExtension;
 
 public class ZamelGkw02 extends Device {
-    private final ThermometerTypeDoubleChannelEncoderImpl thermometerTypeDoubleChannelEncoder =
-            new ThermometerTypeDoubleChannelEncoderImpl();
+    private final ChannelTypeEncoder encoder = ChannelTypeEncoder.INSTANCE;
 
     @Getter
     private HvacChannel hvac = RandomExtension.INSTANCE.randomHvac();
 
     @Getter
-    private BigDecimal temperature = RandomExtension.INSTANCE.randomTemperature();
+    private BigDecimal temperature = BigDecimal.valueOf(21.64);
 
     private final byte[] email;
     private final byte[] authKey;
@@ -60,14 +59,14 @@ public class ZamelGkw02 extends Device {
                     (short) 0),
             new SuplaDeviceChannelD(
                     (short) 1,
-                    3034,
+                    3034, // SUPLA_CHANNELTYPE_THERMOMETER
                     0,
                     null,
-                    40,
-                    134283264L,
+                    40, // SUPLA_CHANNELFNC_THERMOMETER
+                    134283264L, // SUPLA_CHANNEL_FLAG_CHANNELSTATE, SUPLA_CHANNEL_FLAG_RUNTIME_CHANNEL_CONFIG_UPDATE
                     (short) 0,
                     0L,
-                    thermometerTypeDoubleChannelEncoder.encode(new TemperatureValue(temperature)),
+                    new byte[] {-92, 112, 61, 10, -41, -93, 53, 64}, // Temp = 21,64
                     null,
                     null,
                     (short) 0),
@@ -142,12 +141,12 @@ public class ZamelGkw02 extends Device {
     }
 
     public void temperatureUpdated() throws IOException {
-        temperature = RandomExtension.INSTANCE.randomUpdateTemperature(temperature);
+        temperature = RandomExtension.INSTANCE.randomTemperature(temperature);
         var proto = new SuplaDeviceChannelValueC(
                 (short) 1,
                 (short) SUPLA_CHANNEL_OFFLINE_FLAG_ONLINE,
                 0,
-                thermometerTypeDoubleChannelEncoder.encode(new TemperatureValue(temperature)));
+                encoder.encode(new TemperatureDoubleValue(temperature)));
         send(proto);
     }
 
@@ -158,7 +157,7 @@ public class ZamelGkw02 extends Device {
     }
 
     private void updateHvac(byte[] value) {
-        var hvac = HVACValueDecoderImpl.INSTANCE.decode(value);
+        var hvac = HvacTypeDecoder.INSTANCE.decode(value);
         this.hvac = new HvacChannel(hvac);
     }
 
