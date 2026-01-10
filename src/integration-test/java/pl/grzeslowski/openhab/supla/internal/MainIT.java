@@ -7,12 +7,12 @@ import static org.openhab.core.thing.ThingStatus.ONLINE;
 import static org.openhab.core.thing.ThingStatus.UNKNOWN;
 import static org.openhab.core.thing.ThingStatusDetail.*;
 import static pl.grzeslowski.jsupla.protocol.api.HvacMode.SUPLA_HVAC_MODE_OFF;
-import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.*;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.SUPLA_SERVER_DEVICE_TYPE_ID;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.SUPLA_SERVER_TYPE_ID;
 import static pl.grzeslowski.openhab.supla.internal.extension.supla.SuplaExtension.deviceInitialize;
 import static pl.grzeslowski.openhab.supla.internal.extension.supla.SuplaExtension.serverInitialize;
 import static tech.units.indriya.unit.Units.CELSIUS;
+import static tech.units.indriya.unit.Units.PERCENT;
 
 import io.github.glytching.junit.extension.random.RandomBeansExtension;
 import java.math.BigDecimal;
@@ -27,15 +27,13 @@ import org.openhab.core.thing.ThingStatusInfo;
 import org.openhab.core.thing.binding.builder.ThingStatusInfoBuilder;
 import org.openhab.core.util.ColorUtil;
 import pl.grzeslowski.jsupla.protocol.api.structs.sd.SuplaRegisterDeviceResultA;
-import pl.grzeslowski.openhab.supla.internal.device.ZamelDiw01;
-import pl.grzeslowski.openhab.supla.internal.device.ZamelGkw02;
-import pl.grzeslowski.openhab.supla.internal.device.ZamelMslw01;
-import pl.grzeslowski.openhab.supla.internal.device.ZamelRow01;
+import pl.grzeslowski.openhab.supla.internal.device.*;
 import pl.grzeslowski.openhab.supla.internal.extension.random.*;
 import pl.grzeslowski.openhab.supla.internal.extension.supla.CreateHandler;
 import pl.grzeslowski.openhab.supla.internal.extension.supla.Ctx.BridgeCtx;
 import pl.grzeslowski.openhab.supla.internal.extension.supla.Ctx.ThingCtx;
 import pl.grzeslowski.openhab.supla.internal.extension.supla.SuplaExtension;
+import pl.grzeslowski.openhab.supla.internal.server.oh_config.TimeoutConfiguration;
 
 // todo make this tests parallel
 @Slf4j
@@ -383,5 +381,83 @@ public class MainIT {
         await().untilAsserted(() -> assertThat(deviceCtx.openHabDevice().findThingStatus())
                 .isEqualTo(
                         new ThingStatusInfo(OFFLINE, COMMUNICATION_ERROR, "@text/supla.offline.channel-disconnected")));
+    }
+
+    @Test
+    @DisplayName("should run tests for Zamel THW-01")
+    void zamelThw01(
+            @CreateHandler(thingTypeId = SUPLA_SERVER_DEVICE_TYPE_ID) ThingCtx deviceCtx,
+            @CreateHandler(thingTypeId = SUPLA_SERVER_TYPE_ID) BridgeCtx serverCtx,
+            @Port int port,
+            @Email String email,
+            @AuthKey String authKey)
+            throws Exception {
+        var guid = deviceCtx.thing().getUID().getId();
+        log.info(
+                "Testing Zamel THW-01 with GUID={}, using socket on port={}, email={}, authKey={}",
+                guid,
+                port,
+                email,
+                authKey);
+        serverInitialize(serverCtx, port);
+        var timeout = new TimeoutConfiguration(3, 1, 4);
+        deviceInitialize(deviceCtx, serverCtx, email, authKey, guid, timeout);
+        // DEVICE
+        try (var device = new ZamelThw01(guid, email, authKey)) {
+            device.initialize("localhost", port);
+            // register
+            device.register();
+            var registerResult = device.readRegisterDeviceResultA();
+            assertThat(registerResult).isEqualTo(new SuplaRegisterDeviceResultA(3, (short) 100, (short) 18, (short) 1));
+            assertThat(deviceCtx.openHabDevice().findThingStatus())
+                    .isEqualTo(new ThingStatusInfo(
+                            UNKNOWN, CONFIGURATION_PENDING, "@text/supla.offline.waiting-for-registration"));
+            // ping
+            device.sendPing();
+            var ping = device.readPing().now();
+            assertThat(ping).isNotNull();
+            log.info("Waiting for handler to be online");
+            await().untilAsserted(() -> assertThat(deviceCtx.openHabDevice().findThingStatus())
+                    .isEqualTo(ThingStatusInfoBuilder.create(ONLINE, NONE).build()));
+
+            var channels = deviceCtx.openHabDevice().getChannelStates();
+            assertThat(channels).hasSize(6);
+
+            { // Check temperature state
+                log.info("Waiting for temperature to be {} °C", device.getTemperature());
+                await().untilAsserted(() -> {
+                    var temperatureState = deviceCtx.openHabDevice().findChannelState("0", "temperature");
+                    assertThat(temperatureState).isEqualTo(new QuantityType<>(device.getTemperature(), CELSIUS));
+                });
+            }
+            { // Check humidity state
+                log.info("Waiting for humidity to be {}%", device.getHumidity());
+                await().untilAsserted(() -> {
+                    var humidityState = deviceCtx.openHabDevice().findChannelState("0", "humidity");
+                    assertThat(humidityState).isEqualTo(new QuantityType<>(device.getHumidity(), PERCENT));
+                });
+            }
+
+            { // device updates temperature & humidity with OH
+                device.temperatureAndHumidityUpdated();
+                log.info("Waiting for OH to propagate state change");
+                await().untilAsserted(() -> {
+                    var temperatureState = deviceCtx.openHabDevice().findChannelState("0", "temperature");
+                    assertThat(temperatureState).isEqualTo(new QuantityType<>(device.getTemperature(), CELSIUS));
+                });
+                await().untilAsserted(() -> {
+                    var humidityState = deviceCtx.openHabDevice().findChannelState("0", "humidity");
+                    assertThat(humidityState).isEqualTo(new QuantityType<>(device.getHumidity(), PERCENT));
+                });
+            }
+        }
+        // device is closed
+        log.info("Waiting for the device to disconnect");
+        await()
+                // because this is a sleep device we need to wait longer for it to go offline
+                .timeout(timeout.max().multipliedBy(2))
+                .untilAsserted(() -> assertThat(deviceCtx.openHabDevice().findThingStatus())
+                        .isEqualTo(new ThingStatusInfo(
+                                OFFLINE, COMMUNICATION_ERROR, "@text/supla.offline.channel-disconnected")));
     }
 }

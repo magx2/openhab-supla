@@ -14,6 +14,7 @@ import java.io.Closeable;
 import java.text.SimpleDateFormat;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Date;
 import java.util.concurrent.ScheduledFuture;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -68,14 +69,23 @@ class Ping implements Closeable {
             return;
         }
         var now = now();
-        if (lastMessageFromDevice.plus(requireNonNull(timeout).max()).compareTo(now) > 0) {
+        if (lastMessageFromDevice.plus(requireNonNull(timeout).max()).compareTo(now) < 0) {
             var formatter = new SimpleDateFormat("HH:mm:ss z");
-            var delta = now.getEpochSecond() - lastMessageFromDevice.getEpochSecond();
-            updater.updateStatus(
-                    OFFLINE,
-                    COMMUNICATION_ERROR,
-                    text("supla.offline.no-ping", delta, formatter.format(lastMessageFromDevice)));
-            close();
+            var delta = Duration.between(lastMessageFromDevice, now);
+            if (updater.isSleepModeEnabled() && updater.isSleeping()) {
+                log.debug("Updater is sleeping and there was no ping in {} so disconneting channel", delta);
+                updater.channelDisconnected();
+                // closing ping will be done in `channelDisconnected`
+            } else {
+                updater.updateStatus(
+                        OFFLINE,
+                        COMMUNICATION_ERROR,
+                        text(
+                                "supla.offline.no-ping",
+                                delta.getSeconds(),
+                                formatter.format(Date.from(lastMessageFromDevice))));
+                close();
+            }
         }
     }
 
@@ -116,6 +126,10 @@ class Ping implements Closeable {
         String getGuid();
 
         boolean isSleepModeEnabled();
+
+        void channelDisconnected();
+
+        boolean isSleeping();
 
         void updateStatus(
                 org.openhab.core.thing.ThingStatus status,

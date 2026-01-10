@@ -11,10 +11,9 @@ import static org.openhab.core.thing.ThingStatusDetail.HANDLER_CONFIGURATION_PEN
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.SUPLA_SERVER_TYPE;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.SUPPORTED_THING_TYPES_UIDS;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.jdt.annotation.Nullable;
 import org.junit.jupiter.api.extension.*;
 import org.openhab.core.config.core.Configuration;
 import org.openhab.core.thing.ThingStatusInfo;
@@ -28,7 +27,9 @@ import org.osgi.service.component.ComponentContext;
 import pl.grzeslowski.openhab.supla.internal.OpenHabDevice;
 import pl.grzeslowski.openhab.supla.internal.SuplaHandlerFactory;
 import pl.grzeslowski.openhab.supla.internal.extension.random.RandomExtension;
+import pl.grzeslowski.openhab.supla.internal.server.oh_config.TimeoutConfiguration;
 
+@SuppressWarnings("StaticMethodOnlyUsedInOneClass")
 @Slf4j
 public class SuplaExtension implements BeforeEachCallback, AfterEachCallback, ParameterResolver {
     private final SuplaHandlerFactory factory = new SuplaHandlerFactory();
@@ -147,11 +148,29 @@ public class SuplaExtension implements BeforeEachCallback, AfterEachCallback, Pa
 
     public static void deviceInitialize(
             Ctx.ThingCtx deviceCtx, Ctx.BridgeCtx serverCtx, String email, String authKey, String guid) {
+        deviceInitialize(deviceCtx, serverCtx, email, authKey, guid, null);
+    }
+
+    public static void deviceInitialize(
+            Ctx.ThingCtx deviceCtx,
+            Ctx.BridgeCtx serverCtx,
+            String email,
+            String authKey,
+            String guid,
+            @Nullable TimeoutConfiguration timeout) {
         // configure device handler
         var configuration = Map.<String, Object>of(
                 "guid", guid,
                 "email", email,
                 "authKey", authKey);
+        if (timeout != null) {
+            log.info("Using timeout={}", timeout);
+            configuration = new HashMap<>(configuration);
+            configuration.put("timeout", Long.toString(timeout.timeout().toSeconds()));
+            configuration.put("timeoutMin", Long.toString(timeout.min().toSeconds()));
+            configuration.put("timeoutMax", Long.toString(timeout.max().toSeconds()));
+            configuration = Map.copyOf(configuration);
+        }
         deviceInitialize(deviceCtx, serverCtx, configuration, guid);
     }
 
