@@ -2,17 +2,19 @@ package pl.grzeslowski.openhab.supla.internal.server;
 
 import static java.lang.Short.parseShort;
 import static java.lang.String.valueOf;
+import static java.time.Instant.now;
 import static java.util.Comparator.comparing;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.stream.Collectors.joining;
 import static org.openhab.core.thing.ChannelUID.CHANNEL_GROUP_SEPARATOR;
 import static org.openhab.core.types.UnDefType.UNDEF;
 import static pl.grzeslowski.jsupla.protocol.api.ChannelStateField.*;
-import static pl.grzeslowski.jsupla.protocol.api.LastConnectionResetCause.*;
 import static pl.grzeslowski.jsupla.protocol.api.ProtocolHelpers.*;
-import static pl.grzeslowski.jsupla.protocol.api.consts.ProtoConsts.*;
+import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.BINDING_ID;
 
 import java.time.Duration;
 import java.util.*;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -20,6 +22,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
+import org.openhab.core.common.ThreadPoolManager;
 import org.openhab.core.thing.Channel;
 import org.openhab.core.thing.ChannelUID;
 import org.openhab.core.thing.binding.builder.ChannelBuilder;
@@ -28,7 +31,9 @@ import org.slf4j.LoggerFactory;
 import pl.grzeslowski.jsupla.protocol.api.ChannelStateField;
 import pl.grzeslowski.jsupla.protocol.api.LastConnectionResetCause;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.decoders.ChannelTypeDecoder;
-import pl.grzeslowski.jsupla.protocol.api.channeltype.value.*;
+import pl.grzeslowski.jsupla.protocol.api.channeltype.value.ChannelClassSwitch;
+import pl.grzeslowski.jsupla.protocol.api.channeltype.value.ChannelValue;
+import pl.grzeslowski.jsupla.protocol.api.channeltype.value.ElectricityMeterValue;
 import pl.grzeslowski.jsupla.protocol.api.structs.dcs.SetCaption;
 import pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaChannelNewValueResult;
 import pl.grzeslowski.jsupla.protocol.api.structs.dsc.ChannelState;
@@ -42,6 +47,7 @@ public class ChannelUtil {
     private static final Logger LOGGER = LoggerFactory.getLogger(ChannelUtil.class);
     private final ServerDevice invoker;
     private final Map<Integer, DeviceChannel> deviceChannels = new java.util.concurrent.ConcurrentHashMap<>();
+    private final List<ScheduledFuture<?>> schedules = new ArrayList<>();
 
     public void buildChannels(List<DeviceChannel> deviceChannels) {
         {
@@ -143,10 +149,14 @@ public class ChannelUtil {
             invoker.getLogger().debug("Channel Value is offline, ignoring it. trait={}", trait);
             return;
         }
-        updateStatus(trait.channelNumber(), trait.value());
+        updateStatus(trait.channelNumber(), trait.value(), trait.validityTimeSec());
     }
 
     public void updateStatus(int channelNumber, byte[] channelValue) {
+        updateStatus(channelNumber, channelValue, null);
+    }
+
+    private void updateStatus(int channelNumber, byte[] channelValue, @Nullable Long validityTimeSec) {
         invoker.getLogger()
                 .debug("Updating status for channelNumber={}, value={}", channelNumber, Arrays.toString(channelValue));
         var deviceChannel = deviceChannels.get(channelNumber);
@@ -175,7 +185,40 @@ public class ChannelUtil {
                             channelNumber,
                             state);
             invoker.updateState(channelUID, state);
-            invoker.saveState(channelUID, state);
+            var validityTime =
+                    (validityTimeSec != null && validityTimeSec > 0) ? Duration.ofSeconds(validityTimeSec) : null;
+            invoker.saveState(channelUID, state, validityTime);
+            if (validityTime != null) {
+                var now = now();
+                invoker.getLogger()
+                        .debug(
+                                "Setting thread to refresh channel {} in {} ({})",
+                                channelUID,
+                                validityTime,
+                                now.plus(validityTime));
+                synchronized (schedules) {
+                    var schedule = ThreadPoolManager.getScheduledPool(BINDING_ID)
+                            .schedule(
+                                    () -> {
+                                        invoker.getLogger()
+                                                .debug(
+                                                        "Refreshing channel {}, because validity time expired!",
+                                                        channelUID);
+                                        invoker.handleRefreshCommand(channelUID);
+                                    },
+                                    validityTime.toMillis(),
+                                    MILLISECONDS);
+                    schedules.add(schedule);
+                    // clean done schedules
+                    for (var iterator = schedules.iterator(); iterator.hasNext(); ) {
+                        var future = iterator.next();
+                        if (future.isDone() || future.isCancelled()) {
+                            invoker.getLogger().debug("Removing schedule {} because it's already done");
+                            iterator.remove();
+                        }
+                    }
+                }
+            }
         });
     }
 
@@ -343,5 +386,26 @@ public class ChannelUtil {
             return;
         }
         invoker.setProperty(key, valueOf(value));
+    }
+
+    public void dispose() {
+        invoker.getLogger().debug("Disposing channel util");
+        synchronized (schedules) {
+            schedules.forEach(this::disposeSchedule);
+            schedules.clear();
+        }
+    }
+
+    private void disposeSchedule(ScheduledFuture<?> future) {
+        if (future.isDone()) {
+            invoker.getLogger().debug("Schedule {} was already done/cancelled", future);
+            return;
+        }
+        invoker.getLogger().debug("Disposing schedule {}", future);
+        try {
+            future.cancel(true);
+        } catch (Exception e) {
+            invoker.getLogger().warn("Got exception when cancelling schedule {}", future);
+        }
     }
 }

@@ -9,6 +9,7 @@ import static pl.grzeslowski.openhab.supla.internal.server.ByteArrayToHex.hexToB
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.time.Duration;
 import java.util.Arrays;
 import lombok.Getter;
 import org.eclipse.jdt.annotation.Nullable;
@@ -21,13 +22,13 @@ public class ZamelThw01 extends Device {
     private final ChannelTypeEncoder encoder = ChannelTypeEncoder.INSTANCE;
 
     @Getter
-    private HvacChannel hvac = RandomExtension.INSTANCE.randomHvac();
-
-    @Getter
     private BigDecimal temperature = BigDecimal.valueOf(22.075);
 
     @Getter
     private BigDecimal humidity = BigDecimal.valueOf(33.837);
+
+    @Getter
+    private final Duration validityTime = Duration.ofSeconds(60);
 
     private final byte[] email;
     private final byte[] authKey;
@@ -149,7 +150,7 @@ public class ZamelThw01 extends Device {
         var proto = new SuplaDeviceChannelValueC(
                 (short) 0,
                 (short) SUPLA_CHANNEL_OFFLINE_FLAG_ONLINE,
-                60, // important - there is 60 secs validity!
+                validityTime.toSeconds(), // important - there is 60 secs validity!
                 encoder.encode(new TemperatureAndHumidityValue(this.temperature, this.humidity)));
         send(proto);
     }

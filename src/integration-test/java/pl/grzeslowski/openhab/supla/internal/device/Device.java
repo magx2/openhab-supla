@@ -150,6 +150,11 @@ public abstract class Device implements AutoCloseable {
         return (SuplaRegisterDeviceResultA) read;
     }
 
+    public void ping() throws IOException {
+        sendPing();
+        readPing();
+    }
+
     public void sendPing() throws IOException {
         send(new SuplaPingServer(new SuplaTimeval(now().getEpochSecond(), 0)));
     }

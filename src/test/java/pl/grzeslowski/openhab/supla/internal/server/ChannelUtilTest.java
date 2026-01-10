@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -55,7 +56,7 @@ class ChannelUtilTest {
         channelUtil.updateStatus(channelValue);
 
         verify(serverDevice, never()).updateState(any(), any());
-        verify(serverDevice, never()).saveState(any(), any());
+        verify(serverDevice, never()).saveState(any(), any(), any(Duration.class));
     }
 
     @Test

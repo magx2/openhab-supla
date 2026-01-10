@@ -21,6 +21,7 @@ import static pl.grzeslowski.openhab.supla.internal.server.ByteArrayToHex.hexToB
 import io.netty.handler.timeout.ReadTimeoutException;
 import java.math.BigInteger;
 import java.net.SocketException;
+import java.text.SimpleDateFormat;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -520,6 +521,7 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler
             disposePing();
             disposeHandler();
             disposeBridgeHandler();
+            stateCache.close();
             logger = LoggerFactory.getLogger(baseLogger());
             authorized = false;
         });
@@ -778,5 +780,14 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler
             return false;
         }
         return local.flags().contains(SUPLA_DEVICE_FLAG_SLEEP_MODE_ENABLED);
+    }
+
+    @Override
+    public void unresponsive(Duration delta, Instant lastMessageFromDevice) {
+        var formatter = new SimpleDateFormat("HH:mm:ss z");
+        updateStatus(
+                OFFLINE,
+                COMMUNICATION_ERROR,
+                text("supla.offline.no-ping", delta.getSeconds(), formatter.format(Date.from(lastMessageFromDevice))));
     }
 }
