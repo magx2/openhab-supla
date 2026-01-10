@@ -72,17 +72,17 @@
 				<advanced>true</advanced>
 			</parameter>
 
-			<parameter name="timeout" type="integer">
+			<parameter name="timeout" type="text">
 				<label>Timeout</label>
 				<description/>
 				<advanced>true</advanced>
 			</parameter>
-			<parameter name="timeoutMin" type="integer">
+			<parameter name="timeoutMin" type="text">
 				<label>Timeout Min</label>
 				<description/>
 				<advanced>true</advanced>
 			</parameter>
-			<parameter name="timeoutMax" type="integer">
+			<parameter name="timeoutMax" type="text">
 				<label>Timeout Max</label>
 				<description/>
 				<advanced>true</advanced>

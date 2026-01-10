@@ -2,7 +2,7 @@ package pl.grzeslowski.openhab.supla.internal.server.handler;
 
 import static java.time.Instant.now;
 import static java.util.Objects.requireNonNull;
-import static java.util.concurrent.TimeUnit.SECONDS;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.openhab.core.thing.ThingStatus.OFFLINE;
 import static org.openhab.core.thing.ThingStatusDetail.COMMUNICATION_ERROR;
 import static org.openhab.core.types.UnDefType.UNDEF;
@@ -12,8 +12,8 @@ import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.BINDIN
 
 import java.io.Closeable;
 import java.text.SimpleDateFormat;
+import java.time.Duration;
 import java.time.Instant;
-import java.util.Date;
 import java.util.concurrent.ScheduledFuture;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,8 +26,9 @@ import pl.grzeslowski.openhab.supla.internal.server.oh_config.TimeoutConfigurati
 @Slf4j
 @RequiredArgsConstructor
 class Ping implements Closeable {
+    private static final Duration MINIMAL_TIMEOUT_FOR_SLEEP_DEVICE = Duration.ofSeconds(30);
     private final DeviceStatusUpdater updater;
-    private volatile long lastMessageFromDevice = 0L;
+    private volatile Instant lastMessageFromDevice;
 
     @Nullable
     private ScheduledFuture<?> pingSchedule;
@@ -36,7 +37,7 @@ class Ping implements Closeable {
     private TimeoutConfiguration timeout;
 
     public boolean isRunning() {
-        return pingSchedule != null && !pingSchedule.isCancelled() && timeout != null && lastMessageFromDevice > 0L;
+        return pingSchedule != null && !pingSchedule.isCancelled() && timeout != null && lastMessageFromDevice != null;
     }
 
     public synchronized void start(TimeoutConfiguration timeout) {
@@ -44,30 +45,36 @@ class Ping implements Closeable {
             attachGuid(updater.getGuid(), () -> log.warn("Ping is already running for device {}", updater.getGuid()));
             return;
         }
-        lastMessageFromDevice = now().getEpochSecond();
+        lastMessageFromDevice = now();
         this.timeout = timeout;
-        if (updater.isSleepModeEnabled() && timeout.timeout() < 30) {
+        if (updater.isSleepModeEnabled() && timeout.timeout().compareTo(MINIMAL_TIMEOUT_FOR_SLEEP_DEVICE) < 0) {
             attachGuid(
                     updater.getGuid(),
                     () -> log.warn(
-                            "This is a sleep device and timeout is low ({} s). Consider increasing the timeout to prevent ONLINE->OFFLINE toggeling.",
-                            timeout.timeout()));
+                            "This is a sleep device and timeout is low ({}). Consider increasing the timeout to {}.",
+                            timeout.timeout(),
+                            MINIMAL_TIMEOUT_FOR_SLEEP_DEVICE));
         }
         pingSchedule = ThreadPoolManager.getScheduledPool(BINDING_ID)
-                .scheduleWithFixedDelay(this::checkIfDeviceIsUp, timeout.timeout() * 2L, timeout.timeout(), SECONDS);
+                .scheduleWithFixedDelay(
+                        this::checkIfDeviceIsUp,
+                        timeout.timeout().multipliedBy(2).toMillis(),
+                        timeout.timeout().toMillis(),
+                        MILLISECONDS);
     }
 
     private synchronized void checkIfDeviceIsUp() {
         if (!isRunning()) {
             return;
         }
-        var now = now().getEpochSecond();
-        var delta = now - lastMessageFromDevice;
-        if (delta > requireNonNull(timeout).max()) {
-            var lastPingDate = new Date(SECONDS.toMillis(lastMessageFromDevice));
+        var now = now();
+        if (lastMessageFromDevice.plus(requireNonNull(timeout).max()).compareTo(now) > 0) {
             var formatter = new SimpleDateFormat("HH:mm:ss z");
+            var delta = now.getEpochSecond() - lastMessageFromDevice.getEpochSecond();
             updater.updateStatus(
-                    OFFLINE, COMMUNICATION_ERROR, text("supla.offline.no-ping", delta, formatter.format(lastPingDate)));
+                    OFFLINE,
+                    COMMUNICATION_ERROR,
+                    text("supla.offline.no-ping", delta, formatter.format(lastMessageFromDevice)));
             close();
         }
     }
@@ -81,7 +88,7 @@ class Ping implements Closeable {
         var localPingSchedule = pingSchedule;
         pingSchedule = null;
         timeout = null;
-        lastMessageFromDevice = 0;
+        lastMessageFromDevice = null;
 
         var cancelled = requireNonNull(localPingSchedule).cancel(true);
         if (!cancelled) {
@@ -97,11 +104,11 @@ class Ping implements Closeable {
             return;
         }
         attachGuid(updater.getGuid(), () -> log.trace("Ping {}", updater.getGuid()));
-        lastMessageFromDevice = now().getEpochSecond();
+        lastMessageFromDevice = now();
     }
 
     public State toState() {
-        return isRunning() ? new DateTimeType(Instant.ofEpochSecond(lastMessageFromDevice)) : UNDEF;
+        return isRunning() ? new DateTimeType(lastMessageFromDevice) : UNDEF;
     }
 
     public interface DeviceStatusUpdater {

@@ -98,19 +98,19 @@
 					Setup timeouts for all devices
 				</description>
 			</parameter-group>
-			<parameter name="timeout" type="integer" required="true" min="1" groupName="gTimeout">
+			<parameter name="timeout" type="text" required="true" groupName="gTimeout">
 				<label>Timeout</label>
 				<description/>
 				<advanced>true</advanced>
 				<default>10</default>
 			</parameter>
-			<parameter name="timeoutMin" type="integer" required="true" min="1" groupName="gTimeout">
+			<parameter name="timeoutMin" type="text" required="true" groupName="gTimeout">
 				<label>Timeout Min</label>
 				<description/>
 				<advanced>true</advanced>
 				<default>8</default>
 			</parameter>
-			<parameter name="timeoutMax" type="integer" required="true" min="1" groupName="gTimeout">
+			<parameter name="timeoutMax" type="text" required="true" groupName="gTimeout">
 				<label>Timeout Max</label>
 				<description/>
 				<advanced>true</advanced>

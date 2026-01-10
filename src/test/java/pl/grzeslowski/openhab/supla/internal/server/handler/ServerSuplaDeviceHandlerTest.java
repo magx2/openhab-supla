@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 
-import java.math.BigDecimal;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -96,9 +95,9 @@ class ServerSuplaDeviceHandlerTest {
 
         ServerDeviceHandlerConfiguration cfg = new ServerDeviceHandlerConfiguration();
         cfg.setGuid("123");
-        cfg.setTimeout(BigDecimal.valueOf(30));
-        cfg.setTimeoutMin(BigDecimal.valueOf(10));
-        cfg.setTimeoutMax(BigDecimal.valueOf(40));
+        cfg.setTimeout("30");
+        cfg.setTimeoutMin("10");
+        cfg.setTimeoutMax("40");
         given(configuration.as(ServerDeviceHandlerConfiguration.class)).willReturn(cfg);
         given(serverBridge.getTimeoutConfiguration()).willReturn(new TimeoutConfiguration(5, 2, 7));
         given(serverBridge.getAuthData()).willReturn(new AuthData(new AuthData.LocationAuthData(1, "123"), null));
