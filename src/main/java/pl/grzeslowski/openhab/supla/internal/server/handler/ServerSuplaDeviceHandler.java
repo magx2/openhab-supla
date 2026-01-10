@@ -404,7 +404,8 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler
     public final void consumeSuplaSetActivityTimeout(short activityTimeout, SuplaWriter writer) {
         var timeout = requireNonNull(deviceConfiguration).timeoutConfiguration();
         var data = new SuplaSetActivityTimeoutResult(
-                (short) timeout.timeout(), (short) timeout.min(), (short) timeout.max());
+                (short) timeout.timeout().toSeconds(), (short) timeout.min().toSeconds(), (short)
+                        timeout.max().toSeconds());
         writer.write(data).addListener(f -> logger.trace("setActivityTimeout {}", data));
 
         if (ping.isRunning()) {

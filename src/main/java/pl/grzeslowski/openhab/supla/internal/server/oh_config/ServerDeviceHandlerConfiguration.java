@@ -1,9 +1,11 @@
 package pl.grzeslowski.openhab.supla.internal.server.oh_config;
 
 import java.math.BigDecimal;
+import java.time.Duration;
 import lombok.Data;
 import lombok.ToString;
 import org.eclipse.jdt.annotation.Nullable;
+import pl.grzeslowski.openhab.supla.internal.server.handler.trait.ServerBridge;
 
 @Data
 public class ServerDeviceHandlerConfiguration {
@@ -24,32 +26,23 @@ public class ServerDeviceHandlerConfiguration {
     private String authKey;
 
     @Nullable
-    private BigDecimal timeout;
+    private String timeout;
 
     @Nullable
-    private BigDecimal timeoutMin;
+    private String timeoutMin;
 
     @Nullable
-    private BigDecimal timeoutMax;
+    private String timeoutMax;
 
-    public Integer getTimeout() {
-        if (timeout == null) {
-            return null;
-        }
-        return timeout.intValue();
+    public Duration getTimeout() {
+        return ServerBridge.tryParseDuration(timeout).orElse(null);
     }
 
-    public Integer getTimeoutMin() {
-        if (timeoutMin == null) {
-            return null;
-        }
-        return timeoutMin.intValue();
+    public Duration getTimeoutMin() {
+        return ServerBridge.tryParseDuration(timeoutMin).orElse(null);
     }
 
-    public Integer getTimeoutMax() {
-        if (timeoutMax == null) {
-            return null;
-        }
-        return timeoutMax.intValue();
+    public Duration getTimeoutMax() {
+        return ServerBridge.tryParseDuration(timeoutMax).orElse(null);
     }
 }
