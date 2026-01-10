@@ -3,6 +3,7 @@ package pl.grzeslowski.openhab.supla.internal.server.handler.trait;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.math.BigDecimal;
+import java.time.Duration;
 import org.junit.jupiter.api.Test;
 import pl.grzeslowski.openhab.supla.internal.server.oh_config.AuthData;
 import pl.grzeslowski.openhab.supla.internal.server.oh_config.ServerBridgeHandlerConfiguration;
@@ -45,14 +46,28 @@ class ServerBridgeTest {
     @Test
     void shouldBuildTimeoutConfiguration() {
         var config = new ServerBridgeHandlerConfiguration();
-        config.setTimeout(BigDecimal.valueOf(5));
-        config.setTimeoutMin(BigDecimal.valueOf(3));
-        config.setTimeoutMax(BigDecimal.valueOf(7));
+        config.setTimeout("5");
+        config.setTimeoutMin("3");
+        config.setTimeoutMax("7");
 
         TimeoutConfiguration timeoutConfiguration = ServerBridge.buildTimeoutConfiguration(config);
 
-        assertThat(timeoutConfiguration.timeout()).isEqualTo(5);
-        assertThat(timeoutConfiguration.min()).isEqualTo(3);
-        assertThat(timeoutConfiguration.max()).isEqualTo(7);
+        assertThat(timeoutConfiguration.timeout()).isEqualTo(Duration.ofSeconds(5));
+        assertThat(timeoutConfiguration.min()).isEqualTo(Duration.ofSeconds(3));
+        assertThat(timeoutConfiguration.max()).isEqualTo(Duration.ofSeconds(7));
+    }
+
+    @Test
+    void shouldBuildTimeoutConfigurationPt() {
+        var config = new ServerBridgeHandlerConfiguration();
+        config.setTimeout("PT5S");
+        config.setTimeoutMin("PT3S");
+        config.setTimeoutMax("PT7S");
+
+        TimeoutConfiguration timeoutConfiguration = ServerBridge.buildTimeoutConfiguration(config);
+
+        assertThat(timeoutConfiguration.timeout()).isEqualTo(Duration.ofSeconds(5));
+        assertThat(timeoutConfiguration.min()).isEqualTo(Duration.ofSeconds(3));
+        assertThat(timeoutConfiguration.max()).isEqualTo(Duration.ofSeconds(7));
     }
 }

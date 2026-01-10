@@ -1,5 +1,8 @@
 package pl.grzeslowski.openhab.supla.internal.server.handler.trait;
 
+import java.time.DateTimeException;
+import java.time.Duration;
+import java.util.Optional;
 import org.eclipse.jdt.annotation.Nullable;
 import org.openhab.core.thing.binding.BridgeHandler;
 import pl.grzeslowski.openhab.supla.internal.server.oh_config.AuthData;
@@ -34,8 +37,29 @@ public interface ServerBridge extends BridgeHandler {
 
     static TimeoutConfiguration buildTimeoutConfiguration(ServerBridgeHandlerConfiguration config) {
         return new TimeoutConfiguration(
-                config.getTimeout().intValue(),
-                config.getTimeoutMin().intValue(),
-                config.getTimeoutMax().intValue());
+                parseDuration(config.getTimeout()),
+                parseDuration(config.getTimeoutMin()),
+                parseDuration(config.getTimeoutMax()));
+    }
+
+    static Duration parseDuration(@Nullable String timeout) {
+        return tryParseDuration(timeout)
+                .orElseThrow(() -> new IllegalArgumentException("Cannot parse duration from [%s]".formatted(timeout)));
+    }
+
+    static Optional<Duration> tryParseDuration(@Nullable String timeout) {
+        if (timeout == null) {
+            return Optional.empty();
+        }
+        try {
+            var i = Integer.parseInt(timeout);
+            return Optional.of(Duration.ofSeconds(i));
+        } catch (NumberFormatException __) {
+            try {
+                return Optional.of(Duration.parse(timeout));
+            } catch (DateTimeException ___) {
+                return Optional.empty();
+            }
+        }
     }
 }
