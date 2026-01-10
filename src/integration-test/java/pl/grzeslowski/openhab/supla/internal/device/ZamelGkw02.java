@@ -141,7 +141,7 @@ public class ZamelGkw02 extends Device {
     }
 
     public void temperatureUpdated() throws IOException {
-        temperature = RandomExtension.INSTANCE.randomUpdateTemperature(temperature);
+        temperature = RandomExtension.INSTANCE.randomTemperature(temperature);
         var proto = new SuplaDeviceChannelValueC(
                 (short) 1,
                 (short) SUPLA_CHANNEL_OFFLINE_FLAG_ONLINE,

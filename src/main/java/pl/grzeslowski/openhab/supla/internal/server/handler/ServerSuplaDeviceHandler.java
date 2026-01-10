@@ -117,6 +117,7 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler
     private boolean authorized = false;
 
     @ToString.Include
+    @Getter
     private volatile boolean sleeping = false;
 
     private final Ping ping = new Ping(this);
@@ -311,6 +312,11 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler
             sleeping = true;
             return;
         }
+        channelDisconnected();
+    }
+
+    @Override
+    public void channelDisconnected() {
         updateStatus(OFFLINE, COMMUNICATION_ERROR, text("supla.offline.channel-disconnected"));
         this.writer.set(null);
         dispose();
@@ -318,8 +324,9 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler
 
     public void register(@NonNull RegisterDeviceTrait registerEntity, OpenHabMessageHandler handler)
             throws InitializationException {
-        if (!sleeping) {
+        if (sleeping) {
             logger.debug("Not changing status to OFFLINE, because sleep device woke up");
+        } else {
             updateStatus(OFFLINE, HANDLER_CONFIGURATION_PENDING, text("supla.offline.device-authorizing"));
         }
         var oldHandler = this.handler;
@@ -378,11 +385,12 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler
                             SUPLA_PROTO_VERSION_MIN));
         }
 
-        if (!sleeping) {
-            logger.debug("Not changing status to UNKNOWN, becase sleep device woke up");
+        if (sleeping) {
+            logger.debug("Not changing status to UNKNOWN, because sleep device woke up");
+            sleeping = false;
+        } else {
             // thing will have status ONLINE after receiving proto from the device (method `handle(ToServerProto)`)
             updateStatus(ThingStatus.UNKNOWN, CONFIGURATION_PENDING, text("supla.offline.waiting-for-registration"));
-            sleeping = false;
         }
 
         ping.start(requireNonNull(deviceConfiguration).timeoutConfiguration());

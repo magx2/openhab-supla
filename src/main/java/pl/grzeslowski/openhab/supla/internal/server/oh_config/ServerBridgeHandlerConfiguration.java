@@ -37,8 +37,8 @@ public class ServerBridgeHandlerConfiguration {
     private BigDecimal port = new BigDecimal(DEFAULT_PORT);
     private boolean ssl = true;
     private String protocols = "TLSv1.3, TLSv1.2, TLSv1, TLSv1.1";
-    private String timeout = "8";
-    private String timeoutMin = "10";
+    private String timeout = "10";
+    private String timeoutMin = "8";
     private String timeoutMax = "12";
 
     public boolean isServerAuth() {
