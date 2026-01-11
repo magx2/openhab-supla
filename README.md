@@ -42,6 +42,7 @@ allows you to control lighting with buttons or switches in bistable mode. In add
 module, it is possible to remotely manage lighting using a smartphone application. The device informs about the status
 of the lighting. The user can control the lighting from anywhere in the world. Thanks to the cloud application, it is
 also possible to automatically start or stop the lighting according to the schedule stored on the cloud.
+- [Zamel THW-01](https://supla.zamel.com/product/czujnik-temperatury-wilgotnosci-thw-01/) a modern, easy-to-install and easy-to-use temperature and humidity sensor. The THW-01 is a compact device that can be installed almost anywhere you want to measure temperature and humidity. All you need is Wi-Fi coverage and a micro USB power supply to add the THW-01 to your Supla account and analyse the measurements on your phone screen. The sensor operates in a temperature range of -25°C to +55°C and a humidity range of 0 to 99%. You can place the THW-01 on a surface, mount it on a wall or attach it to a metal surface using the magnet built into the housing.
 
 These devices have been confirmed to work optimally with both the native and cloud-based approaches supported by this
 binding, providing a smooth and efficient smart home experience. For any additional devices or updates, please refer to
