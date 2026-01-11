@@ -1,6 +1,7 @@
 package pl.grzeslowski.openhab.supla.internal.server;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.openhab.core.library.unit.SIUnits.CELSIUS;
 import static org.openhab.core.types.UnDefType.UNDEF;
 import static pl.grzeslowski.jsupla.protocol.api.RgbwBitFunction.SUPLA_RGBW_BIT_FUNC_DIMMER;
 import static pl.grzeslowski.jsupla.protocol.api.RgbwBitFunction.SUPLA_RGBW_BIT_FUNC_DIMMER_AND_RGB_LIGHTING;
@@ -21,6 +22,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.openhab.core.library.types.HSBType;
 import org.openhab.core.library.types.PercentType;
+import org.openhab.core.library.types.QuantityType;
 import org.openhab.core.library.types.StringType;
 import org.openhab.core.thing.ChannelGroupUID;
 import org.openhab.core.thing.ChannelUID;
@@ -154,5 +156,30 @@ class ChannelValueToStateTest {
                 .containsExactly(
                         new ChannelUID(new ChannelGroupUID(thingUID, "12"), "temperature"),
                         new ChannelUID(new ChannelGroupUID(thingUID, "12"), "humidity"));
+    }
+
+    @Test
+    void shouldUseCelsiusForHeatpolThermostatTemperatures() {
+        var converter = new ChannelValueToState(thingUID, mockDeviceChannel(9));
+        var heatpolValue = new HeatpolThermostatValue(true, Set.of(), BigDecimal.valueOf(21.5), BigDecimal.valueOf(19));
+
+        List<ChannelState> channelStates = converter.switchOn(heatpolValue).toList();
+
+        var channelGroupUid = new ChannelGroupUID(thingUID, "9");
+        var measuredUid = new ChannelUID(channelGroupUid, "measuredTemperature");
+        var presetUid = new ChannelUID(channelGroupUid, "presetTemperature");
+        var measuredState = channelStates.stream()
+                .filter(state -> state.uid().equals(measuredUid))
+                .findFirst()
+                .orElseThrow()
+                .state();
+        var presetState = channelStates.stream()
+                .filter(state -> state.uid().equals(presetUid))
+                .findFirst()
+                .orElseThrow()
+                .state();
+
+        assertThat(measuredState).isEqualTo(new QuantityType<>(BigDecimal.valueOf(21.5), CELSIUS));
+        assertThat(presetState).isEqualTo(new QuantityType<>(BigDecimal.valueOf(19), CELSIUS));
     }
 }

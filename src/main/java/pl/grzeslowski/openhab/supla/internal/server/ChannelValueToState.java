@@ -73,10 +73,10 @@ public class ChannelValueToState {
                 new ChannelState(new ChannelUID(channelGroupUid, "on"), OnOffType.from(value.on())),
                 new ChannelState(
                         new ChannelUID(channelGroupUid, "measuredTemperature"),
-                        new DecimalType(value.measuredTemperature())),
+                        new QuantityType<>(value.measuredTemperature(), CELSIUS)),
                 new ChannelState(
                         new ChannelUID(channelGroupUid, "presetTemperature"),
-                        new DecimalType(value.presetTemperature())));
+                        new QuantityType<>(value.presetTemperature(), CELSIUS)));
         return Stream.concat(basicStream, flagsStream);
     }
 
