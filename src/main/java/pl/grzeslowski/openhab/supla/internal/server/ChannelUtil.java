@@ -209,7 +209,7 @@ public class ChannelUtil {
                                         ThreadPoolManager.getScheduledPool(BINDING_ID)
                                                 .schedule(this::cleanDoneSchedules, 100, MILLISECONDS);
                                     },
-                                    validityTime.toMillis(),
+                                    validityTime.plusMillis(100).toMillis(),
                                     MILLISECONDS);
                     schedules.add(schedule);
                 }
