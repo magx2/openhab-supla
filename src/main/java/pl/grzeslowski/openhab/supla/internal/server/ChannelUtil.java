@@ -224,7 +224,7 @@ public class ChannelUtil {
             for (var iterator = schedules.iterator(); iterator.hasNext(); ) {
                 var future = iterator.next();
                 if (future.isDone() || future.isCancelled()) {
-                    invoker.getLogger().debug("Removing schedule {} because it's already done");
+                    invoker.getLogger().debug("Removing schedule {} because it's already done", future);
                     iterator.remove();
                 }
             }
