@@ -51,7 +51,6 @@ public record DeviceChannel(
         Set<BitFunction> functions,
         @Min(0) @Max(255) int defaultIcon) {
 
-    // todo use codex to test this method
     public static DeviceChannel fromProto(SuplaDeviceChannel proto) {
         return switch (proto) {
             case SuplaDeviceChannelA r -> a(r);
