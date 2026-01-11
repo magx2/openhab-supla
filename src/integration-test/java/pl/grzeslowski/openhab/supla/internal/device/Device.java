@@ -51,7 +51,11 @@ public abstract class Device implements AutoCloseable {
 
     protected synchronized void send(ToServerProto proto) throws IOException {
         requireConnection();
-        log.info("Sending proto to server: {}", proto);
+        if (proto instanceof SuplaPingServer) {
+            log.trace("Sending ping {}", proto);
+        } else {
+            log.info("Sending proto to server: {}", proto);
+        }
         var encoder = EncoderFactoryImpl.INSTANCE.getEncoder(proto);
         var encode = encoder.encode(proto);
 
