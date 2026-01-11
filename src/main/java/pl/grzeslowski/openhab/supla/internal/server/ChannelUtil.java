@@ -205,21 +205,29 @@ public class ChannelUtil {
                                                         "Refreshing channel {}, because validity time expired!",
                                                         channelUID);
                                         invoker.handleRefreshCommand(channelUID);
+                                        ThreadPoolManager.getScheduledPool(BINDING_ID)
+                                                .schedule(this::cleanDoneSchedules, 100, MILLISECONDS);
                                     },
                                     validityTime.toMillis(),
                                     MILLISECONDS);
                     schedules.add(schedule);
-                    // clean done schedules
-                    for (var iterator = schedules.iterator(); iterator.hasNext(); ) {
-                        var future = iterator.next();
-                        if (future.isDone() || future.isCancelled()) {
-                            invoker.getLogger().debug("Removing schedule {} because it's already done");
-                            iterator.remove();
-                        }
-                    }
                 }
             }
         });
+    }
+
+    private void cleanDoneSchedules() {
+        synchronized (schedules) {
+            // clean done schedules
+            invoker.getLogger().debug("Cleaning done schedules");
+            for (var iterator = schedules.iterator(); iterator.hasNext(); ) {
+                var future = iterator.next();
+                if (future.isDone() || future.isCancelled()) {
+                    invoker.getLogger().debug("Removing schedule {} because it's already done");
+                    iterator.remove();
+                }
+            }
+        }
     }
 
     public void setCaption(SetCaption value) {
