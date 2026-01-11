@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <thing:thing-descriptions bindingId="supla"
-						xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-						xmlns:thing="https://openhab.org/schemas/thing-description/v1.0.0"
-						xsi:schemaLocation="https://openhab.org/schemas/thing-description/v1.0.0 https://openhab.org/schemas/thing-description-1.0.0.xsd">
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:thing="https://openhab.org/schemas/thing-description/v1.0.0"
+	xsi:schemaLocation="https://openhab.org/schemas/thing-description/v1.0.0 https://openhab.org/schemas/thing-description-1.0.0.xsd">
 
 	<bridge-type id="server-bridge">
 		<label>Supla Server</label>
@@ -11,7 +11,7 @@
 		</description>
 
 		<channels>
-			<channel id="server-devices" typeId="connected-devices"/>
+			<channel id="server-devices" typeId="connected-devices" />
 		</channels>
 
 		<representation-property>port</representation-property>
@@ -19,18 +19,23 @@
 			<parameter-group name="accessIdLogin">
 				<label>Access ID Login</label>
 				<description>
-					If you want to authenticate your devices with access ID flow fill
+					If you want to authenticate your devices with access ID
+					flow fill
 					&lt;strong&gt;both&lt;/strong&gt;
-					&lt;em&gt;Server Access ID&lt;/em&gt; and
+					&lt;em&gt;Server Access
+					ID&lt;/em&gt; and
 					&lt;em&gt;Server Access ID Password&lt;/em&gt; </description>
 			</parameter-group>
-			<parameter name="serverAccessId" type="integer" min="1" groupName="accessIdLogin">
+			<parameter name="serverAccessId" type="integer" min="1"
+				groupName="accessIdLogin">
 				<label>Server Access ID</label>
 				<description>
-					This is ID that devices will use to register to your server.
+					This is ID that devices will use to register to your
+					server.
 				</description>
 			</parameter>
-			<parameter name="serverAccessIdPassword" type="text" groupName="accessIdLogin">
+			<parameter name="serverAccessIdPassword" type="text"
+				groupName="accessIdLogin">
 				<label>Server Access ID Password</label>
 				<description>
 					This is password required to register to your server.
@@ -40,20 +45,27 @@
 			<parameter-group name="emailIdLogin">
 				<label>Email Login</label>
 				<description>
-					If you want to authenticate your devices with email/password flow fill
-					&lt;strong&gt;both&lt;/strong&gt; &lt;em&gt;Email&lt;/em&gt; and
+					If you want to authenticate your devices with
+					email/password flow fill
+					&lt;strong&gt;both&lt;/strong&gt;
+					&lt;em&gt;Email&lt;/em&gt; and
 					&lt;em&gt;Email Password&lt;/em&gt; </description>
 			</parameter-group>
-			<parameter name="email" type="text" min="1" groupName="emailIdLogin">
+			<parameter name="email" type="text" min="1"
+				groupName="emailIdLogin">
 				<label>Email</label>
 				<description>
-					This is email that devices will use to register to your server.&lt;br/&gt;
+					This is email that devices will use to register to your
+					server.&lt;br/&gt;
 					&lt;em&gt;This email address
-					does not need to be reachable. It won't be used in any way, i.e. to
-					send email to.&lt;/em&gt; </description>
+					does not need to be
+					reachable. It won't be used in any way, i.e. to
+					send email
+					to.&lt;/em&gt; </description>
 				<context>email</context>
 			</parameter>
-			<parameter name="authKey" type="text" min="1" groupName="emailIdLogin">
+			<parameter name="authKey" type="text" min="1"
+				groupName="emailIdLogin">
 				<label>Auth Key</label>
 				<description>
 					Authentication key that device sends to authenticate.
@@ -61,7 +73,8 @@
 				<advanced>true</advanced>
 			</parameter>
 
-			<parameter name="port" type="integer" required="true" min="1">
+			<parameter name="port" type="integer" required="true"
+				min="1">
 				<label>Server port</label>
 				<description>
 					<![CDATA[
@@ -76,7 +89,7 @@
 				<default>2016</default>
 			</parameter>
 
-			<parameter name="ssl" type="boolean" >
+			<parameter name="ssl" type="boolean">
 				<label>Enable SSL</label>
 				<description><![CDATA[
 					Enable SSL in server. <br>
@@ -98,21 +111,24 @@
 					Setup timeouts for all devices
 				</description>
 			</parameter-group>
-			<parameter name="timeout" type="text" required="true" groupName="gTimeout">
+			<parameter name="timeout" type="text" required="true"
+				groupName="gTimeout">
 				<label>Timeout</label>
-				<description/>
+				<description />
 				<advanced>true</advanced>
 				<default>10</default>
 			</parameter>
-			<parameter name="timeoutMin" type="text" required="true" groupName="gTimeout">
+			<parameter name="timeoutMin" type="text" required="true"
+				groupName="gTimeout">
 				<label>Timeout Min</label>
-				<description/>
+				<description />
 				<advanced>true</advanced>
 				<default>8</default>
 			</parameter>
-			<parameter name="timeoutMax" type="text" required="true" groupName="gTimeout">
+			<parameter name="timeoutMax" type="text" required="true"
+				groupName="gTimeout">
 				<label>Timeout Max</label>
-				<description/>
+				<description />
 				<advanced>true</advanced>
 				<default>12</default>
 			</parameter>
@@ -124,6 +140,6 @@
 		<item-type>Number</item-type>
 		<label>Connected devices</label>
 		<description>Indicates how many devices are connected to this server.</description>
-		<state readOnly="true" min="0"/>
+		<state readOnly="true" min="0" />
 	</channel-type>
 </thing:thing-descriptions>

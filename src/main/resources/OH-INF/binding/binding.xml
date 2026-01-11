@@ -1,14 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<binding:binding id="supla" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<binding:binding id="supla"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xmlns:binding="https://openhab.org/schemas/binding/v1.0.0"
 	xsi:schemaLocation="https://openhab.org/schemas/binding/v1.0.0 https://openhab.org/schemas/binding-1.0.0.xsd">
 
 	<name>Supla Binding</name>
-	<description>This binding is able to create native server for Supla devices.
+	<description>This binding is able to create native server for Supla
+		devices.
 		For more information visit &lt;a
 		href="https://github.com/magx2/jSupla"&gt;https://github.com/magx2/jSupla&lt;/a&gt;.
 		To get familiar with Supla system
-		visit &lt;a href="https://www.supla.org"&gt;https://www.supla.org&lt;/a&gt; </description>
+		visit &lt;a
+		href="https://www.supla.org"&gt;https://www.supla.org&lt;/a&gt; </description>
 	<author>Martin Grzeslowski</author>
 
 </binding:binding>
