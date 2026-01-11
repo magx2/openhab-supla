@@ -1,6 +1,5 @@
 package pl.grzeslowski.openhab.supla.internal.extension.supla;
 
-import static java.util.Collections.synchronizedList;
 import static java.util.Objects.requireNonNull;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -13,6 +12,8 @@ import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.SUPPOR
 
 import java.util.*;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.MultiValuedMap;
+import org.apache.commons.collections4.multimap.ArrayListValuedHashMap;
 import org.eclipse.jdt.annotation.Nullable;
 import org.junit.jupiter.api.extension.*;
 import org.openhab.core.config.core.Configuration;
@@ -33,7 +34,7 @@ import pl.grzeslowski.openhab.supla.internal.server.oh_config.TimeoutConfigurati
 @Slf4j
 public class SuplaExtension implements BeforeEachCallback, AfterEachCallback, ParameterResolver {
     private final SuplaHandlerFactory factory = new SuplaHandlerFactory();
-    private final List<ThingHandler> handlers = synchronizedList(new ArrayList<>());
+    private final MultiValuedMap<String, ThingHandler> handlers = new ArrayListValuedHashMap<>();
 
     @Override
     public void beforeEach(ExtensionContext context) throws Exception {
@@ -42,9 +43,10 @@ public class SuplaExtension implements BeforeEachCallback, AfterEachCallback, Pa
 
     @Override
     public void afterEach(ExtensionContext context) {
-        var local = new ArrayList<>(handlers);
-        log.info("Disposing {} handlers", local.size());
-        handlers.clear();
+        var uniqueId = context.getUniqueId();
+        var local = handlers.get(uniqueId);
+        log.info("Disposing {} handlers for unique ID={}", local.size(), uniqueId);
+        handlers.remove(uniqueId);
         local.forEach(this::disposeHandler);
     }
 
@@ -92,12 +94,12 @@ public class SuplaExtension implements BeforeEachCallback, AfterEachCallback, Pa
     public Object resolveParameter(ParameterContext parameterContext, ExtensionContext extensionContext)
             throws ParameterResolutionException {
         if (parameterContext.isAnnotated(CreateHandler.class)) {
-            return generateHandler(parameterContext);
+            return generateHandler(parameterContext, extensionContext.getUniqueId());
         }
         return null;
     }
 
-    private Ctx generateHandler(ParameterContext ctx) {
+    private Ctx generateHandler(ParameterContext ctx, String uniqueId) {
         var createHandler = ctx.findAnnotation(CreateHandler.class).orElseThrow();
         var bridge = ctx.getParameter().getType() == Ctx.BridgeCtx.class;
         var thingTypeId = createHandler.thingTypeId();
@@ -107,7 +109,7 @@ public class SuplaExtension implements BeforeEachCallback, AfterEachCallback, Pa
                 .orElseThrow(() -> new IllegalArgumentException("Can not find thingTypeId=" + thingTypeId));
         var thing = buildThing(bridge, thingTypeUID);
         var handler = requireNonNull(factory.createHandler(thing));
-        handlers.add(handler);
+        handlers.put(uniqueId, handler);
         thing.setHandler(handler);
         var openHabDevice = OpenHabDevice.builder().build();
         handler.setCallback(openHabDevice);

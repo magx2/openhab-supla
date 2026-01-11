@@ -38,7 +38,6 @@ import pl.grzeslowski.openhab.supla.internal.extension.supla.Ctx.ThingCtx;
 import pl.grzeslowski.openhab.supla.internal.extension.supla.SuplaExtension;
 import pl.grzeslowski.openhab.supla.internal.server.oh_config.TimeoutConfiguration;
 
-// todo make this tests parallel
 @Slf4j
 @ExtendWith({MockitoExtension.class, RandomExtension.class, RandomBeansExtension.class, SuplaExtension.class})
 public class MainIT {
