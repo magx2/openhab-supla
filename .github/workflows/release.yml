@@ -24,6 +24,14 @@ jobs:
         env:
           GITHUB_USERNAME: x-access-token
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports-${{ github.job }}
+          path: |
+            target/surefire-reports/**
+            target/failsafe-reports/**
       - name: Download latest open-hab
         id: config
         run: |
