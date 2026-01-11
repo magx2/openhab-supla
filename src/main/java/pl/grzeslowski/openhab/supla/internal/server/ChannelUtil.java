@@ -180,10 +180,11 @@ public class ChannelUtil {
             var state = pair.state();
             invoker.getLogger()
                     .debug(
-                            "Updating state for channel {}, channelNumber {}, state={}",
+                            "Updating state for channel {}, channelNumber {}, state={}, value={}",
                             channelUID,
                             channelNumber,
-                            state);
+                            state,
+                            Arrays.toString(channelValue));
             invoker.updateState(channelUID, state);
             var validityTime =
                     (validityTimeSec != null && validityTimeSec > 0) ? Duration.ofSeconds(validityTimeSec) : null;
