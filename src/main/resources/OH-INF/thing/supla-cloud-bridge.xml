@@ -1,32 +1,38 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <thing:thing-descriptions bindingId="supla"
-						xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-						xmlns:thing="https://openhab.org/schemas/thing-description/v1.0.0"
-						xsi:schemaLocation="https://openhab.org/schemas/thing-description/v1.0.0 https://openhab.org/schemas/thing-description-1.0.0.xsd">
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:thing="https://openhab.org/schemas/thing-description/v1.0.0"
+	xsi:schemaLocation="https://openhab.org/schemas/thing-description/v1.0.0 https://openhab.org/schemas/thing-description-1.0.0.xsd">
 
 	<bridge-type id="cloud-bridge">
 		<label>Supla Cloud</label>
 		<description>
-			This bridge allows OpenHAB to connect via REST API to Supla Cloud.&lt;br /&gt;
+			This bridge allows OpenHAB to connect via REST API to
+			Supla Cloud.&lt;br /&gt;
 			Please double check that
-			you enabled REST API in your server config.
+			you enabled REST API
+			in your server config.
 		</description>
 
 		<channels>
-			<channel id="address" typeId="address"/>
-			<channel id="api-version" typeId="api-version"/>
-			<channel id="cloud-version" typeId="cloud-version"/>
+			<channel id="address" typeId="address" />
+			<channel id="api-version" typeId="api-version" />
+			<channel id="cloud-version" typeId="cloud-version" />
 
-			<channel id="api-calls" typeId="api-calls"/>
-			<channel id="remaining-api-calls" typeId="remaining-api-calls"/>
-			<channel id="api-calls-percentage" typeId="api-calls-percentage"/>
-			<channel id="remaining-api-calls-percentage" typeId="remaining-api-calls-percentage"/>
-			<channel id="rate-limit-max" typeId="rate-limit-max"/>
-			<channel id="rate-limit-reset-date-time" typeId="rate-limit-reset-date-time"/>
+			<channel id="api-calls" typeId="api-calls" />
+			<channel id="remaining-api-calls"
+				typeId="remaining-api-calls" />
+			<channel id="api-calls-percentage"
+				typeId="api-calls-percentage" />
+			<channel id="remaining-api-calls-percentage"
+				typeId="remaining-api-calls-percentage" />
+			<channel id="rate-limit-max" typeId="rate-limit-max" />
+			<channel id="rate-limit-reset-date-time"
+				typeId="rate-limit-reset-date-time" />
 
-			<channel id="req-per-s" typeId="req-per-x"/>
-			<channel id="req-per-m" typeId="req-per-x"/>
-			<channel id="req-per-h" typeId="req-per-x"/>
+			<channel id="req-per-s" typeId="req-per-x" />
+			<channel id="req-per-m" typeId="req-per-x" />
+			<channel id="req-per-h" typeId="req-per-x" />
 		</channels>
 
 		<representation-property>oAuthToken</representation-property>
@@ -39,19 +45,24 @@
 					]]></description>
 				<context>password</context>
 			</parameter>
-			<parameter name="refreshInterval" type="integer" required="false" min="1" unit="s">
+			<parameter name="refreshInterval" type="integer"
+				required="false" min="1" unit="s">
 				<label>Refresh Interval</label>
 				<description>Refresh time in seconds.</description>
 				<default>30</default>
 			</parameter>
-			<parameter name="cacheEvict" type="integer" required="false" unit="s">
+			<parameter name="cacheEvict" type="integer"
+				required="false" unit="s">
 				<label>Cache Evict</label>
-				<description>How long should cache store values from API (seconds). Setting this to value ≤ 0 will turn off caches
-					(you probably don't want to do this, because it will drain your API query limit)</description>
+				<description>How long should cache store values from API (seconds).
+					Setting this to value ≤ 0 will turn off caches
+					(you probably don't
+					want to do this, because it will drain your API query limit)</description>
 				<default>30</default>
 				<advanced>true</advanced>
 			</parameter>
-			<parameter name="refreshHandlerInterval" type="integer" required="false" min="1" unit="s">
+			<parameter name="refreshHandlerInterval" type="integer"
+				required="false" min="1" unit="s">
 				<label>Refresh Interval for Handler</label>
 				<description>Refresh Cloud Handler time in seconds.</description>
 				<default>600</default>
@@ -64,51 +75,51 @@
 	<channel-type id="address">
 		<item-type>String</item-type>
 		<label>Supla Cloud Address</label>
-		<state readOnly="true"/>
+		<state readOnly="true" />
 	</channel-type>
 	<channel-type id="api-version">
 		<item-type>String</item-type>
 		<label>API Version</label>
-		<state readOnly="true"/>
+		<state readOnly="true" />
 	</channel-type>
 	<channel-type id="cloud-version">
 		<item-type>String</item-type>
 		<label>Cloud Version</label>
-		<state readOnly="true"/>
+		<state readOnly="true" />
 	</channel-type>
 	<channel-type id="api-calls">
 		<item-type>Number</item-type>
 		<label>Used API calls (in last hour)</label>
-		<state readOnly="true"/>
+		<state readOnly="true" />
 	</channel-type>
 	<channel-type id="remaining-api-calls">
 		<item-type>Number</item-type>
 		<label>Remaining API calls</label>
-		<state readOnly="true"/>
+		<state readOnly="true" />
 	</channel-type>
 	<channel-type id="api-calls-percentage">
 		<item-type>Number</item-type>
 		<label>Percentage of used API calls (in last hour)</label>
-		<state readOnly="true"/>
+		<state readOnly="true" />
 	</channel-type>
 	<channel-type id="remaining-api-calls-percentage">
 		<item-type>Number</item-type>
 		<label>Remaining percentage API calls</label>
-		<state readOnly="true"/>
+		<state readOnly="true" />
 	</channel-type>
 	<channel-type id="rate-limit-max">
 		<item-type>Number</item-type>
 		<label>Maximum API calls per hour</label>
-		<state readOnly="true"/>
+		<state readOnly="true" />
 	</channel-type>
 	<channel-type id="rate-limit-reset-date-time">
 		<item-type>String:Timestamp</item-type>
 		<label>Time when API calls will be reset</label>
-		<state readOnly="true"/>
+		<state readOnly="true" />
 	</channel-type>
 	<channel-type id="req-per-x">
 		<item-type>Number</item-type>
 		<label>Requests per ...</label>
-		<state readOnly="true"/>
+		<state readOnly="true" />
 	</channel-type>
 </thing:thing-descriptions>

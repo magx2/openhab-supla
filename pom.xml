@@ -465,6 +465,7 @@ bcutil-jdk15on-*.jar;lib:=true
                                 <exclude>src/main/java/**/*.java</exclude>
                                 <exclude>src/test/java/**/*.java</exclude>
                                 <exclude>src/integration-test/java/**/*.java</exclude>
+                                <exclude>src/*/resources/**/*.xml</exclude>
                                 <exclude>.github/workflows/*.yml</exclude>
                                 <exclude>*.http</exclude>
                                 <exclude>imgs/**</exclude>
@@ -475,6 +476,14 @@ bcutil-jdk15on-*.jar;lib:=true
                                 <tabs>true</tabs>
                                 <spacesPerTab>4</spacesPerTab>
                             </indent>
+                        </format>
+                        <format>
+                            <includes>
+                                <include>src/*/resources/**/*.xml</include>
+                            </includes>
+                            <eclipseWtp>
+                                <type>XML</type>
+                            </eclipseWtp>
                         </format>
                     </formats>
                     <java>
