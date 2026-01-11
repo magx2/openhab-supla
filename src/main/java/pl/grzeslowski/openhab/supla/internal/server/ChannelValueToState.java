@@ -109,7 +109,7 @@ public class ChannelValueToState {
     }
 
     private Stream<ChannelState> onPercentValue(PercentValue percentValue) {
-        return Stream.of(new ChannelState(createChannelUid(), new QuantityType<>(percentValue.value(), PERCENT)));
+        return Stream.of(new ChannelState(createChannelUid(), new PercentType(percentValue.value())));
     }
 
     private Stream<ChannelState> onRgbValue(RgbValue value) {
