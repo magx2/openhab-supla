@@ -200,6 +200,8 @@ public class SuplaBindingConstants {
          * <p>{@code Number:<dimension>} like {@code Number}, additional dimension information for unit support
          *
          * <p>Command Types: Quantity, Refresh
+         *
+         * <p>see: <a href="https://www.openhab.org/docs/concepts/units-of-measurement.html">Units of Measurement</a>
          */
         static String number(@Nullable String dimension) {
             if (dimension != null && !dimension.isBlank()) {
