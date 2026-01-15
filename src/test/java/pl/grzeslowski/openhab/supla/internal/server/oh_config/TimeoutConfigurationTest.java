@@ -5,6 +5,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.time.Duration;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 class TimeoutConfigurationTest {
     @Test
@@ -64,6 +67,30 @@ class TimeoutConfigurationTest {
                 .hasMessage("max has to be grater than 0. Was PT0S");
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = {"0", "0.0", "0.00"})
+    void shouldRejectZeroTimeoutFromString(String value) {
+        assertThatThrownBy(() -> new TimeoutConfiguration(value, "1", "2"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("timeout has to be grater than 0. Was PT0S");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"0", "0.0", "0.00"})
+    void shouldRejectZeroMinFromString(String value) {
+        assertThatThrownBy(() -> new TimeoutConfiguration("1", value, "2"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("min has to be grater than 0. Was PT0S");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"0", "0.0", "0.00"})
+    void shouldRejectZeroMaxFromString(String value) {
+        assertThatThrownBy(() -> new TimeoutConfiguration("1", "1", value))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("max has to be grater than 0. Was PT0S");
+    }
+
     @Test
     void shouldRejectMinGreaterThanTimeout() {
         assertThatThrownBy(() ->
@@ -89,6 +116,13 @@ class TimeoutConfigurationTest {
     void shouldParseDurationFromDoubleSeconds() {
         assertThat(TimeoutConfiguration.tryParseDuration("2.25"))
                 .contains(Duration.ofSeconds(2).plusMillis(250));
+    }
+
+    @ParameterizedTest
+    @CsvSource({"1.5,1,500", "2.25,2,250", "10.75,10,750"})
+    void shouldParseDurationFromDoubleSecondsParameterized(String value, long seconds, long millis) {
+        assertThat(TimeoutConfiguration.tryParseDuration(value))
+                .contains(Duration.ofSeconds(seconds).plusMillis(millis));
     }
 
     @Test
