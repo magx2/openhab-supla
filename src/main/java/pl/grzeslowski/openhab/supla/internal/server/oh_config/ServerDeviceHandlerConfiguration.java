@@ -5,7 +5,6 @@ import java.time.Duration;
 import lombok.Data;
 import lombok.ToString;
 import org.eclipse.jdt.annotation.Nullable;
-import pl.grzeslowski.openhab.supla.internal.server.handler.trait.ServerBridge;
 
 @Data
 public class ServerDeviceHandlerConfiguration {
@@ -35,14 +34,14 @@ public class ServerDeviceHandlerConfiguration {
     private String timeoutMax;
 
     public Duration getTimeout() {
-        return ServerBridge.tryParseDuration(timeout).orElse(null);
+        return TimeoutConfiguration.tryParseDuration(timeout).orElse(null);
     }
 
     public Duration getTimeoutMin() {
-        return ServerBridge.tryParseDuration(timeoutMin).orElse(null);
+        return TimeoutConfiguration.tryParseDuration(timeoutMin).orElse(null);
     }
 
     public Duration getTimeoutMax() {
-        return ServerBridge.tryParseDuration(timeoutMax).orElse(null);
+        return TimeoutConfiguration.tryParseDuration(timeoutMax).orElse(null);
     }
 }
