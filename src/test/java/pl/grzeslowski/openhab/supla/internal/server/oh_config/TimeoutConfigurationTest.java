@@ -26,6 +26,45 @@ class TimeoutConfigurationTest {
     }
 
     @Test
+    void shouldConvertStringSecondsToDuration() {
+        var timeout = new TimeoutConfiguration("6", "4", "9");
+
+        assertThat(timeout.timeout()).isEqualTo(Duration.ofSeconds(6));
+        assertThat(timeout.min()).isEqualTo(Duration.ofSeconds(4));
+        assertThat(timeout.max()).isEqualTo(Duration.ofSeconds(9));
+    }
+
+    @Test
+    void shouldConvertStringSecondsWithFractionToDuration() {
+        var timeout = new TimeoutConfiguration("1.5", "1.2", "1.8");
+
+        assertThat(timeout.timeout()).isEqualTo(Duration.ofSeconds(1).plusMillis(500));
+        assertThat(timeout.min()).isEqualTo(Duration.ofSeconds(1).plusMillis(200));
+        assertThat(timeout.max()).isEqualTo(Duration.ofSeconds(1).plusMillis(800));
+    }
+
+    @Test
+    void shouldRejectNonPositiveTimeout() {
+        assertThatThrownBy(() -> new TimeoutConfiguration(Duration.ZERO, Duration.ofSeconds(1), Duration.ofSeconds(2)))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("timeout has to be grater than 0. Was PT0S");
+    }
+
+    @Test
+    void shouldRejectNonPositiveMin() {
+        assertThatThrownBy(() -> new TimeoutConfiguration(Duration.ofSeconds(1), Duration.ZERO, Duration.ofSeconds(2)))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("min has to be grater than 0. Was PT0S");
+    }
+
+    @Test
+    void shouldRejectNonPositiveMax() {
+        assertThatThrownBy(() -> new TimeoutConfiguration(Duration.ofSeconds(1), Duration.ofSeconds(1), Duration.ZERO))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("max has to be grater than 0. Was PT0S");
+    }
+
+    @Test
     void shouldRejectMinGreaterThanTimeout() {
         assertThatThrownBy(() ->
                         new TimeoutConfiguration(Duration.ofSeconds(5), Duration.ofSeconds(6), Duration.ofSeconds(7)))
@@ -39,5 +78,26 @@ class TimeoutConfigurationTest {
                         new TimeoutConfiguration(Duration.ofSeconds(8), Duration.ofSeconds(6), Duration.ofSeconds(7)))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("timeout (PT8S) has to be smaller than max (PT7S)!");
+    }
+
+    @Test
+    void shouldParseDurationFromNullAsEmpty() {
+        assertThat(TimeoutConfiguration.tryParseDuration(null)).isEmpty();
+    }
+
+    @Test
+    void shouldParseDurationFromDoubleSeconds() {
+        assertThat(TimeoutConfiguration.tryParseDuration("2.25"))
+                .contains(Duration.ofSeconds(2).plusMillis(250));
+    }
+
+    @Test
+    void shouldParseDurationFromIso() {
+        assertThat(TimeoutConfiguration.tryParseDuration("PT3S")).contains(Duration.ofSeconds(3));
+    }
+
+    @Test
+    void shouldReturnEmptyWhenCannotParseDuration() {
+        assertThat(TimeoutConfiguration.tryParseDuration("not-a-duration")).isEmpty();
     }
 }
