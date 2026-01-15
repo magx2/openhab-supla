@@ -13,6 +13,15 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public record TimeoutConfiguration(Duration timeout, Duration min, Duration max) {
     public TimeoutConfiguration {
+        if (timeout.compareTo(Duration.ZERO) <= 0) {
+            throw new IllegalArgumentException("timeout has to be grater than 0. Was " + timeout);
+        }
+        if (min.compareTo(Duration.ZERO) <= 0) {
+            throw new IllegalArgumentException("min has to be grater than 0. Was " + min);
+        }
+        if (max.compareTo(Duration.ZERO) <= 0) {
+            throw new IllegalArgumentException("max has to be grater than 0. Was " + max);
+        }
         if (min.compareTo(timeout) > 0) {
             throw new IllegalArgumentException("min (%s) has to be smaller than timeout (%s)!".formatted(min, timeout));
         }
