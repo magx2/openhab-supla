@@ -39,11 +39,11 @@ class TimeoutConfigurationTest {
 
     @Test
     void shouldConvertStringSecondsWithFractionToDuration() {
-        var timeout = new TimeoutConfiguration("1.5", "1.2", "1.8");
+        var timeout = new TimeoutConfiguration("1.5", "1.25", "1.75");
 
         assertThat(timeout.timeout()).isEqualTo(Duration.ofSeconds(1).plusMillis(500));
-        assertThat(timeout.min()).isEqualTo(Duration.ofSeconds(1).plusMillis(200));
-        assertThat(timeout.max()).isEqualTo(Duration.ofSeconds(1).plusMillis(800));
+        assertThat(timeout.min()).isEqualTo(Duration.ofSeconds(1).plusMillis(250));
+        assertThat(timeout.max()).isEqualTo(Duration.ofSeconds(1).plusMillis(750));
     }
 
     @Test
