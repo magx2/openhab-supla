@@ -1,5 +1,6 @@
 package pl.grzeslowski.openhab.supla.internal;
 
+import static java.lang.System.lineSeparator;
 import static java.util.Arrays.stream;
 import static org.assertj.core.api.Assertions.assertThat;
 import static pl.grzeslowski.jsupla.protocol.api.ChannelFunction.SUPLA_CHANNELFNC_NONE;
@@ -42,7 +43,7 @@ public class DecipherProtocol {
     @SuppressWarnings("SwitchStatementWithTooFewBranches")
     @ParameterizedTest(name = "{index}: should decode `SuplaDataPacket` for {0}")
     @MethodSource
-    void decodeSuplaDataPacket(String description, String text) {
+    synchronized void decodeSuplaDataPacket(String description, String text) {
         // when
         Matcher matcher = PACKET.matcher(text);
         assertThat(matcher.find()).isTrue();
@@ -64,19 +65,24 @@ public class DecipherProtocol {
         }
 
         // then
-        System.out.println("                          ♠️♣️♥️♦️ " + description + " ♦️♥️♣️♠️");
-        System.out.println("✅ version=" + version);
-        System.out.println("✅ rrId=" + rrId);
-        System.out.println("✅ callId=" + callId);
-        System.out.println("✅ dataSize=" + dataSize);
-        System.out.println("✅ data=" + Arrays.toString(data));
+        var sb = new StringBuilder();
+        sb.append("                          ♠️♣️♥️♦️ ")
+                .append(description)
+                .append(" ♦️♥️♣️♠️")
+                .append(lineSeparator());
+        sb.append("✅ version=").append(version).append(lineSeparator());
+        sb.append("✅ rrId=").append(rrId).append(lineSeparator());
+        sb.append("✅ callId=").append(callId).append(lineSeparator());
+        sb.append("✅ dataSize=").append(dataSize).append(lineSeparator());
+        sb.append("✅ data=").append(Arrays.toString(data)).append(lineSeparator());
 
         var decoder = decoderFactory.getDecoder(callTypeParser.parse(callId).orElseThrow());
         var decode = decoder.decode(data);
         switch (decode) {
-            case SuplaRegisterDevice register -> print(register);
-            default -> System.out.println(decode);
+            case SuplaRegisterDevice register -> print(register, sb);
+            default -> sb.append(decode).append(lineSeparator());
         }
+        System.out.println(sb);
     }
 
     static Stream<Arguments> decodeSuplaDataPacket() {
@@ -152,14 +158,17 @@ public class DecipherProtocol {
                                 + "0, -120, 19, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, -60, -38, 2, 0, 0, 0, 0]}"));
     }
 
-    private void print(SuplaRegisterDevice register) {
-        System.out.println(findRegister(register));
-        System.out.println("Channels:");
+    private void print(SuplaRegisterDevice register, StringBuilder sb) {
+        sb.append(findRegister(register)).append(lineSeparator());
+        sb.append("Channels:").append(lineSeparator());
         var channels = findChannels(register);
         if (channels.isEmpty()) {
-            System.out.println("<none>");
+            sb.append("<none>").append(lineSeparator());
         } else {
-            channels.stream().map(Object::toString).map(s -> "🔵 " + s).forEach(System.out::println);
+            channels.stream()
+                    .map(Object::toString)
+                    .map(s -> "🔵 " + s + lineSeparator())
+                    .forEach(sb::append);
         }
     }
 
