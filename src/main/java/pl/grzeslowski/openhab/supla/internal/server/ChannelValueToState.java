@@ -3,15 +3,30 @@ package pl.grzeslowski.openhab.supla.internal.server;
 import static java.lang.String.valueOf;
 import static java.util.Arrays.stream;
 import static java.util.Optional.ofNullable;
+import static org.openhab.core.library.unit.CurrencyUnits.BASE_CURRENCY;
+import static org.openhab.core.library.unit.CurrencyUnits.BASE_ENERGY_PRICE;
 import static org.openhab.core.library.unit.SIUnits.CELSIUS;
+import static org.openhab.core.library.unit.Units.AMPERE;
+import static org.openhab.core.library.unit.Units.DEGREE_ANGLE;
+import static org.openhab.core.library.unit.Units.HERTZ;
+import static org.openhab.core.library.unit.Units.KILOVAR_HOUR;
+import static org.openhab.core.library.unit.Units.KILOWATT_HOUR;
+import static org.openhab.core.library.unit.Units.PERCENT;
+import static org.openhab.core.library.unit.Units.SECOND;
+import static org.openhab.core.library.unit.Units.VAR;
+import static org.openhab.core.library.unit.Units.VOLT;
+import static org.openhab.core.library.unit.Units.VOLT_AMPERE;
+import static org.openhab.core.library.unit.Units.WATT;
 import static org.openhab.core.types.UnDefType.NULL;
 import static org.openhab.core.types.UnDefType.UNDEF;
-import static tech.units.indriya.unit.Units.PERCENT;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Stream;
+import javax.measure.Quantity;
+import javax.measure.Unit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -179,36 +194,40 @@ public class ChannelValueToState {
         {
             val id = new ChannelUID(groupUid, "totalForwardActiveEnergyBalanced");
             val stateValue = optionalMeter
-                    .<State>map(value -> new DecimalType(new BigDecimal(value.totalForwardActiveEnergyBalanced())))
+                    .map(ElectricityMeterValue::totalForwardActiveEnergyBalanced)
+                    .map(value -> quantityState(value, KILOWATT_HOUR))
                     .orElse(NULL);
             pairs.add(new ChannelState(id, stateValue));
         }
         {
             val id = new ChannelUID(groupUid, "totalReverseActiveEnergyBalanced");
             val stateValue = optionalMeter
-                    .<State>map(value -> new DecimalType(new BigDecimal(value.totalReverseActiveEnergyBalanced())))
+                    .map(ElectricityMeterValue::totalReverseActiveEnergyBalanced)
+                    .map(value -> quantityState(value, KILOWATT_HOUR))
                     .orElse(NULL);
             pairs.add(new ChannelState(id, stateValue));
         }
         {
             val id = new ChannelUID(groupUid, "totalCost");
             val stateValue = optionalMeter
-                    .<State>map(value -> new DecimalType(value.totalCost()))
+                    .map(ElectricityMeterValue::totalCost)
+                    .map(value -> quantityState(value, BASE_CURRENCY))
                     .orElse(NULL);
             pairs.add(new ChannelState(id, stateValue));
         }
         {
             val id = new ChannelUID(groupUid, "pricePerUnit");
             val stateValue = optionalMeter
-                    .<State>map(value -> new DecimalType(value.pricePerUnit()))
+                    .map(ElectricityMeterValue::pricePerUnit)
+                    .map(value -> quantityState(value, BASE_ENERGY_PRICE))
                     .orElse(NULL);
             pairs.add(new ChannelState(id, stateValue));
         }
         {
             val id = new ChannelUID(groupUid, "currency");
             val stateValue = optionalMeter
-                    .map(value -> ofNullable(value.currency())
-                            .map(Object::toString)
+                    .map(ElectricityMeterValue::currency)
+                    .map(currency -> currency.map(Object::toString)
                             .<State>map(StringType::new)
                             .orElse(NULL))
                     .orElse(NULL);
@@ -224,7 +243,48 @@ public class ChannelValueToState {
         {
             val id = new ChannelUID(groupUid, "period");
             val stateValue = optionalMeter
-                    .<State>map(value -> new DecimalType(value.period()))
+                    .map(ElectricityMeterValue::period)
+                    .map(value -> quantityState(value, SECOND))
+                    .orElse(NULL);
+            pairs.add(new ChannelState(id, stateValue));
+        }
+        {
+            val id = new ChannelUID(groupUid, "voltagePhaseAngle12");
+            val stateValue = optionalMeter
+                    .map(ElectricityMeterValue::voltagePhaseAngle12)
+                    .map(value -> quantityState(value, DEGREE_ANGLE))
+                    .orElse(NULL);
+            pairs.add(new ChannelState(id, stateValue));
+        }
+        {
+            val id = new ChannelUID(groupUid, "voltagePhaseAngle13");
+            val stateValue = optionalMeter
+                    .map(ElectricityMeterValue::voltagePhaseAngle13)
+                    .map(value -> quantityState(value, DEGREE_ANGLE))
+                    .orElse(NULL);
+            pairs.add(new ChannelState(id, stateValue));
+        }
+        {
+            val id = new ChannelUID(groupUid, "phaseSequenceVoltage");
+            val stateValue = optionalMeter
+                    .map(ElectricityMeterValue::phaseSequence)
+                    .map(phaseSequence -> phaseSequence
+                            .map(ElectricityMeterValue.PhaseSequence::voltage)
+                            .map(Enum::name)
+                            .<State>map(StringType::new)
+                            .orElse(UNDEF))
+                    .orElse(NULL);
+            pairs.add(new ChannelState(id, stateValue));
+        }
+        {
+            val id = new ChannelUID(groupUid, "phaseSequenceCurrent");
+            val stateValue = optionalMeter
+                    .map(ElectricityMeterValue::phaseSequence)
+                    .map(phaseSequence -> phaseSequence
+                            .map(ElectricityMeterValue.PhaseSequence::current)
+                            .map(Enum::name)
+                            .<State>map(StringType::new)
+                            .orElse(UNDEF))
                     .orElse(NULL);
             pairs.add(new ChannelState(id, stateValue));
         }
@@ -239,80 +299,107 @@ public class ChannelValueToState {
     private List<ChannelState> buildStateForPhase(
             ChannelGroupUID groupUid, int phaseNumber, @Nullable ElectricityMeterValue meter) {
         val pairs = new ArrayList<ChannelState>();
-        val phase = ofNullable(meter).map(ElectricityMeterValue::phases).map(p -> p.get(phaseNumber - 1));
+        val phase = ofNullable(meter).flatMap(value -> switch (phaseNumber) {
+            case 1 -> value.phase1();
+            case 2 -> value.phase2();
+            case 3 -> value.phase3();
+            default -> Optional.empty();
+        });
         {
             val channelUid = new ChannelUID(groupUid, "phase-" + phaseNumber + "-" + "totalForwardActiveEnergy");
-            val stateValue = phase.<State>map(value -> new DecimalType(value.totalForwardActiveEnergy()))
+            val stateValue = phase.map(ElectricityMeterValue.Phase::totalForwardActiveEnergy)
+                    .map(value -> quantityState(value, KILOWATT_HOUR))
                     .orElse(NULL);
             pairs.add(new ChannelState(channelUid, stateValue));
         }
         {
             val channelUid = new ChannelUID(groupUid, "phase-" + phaseNumber + "-" + "totalReverseActiveEnergy");
-            val stateValue = phase.<State>map(value -> new DecimalType(value.totalReverseActiveEnergy()))
+            val stateValue = phase.map(ElectricityMeterValue.Phase::totalReverseActiveEnergy)
+                    .map(value -> quantityState(value, KILOWATT_HOUR))
                     .orElse(NULL);
             pairs.add(new ChannelState(channelUid, stateValue));
         }
         {
             val channelUid = new ChannelUID(groupUid, "phase-" + phaseNumber + "-" + "totalForwardReactiveEnergy");
-            val stateValue = phase.<State>map(value -> new DecimalType(value.totalForwardReactiveEnergy()))
+            val stateValue = phase.map(ElectricityMeterValue.Phase::totalForwardReactiveEnergy)
+                    .map(value -> quantityState(value, KILOVAR_HOUR))
                     .orElse(NULL);
             pairs.add(new ChannelState(channelUid, stateValue));
         }
         {
             val channelUid = new ChannelUID(groupUid, "phase-" + phaseNumber + "-" + "totalReverseReactiveEnergy");
-            val stateValue = phase.<State>map(value -> new DecimalType(value.totalReverseReactiveEnergy()))
+            val stateValue = phase.map(ElectricityMeterValue.Phase::totalReverseReactiveEnergy)
+                    .map(value -> quantityState(value, KILOVAR_HOUR))
                     .orElse(NULL);
             pairs.add(new ChannelState(channelUid, stateValue));
         }
         {
             val channelUid = new ChannelUID(groupUid, "phase-" + phaseNumber + "-" + "voltage");
-            val stateValue =
-                    phase.<State>map(value -> new DecimalType(value.voltage())).orElse(NULL);
+            val stateValue = phase.map(ElectricityMeterValue.Phase::voltage)
+                    .map(value -> quantityState(value, VOLT))
+                    .orElse(NULL);
             pairs.add(new ChannelState(channelUid, stateValue));
         }
         {
             val channelUid = new ChannelUID(groupUid, "phase-" + phaseNumber + "-" + "current");
-            val stateValue =
-                    phase.<State>map(value -> new DecimalType(value.current())).orElse(NULL);
+            val stateValue = phase.map(ElectricityMeterValue.Phase::current)
+                    .map(value -> quantityState(value, AMPERE))
+                    .orElse(NULL);
             pairs.add(new ChannelState(channelUid, stateValue));
         }
         {
             val channelUid = new ChannelUID(groupUid, "phase-" + phaseNumber + "-" + "powerActive");
-            val stateValue = phase.<State>map(value -> new DecimalType(value.powerActive()))
+            val stateValue = phase.map(ElectricityMeterValue.Phase::powerActive)
+                    .map(value -> quantityState(value, WATT))
                     .orElse(NULL);
             pairs.add(new ChannelState(channelUid, stateValue));
         }
         {
             val channelUid = new ChannelUID(groupUid, "phase-" + phaseNumber + "-" + "powerReactive");
-            val stateValue = phase.<State>map(value -> new DecimalType(value.powerReactive()))
+            val stateValue = phase.map(ElectricityMeterValue.Phase::powerReactive)
+                    .map(value -> quantityState(value, VAR))
                     .orElse(NULL);
             pairs.add(new ChannelState(channelUid, stateValue));
         }
         {
             val channelUid = new ChannelUID(groupUid, "phase-" + phaseNumber + "-" + "powerApparent");
-            val stateValue = phase.<State>map(value -> new DecimalType(value.powerApparent()))
+            val stateValue = phase.map(ElectricityMeterValue.Phase::powerApparent)
+                    .map(value -> quantityState(value, VOLT_AMPERE))
                     .orElse(NULL);
             pairs.add(new ChannelState(channelUid, stateValue));
         }
         {
-            val channelUid = new ChannelUID(groupUid, "phase-" + phaseNumber + "-" + "powerApparent");
-            val stateValue = phase.<State>map(value -> new DecimalType(value.powerApparent()))
+            val channelUid = new ChannelUID(groupUid, "phase-" + phaseNumber + "-" + "powerFactor");
+            val stateValue = phase.map(ElectricityMeterValue.Phase::powerFactor)
+                    .map(ChannelValueToState::decimalState)
                     .orElse(NULL);
             pairs.add(new ChannelState(channelUid, stateValue));
         }
         {
-            val channelUid = new ChannelUID(groupUid, "phase-" + phaseNumber + "-" + "powerApparent");
-            val stateValue = phase.<State>map(value -> new DecimalType(value.powerApparent()))
+            val channelUid = new ChannelUID(groupUid, "phase-" + phaseNumber + "-" + "phaseAngle");
+            val stateValue = phase.map(ElectricityMeterValue.Phase::phaseAngle)
+                    .map(value -> quantityState(value, DEGREE_ANGLE))
                     .orElse(NULL);
             pairs.add(new ChannelState(channelUid, stateValue));
         }
         {
             val channelUid = new ChannelUID(groupUid, "phase-" + phaseNumber + "-" + "frequency");
-            val stateValue = phase.<State>map(value -> new DecimalType(value.frequency()))
+            val stateValue = phase.map(ElectricityMeterValue.Phase::frequency)
+                    .map(value -> quantityState(value, HERTZ))
                     .orElse(NULL);
             pairs.add(new ChannelState(channelUid, stateValue));
         }
         return pairs;
+    }
+
+    private static <T extends Quantity<T>> State quantityState(Optional<? extends Number> value, Unit<T> unit) {
+        return value.<State>map(number -> new QuantityType<>(number, unit)).orElse(UNDEF);
+    }
+
+    private static State decimalState(Optional<? extends Number> value) {
+        return value.map(number -> new BigDecimal(number.toString()))
+                .<State>map(DecimalType::new)
+                .orElse(UNDEF);
     }
 
     private Stream<ChannelState> onHvacValue(HvacValue channelValue) {

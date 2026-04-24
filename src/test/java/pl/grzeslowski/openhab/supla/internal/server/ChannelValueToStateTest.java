@@ -1,16 +1,32 @@
 package pl.grzeslowski.openhab.supla.internal.server;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.openhab.core.library.unit.CurrencyUnits.BASE_CURRENCY;
+import static org.openhab.core.library.unit.CurrencyUnits.BASE_ENERGY_PRICE;
 import static org.openhab.core.library.unit.SIUnits.CELSIUS;
+import static org.openhab.core.library.unit.Units.AMPERE;
+import static org.openhab.core.library.unit.Units.DEGREE_ANGLE;
+import static org.openhab.core.library.unit.Units.HERTZ;
+import static org.openhab.core.library.unit.Units.KILOVAR_HOUR;
+import static org.openhab.core.library.unit.Units.KILOWATT_HOUR;
+import static org.openhab.core.library.unit.Units.SECOND;
+import static org.openhab.core.library.unit.Units.VAR;
+import static org.openhab.core.library.unit.Units.VOLT;
+import static org.openhab.core.library.unit.Units.VOLT_AMPERE;
+import static org.openhab.core.library.unit.Units.WATT;
 import static org.openhab.core.types.UnDefType.UNDEF;
 import static pl.grzeslowski.jsupla.protocol.api.RgbwBitFunction.SUPLA_RGBW_BIT_FUNC_DIMMER;
 import static pl.grzeslowski.jsupla.protocol.api.RgbwBitFunction.SUPLA_RGBW_BIT_FUNC_DIMMER_AND_RGB_LIGHTING;
 import static pl.grzeslowski.jsupla.protocol.api.RgbwBitFunction.SUPLA_RGBW_BIT_FUNC_DIMMER_CCT;
 import static pl.grzeslowski.jsupla.protocol.api.RgbwBitFunction.SUPLA_RGBW_BIT_FUNC_DIMMER_CCT_AND_RGB;
 import static pl.grzeslowski.jsupla.protocol.api.RgbwBitFunction.SUPLA_RGBW_BIT_FUNC_RGB_LIGHTING;
+import static pl.grzeslowski.jsupla.protocol.api.channeltype.value.ElectricityMeterValue.Sequence.CLOCKWISE_123;
+import static pl.grzeslowski.jsupla.protocol.api.channeltype.value.ElectricityMeterValue.Sequence.COUNTER_CLOCKWISE_132;
 
 import java.math.BigDecimal;
+import java.util.Currency;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.DisplayName;
@@ -181,5 +197,91 @@ class ChannelValueToStateTest {
 
         assertThat(measuredState).isEqualTo(new QuantityType<>(BigDecimal.valueOf(21.5), CELSIUS));
         assertThat(presetState).isEqualTo(new QuantityType<>(BigDecimal.valueOf(19), CELSIUS));
+    }
+
+    @Test
+    void shouldMapElectricityMeterValuesToOhQuantityTypes() {
+        var converter = new ChannelValueToState(thingUID, mockDeviceChannel(8));
+        var electricityMeterValue = new ElectricityMeterValue(
+                Optional.of(BigDecimal.valueOf(10)),
+                Optional.of(BigDecimal.valueOf(11)),
+                Optional.of(BigDecimal.valueOf(12)),
+                Optional.of(BigDecimal.valueOf(13)),
+                Optional.of(Currency.getInstance("PLN")),
+                14,
+                Optional.of(15),
+                Optional.of(BigDecimal.valueOf(16)),
+                Optional.of(BigDecimal.valueOf(17)),
+                Optional.of(new ElectricityMeterValue.PhaseSequence(CLOCKWISE_123, COUNTER_CLOCKWISE_132)),
+                Optional.of(phase(100)),
+                Optional.empty(),
+                Optional.empty());
+
+        List<ChannelState> states = converter.switchOn(electricityMeterValue).toList();
+
+        var groupUid = new ChannelGroupUID(thingUID, "8");
+        assertThat(state(states, new ChannelUID(groupUid, "totalForwardActiveEnergyBalanced")))
+                .isEqualTo(new QuantityType<>(BigDecimal.valueOf(10), KILOWATT_HOUR));
+        assertThat(state(states, new ChannelUID(groupUid, "totalReverseActiveEnergyBalanced")))
+                .isEqualTo(new QuantityType<>(BigDecimal.valueOf(11), KILOWATT_HOUR));
+        assertThat(state(states, new ChannelUID(groupUid, "totalCost")))
+                .isEqualTo(new QuantityType<>(BigDecimal.valueOf(12), BASE_CURRENCY));
+        assertThat(state(states, new ChannelUID(groupUid, "pricePerUnit")))
+                .isEqualTo(new QuantityType<>(BigDecimal.valueOf(13), BASE_ENERGY_PRICE));
+        assertThat(state(states, new ChannelUID(groupUid, "period"))).isEqualTo(new QuantityType<>(15, SECOND));
+        assertThat(state(states, new ChannelUID(groupUid, "voltagePhaseAngle12")))
+                .isEqualTo(new QuantityType<>(BigDecimal.valueOf(16), DEGREE_ANGLE));
+        assertThat(state(states, new ChannelUID(groupUid, "voltagePhaseAngle13")))
+                .isEqualTo(new QuantityType<>(BigDecimal.valueOf(17), DEGREE_ANGLE));
+        assertThat(state(states, new ChannelUID(groupUid, "phaseSequenceVoltage")))
+                .isEqualTo(new StringType("CLOCKWISE_123"));
+        assertThat(state(states, new ChannelUID(groupUid, "phaseSequenceCurrent")))
+                .isEqualTo(new StringType("COUNTER_CLOCKWISE_132"));
+        assertThat(state(states, new ChannelUID(groupUid, "phase-1-totalForwardActiveEnergy")))
+                .isEqualTo(new QuantityType<>(BigDecimal.valueOf(100), KILOWATT_HOUR));
+        assertThat(state(states, new ChannelUID(groupUid, "phase-1-totalReverseActiveEnergy")))
+                .isEqualTo(new QuantityType<>(BigDecimal.valueOf(101), KILOWATT_HOUR));
+        assertThat(state(states, new ChannelUID(groupUid, "phase-1-totalForwardReactiveEnergy")))
+                .isEqualTo(new QuantityType<>(BigDecimal.valueOf(102), KILOVAR_HOUR));
+        assertThat(state(states, new ChannelUID(groupUid, "phase-1-totalReverseReactiveEnergy")))
+                .isEqualTo(new QuantityType<>(BigDecimal.valueOf(103), KILOVAR_HOUR));
+        assertThat(state(states, new ChannelUID(groupUid, "phase-1-voltage")))
+                .isEqualTo(new QuantityType<>(BigDecimal.valueOf(104), VOLT));
+        assertThat(state(states, new ChannelUID(groupUid, "phase-1-current")))
+                .isEqualTo(new QuantityType<>(BigDecimal.valueOf(105), AMPERE));
+        assertThat(state(states, new ChannelUID(groupUid, "phase-1-powerActive")))
+                .isEqualTo(new QuantityType<>(BigDecimal.valueOf(106), WATT));
+        assertThat(state(states, new ChannelUID(groupUid, "phase-1-powerReactive")))
+                .isEqualTo(new QuantityType<>(BigDecimal.valueOf(107), VAR));
+        assertThat(state(states, new ChannelUID(groupUid, "phase-1-powerApparent")))
+                .isEqualTo(new QuantityType<>(BigDecimal.valueOf(108), VOLT_AMPERE));
+        assertThat(state(states, new ChannelUID(groupUid, "phase-1-phaseAngle")))
+                .isEqualTo(new QuantityType<>(BigDecimal.valueOf(110), DEGREE_ANGLE));
+        assertThat(state(states, new ChannelUID(groupUid, "phase-1-frequency")))
+                .isEqualTo(new QuantityType<>(BigDecimal.valueOf(111), HERTZ));
+    }
+
+    private static State state(List<ChannelState> states, ChannelUID uid) {
+        return states.stream()
+                .filter(channelState -> channelState.uid().equals(uid))
+                .findFirst()
+                .orElseThrow()
+                .state();
+    }
+
+    private static ElectricityMeterValue.Phase phase(int start) {
+        return new ElectricityMeterValue.Phase(
+                Optional.of(BigDecimal.valueOf(start)),
+                Optional.of(BigDecimal.valueOf(start + 1)),
+                Optional.of(BigDecimal.valueOf(start + 2)),
+                Optional.of(BigDecimal.valueOf(start + 3)),
+                Optional.of(BigDecimal.valueOf(start + 4)),
+                Optional.of(BigDecimal.valueOf(start + 5)),
+                Optional.of(BigDecimal.valueOf(start + 6)),
+                Optional.of(BigDecimal.valueOf(start + 7)),
+                Optional.of(BigDecimal.valueOf(start + 8)),
+                Optional.of(BigDecimal.valueOf(start + 9)),
+                Optional.of(BigDecimal.valueOf(start + 10)),
+                Optional.of(BigDecimal.valueOf(start + 11)));
     }
 }

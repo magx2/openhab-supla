@@ -167,17 +167,19 @@ public class ChannelCallback implements ChannelClassSwitch.Callback<Stream<Chann
         {
             val channelUid = new ChannelUID(groupUid, "totalForwardActiveEnergyBalanced");
             var channelTypeUID = createChannelTypeUID(ENERGY_CHANNEL_ID);
-            channels.add(ChannelBuilder.create(channelUid, "Number:ElectricCurrent")
+            channels.add(ChannelBuilder.create(channelUid, "Number:Energy")
                     .withType(channelTypeUID)
                     .withLabel("Total Forward Active Energy")
+                    .withDescription("Total forward active energy with vector phase-to-phase balancing in kWh")
                     .build());
         }
         {
             val channelUid = new ChannelUID(groupUid, "totalReverseActiveEnergyBalanced");
             var channelTypeUID = createChannelTypeUID(ENERGY_CHANNEL_ID);
-            channels.add(ChannelBuilder.create(channelUid, "Number:ElectricCurrent")
+            channels.add(ChannelBuilder.create(channelUid, "Number:Energy")
                     .withType(channelTypeUID)
                     .withLabel("Total Reversed Active Energy")
+                    .withDescription("Total reverse active energy with vector phase-to-phase balancing in kWh")
                     .build());
         }
         {
@@ -186,6 +188,7 @@ public class ChannelCallback implements ChannelClassSwitch.Callback<Stream<Chann
             channels.add(ChannelBuilder.create(channelUid, "Number:Currency")
                     .withType(channelTypeUID)
                     .withLabel("Total Cost")
+                    .withDescription("Total cost calculated from total forward active energy and price per unit")
                     .build());
         }
         {
@@ -194,6 +197,7 @@ public class ChannelCallback implements ChannelClassSwitch.Callback<Stream<Chann
             channels.add(ChannelBuilder.create(channelUid, "Number:EnergyPrice")
                     .withType(channelTypeUID)
                     .withLabel("Price Per Unit")
+                    .withDescription("Energy price per kWh")
                     .build());
         }
         {
@@ -217,10 +221,46 @@ public class ChannelCallback implements ChannelClassSwitch.Callback<Stream<Chann
         {
             val channelUid = new ChannelUID(groupUid, "period");
             var channelTypeUID = createChannelTypeUID(DECIMAL_CHANNEL_ID); // todo add time channel
-            channels.add(ChannelBuilder.create(channelUid, "Number")
+            channels.add(ChannelBuilder.create(channelUid, "Number:Time")
                     .withType(channelTypeUID)
                     .withLabel("Period")
                     .withDescription("Approximate period between measurements in seconds")
+                    .build());
+        }
+        {
+            val channelUid = new ChannelUID(groupUid, "voltagePhaseAngle12");
+            var channelTypeUID = createChannelTypeUID(DECIMAL_CHANNEL_ID);
+            channels.add(ChannelBuilder.create(channelUid, "Number:Angle")
+                    .withType(channelTypeUID)
+                    .withLabel("Voltage Phase Angle 1-2")
+                    .withDescription("Voltage phase angle between phase 1 and phase 2 in degrees")
+                    .build());
+        }
+        {
+            val channelUid = new ChannelUID(groupUid, "voltagePhaseAngle13");
+            var channelTypeUID = createChannelTypeUID(DECIMAL_CHANNEL_ID);
+            channels.add(ChannelBuilder.create(channelUid, "Number:Angle")
+                    .withType(channelTypeUID)
+                    .withLabel("Voltage Phase Angle 1-3")
+                    .withDescription("Voltage phase angle between phase 1 and phase 3 in degrees")
+                    .build());
+        }
+        {
+            val channelUid = new ChannelUID(groupUid, "phaseSequenceVoltage");
+            var channelTypeUID = createChannelTypeUID(STRING_CHANNEL_ID);
+            channels.add(ChannelBuilder.create(channelUid, "String")
+                    .withType(channelTypeUID)
+                    .withLabel("Voltage Phase Sequence")
+                    .withDescription("Voltage phase sequence: CLOCKWISE_123 or COUNTER_CLOCKWISE_132")
+                    .build());
+        }
+        {
+            val channelUid = new ChannelUID(groupUid, "phaseSequenceCurrent");
+            var channelTypeUID = createChannelTypeUID(STRING_CHANNEL_ID);
+            channels.add(ChannelBuilder.create(channelUid, "String")
+                    .withType(channelTypeUID)
+                    .withLabel("Current Phase Sequence")
+                    .withDescription("Current phase sequence: CLOCKWISE_123 or COUNTER_CLOCKWISE_132")
                     .build());
         }
 
@@ -239,6 +279,7 @@ public class ChannelCallback implements ChannelClassSwitch.Callback<Stream<Chann
             channels.add(ChannelBuilder.create(channelUid, "Number:Energy")
                     .withType(channelTypeUID)
                     .withLabel("Total Forward Active Energy (Phase #%s)".formatted(phaseNumber))
+                    .withDescription("Total forward active energy for phase %s in kWh".formatted(phaseNumber))
                     .build());
         }
         {
@@ -247,6 +288,7 @@ public class ChannelCallback implements ChannelClassSwitch.Callback<Stream<Chann
             channels.add(ChannelBuilder.create(channelUid, "Number:Energy")
                     .withType(channelTypeUID)
                     .withLabel("Total Reversed Active Energy (Phase #%s)".formatted(phaseNumber))
+                    .withDescription("Total reverse active energy for phase %s in kWh".formatted(phaseNumber))
                     .build());
         }
         {
@@ -255,6 +297,7 @@ public class ChannelCallback implements ChannelClassSwitch.Callback<Stream<Chann
             channels.add(ChannelBuilder.create(channelUid, "Number:Energy")
                     .withType(channelTypeUID)
                     .withLabel("Total Forward Reactive Energy (Phase #%s)".formatted(phaseNumber))
+                    .withDescription("Total forward reactive energy for phase %s in kvarh".formatted(phaseNumber))
                     .build());
         }
         {
@@ -263,6 +306,7 @@ public class ChannelCallback implements ChannelClassSwitch.Callback<Stream<Chann
             channels.add(ChannelBuilder.create(channelUid, "Number:Energy")
                     .withType(channelTypeUID)
                     .withLabel("Total Reversed Reactive Energy (Phase #%s)".formatted(phaseNumber))
+                    .withDescription("Total reverse reactive energy for phase %s in kvarh".formatted(phaseNumber))
                     .build());
         }
         {
@@ -271,6 +315,7 @@ public class ChannelCallback implements ChannelClassSwitch.Callback<Stream<Chann
             channels.add(ChannelBuilder.create(channelUid, "Number:ElectricPotential")
                     .withType(channelTypeUID)
                     .withLabel("Voltage (Phase #%s)".formatted(phaseNumber))
+                    .withDescription("Voltage for phase %s in V".formatted(phaseNumber))
                     .build());
         }
         {
@@ -279,6 +324,7 @@ public class ChannelCallback implements ChannelClassSwitch.Callback<Stream<Chann
             channels.add(ChannelBuilder.create(channelUid, "Number:ElectricCurrent")
                     .withType(channelTypeUID)
                     .withLabel("Current (Phase #%s)".formatted(phaseNumber))
+                    .withDescription("Current for phase %s in A".formatted(phaseNumber))
                     .build());
         }
         {
@@ -287,6 +333,7 @@ public class ChannelCallback implements ChannelClassSwitch.Callback<Stream<Chann
             channels.add(ChannelBuilder.create(channelUid, "Number:Power")
                     .withType(channelTypeUID)
                     .withLabel("Power Active (Phase #%s)".formatted(phaseNumber))
+                    .withDescription("Active power for phase %s in W".formatted(phaseNumber))
                     .build());
         }
         {
@@ -295,6 +342,7 @@ public class ChannelCallback implements ChannelClassSwitch.Callback<Stream<Chann
             channels.add(ChannelBuilder.create(channelUid, "Number:Power")
                     .withType(channelTypeUID)
                     .withLabel("Power Reactive (Phase #%s)".formatted(phaseNumber))
+                    .withDescription("Reactive power for phase %s in var".formatted(phaseNumber))
                     .build());
         }
         {
@@ -303,6 +351,7 @@ public class ChannelCallback implements ChannelClassSwitch.Callback<Stream<Chann
             channels.add(ChannelBuilder.create(channelUid, "Number:Power")
                     .withType(channelTypeUID)
                     .withLabel("Power Apparent (Phase #%s)".formatted(phaseNumber))
+                    .withDescription("Apparent power for phase %s in VA".formatted(phaseNumber))
                     .build());
         }
         {
@@ -311,6 +360,7 @@ public class ChannelCallback implements ChannelClassSwitch.Callback<Stream<Chann
             channels.add(ChannelBuilder.create(channelUid, "Number")
                     .withType(channelTypeUID)
                     .withLabel("Power Factor (Phase #%s)".formatted(phaseNumber))
+                    .withDescription("Power factor for phase %s".formatted(phaseNumber))
                     .build());
         }
         {
@@ -319,14 +369,16 @@ public class ChannelCallback implements ChannelClassSwitch.Callback<Stream<Chann
             channels.add(ChannelBuilder.create(channelUid, "Number:Angle")
                     .withType(channelTypeUID)
                     .withLabel("Phase Angle (Phase #%s)".formatted(phaseNumber))
+                    .withDescription("Phase angle for phase %s in degrees".formatted(phaseNumber))
                     .build());
         }
         {
             val channelUid = new ChannelUID(groupUid, "phase-" + phaseNumber + "-" + "frequency");
-            var channelTypeUID = createChannelTypeUID(DECIMAL_CHANNEL_ID);
+            var channelTypeUID = createChannelTypeUID(FREQUENCY_CHANNEL_ID);
             channels.add(ChannelBuilder.create(channelUid, "Number:Frequency")
                     .withType(channelTypeUID)
                     .withLabel("Frequency")
+                    .withDescription("Frequency for phase %s in Hz".formatted(phaseNumber))
                     .build());
         }
         return channels;

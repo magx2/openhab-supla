@@ -90,4 +90,40 @@ class ChannelCallbackTest {
                 .isEqualTo(new ChannelTypeUID(SuplaBindingConstants.BINDING_ID, UNKNOWN_CHANNEL_ID));
         assertThat(channel.getLabel()).isEqualTo("Unknown");
     }
+
+    @Test
+    void shouldCreateElectricityMeterChannelsWithCompatibleItemTypes() {
+        var callback = new ChannelCallback(thingUID, mockDeviceChannel(11));
+
+        List<Channel> channels = callback.onElectricityMeter().toList();
+
+        var groupUid = new ChannelGroupUID(thingUID, "11");
+        assertThat(channels)
+                .filteredOn(channel ->
+                        channel.getUID().equals(new ChannelUID(groupUid, "totalForwardActiveEnergyBalanced")))
+                .singleElement()
+                .extracting(Channel::getAcceptedItemType)
+                .isEqualTo("Number:Energy");
+        assertThat(channels)
+                .filteredOn(channel ->
+                        channel.getUID().equals(new ChannelUID(groupUid, "totalReverseActiveEnergyBalanced")))
+                .singleElement()
+                .extracting(Channel::getAcceptedItemType)
+                .isEqualTo("Number:Energy");
+        assertThat(channels)
+                .filteredOn(channel -> channel.getUID().equals(new ChannelUID(groupUid, "period")))
+                .singleElement()
+                .extracting(Channel::getAcceptedItemType)
+                .isEqualTo("Number:Time");
+        assertThat(channels)
+                .filteredOn(channel -> channel.getUID().equals(new ChannelUID(groupUid, "phase-1-frequency")))
+                .singleElement()
+                .satisfies(channel -> {
+                    assertThat(channel.getAcceptedItemType()).isEqualTo("Number:Frequency");
+                    assertThat(channel.getChannelTypeUID())
+                            .isEqualTo(new ChannelTypeUID(
+                                    SuplaBindingConstants.BINDING_ID,
+                                    SuplaBindingConstants.Channels.FREQUENCY_CHANNEL_ID));
+                });
+    }
 }
