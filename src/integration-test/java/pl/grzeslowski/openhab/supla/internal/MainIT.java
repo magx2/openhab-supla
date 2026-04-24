@@ -510,10 +510,13 @@ public class MainIT {
 
             device.meterValueUpdatedCall100();
             await().untilAsserted(() ->
-                    assertThat(deviceCtx.openHabDevice().getChannelStates()).hasSize(1));
+                    assertThat(deviceCtx.openHabDevice().getChannelStates()).hasSize(2));
 
             await().untilAsserted(() -> assertThat(
                             deviceCtx.openHabDevice().findChannelState("0", "totalForwardActiveEnergy"))
+                    .isEqualTo(new QuantityType<>(new BigDecimal("1871.83"), KILOWATT_HOUR)));
+            await().untilAsserted(() -> assertThat(
+                            deviceCtx.openHabDevice().findChannelState("0", "totalForwardActiveEnergyBalanced"))
                     .isEqualTo(new QuantityType<>(new BigDecimal("1871.83"), KILOWATT_HOUR)));
 
             device.meterValueUpdatedCall105();
