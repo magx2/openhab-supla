@@ -70,6 +70,20 @@ public abstract class Device implements AutoCloseable {
         out.flush();
     }
 
+    protected synchronized void sendPacket(long callId, byte[] data) throws IOException {
+        requireConnection();
+        log.info("Sending raw packet to server: callId={}, data={}", callId, Arrays.toString(data));
+
+        var packet = new SuplaDataPacket(version, id.incrementAndGet(), callId, data.length, data);
+        var bytes = SuplaDataPacketEncoder.INSTANCE.encode(packet);
+
+        var out = requireNonNull(socket).getOutputStream();
+        out.write(SUPLA_TAG);
+        out.write(bytes);
+        out.write(SUPLA_TAG);
+        out.flush();
+    }
+
     protected synchronized FromServerProto read() throws IOException {
         requireConnection();
 

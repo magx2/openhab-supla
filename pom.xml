@@ -36,7 +36,7 @@
         <dependency>
             <groupId>pl.grzeslowski.jSupla</groupId>
             <artifactId>server</artifactId>
-            <version>5.0.0</version>
+            <version>5.0.1</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
@@ -489,6 +489,7 @@ bcutil-jdk15on-*.jar;lib:=true
                                 <exclude>.github/workflows/*.yml</exclude>
                                 <exclude>*.http</exclude>
                                 <exclude>imgs/**</exclude>
+                                <exclude>.codex</exclude>
                             </excludes>
                             <trimTrailingWhitespace/>
                             <endWithNewline/>

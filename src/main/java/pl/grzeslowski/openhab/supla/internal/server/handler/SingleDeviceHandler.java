@@ -67,7 +67,7 @@ public class SingleDeviceHandler extends ServerSuplaDeviceHandler {
 
     @Override
     public void consumeSuplaDeviceChannelExtendedValue(int channelNumber, byte[] value) {
-        channelUtil.updateStatus(channelNumber, value);
+        channelUtil.updateExtendedStatus(channelNumber, value);
     }
 
     @Override

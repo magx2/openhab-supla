@@ -508,19 +508,18 @@ public class MainIT {
             await().untilAsserted(() -> assertThat(deviceCtx.openHabDevice().findThingStatus())
                     .isEqualTo(ThingStatusInfoBuilder.create(ONLINE, NONE).build()));
 
-            device.meterValueUpdated();
+            device.meterValueUpdatedCall100();
             await().untilAsserted(() ->
-                    assertThat(deviceCtx.openHabDevice().getChannelStates()).hasSize(47));
+                    assertThat(deviceCtx.openHabDevice().getChannelStates()).hasSize(1));
 
             await().untilAsserted(() -> assertThat(
-                            deviceCtx.openHabDevice().findChannelState("0", "totalForwardActiveEnergyBalanced"))
-                    .isEqualTo(new QuantityType<>(new BigDecimal("1870.760"), KILOWATT_HOUR)));
-            assertThat(deviceCtx.openHabDevice().findChannelState("0", "totalReverseActiveEnergyBalanced"))
-                    .isEqualTo(UNDEF);
-            assertThat(deviceCtx.openHabDevice().findChannelState("0", "phase-1-totalForwardActiveEnergy"))
-                    .isEqualTo(UNDEF);
-            assertThat(deviceCtx.openHabDevice().findChannelState("0", "phaseSequenceVoltage"))
-                    .isEqualTo(UNDEF);
+                            deviceCtx.openHabDevice().findChannelState("0", "totalForwardActiveEnergy"))
+                    .isEqualTo(new QuantityType<>(new BigDecimal("1871.83"), KILOWATT_HOUR)));
+
+            device.meterValueUpdatedCall105();
+            await().untilAsserted(() -> assertThat(
+                            deviceCtx.openHabDevice().findChannelState("0", "totalForwardActiveEnergy"))
+                    .isEqualTo(new QuantityType<>(new BigDecimal("1871.83564"), KILOWATT_HOUR)));
         }
 
         log.info("Waiting for the device to disconnect");

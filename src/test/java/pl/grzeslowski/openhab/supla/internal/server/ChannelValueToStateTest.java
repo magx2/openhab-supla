@@ -204,46 +204,58 @@ class ChannelValueToStateTest {
     void shouldMapElectricityMeterValuesToOhQuantityTypes() {
         var converter = new ChannelValueToState(thingUID, mockDeviceChannel(8));
         var electricityMeterValue = new ElectricityMeterValue(
-                Optional.of(BigDecimal.valueOf(10)),
-                Optional.of(BigDecimal.valueOf(11)),
-                Optional.of(BigDecimal.valueOf(12)),
-                Optional.of(BigDecimal.valueOf(13)),
+                BigDecimal.valueOf(10),
+                BigDecimal.valueOf(11),
+                BigDecimal.valueOf(12),
+                BigDecimal.valueOf(13),
+                BigDecimal.valueOf(14),
+                BigDecimal.valueOf(15),
+                BigDecimal.valueOf(16),
+                BigDecimal.valueOf(17),
                 Optional.of(Currency.getInstance("PLN")),
-                14,
-                Optional.of(15),
-                Optional.of(BigDecimal.valueOf(16)),
-                Optional.of(BigDecimal.valueOf(17)),
+                18,
+                19,
+                BigDecimal.valueOf(22),
+                BigDecimal.valueOf(23),
                 Optional.of(new ElectricityMeterValue.PhaseSequence(CLOCKWISE_123, COUNTER_CLOCKWISE_132)),
                 Optional.of(phase(100)),
-                Optional.empty(),
-                Optional.empty());
+                Optional.<ElectricityMeterValue.Phase>empty(),
+                Optional.<ElectricityMeterValue.Phase>empty());
 
         List<ChannelState> states = converter.switchOn(electricityMeterValue).toList();
 
         var groupUid = new ChannelGroupUID(thingUID, "8");
         var pln = createCurrency("PLN", "PLN");
-        assertThat(state(states, new ChannelUID(groupUid, "totalForwardActiveEnergyBalanced")))
+        assertThat(state(states, new ChannelUID(groupUid, "totalForwardActiveEnergy")))
                 .isEqualTo(new QuantityType<>(BigDecimal.valueOf(10), KILOWATT_HOUR));
-        assertThat(state(states, new ChannelUID(groupUid, "totalReverseActiveEnergyBalanced")))
+        assertThat(state(states, new ChannelUID(groupUid, "totalReverseActiveEnergy")))
                 .isEqualTo(new QuantityType<>(BigDecimal.valueOf(11), KILOWATT_HOUR));
+        assertThat(state(states, new ChannelUID(groupUid, "totalForwardReactiveEnergy")))
+                .isEqualTo(new QuantityType<>(BigDecimal.valueOf(12), KILOVAR_HOUR));
+        assertThat(state(states, new ChannelUID(groupUid, "totalReverseReactiveEnergy")))
+                .isEqualTo(new QuantityType<>(BigDecimal.valueOf(13), KILOVAR_HOUR));
+        assertThat(state(states, new ChannelUID(groupUid, "totalForwardActiveEnergyBalanced")))
+                .isEqualTo(new QuantityType<>(BigDecimal.valueOf(14), KILOWATT_HOUR));
+        assertThat(state(states, new ChannelUID(groupUid, "totalReverseActiveEnergyBalanced")))
+                .isEqualTo(new QuantityType<>(BigDecimal.valueOf(15), KILOWATT_HOUR));
         assertThat(quantityState(states, new ChannelUID(groupUid, "totalCost")).toBigDecimal())
-                .isEqualByComparingTo(BigDecimal.valueOf(12));
+                .isEqualByComparingTo(BigDecimal.valueOf(16));
         assertThat(quantityState(states, new ChannelUID(groupUid, "totalCost"))
                         .getUnit()
                         .toString())
                 .isEqualTo(pln.toString());
         assertThat(quantityState(states, new ChannelUID(groupUid, "pricePerUnit"))
                         .toBigDecimal())
-                .isEqualByComparingTo(BigDecimal.valueOf(13));
+                .isEqualByComparingTo(BigDecimal.valueOf(17));
         assertThat(quantityState(states, new ChannelUID(groupUid, "pricePerUnit"))
                         .getUnit()
                         .toString())
                 .isEqualTo(pln.divide(KILOWATT_HOUR).toString());
-        assertThat(state(states, new ChannelUID(groupUid, "period"))).isEqualTo(new QuantityType<>(15, SECOND));
+        assertThat(state(states, new ChannelUID(groupUid, "period"))).isEqualTo(new QuantityType<>(19, SECOND));
         assertThat(state(states, new ChannelUID(groupUid, "voltagePhaseAngle12")))
-                .isEqualTo(new QuantityType<>(BigDecimal.valueOf(16), DEGREE_ANGLE));
+                .isEqualTo(new QuantityType<>(BigDecimal.valueOf(22), DEGREE_ANGLE));
         assertThat(state(states, new ChannelUID(groupUid, "voltagePhaseAngle13")))
-                .isEqualTo(new QuantityType<>(BigDecimal.valueOf(17), DEGREE_ANGLE));
+                .isEqualTo(new QuantityType<>(BigDecimal.valueOf(23), DEGREE_ANGLE));
         assertThat(state(states, new ChannelUID(groupUid, "phaseSequenceVoltage")))
                 .isEqualTo(new StringType("CLOCKWISE_123"));
         assertThat(state(states, new ChannelUID(groupUid, "phaseSequenceCurrent")))
@@ -276,19 +288,23 @@ class ChannelValueToStateTest {
     void shouldFallbackToBaseCurrencyWhenMeterCurrencyIsMissing() {
         var converter = new ChannelValueToState(thingUID, mockDeviceChannel(8));
         var electricityMeterValue = new ElectricityMeterValue(
-                Optional.empty(),
-                Optional.empty(),
-                Optional.of(BigDecimal.valueOf(12)),
-                Optional.of(BigDecimal.valueOf(13)),
-                Optional.empty(),
+                BigDecimal.ZERO,
+                BigDecimal.ZERO,
+                BigDecimal.ZERO,
+                BigDecimal.ZERO,
+                BigDecimal.ZERO,
+                BigDecimal.ZERO,
+                BigDecimal.valueOf(12),
+                BigDecimal.valueOf(13),
+                Optional.<Currency>empty(),
                 0,
-                Optional.empty(),
-                Optional.empty(),
-                Optional.empty(),
-                Optional.empty(),
-                Optional.empty(),
-                Optional.empty(),
-                Optional.empty());
+                0,
+                BigDecimal.ZERO,
+                BigDecimal.ZERO,
+                Optional.<ElectricityMeterValue.PhaseSequence>empty(),
+                Optional.<ElectricityMeterValue.Phase>empty(),
+                Optional.<ElectricityMeterValue.Phase>empty(),
+                Optional.<ElectricityMeterValue.Phase>empty());
 
         List<ChannelState> states = converter.switchOn(electricityMeterValue).toList();
 
@@ -313,17 +329,17 @@ class ChannelValueToStateTest {
 
     private static ElectricityMeterValue.Phase phase(int start) {
         return new ElectricityMeterValue.Phase(
-                Optional.of(BigDecimal.valueOf(start)),
-                Optional.of(BigDecimal.valueOf(start + 1)),
-                Optional.of(BigDecimal.valueOf(start + 2)),
-                Optional.of(BigDecimal.valueOf(start + 3)),
-                Optional.of(BigDecimal.valueOf(start + 4)),
-                Optional.of(BigDecimal.valueOf(start + 5)),
-                Optional.of(BigDecimal.valueOf(start + 6)),
-                Optional.of(BigDecimal.valueOf(start + 7)),
-                Optional.of(BigDecimal.valueOf(start + 8)),
-                Optional.of(BigDecimal.valueOf(start + 9)),
-                Optional.of(BigDecimal.valueOf(start + 10)),
-                Optional.of(BigDecimal.valueOf(start + 11)));
+                BigDecimal.valueOf(start),
+                BigDecimal.valueOf(start + 1),
+                BigDecimal.valueOf(start + 2),
+                BigDecimal.valueOf(start + 3),
+                BigDecimal.valueOf(start + 4),
+                BigDecimal.valueOf(start + 5),
+                BigDecimal.valueOf(start + 6),
+                BigDecimal.valueOf(start + 7),
+                BigDecimal.valueOf(start + 8),
+                BigDecimal.valueOf(start + 9),
+                BigDecimal.valueOf(start + 10),
+                BigDecimal.valueOf(start + 11));
     }
 }
