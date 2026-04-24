@@ -70,9 +70,7 @@ public class MainIT {
             device.register();
             var registerResult = device.readRegisterDeviceResultA();
             assertThat(registerResult).isEqualTo(new SuplaRegisterDeviceResultA(3, (short) 100, (short) 5, (short) 1));
-            assertThat(deviceCtx.openHabDevice().findThingStatus())
-                    .isEqualTo(new ThingStatusInfo(
-                            UNKNOWN, CONFIGURATION_PENDING, "@text/supla.offline.waiting-for-registration"));
+            awaitWaitingForRegistration(deviceCtx);
             // ping
             device.sendPing();
             var ping = device.readPing().now();
@@ -132,9 +130,7 @@ public class MainIT {
             device.register();
             var registerResult = device.readRegisterDeviceResultA();
             assertThat(registerResult).isEqualTo(new SuplaRegisterDeviceResultA(3, (short) 100, (short) 23, (short) 1));
-            assertThat(deviceCtx.openHabDevice().findThingStatus())
-                    .isEqualTo(new ThingStatusInfo(
-                            UNKNOWN, CONFIGURATION_PENDING, "@text/supla.offline.waiting-for-registration"));
+            awaitWaitingForRegistration(deviceCtx);
             // ping
             device.sendPing();
             var ping = device.readPing().now();
@@ -227,9 +223,7 @@ public class MainIT {
             device.register();
             var registerResult = device.readRegisterDeviceResultA();
             assertThat(registerResult).isEqualTo(new SuplaRegisterDeviceResultA(3, (short) 100, (short) 12, (short) 1));
-            assertThat(deviceCtx.openHabDevice().findThingStatus())
-                    .isEqualTo(new ThingStatusInfo(
-                            UNKNOWN, CONFIGURATION_PENDING, "@text/supla.offline.waiting-for-registration"));
+            awaitWaitingForRegistration(deviceCtx);
             // ping
             device.sendPing();
             var ping = device.readPing().now();
@@ -294,9 +288,7 @@ public class MainIT {
             device.register();
             var registerResult = device.readRegisterDeviceResultA();
             assertThat(registerResult).isEqualTo(new SuplaRegisterDeviceResultA(3, (short) 100, (short) 18, (short) 1));
-            assertThat(deviceCtx.openHabDevice().findThingStatus())
-                    .isEqualTo(new ThingStatusInfo(
-                            UNKNOWN, CONFIGURATION_PENDING, "@text/supla.offline.waiting-for-registration"));
+            awaitWaitingForRegistration(deviceCtx);
             // ping
             device.sendPing();
             var ping = device.readPing().now();
@@ -413,9 +405,7 @@ public class MainIT {
             device.register();
             var registerResult = device.readRegisterDeviceResultA();
             assertThat(registerResult).isEqualTo(new SuplaRegisterDeviceResultA(3, (short) 100, (short) 18, (short) 1));
-            assertThat(deviceCtx.openHabDevice().findThingStatus())
-                    .isEqualTo(new ThingStatusInfo(
-                            UNKNOWN, CONFIGURATION_PENDING, "@text/supla.offline.waiting-for-registration"));
+            awaitWaitingForRegistration(deviceCtx);
             // ping
             device.sendPing();
             var ping = device.readPing().now();
@@ -510,9 +500,7 @@ public class MainIT {
             device.register();
             var registerResult = device.readRegisterDeviceResultA();
             assertThat(registerResult).isEqualTo(new SuplaRegisterDeviceResultA(3, (short) 100, (short) 10, (short) 1));
-            assertThat(deviceCtx.openHabDevice().findThingStatus())
-                    .isEqualTo(new ThingStatusInfo(
-                            UNKNOWN, CONFIGURATION_PENDING, "@text/supla.offline.waiting-for-registration"));
+            awaitWaitingForRegistration(deviceCtx);
 
             device.sendPing();
             var ping = device.readPing().now();
@@ -539,5 +527,11 @@ public class MainIT {
         await().untilAsserted(() -> assertThat(deviceCtx.openHabDevice().findThingStatus())
                 .isEqualTo(
                         new ThingStatusInfo(OFFLINE, COMMUNICATION_ERROR, "@text/supla.offline.channel-disconnected")));
+    }
+
+    private static void awaitWaitingForRegistration(ThingCtx deviceCtx) {
+        await().untilAsserted(() -> assertThat(deviceCtx.openHabDevice().findThingStatus())
+                .isEqualTo(new ThingStatusInfo(
+                        UNKNOWN, CONFIGURATION_PENDING, "@text/supla.offline.waiting-for-registration")));
     }
 }
