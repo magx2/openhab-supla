@@ -226,7 +226,7 @@ public class ChannelCallback implements ChannelClassSwitch.Callback<Stream<Chann
         }
         {
             val channelUid = new ChannelUID(groupUid, "totalCost");
-            var channelTypeUID = createChannelTypeUID(DECIMAL_CHANNEL_ID);
+            var channelTypeUID = createChannelTypeUID(CURRENCY_CHANNEL_ID);
             channels.add(ChannelBuilder.create(channelUid, "Number:Currency")
                     .withType(channelTypeUID)
                     .withLabel("Total Cost")
@@ -235,7 +235,7 @@ public class ChannelCallback implements ChannelClassSwitch.Callback<Stream<Chann
         }
         {
             val channelUid = new ChannelUID(groupUid, "pricePerUnit");
-            var channelTypeUID = createChannelTypeUID(DECIMAL_CHANNEL_ID);
+            var channelTypeUID = createChannelTypeUID(ENERGY_PRICE_CHANNEL_ID);
             channels.add(ChannelBuilder.create(channelUid, "Number:EnergyPrice")
                     .withType(channelTypeUID)
                     .withLabel("Price Per Unit")
@@ -262,7 +262,7 @@ public class ChannelCallback implements ChannelClassSwitch.Callback<Stream<Chann
         }
         {
             val channelUid = new ChannelUID(groupUid, "period");
-            var channelTypeUID = createChannelTypeUID(DECIMAL_CHANNEL_ID); // todo add time channel
+            var channelTypeUID = createChannelTypeUID(TIME_CHANNEL_ID);
             channels.add(ChannelBuilder.create(channelUid, "Number:Time")
                     .withType(channelTypeUID)
                     .withLabel("Period")
@@ -271,7 +271,7 @@ public class ChannelCallback implements ChannelClassSwitch.Callback<Stream<Chann
         }
         {
             val channelUid = new ChannelUID(groupUid, "voltagePhaseAngle12");
-            var channelTypeUID = createChannelTypeUID(DECIMAL_CHANNEL_ID);
+            var channelTypeUID = createChannelTypeUID(ANGLE_CHANNEL_ID);
             channels.add(ChannelBuilder.create(channelUid, "Number:Angle")
                     .withType(channelTypeUID)
                     .withLabel("Voltage Phase Angle 1-2")
@@ -280,7 +280,7 @@ public class ChannelCallback implements ChannelClassSwitch.Callback<Stream<Chann
         }
         {
             val channelUid = new ChannelUID(groupUid, "voltagePhaseAngle13");
-            var channelTypeUID = createChannelTypeUID(DECIMAL_CHANNEL_ID);
+            var channelTypeUID = createChannelTypeUID(ANGLE_CHANNEL_ID);
             channels.add(ChannelBuilder.create(channelUid, "Number:Angle")
                     .withType(channelTypeUID)
                     .withLabel("Voltage Phase Angle 1-3")
@@ -407,7 +407,7 @@ public class ChannelCallback implements ChannelClassSwitch.Callback<Stream<Chann
         }
         {
             val channelUid = new ChannelUID(groupUid, "phase-" + phaseNumber + "-" + "phaseAngle");
-            var channelTypeUID = createChannelTypeUID(DECIMAL_CHANNEL_ID);
+            var channelTypeUID = createChannelTypeUID(ANGLE_CHANNEL_ID);
             channels.add(ChannelBuilder.create(channelUid, "Number:Angle")
                     .withType(channelTypeUID)
                     .withLabel("Phase Angle (Phase #%s)".formatted(phaseNumber))

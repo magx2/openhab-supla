@@ -155,10 +155,24 @@
 		<state readOnly="true" />
 	</channel-type>
 
+	<channel-type id="currency-channel">
+		<item-type>Number:Currency</item-type>
+		<label>%channel-type.supla.decimal-channel.label</label>
+		<description>%channel-type.supla.decimal-channel.description</description>
+		<state readOnly="true" pattern="%.2f %unit%" />
+	</channel-type>
+
 	<channel-type id="energy-channel">
 		<item-type>Number:Energy</item-type>
 		<label>%channel-type.supla.energy-channel.label</label>
 		<state readOnly="true" pattern="%.2f kWh" />
+	</channel-type>
+
+	<channel-type id="energy-price-channel">
+		<item-type>Number:EnergyPrice</item-type>
+		<label>%channel-type.supla.decimal-channel.label</label>
+		<description>%channel-type.supla.decimal-channel.description</description>
+		<state readOnly="true" pattern="%.2f %unit%" />
 	</channel-type>
 
 	<channel-type id="power-channel">
@@ -186,6 +200,20 @@
 		<label>%channel-type.supla.frequency-channel.label</label>
 		<description>%channel-type.supla.frequency-channel.description</description>
 		<state readOnly="true" pattern="%.2f Hz" />
+	</channel-type>
+
+	<channel-type id="time-channel">
+		<item-type>Number:Time</item-type>
+		<label>%channel-type.supla.decimal-channel.label</label>
+		<description>%channel-type.supla.decimal-channel.description</description>
+		<state readOnly="true" pattern="%.2f %unit%" />
+	</channel-type>
+
+	<channel-type id="angle-channel">
+		<item-type>Number:Angle</item-type>
+		<label>%channel-type.supla.decimal-channel.label</label>
+		<description>%channel-type.supla.decimal-channel.description</description>
+		<state readOnly="true" pattern="%.2f %unit%" />
 	</channel-type>
 
 	<channel-type id="percentage-channel">

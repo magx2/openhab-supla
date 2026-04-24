@@ -1,6 +1,9 @@
 package pl.grzeslowski.openhab.supla.internal.server;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.Channels.ANGLE_CHANNEL_ID;
+import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.Channels.CURRENCY_CHANNEL_ID;
+import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.Channels.ENERGY_PRICE_CHANNEL_ID;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.Channels.HUMIDITY_CHANNEL_ID;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.Channels.HVAC_MODE_CHANNEL_ID;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.Channels.HVAC_TEMPERATURE_COOL_CHANNEL_ID;
@@ -8,6 +11,7 @@ import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.Channe
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.Channels.HVAC_WORKING_CHANNEL_ID;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.Channels.SWITCH_CHANNEL_ID;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.Channels.TEMPERATURE_CHANNEL_ID;
+import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.Channels.TIME_CHANNEL_ID;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.Channels.UNKNOWN_CHANNEL_ID;
 
 import java.util.List;
@@ -133,8 +137,35 @@ class ChannelCallbackTest {
         assertThat(channels)
                 .filteredOn(channel -> channel.getUID().equals(new ChannelUID(groupUid, "period")))
                 .singleElement()
-                .extracting(Channel::getAcceptedItemType)
-                .isEqualTo("Number:Time");
+                .satisfies(channel -> {
+                    assertThat(channel.getAcceptedItemType()).isEqualTo("Number:Time");
+                    assertThat(channel.getChannelTypeUID())
+                            .isEqualTo(new ChannelTypeUID(SuplaBindingConstants.BINDING_ID, TIME_CHANNEL_ID));
+                });
+        assertThat(channels)
+                .filteredOn(channel -> channel.getUID().equals(new ChannelUID(groupUid, "totalCost")))
+                .singleElement()
+                .satisfies(channel -> {
+                    assertThat(channel.getAcceptedItemType()).isEqualTo("Number:Currency");
+                    assertThat(channel.getChannelTypeUID())
+                            .isEqualTo(new ChannelTypeUID(SuplaBindingConstants.BINDING_ID, CURRENCY_CHANNEL_ID));
+                });
+        assertThat(channels)
+                .filteredOn(channel -> channel.getUID().equals(new ChannelUID(groupUid, "pricePerUnit")))
+                .singleElement()
+                .satisfies(channel -> {
+                    assertThat(channel.getAcceptedItemType()).isEqualTo("Number:EnergyPrice");
+                    assertThat(channel.getChannelTypeUID())
+                            .isEqualTo(new ChannelTypeUID(SuplaBindingConstants.BINDING_ID, ENERGY_PRICE_CHANNEL_ID));
+                });
+        assertThat(channels)
+                .filteredOn(channel -> channel.getUID().equals(new ChannelUID(groupUid, "voltagePhaseAngle12")))
+                .singleElement()
+                .satisfies(channel -> {
+                    assertThat(channel.getAcceptedItemType()).isEqualTo("Number:Angle");
+                    assertThat(channel.getChannelTypeUID())
+                            .isEqualTo(new ChannelTypeUID(SuplaBindingConstants.BINDING_ID, ANGLE_CHANNEL_ID));
+                });
         assertThat(channels)
                 .filteredOn(channel -> channel.getUID().equals(new ChannelUID(groupUid, "phase-1-frequency")))
                 .singleElement()
