@@ -50,6 +50,7 @@ import org.openhab.core.types.State;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import pl.grzeslowski.jsupla.protocol.api.ChannelFunction;
+import pl.grzeslowski.jsupla.protocol.api.ChannelType;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.value.ActionTrigger.Capabilities;
 import pl.grzeslowski.jsupla.protocol.api.encoders.ChannelConfigActionTriggerEncoder;
 import pl.grzeslowski.jsupla.protocol.api.structs.ChannelConfigActionTrigger;
@@ -275,7 +276,10 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler
                     consumeDeviceChannelValueTrait(DeviceChannelValue.fromProto(value));
                 case SuplaDeviceChannelExtendedValue value -> {
                     var extendedValue = value.value();
-                    consumeSuplaDeviceChannelExtendedValue(value.channelNumber(), extendedValue.value());
+                    var extendedType = ChannelType.findByValue(extendedValue.type())
+                            .orElseThrow(() -> new IllegalArgumentException(
+                                    "Cannot find extended value type for value " + extendedValue.type()));
+                    consumeSuplaDeviceChannelExtendedValue(value.channelNumber(), extendedType, extendedValue.value());
                 }
                 case LocalTimeRequest value -> consumeLocalTimeRequest(writer);
                 case SetCaption value -> consumeSetCaption(value);
@@ -735,7 +739,7 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler
 
     abstract void consumeDeviceChannelValueTrait(DeviceChannelValue trait);
 
-    abstract void consumeSuplaDeviceChannelExtendedValue(int channelNumber, byte[] value);
+    abstract void consumeSuplaDeviceChannelExtendedValue(int channelNumber, ChannelType type, byte[] value);
 
     abstract void consumeSetCaption(SetCaption value);
 
