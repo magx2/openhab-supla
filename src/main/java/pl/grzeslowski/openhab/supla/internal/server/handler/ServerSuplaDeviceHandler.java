@@ -276,10 +276,14 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler
                     consumeDeviceChannelValueTrait(DeviceChannelValue.fromProto(value));
                 case SuplaDeviceChannelExtendedValue value -> {
                     var extendedValue = value.value();
-                    var extendedType = ChannelType.findByValue(extendedValue.type())
-                            .orElseThrow(() -> new IllegalArgumentException(
-                                    "Cannot find extended value type for value " + extendedValue.type()));
-                    consumeSuplaDeviceChannelExtendedValue(value.channelNumber(), extendedType, extendedValue.value());
+                    var extendedType = ChannelType.findByValue(extendedValue.type());
+                    if (extendedType.isEmpty()) {
+                        logger.warn(
+                                "Cannot find extended value type for value {}. Skipping packet.", extendedValue.type());
+                        break;
+                    }
+                    consumeSuplaDeviceChannelExtendedValue(
+                            value.channelNumber(), extendedType.orElseThrow(), extendedValue.value());
                 }
                 case LocalTimeRequest value -> consumeLocalTimeRequest(writer);
                 case SetCaption value -> consumeSetCaption(value);
