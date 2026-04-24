@@ -61,6 +61,7 @@ public class ChannelValueToState {
 
     public Stream<ChannelState> switchOn(@lombok.NonNull ChannelValue channelValue) {
         return switch (channelValue) {
+            case ElectricityMeterSimpleValue value -> onElectricityMeter(value);
             case ElectricityMeterValue value -> onElectricityMeter(value);
             case HeatpolThermostatValue value -> onHeatpolThermostatValue(value);
             case HumidityValue value -> onHumidityValue(value);
@@ -190,10 +191,57 @@ public class ChannelValueToState {
         return new QuantityType<>(value.humidity(), PERCENT);
     }
 
+    private Stream<ChannelState> onElectricityMeter(@Nullable ElectricityMeterSimpleValue electricityMeterValue) {
+        val groupUid = createChannelGroupUid();
+        val pairs = new ArrayList<ChannelState>();
+        val optionalMeter = ofNullable(electricityMeterValue);
+        {
+            val id = new ChannelUID(groupUid, "totalForwardActiveEnergy");
+            val stateValue = optionalMeter
+                    .map(ElectricityMeterSimpleValue::totalForwardActiveEnergy)
+                    .map(value -> quantityState(value, KILOWATT_HOUR))
+                    .orElse(NULL);
+            pairs.add(new ChannelState(id, stateValue));
+        }
+        return pairs.stream();
+    }
+
     private Stream<ChannelState> onElectricityMeter(@Nullable ElectricityMeterValue electricityMeterValue) {
         val groupUid = createChannelGroupUid();
         val pairs = new ArrayList<ChannelState>();
         val optionalMeter = ofNullable(electricityMeterValue);
+        {
+            val id = new ChannelUID(groupUid, "totalForwardActiveEnergy");
+            val stateValue = optionalMeter
+                    .map(ElectricityMeterValue::totalForwardActiveEnergy)
+                    .map(number -> quantityState(number, KILOWATT_HOUR))
+                    .orElse(UNDEF);
+            pairs.add(new ChannelState(id, stateValue));
+        }
+        {
+            val id = new ChannelUID(groupUid, "totalReverseActiveEnergy");
+            val stateValue = optionalMeter
+                    .map(ElectricityMeterValue::totalReverseActiveEnergy)
+                    .map(value -> quantityState(value, KILOWATT_HOUR))
+                    .orElse(NULL);
+            pairs.add(new ChannelState(id, stateValue));
+        }
+        {
+            val id = new ChannelUID(groupUid, "totalForwardReactiveEnergy");
+            val stateValue = optionalMeter
+                    .map(ElectricityMeterValue::totalForwardReactiveEnergy)
+                    .map(value -> quantityState(value, KILOVAR_HOUR))
+                    .orElse(NULL);
+            pairs.add(new ChannelState(id, stateValue));
+        }
+        {
+            val id = new ChannelUID(groupUid, "totalReverseReactiveEnergy");
+            val stateValue = optionalMeter
+                    .map(ElectricityMeterValue::totalReverseReactiveEnergy)
+                    .map(value -> quantityState(value, KILOVAR_HOUR))
+                    .orElse(NULL);
+            pairs.add(new ChannelState(id, stateValue));
+        }
         {
             val id = new ChannelUID(groupUid, "totalForwardActiveEnergyBalanced");
             val stateValue = optionalMeter
@@ -397,6 +445,10 @@ public class ChannelValueToState {
         return value.<State>map(number -> new QuantityType<>(number, unit)).orElse(UNDEF);
     }
 
+    private static <T extends Quantity<T>> State quantityState(Number value, Unit<T> unit) {
+        return new QuantityType<>(value, unit);
+    }
+
     private static Unit<org.openhab.core.library.dimension.Currency> meterCurrency(ElectricityMeterValue value) {
         return value.currency().map(ChannelValueToState::currencyUnit).orElse(BASE_CURRENCY);
     }
@@ -415,9 +467,11 @@ public class ChannelValueToState {
     }
 
     private static State decimalState(Optional<? extends Number> value) {
-        return value.map(number -> new BigDecimal(number.toString()))
-                .<State>map(DecimalType::new)
-                .orElse(UNDEF);
+        return value.<State>map(DecimalType::new).orElse(UNDEF);
+    }
+
+    private static State decimalState(Number value) {
+        return new DecimalType(value.toString());
     }
 
     private Stream<ChannelState> onHvacValue(HvacValue channelValue) {

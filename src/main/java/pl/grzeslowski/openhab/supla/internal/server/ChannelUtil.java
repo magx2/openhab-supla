@@ -9,6 +9,7 @@ import static java.util.stream.Collectors.joining;
 import static org.openhab.core.thing.ChannelUID.CHANNEL_GROUP_SEPARATOR;
 import static org.openhab.core.types.UnDefType.UNDEF;
 import static pl.grzeslowski.jsupla.protocol.api.ChannelStateField.*;
+import static pl.grzeslowski.jsupla.protocol.api.ChannelType.EV_TYPE_ELECTRICITY_METER_MEASUREMENT_V1;
 import static pl.grzeslowski.jsupla.protocol.api.ProtocolHelpers.*;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.BINDING_ID;
 
@@ -116,9 +117,13 @@ public class ChannelUtil {
         return findState(deviceChannel, deviceChannel.value());
     }
 
+    public Stream<ChannelValueToState.ChannelState> findState(DeviceChannel deviceChannel, ChannelValue channelValue) {
+        val valueSwitch = new ChannelValueToState(invoker.getThing().getUID(), deviceChannel);
+        return valueSwitch.switchOn(channelValue);
+    }
+
     public Stream<ChannelValueToState.ChannelState> findState(
             DeviceChannel deviceChannel, @jakarta.annotation.Nullable byte[] value) {
-        val valueSwitch = new ChannelValueToState(invoker.getThing().getUID(), deviceChannel);
         ChannelValue channelValue;
         if (value != null) {
             channelValue = ChannelTypeDecoder.INSTANCE.decode(deviceChannel.type(), value);
@@ -129,7 +134,7 @@ public class ChannelUtil {
         } else {
             throw new IllegalArgumentException("value and hvacValue cannot be null!");
         }
-        return valueSwitch.switchOn(channelValue);
+        return findState(deviceChannel, channelValue);
     }
 
     public void updateChannels(List<Channel> channels) {
@@ -166,9 +171,25 @@ public class ChannelUtil {
         updateStatus(channelNumber, channelValue, null);
     }
 
+    public void updateExtendedStatus(int channelNumber, byte[] channelValue) {
+        updateStatus(
+                channelNumber,
+                ChannelTypeDecoder.INSTANCE.decode(EV_TYPE_ELECTRICITY_METER_MEASUREMENT_V1, channelValue),
+                null);
+    }
+
     private void updateStatus(int channelNumber, byte[] channelValue, @Nullable Long validityTimeSec) {
-        invoker.getLogger()
-                .debug("Updating status for channelNumber={}, value={}", channelNumber, Arrays.toString(channelValue));
+        var deviceChannel = deviceChannels.get(channelNumber);
+        if (deviceChannel == null) {
+            updateStatus(channelNumber, (ChannelValue) null, validityTimeSec);
+            return;
+        }
+        updateStatus(
+                channelNumber, ChannelTypeDecoder.INSTANCE.decode(deviceChannel.type(), channelValue), validityTimeSec);
+    }
+
+    private void updateStatus(int channelNumber, @Nullable ChannelValue channelValue, @Nullable Long validityTimeSec) {
+        invoker.getLogger().debug("Updating status for channelNumber={}, value={}", channelNumber, channelValue);
         var deviceChannel = deviceChannels.get(channelNumber);
         if (deviceChannel == null) {
             if (invoker.getLogger().isWarnEnabled()) {
@@ -185,6 +206,10 @@ public class ChannelUtil {
             }
             return;
         }
+        if (channelValue == null) {
+            LOGGER.warn("Cannot decode channel value for channel number {}", channelNumber);
+            return;
+        }
         findState(deviceChannel, channelValue).forEach(pair -> {
             var channelUID = pair.uid();
             var state = pair.state();
@@ -194,7 +219,7 @@ public class ChannelUtil {
                             channelUID,
                             channelNumber,
                             state,
-                            Arrays.toString(channelValue));
+                            channelValue);
             invoker.updateState(channelUID, state);
             var validityTime =
                     (validityTimeSec != null && validityTimeSec > 0) ? Duration.ofSeconds(validityTimeSec) : null;

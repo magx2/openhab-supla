@@ -99,6 +99,26 @@ class ChannelCallbackTest {
 
         var groupUid = new ChannelGroupUID(thingUID, "11");
         assertThat(channels)
+                .filteredOn(channel -> channel.getUID().equals(new ChannelUID(groupUid, "totalForwardActiveEnergy")))
+                .singleElement()
+                .extracting(Channel::getAcceptedItemType)
+                .isEqualTo("Number:Energy");
+        assertThat(channels)
+                .filteredOn(channel -> channel.getUID().equals(new ChannelUID(groupUid, "totalReverseActiveEnergy")))
+                .singleElement()
+                .extracting(Channel::getAcceptedItemType)
+                .isEqualTo("Number:Energy");
+        assertThat(channels)
+                .filteredOn(channel -> channel.getUID().equals(new ChannelUID(groupUid, "totalForwardReactiveEnergy")))
+                .singleElement()
+                .extracting(Channel::getAcceptedItemType)
+                .isEqualTo("Number:Energy");
+        assertThat(channels)
+                .filteredOn(channel -> channel.getUID().equals(new ChannelUID(groupUid, "totalReverseReactiveEnergy")))
+                .singleElement()
+                .extracting(Channel::getAcceptedItemType)
+                .isEqualTo("Number:Energy");
+        assertThat(channels)
                 .filteredOn(channel ->
                         channel.getUID().equals(new ChannelUID(groupUid, "totalForwardActiveEnergyBalanced")))
                 .singleElement()

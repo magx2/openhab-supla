@@ -158,6 +158,12 @@ public class ChannelCallback implements ChannelClassSwitch.Callback<Stream<Chann
     }
 
     @Override
+    public Stream<Channel> onElectricityMeterSimple() {
+        log.debug("{} {} onElectricityMeterSimple", thingUID, deviceChannel);
+        return onElectricityMeter();
+    }
+
+    @Override
     public Stream<Channel> onElectricityMeter() {
         log.debug("{} {} onElectricityMeter", thingUID, deviceChannel);
         val groupUid = buildGroupUid();
@@ -165,11 +171,47 @@ public class ChannelCallback implements ChannelClassSwitch.Callback<Stream<Chann
 
         // main
         {
-            val channelUid = new ChannelUID(groupUid, "totalForwardActiveEnergyBalanced");
+            val channelUid = new ChannelUID(groupUid, "totalForwardActiveEnergy");
             var channelTypeUID = createChannelTypeUID(ENERGY_CHANNEL_ID);
             channels.add(ChannelBuilder.create(channelUid, "Number:Energy")
                     .withType(channelTypeUID)
                     .withLabel("Total Forward Active Energy")
+                    .withDescription("Total forward active energy in kWh")
+                    .build());
+        }
+        {
+            val channelUid = new ChannelUID(groupUid, "totalReverseActiveEnergy");
+            var channelTypeUID = createChannelTypeUID(ENERGY_CHANNEL_ID);
+            channels.add(ChannelBuilder.create(channelUid, "Number:Energy")
+                    .withType(channelTypeUID)
+                    .withLabel("Total Reversed Active Energy")
+                    .withDescription("Total reverse active energy in kWh")
+                    .build());
+        }
+        {
+            val channelUid = new ChannelUID(groupUid, "totalForwardReactiveEnergy");
+            var channelTypeUID = createChannelTypeUID(ENERGY_CHANNEL_ID);
+            channels.add(ChannelBuilder.create(channelUid, "Number:Energy")
+                    .withType(channelTypeUID)
+                    .withLabel("Total Forward Reactive Energy")
+                    .withDescription("Total forward reactive energy in kvarh")
+                    .build());
+        }
+        {
+            val channelUid = new ChannelUID(groupUid, "totalReverseReactiveEnergy");
+            var channelTypeUID = createChannelTypeUID(ENERGY_CHANNEL_ID);
+            channels.add(ChannelBuilder.create(channelUid, "Number:Energy")
+                    .withType(channelTypeUID)
+                    .withLabel("Total Reversed Reactive Energy")
+                    .withDescription("Total reverse reactive energy in kvarh")
+                    .build());
+        }
+        {
+            val channelUid = new ChannelUID(groupUid, "totalForwardActiveEnergyBalanced");
+            var channelTypeUID = createChannelTypeUID(ENERGY_CHANNEL_ID);
+            channels.add(ChannelBuilder.create(channelUid, "Number:Energy")
+                    .withType(channelTypeUID)
+                    .withLabel("Total Forward Active Energy (Balanced)")
                     .withDescription("Total forward active energy with vector phase-to-phase balancing in kWh")
                     .build());
         }
@@ -178,7 +220,7 @@ public class ChannelCallback implements ChannelClassSwitch.Callback<Stream<Chann
             var channelTypeUID = createChannelTypeUID(ENERGY_CHANNEL_ID);
             channels.add(ChannelBuilder.create(channelUid, "Number:Energy")
                     .withType(channelTypeUID)
-                    .withLabel("Total Reversed Active Energy")
+                    .withLabel("Total Reversed Active Energy (Balanced)")
                     .withDescription("Total reverse active energy with vector phase-to-phase balancing in kWh")
                     .build());
         }
