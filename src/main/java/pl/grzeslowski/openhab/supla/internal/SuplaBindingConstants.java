@@ -92,8 +92,12 @@ public class SuplaBindingConstants {
         public static final String SWITCH_CHANNEL_RO_ID = "switch-channel-ro";
         public static final String FLAG_CHANNEL_ID = "flag-channel";
         public static final String DECIMAL_CHANNEL_ID = "decimal-channel";
+        public static final String ANGLE_CHANNEL_ID = "angle-channel";
+        public static final String CURRENCY_CHANNEL_ID = "currency-channel";
         public static final String ENERGY_CHANNEL_ID = "energy-channel";
+        public static final String ENERGY_PRICE_CHANNEL_ID = "energy-price-channel";
         public static final String POWER_CHANNEL_ID = "power-channel";
+        public static final String TIME_CHANNEL_ID = "time-channel";
         public static final String VOLTAGE_CHANNEL_ID = "voltage-channel";
         public static final String CURRENT_CHANNEL_ID = "current-channel";
         public static final String FREQUENCY_CHANNEL_ID = "frequency-channel";
