@@ -3,6 +3,7 @@ package pl.grzeslowski.openhab.supla.internal.server;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.openhab.core.library.unit.CurrencyUnits.BASE_CURRENCY;
 import static org.openhab.core.library.unit.CurrencyUnits.BASE_ENERGY_PRICE;
+import static org.openhab.core.library.unit.CurrencyUnits.createCurrency;
 import static org.openhab.core.library.unit.SIUnits.CELSIUS;
 import static org.openhab.core.library.unit.Units.AMPERE;
 import static org.openhab.core.library.unit.Units.DEGREE_ANGLE;
@@ -220,14 +221,24 @@ class ChannelValueToStateTest {
         List<ChannelState> states = converter.switchOn(electricityMeterValue).toList();
 
         var groupUid = new ChannelGroupUID(thingUID, "8");
+        var pln = createCurrency("PLN", "PLN");
         assertThat(state(states, new ChannelUID(groupUid, "totalForwardActiveEnergyBalanced")))
                 .isEqualTo(new QuantityType<>(BigDecimal.valueOf(10), KILOWATT_HOUR));
         assertThat(state(states, new ChannelUID(groupUid, "totalReverseActiveEnergyBalanced")))
                 .isEqualTo(new QuantityType<>(BigDecimal.valueOf(11), KILOWATT_HOUR));
-        assertThat(state(states, new ChannelUID(groupUid, "totalCost")))
-                .isEqualTo(new QuantityType<>(BigDecimal.valueOf(12), BASE_CURRENCY));
-        assertThat(state(states, new ChannelUID(groupUid, "pricePerUnit")))
-                .isEqualTo(new QuantityType<>(BigDecimal.valueOf(13), BASE_ENERGY_PRICE));
+        assertThat(quantityState(states, new ChannelUID(groupUid, "totalCost")).toBigDecimal())
+                .isEqualByComparingTo(BigDecimal.valueOf(12));
+        assertThat(quantityState(states, new ChannelUID(groupUid, "totalCost"))
+                        .getUnit()
+                        .toString())
+                .isEqualTo(pln.toString());
+        assertThat(quantityState(states, new ChannelUID(groupUid, "pricePerUnit"))
+                        .toBigDecimal())
+                .isEqualByComparingTo(BigDecimal.valueOf(13));
+        assertThat(quantityState(states, new ChannelUID(groupUid, "pricePerUnit"))
+                        .getUnit()
+                        .toString())
+                .isEqualTo(pln.divide(KILOWATT_HOUR).toString());
         assertThat(state(states, new ChannelUID(groupUid, "period"))).isEqualTo(new QuantityType<>(15, SECOND));
         assertThat(state(states, new ChannelUID(groupUid, "voltagePhaseAngle12")))
                 .isEqualTo(new QuantityType<>(BigDecimal.valueOf(16), DEGREE_ANGLE));
@@ -261,12 +272,43 @@ class ChannelValueToStateTest {
                 .isEqualTo(new QuantityType<>(BigDecimal.valueOf(111), HERTZ));
     }
 
+    @Test
+    void shouldFallbackToBaseCurrencyWhenMeterCurrencyIsMissing() {
+        var converter = new ChannelValueToState(thingUID, mockDeviceChannel(8));
+        var electricityMeterValue = new ElectricityMeterValue(
+                Optional.empty(),
+                Optional.empty(),
+                Optional.of(BigDecimal.valueOf(12)),
+                Optional.of(BigDecimal.valueOf(13)),
+                Optional.empty(),
+                0,
+                Optional.empty(),
+                Optional.empty(),
+                Optional.empty(),
+                Optional.empty(),
+                Optional.empty(),
+                Optional.empty(),
+                Optional.empty());
+
+        List<ChannelState> states = converter.switchOn(electricityMeterValue).toList();
+
+        var groupUid = new ChannelGroupUID(thingUID, "8");
+        assertThat(state(states, new ChannelUID(groupUid, "totalCost")))
+                .isEqualTo(new QuantityType<>(BigDecimal.valueOf(12), BASE_CURRENCY));
+        assertThat(state(states, new ChannelUID(groupUid, "pricePerUnit")))
+                .isEqualTo(new QuantityType<>(BigDecimal.valueOf(13), BASE_ENERGY_PRICE));
+    }
+
     private static State state(List<ChannelState> states, ChannelUID uid) {
         return states.stream()
                 .filter(channelState -> channelState.uid().equals(uid))
                 .findFirst()
                 .orElseThrow()
                 .state();
+    }
+
+    private static QuantityType<?> quantityState(List<ChannelState> states, ChannelUID uid) {
+        return (QuantityType<?>) state(states, uid);
     }
 
     private static ElectricityMeterValue.Phase phase(int start) {

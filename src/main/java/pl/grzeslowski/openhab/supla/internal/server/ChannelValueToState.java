@@ -5,6 +5,7 @@ import static java.util.Arrays.stream;
 import static java.util.Optional.ofNullable;
 import static org.openhab.core.library.unit.CurrencyUnits.BASE_CURRENCY;
 import static org.openhab.core.library.unit.CurrencyUnits.BASE_ENERGY_PRICE;
+import static org.openhab.core.library.unit.CurrencyUnits.createCurrency;
 import static org.openhab.core.library.unit.SIUnits.CELSIUS;
 import static org.openhab.core.library.unit.Units.AMPERE;
 import static org.openhab.core.library.unit.Units.DEGREE_ANGLE;
@@ -22,6 +23,7 @@ import static org.openhab.core.types.UnDefType.UNDEF;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Currency;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -45,6 +47,7 @@ import pl.grzeslowski.jsupla.protocol.api.channeltype.value.ActionTrigger;
 import pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ChannelIds.RgbwLed;
 import pl.grzeslowski.openhab.supla.internal.server.traits.DeviceChannel;
 
+@SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 @Slf4j
 @NonNullByDefault
 @RequiredArgsConstructor
@@ -210,16 +213,14 @@ public class ChannelValueToState {
         {
             val id = new ChannelUID(groupUid, "totalCost");
             val stateValue = optionalMeter
-                    .map(ElectricityMeterValue::totalCost)
-                    .map(value -> quantityState(value, BASE_CURRENCY))
+                    .map(value -> quantityState(value.totalCost(), meterCurrency(value)))
                     .orElse(NULL);
             pairs.add(new ChannelState(id, stateValue));
         }
         {
             val id = new ChannelUID(groupUid, "pricePerUnit");
             val stateValue = optionalMeter
-                    .map(ElectricityMeterValue::pricePerUnit)
-                    .map(value -> quantityState(value, BASE_ENERGY_PRICE))
+                    .map(value -> quantityState(value.pricePerUnit(), meterEnergyPrice(value)))
                     .orElse(NULL);
             pairs.add(new ChannelState(id, stateValue));
         }
@@ -394,6 +395,23 @@ public class ChannelValueToState {
 
     private static <T extends Quantity<T>> State quantityState(Optional<? extends Number> value, Unit<T> unit) {
         return value.<State>map(number -> new QuantityType<>(number, unit)).orElse(UNDEF);
+    }
+
+    private static Unit<org.openhab.core.library.dimension.Currency> meterCurrency(ElectricityMeterValue value) {
+        return value.currency().map(ChannelValueToState::currencyUnit).orElse(BASE_CURRENCY);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Unit<org.openhab.core.library.dimension.EnergyPrice> meterEnergyPrice(ElectricityMeterValue value) {
+        return value.currency()
+                .map(currency -> (Unit<org.openhab.core.library.dimension.EnergyPrice>)
+                        currencyUnit(currency).divide(KILOWATT_HOUR))
+                .orElse(BASE_ENERGY_PRICE);
+    }
+
+    private static Unit<org.openhab.core.library.dimension.Currency> currencyUnit(Currency currency) {
+        val currencyCode = currency.getCurrencyCode();
+        return createCurrency(currencyCode, currencyCode);
     }
 
     private static State decimalState(Optional<? extends Number> value) {
