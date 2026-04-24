@@ -82,7 +82,7 @@ public class ChannelUtil {
         deviceChannels.put(deviceChannel.number(), deviceChannel);
         var channelCallback = new ChannelCallback(invoker.getThing().getUID(), deviceChannel);
         var channelValueSwitch = new ChannelClassSwitch<>(channelCallback);
-        var clazz = ChannelTypeDecoder.INSTANCE.findClass(deviceChannel.type());
+        var clazz = findChannelValueClass(deviceChannel);
         var channels = channelValueSwitch.doSwitch(clazz);
         if (adjustLabel) {
             record ChannelAndLabel(
@@ -95,11 +95,21 @@ public class ChannelUtil {
     }
 
     private Stream<ChannelValueToState.ChannelState> channelForUpdate(DeviceChannel deviceChannel) {
-        Class<? extends ChannelValue> clazz = ChannelTypeDecoder.INSTANCE.findClass(deviceChannel.type());
+        Class<? extends ChannelValue> clazz = findChannelValueClass(deviceChannel);
         if (clazz.isAssignableFrom(ElectricityMeterValue.class)) {
             return Stream.empty();
         }
         return findState(deviceChannel);
+    }
+
+    private static Class<? extends ChannelValue> findChannelValueClass(DeviceChannel deviceChannel) {
+        if (deviceChannel.action() != null) {
+            return pl.grzeslowski.jsupla.protocol.api.channeltype.value.ActionTrigger.class;
+        }
+        if (deviceChannel.hvacValue() != null) {
+            return pl.grzeslowski.jsupla.protocol.api.channeltype.value.HvacValue.class;
+        }
+        return ChannelTypeDecoder.INSTANCE.findClass(deviceChannel.type());
     }
 
     public Stream<ChannelValueToState.ChannelState> findState(DeviceChannel deviceChannel) {
