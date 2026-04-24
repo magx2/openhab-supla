@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.*;
+import static pl.grzeslowski.jsupla.protocol.api.ChannelType.EV_TYPE_ELECTRICITY_METER_MEASUREMENT_V1;
 import static pl.grzeslowski.jsupla.protocol.api.ChannelType.SUPLA_CHANNELTYPE_ACTIONTRIGGER;
 import static pl.grzeslowski.jsupla.protocol.api.ChannelType.SUPLA_CHANNELTYPE_ELECTRICITY_METER;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.Channels.ACTION_TRIGGER_ID;
@@ -224,7 +225,10 @@ class ChannelUtilTest {
             0, 12, 64, 3, 0, 126, -54, -4, -1, -56, 3, 0, 0, -106, 100, 77, 0, 0, -64, 2, 0, 102, -26, 1, 0, -6, 2, -24,
             3, -24, 3, -4, -8, -83, -7, -8, -8
         };
-        channelUtil.updateExtendedStatus(0, Arrays.copyOfRange(rawPacketData, 6, rawPacketData.length));
+        channelUtil.updateExtendedStatus(
+                0,
+                EV_TYPE_ELECTRICITY_METER_MEASUREMENT_V1,
+                Arrays.copyOfRange(rawPacketData, 6, rawPacketData.length));
 
         verify(serverDevice)
                 .updateState(

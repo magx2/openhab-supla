@@ -18,6 +18,7 @@ import lombok.experimental.Delegate;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
 import org.openhab.core.thing.Thing;
+import pl.grzeslowski.jsupla.protocol.api.ChannelType;
 import pl.grzeslowski.jsupla.protocol.api.structs.dcs.SetCaption;
 import pl.grzeslowski.jsupla.protocol.api.structs.ds.SubdeviceDetails;
 import pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaChannelNewValueResult;
@@ -66,8 +67,8 @@ public class SingleDeviceHandler extends ServerSuplaDeviceHandler {
     }
 
     @Override
-    public void consumeSuplaDeviceChannelExtendedValue(int channelNumber, byte[] value) {
-        channelUtil.updateExtendedStatus(channelNumber, value);
+    public void consumeSuplaDeviceChannelExtendedValue(int channelNumber, ChannelType type, byte[] value) {
+        channelUtil.updateExtendedStatus(channelNumber, type, value);
     }
 
     @Override

@@ -9,7 +9,6 @@ import static java.util.stream.Collectors.joining;
 import static org.openhab.core.thing.ChannelUID.CHANNEL_GROUP_SEPARATOR;
 import static org.openhab.core.types.UnDefType.UNDEF;
 import static pl.grzeslowski.jsupla.protocol.api.ChannelStateField.*;
-import static pl.grzeslowski.jsupla.protocol.api.ChannelType.EV_TYPE_ELECTRICITY_METER_MEASUREMENT_V1;
 import static pl.grzeslowski.jsupla.protocol.api.ProtocolHelpers.*;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.BINDING_ID;
 
@@ -30,6 +29,7 @@ import org.openhab.core.thing.binding.builder.ChannelBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import pl.grzeslowski.jsupla.protocol.api.ChannelStateField;
+import pl.grzeslowski.jsupla.protocol.api.ChannelType;
 import pl.grzeslowski.jsupla.protocol.api.LastConnectionResetCause;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.decoders.ChannelTypeDecoder;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.value.ChannelClassSwitch;
@@ -171,11 +171,8 @@ public class ChannelUtil {
         updateStatus(channelNumber, channelValue, null);
     }
 
-    public void updateExtendedStatus(int channelNumber, byte[] channelValue) {
-        updateStatus(
-                channelNumber,
-                ChannelTypeDecoder.INSTANCE.decode(EV_TYPE_ELECTRICITY_METER_MEASUREMENT_V1, channelValue),
-                null);
+    public void updateExtendedStatus(int channelNumber, ChannelType extendedType, byte[] channelValue) {
+        updateStatus(channelNumber, ChannelTypeDecoder.INSTANCE.decode(extendedType, channelValue), null);
     }
 
     private void updateStatus(int channelNumber, byte[] channelValue, @Nullable Long validityTimeSec) {
