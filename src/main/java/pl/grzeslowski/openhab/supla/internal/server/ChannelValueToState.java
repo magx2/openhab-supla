@@ -203,6 +203,14 @@ public class ChannelValueToState {
                     .orElse(NULL);
             pairs.add(new ChannelState(id, stateValue));
         }
+        {
+            val id = new ChannelUID(groupUid, "totalForwardActiveEnergyBalanced");
+            val stateValue = optionalMeter
+                    .map(ElectricityMeterSimpleValue::totalForwardActiveEnergy)
+                    .map(value -> quantityState(value, KILOWATT_HOUR))
+                    .orElse(NULL);
+            pairs.add(new ChannelState(id, stateValue));
+        }
         return pairs.stream();
     }
 
@@ -300,7 +308,7 @@ public class ChannelValueToState {
         {
             val id = new ChannelUID(groupUid, "voltagePhaseAngle12");
             val stateValue = optionalMeter
-                    .map(ElectricityMeterValue::voltagePhaseAngle12)
+                    .flatMap(ElectricityMeterValue::voltagePhaseAngle12)
                     .map(value -> quantityState(value, DEGREE_ANGLE))
                     .orElse(NULL);
             pairs.add(new ChannelState(id, stateValue));
@@ -308,7 +316,7 @@ public class ChannelValueToState {
         {
             val id = new ChannelUID(groupUid, "voltagePhaseAngle13");
             val stateValue = optionalMeter
-                    .map(ElectricityMeterValue::voltagePhaseAngle13)
+                    .flatMap(ElectricityMeterValue::voltagePhaseAngle13)
                     .map(value -> quantityState(value, DEGREE_ANGLE))
                     .orElse(NULL);
             pairs.add(new ChannelState(id, stateValue));

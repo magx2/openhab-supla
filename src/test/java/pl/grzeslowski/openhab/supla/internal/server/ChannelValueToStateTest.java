@@ -215,8 +215,8 @@ class ChannelValueToStateTest {
                 Optional.of(Currency.getInstance("PLN")),
                 18,
                 19,
-                BigDecimal.valueOf(22),
-                BigDecimal.valueOf(23),
+                Optional.of(BigDecimal.valueOf(22)),
+                Optional.of(BigDecimal.valueOf(23)),
                 Optional.of(new ElectricityMeterValue.PhaseSequence(CLOCKWISE_123, COUNTER_CLOCKWISE_132)),
                 Optional.of(phase(100)),
                 Optional.<ElectricityMeterValue.Phase>empty(),
@@ -285,6 +285,21 @@ class ChannelValueToStateTest {
     }
 
     @Test
+    void shouldMapSimpleElectricityMeterValueToLegacyBalancedChannel() {
+        var converter = new ChannelValueToState(thingUID, mockDeviceChannel(8));
+        var electricityMeterValue = new ElectricityMeterSimpleValue(BigDecimal.valueOf(1871.83), true, true, true);
+
+        List<ChannelState> states = converter.switchOn(electricityMeterValue).toList();
+
+        var groupUid = new ChannelGroupUID(thingUID, "8");
+        var expected = new QuantityType<>(BigDecimal.valueOf(1871.83), KILOWATT_HOUR);
+        assertThat(state(states, new ChannelUID(groupUid, "totalForwardActiveEnergy")))
+                .isEqualTo(expected);
+        assertThat(state(states, new ChannelUID(groupUid, "totalForwardActiveEnergyBalanced")))
+                .isEqualTo(expected);
+    }
+
+    @Test
     void shouldFallbackToBaseCurrencyWhenMeterCurrencyIsMissing() {
         var converter = new ChannelValueToState(thingUID, mockDeviceChannel(8));
         var electricityMeterValue = new ElectricityMeterValue(
@@ -299,8 +314,8 @@ class ChannelValueToStateTest {
                 Optional.<Currency>empty(),
                 0,
                 0,
-                BigDecimal.ZERO,
-                BigDecimal.ZERO,
+                Optional.of(BigDecimal.ZERO),
+                Optional.of(BigDecimal.ZERO),
                 Optional.<ElectricityMeterValue.PhaseSequence>empty(),
                 Optional.<ElectricityMeterValue.Phase>empty(),
                 Optional.<ElectricityMeterValue.Phase>empty(),
