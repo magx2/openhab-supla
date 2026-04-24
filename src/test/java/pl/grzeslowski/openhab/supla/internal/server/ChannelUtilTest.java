@@ -3,6 +3,8 @@ package pl.grzeslowski.openhab.supla.internal.server;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
+import static pl.grzeslowski.jsupla.protocol.api.ChannelType.SUPLA_CHANNELTYPE_ACTIONTRIGGER;
+import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.Channels.ACTION_TRIGGER_ID;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -20,8 +22,13 @@ import org.openhab.core.thing.ChannelGroupUID;
 import org.openhab.core.thing.ChannelUID;
 import org.openhab.core.thing.Thing;
 import org.openhab.core.thing.binding.builder.ThingBuilder;
+import org.openhab.core.thing.type.ChannelKind;
+import org.openhab.core.thing.type.ChannelTypeUID;
 import org.slf4j.Logger;
+import pl.grzeslowski.jsupla.protocol.api.channeltype.value.ActionTrigger;
+import pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants;
 import pl.grzeslowski.openhab.supla.internal.server.handler.trait.ServerDevice;
+import pl.grzeslowski.openhab.supla.internal.server.traits.DeviceChannel;
 import pl.grzeslowski.openhab.supla.internal.server.traits.DeviceChannelValue;
 
 @ExtendWith(MockitoExtension.class)
@@ -132,5 +139,42 @@ class ChannelUtilTest {
         channelUtil.consumeSuplaChannelNewValueResult(newValueResult);
 
         verify(serverDevice).handleRefreshCommand(channelUID);
+    }
+
+    @Test
+    void shouldCreateActionTriggerChannelInsteadOfUnknownChannel() {
+        var thingUid = new org.openhab.core.thing.ThingUID("supla:test:1");
+        when(thing.getUID()).thenReturn(thingUid);
+        when(thingBuilder.build()).thenReturn(thing);
+
+        var actionTriggerChannel = new DeviceChannel(
+                1,
+                false,
+                SUPLA_CHANNELTYPE_ACTIONTRIGGER,
+                java.util.Set.of(),
+                null,
+                java.util.Set.of(),
+                null,
+                new ActionTrigger(ActionTrigger.Capabilities.SHORT_PRESS_x1.toMask()),
+                null,
+                null,
+                0L,
+                java.util.Set.of(),
+                0);
+
+        channelUtil.buildChannels(List.of(actionTriggerChannel));
+
+        @SuppressWarnings("unchecked")
+        var channelsCaptor = org.mockito.ArgumentCaptor.forClass(List.class);
+        verify(thingBuilder).withChannels(channelsCaptor.capture());
+        @SuppressWarnings("unchecked")
+        var channels = (List<Channel>) channelsCaptor.getValue();
+
+        assertThat(channels).singleElement().satisfies(channel -> {
+            assertThat(channel.getUID()).isEqualTo(new ChannelUID(thingUid, "1"));
+            assertThat(channel.getChannelTypeUID())
+                    .isEqualTo(new ChannelTypeUID(SuplaBindingConstants.BINDING_ID, ACTION_TRIGGER_ID));
+            assertThat(channel.getKind()).isEqualTo(ChannelKind.TRIGGER);
+        });
     }
 }
