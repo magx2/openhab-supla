@@ -2,6 +2,7 @@ package pl.grzeslowski.openhab.supla.internal;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
+import static org.openhab.core.library.unit.Units.KILOWATT_HOUR;
 import static org.openhab.core.thing.ThingStatus.OFFLINE;
 import static org.openhab.core.thing.ThingStatus.ONLINE;
 import static org.openhab.core.thing.ThingStatus.UNKNOWN;
@@ -484,5 +485,59 @@ public class MainIT {
                 .untilAsserted(() -> assertThat(deviceCtx.openHabDevice().findThingStatus())
                         .isEqualTo(new ThingStatusInfo(
                                 OFFLINE, COMMUNICATION_ERROR, "@text/supla.offline.channel-disconnected")));
+    }
+
+    @Test
+    @DisplayName("should run tests for Zamel MEW-01")
+    void zamelMew01(
+            @CreateHandler(thingTypeId = SUPLA_SERVER_DEVICE_TYPE_ID) ThingCtx deviceCtx,
+            @CreateHandler(thingTypeId = SUPLA_SERVER_TYPE_ID) BridgeCtx serverCtx,
+            @Port int port,
+            @Email String email,
+            @AuthKey String authKey)
+            throws Exception {
+        var guid = deviceCtx.thing().getUID().getId();
+        log.info(
+                "Testing Zamel MEW-01 with GUID={}, using socket on port={}, email={}, authKey={}",
+                guid,
+                port,
+                email,
+                authKey);
+        serverInitialize(serverCtx, port);
+        deviceInitialize(deviceCtx, serverCtx, email, authKey, guid);
+        try (var device = new ZamelMew01(guid, email, authKey)) {
+            device.initialize("localhost", port);
+            device.register();
+            var registerResult = device.readRegisterDeviceResultA();
+            assertThat(registerResult).isEqualTo(new SuplaRegisterDeviceResultA(3, (short) 100, (short) 10, (short) 1));
+            assertThat(deviceCtx.openHabDevice().findThingStatus())
+                    .isEqualTo(new ThingStatusInfo(
+                            UNKNOWN, CONFIGURATION_PENDING, "@text/supla.offline.waiting-for-registration"));
+
+            device.sendPing();
+            var ping = device.readPing().now();
+            assertThat(ping).isNotNull();
+            await().untilAsserted(() -> assertThat(deviceCtx.openHabDevice().findThingStatus())
+                    .isEqualTo(ThingStatusInfoBuilder.create(ONLINE, NONE).build()));
+
+            device.meterValueUpdated();
+            await().untilAsserted(() ->
+                    assertThat(deviceCtx.openHabDevice().getChannelStates()).hasSize(47));
+
+            await().untilAsserted(() -> assertThat(
+                            deviceCtx.openHabDevice().findChannelState("0", "totalForwardActiveEnergyBalanced"))
+                    .isEqualTo(new QuantityType<>(new BigDecimal("1870.760"), KILOWATT_HOUR)));
+            assertThat(deviceCtx.openHabDevice().findChannelState("0", "totalReverseActiveEnergyBalanced"))
+                    .isEqualTo(UNDEF);
+            assertThat(deviceCtx.openHabDevice().findChannelState("0", "phase-1-totalForwardActiveEnergy"))
+                    .isEqualTo(UNDEF);
+            assertThat(deviceCtx.openHabDevice().findChannelState("0", "phaseSequenceVoltage"))
+                    .isEqualTo(UNDEF);
+        }
+
+        log.info("Waiting for the device to disconnect");
+        await().untilAsserted(() -> assertThat(deviceCtx.openHabDevice().findThingStatus())
+                .isEqualTo(
+                        new ThingStatusInfo(OFFLINE, COMMUNICATION_ERROR, "@text/supla.offline.channel-disconnected")));
     }
 }

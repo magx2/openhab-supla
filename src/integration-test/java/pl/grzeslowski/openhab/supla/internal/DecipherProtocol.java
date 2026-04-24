@@ -155,7 +155,31 @@ public class DecipherProtocol {
                                 // channel count
                                 + "1, "
                                 // channels
-                                + "0, -120, 19, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, -60, -38, 2, 0, 0, 0, 0]}"));
+                                // channel number
+                                + "0, " +
+                                // type
+                                "-120, 19, 0, 0, "
+                                +
+                                // FuncList / ActionTriggerCaps
+                                "0, 0, 0, 0, "
+                                +
+                                // defaults
+                                "0, 0, 0, 0, "
+                                +
+                                // flags
+                                "0, 0, 0, 0, "
+                                // channel value
+                                // typedef struct {
+                                //   char flags;
+                                //   unsigned _supla_int_t total_forward_active_energy;  // * 0.01 kW
+                                // } TElectricityMeter_Value;
+                                //
+                                // flags = EM_VALUE_FLAG_PHASE1_ON & EM_VALUE_FLAG_PHASE2_ON & EM_VALUE_FLAG_PHASE3_ON
+                                + "7, "
+                                // total_forward_active_energy = 187_076 * 0,01 kW = 1_870,76 kW
+                                + "-60, -38, 2, 0, "
+                                // tail
+                                + "0, 0, 0]}"));
     }
 
     private void print(SuplaRegisterDevice register, StringBuilder sb) {
