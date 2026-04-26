@@ -386,6 +386,14 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler
             setProperty("DEVICE_FLAGS", flags);
             logger.debug("Setting device flags: {}", flags);
         }
+        {
+            clearChannelProperties();
+            var channelProperties = buildChannelProperties(registerEntity.channels());
+            channelProperties.forEach((key, value) -> {
+                setProperty(key, value);
+                logger.debug("Setting {}: {}", key, value);
+            });
+        }
 
         afterRegister(registerEntity);
 
@@ -663,10 +671,35 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler
         map.forEach((k, v) -> thing.setProperty(k, v));
     }
 
+    static Map<String, String> buildChannelProperties(List<DeviceChannel> channels) {
+        var properties = new LinkedHashMap<String, String>();
+        channels.forEach(channel -> {
+            properties.put("CHANNEL_FLAGS_" + channel.number(), formatEnums(channel.flags()));
+            var channelFunction = channel.channelFunction();
+            if (channelFunction != null) {
+                properties.put("CHANNEL_FUNCTION_" + channel.number(), channelFunction.name());
+            }
+            properties.put("CHANNEL_FUNCTIONS_" + channel.number(), formatEnums(channel.functions()));
+        });
+        return properties;
+    }
+
+    private static String formatEnums(Collection<? extends Enum<?>> values) {
+        return values.stream().map(Enum::name).collect(joining(", ", "[", "]"));
+    }
+
     private void clearDeviceConfig() {
         // remove all properties with prefix `DEVICE_CONFIG_`
         thing.getProperties().keySet().stream()
                 .filter(key -> key.startsWith(DeviceConfigUtil.PREFIX))
+                .forEach(key -> thing.setProperty(key, null));
+    }
+
+    private void clearChannelProperties() {
+        thing.getProperties().keySet().stream()
+                .filter(key -> key.startsWith("CHANNEL_FLAGS_")
+                        || key.startsWith("CHANNEL_FUNCTION_")
+                        || key.startsWith("CHANNEL_FUNCTIONS_"))
                 .forEach(key -> thing.setProperty(key, null));
     }
 
