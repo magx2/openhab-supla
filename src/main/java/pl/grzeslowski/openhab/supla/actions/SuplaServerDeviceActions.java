@@ -125,7 +125,17 @@ public class SuplaServerDeviceActions implements ThingActions {
             description = "Send SUPLA_CALCFG_CMD_RESET_COUNTERS to a Supla channel")
     public synchronized void resetElectricMeterCounters(String channelUID)
             throws InterruptedException, TimeoutException {
+        var localHandler = thingHandler;
+        if (localHandler == null) {
+            log.warn("Thing handler is null!");
+            return;
+        }
         var parsedChannelUID = parseChannelUID(channelUID);
+        var thingUID = localHandler.getThing().getUID();
+        if (!thingUID.equals(parsedChannelUID.getThingUID())) {
+            throw new IllegalArgumentException(
+                    "Channel UID %s does not belong to thing %s".formatted(parsedChannelUID, thingUID));
+        }
         int channelNumber = ChannelUtil.findSuplaChannelNumber(parsedChannelUID)
                 .map(Short::intValue)
                 .orElseThrow(() -> new IllegalArgumentException("Cannot find channel number from " + parsedChannelUID));
