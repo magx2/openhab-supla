@@ -6,6 +6,8 @@ import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static pl.grzeslowski.jsupla.protocol.api.DeviceFlag.SUPLA_DEVICE_FLAG_CALCFG_ENTER_CFG_MODE;
+import static pl.grzeslowski.jsupla.protocol.api.consts.ProtoConsts.SUPLA_CALCFG_CMD_ENTER_CFG_MODE;
 import static pl.grzeslowski.jsupla.protocol.api.consts.ProtoConsts.SUPLA_CALCFG_CMD_RESET_COUNTERS;
 import static pl.grzeslowski.jsupla.protocol.api.consts.ProtoConsts.SUPLA_CALCFG_RESULT_DONE;
 import static pl.grzeslowski.jsupla.protocol.api.consts.ProtoConsts.SUPLA_CALCFG_RESULT_NOT_SUPPORTED;
@@ -13,6 +15,8 @@ import static pl.grzeslowski.jsupla.protocol.api.consts.ProtoConsts.SUPLA_CALCFG
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.DefaultChannelPromise;
 import io.netty.channel.embedded.EmbeddedChannel;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -27,6 +31,7 @@ import pl.grzeslowski.jsupla.protocol.api.structs.sd.DeviceCalCfgRequest;
 import pl.grzeslowski.jsupla.server.SuplaWriter;
 import pl.grzeslowski.openhab.supla.actions.SuplaServerDeviceActions;
 import pl.grzeslowski.openhab.supla.internal.server.handler.ServerSuplaDeviceHandler;
+import pl.grzeslowski.openhab.supla.internal.server.traits.SuplaDevice;
 
 @ExtendWith(MockitoExtension.class)
 class SuplaServerDeviceActionsTest {
@@ -53,6 +58,17 @@ class SuplaServerDeviceActionsTest {
         org.mockito.Mockito.lenient().when(handler.getWriter()).thenReturn(new AtomicReference<>(writer));
         org.mockito.Mockito.lenient().when(handler.getThing()).thenReturn(thing);
         org.mockito.Mockito.lenient().when(thing.getUID()).thenReturn(new ThingUID("supla:test:1"));
+        org.mockito.Mockito.lenient()
+                .when(handler.getSuplaDevice())
+                .thenReturn(new SuplaDevice(
+                        SuplaDevice.Type.EMAIL,
+                        "guid",
+                        "device",
+                        "soft",
+                        null,
+                        null,
+                        Set.of(SUPLA_DEVICE_FLAG_CALCFG_ENTER_CFG_MODE),
+                        List.of()));
         org.mockito.Mockito.lenient()
                 .when(handler.hasRegisteredElectricityMeterChannel(7))
                 .thenReturn(true);
@@ -135,5 +151,48 @@ class SuplaServerDeviceActionsTest {
         assertThatThrownBy(() -> actions.resetElectricMeterCounters(9))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("Cannot find electricity meter device channel for channel number 9");
+    }
+
+    @Test
+    void shouldSendEnterConfigModeRequest() throws Exception {
+        when(handler.listenForDeviceCalCfgResult(30, SECONDS))
+                .thenReturn(new DeviceCalCfgResult(
+                        0, -1, SUPLA_CALCFG_CMD_ENTER_CFG_MODE, SUPLA_CALCFG_RESULT_DONE, 0L, new byte[0]));
+
+        actions.enterConfigMode();
+
+        var inOrder = inOrder(handler, writer);
+        inOrder.verify(handler).clearDeviceCalCfgResult();
+        inOrder.verify(writer)
+                .write(argThat(proto -> proto instanceof DeviceCalCfgRequest request
+                        && request.senderId() == 0
+                        && request.channelNumber() == -1
+                        && request.command() == SUPLA_CALCFG_CMD_ENTER_CFG_MODE
+                        && request.superUserAuthorized() == 1
+                        && request.dataType() == 0
+                        && request.dataSize() == 0L
+                        && request.data().length == 0));
+    }
+
+    @Test
+    void shouldFailWhenDeviceDoesNotSupportEnteringConfigMode() {
+        when(handler.getSuplaDevice())
+                .thenReturn(new SuplaDevice(
+                        SuplaDevice.Type.EMAIL, "guid", "device", "soft", null, null, Set.of(), List.of()));
+
+        assertThatThrownBy(() -> actions.enterConfigMode())
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Device does not support entering config mode");
+    }
+
+    @Test
+    void shouldFailWhenDeviceRejectsEnterConfigMode() throws Exception {
+        when(handler.listenForDeviceCalCfgResult(30, SECONDS))
+                .thenReturn(new DeviceCalCfgResult(
+                        0, -1, SUPLA_CALCFG_CMD_ENTER_CFG_MODE, SUPLA_CALCFG_RESULT_NOT_SUPPORTED, 0L, new byte[0]));
+
+        assertThatThrownBy(() -> actions.enterConfigMode())
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("Enter config mode did not succeed");
     }
 }

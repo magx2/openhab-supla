@@ -220,6 +220,31 @@ then
 end
 ```
 
+### Enter Device Config Mode
+
+Enter Device Config Mode sends `SUPLA_CALCFG_CMD_ENTER_CFG_MODE` to the registered device as a regular `TSD_DeviceCalCfgRequest`.
+
+Methods:
+
+- `enterConfigMode()`
+
+Notes:
+
+- The binding sends the request with `channelNumber = -1`, matching the native server flow.
+- The action is available only for devices that declared `SUPLA_DEVICE_FLAG_CALCFG_ENTER_CFG_MODE` during registration.
+
+#### Example
+
+```
+rule "Enter device config mode"
+when
+	<TRIGGER>
+then
+	val actions = getActions("supla", "supla:server-device:8e6baab333")
+	actions.enterConfigMode()
+end
+```
+
 ## FAQ 🤔
 
 ### SSL Problem
