@@ -192,6 +192,34 @@ actions.setDeviceConfig("PowerStatusLedConfig:false", "StatusLedConfig:OFF_WHEN_
 end
 ```
 
+### Reset Electricity Meter Counters
+
+Reset Electricity Meter Counters action sends `SUPLA_CALCFG_CMD_RESET_COUNTERS` to the device channel resolved from a channel UID string.
+
+Methods:
+
+- `resetElectricMeterCounters(String channelUID)`
+- `resetElectricMeterCounters(int channelNumber)`
+
+Notes:
+
+- `channelUID` should be a full OpenHAB channel UID string and is mapped to the Supla device channel number with the binding's normal channel-number lookup.
+- `channelNumber` is validated against the device channels already registered by the binding.
+- The resolved `DeviceChannel` must have type `SUPLA_CHANNELTYPE_ELECTRICITY_METER`.
+
+#### Example
+
+```
+rule "Reset meter counters"
+when
+	<TRIGGER>
+then
+	val actions = getActions("supla", "supla:server-device:8e6baab333")
+	actions.resetElectricMeterCounters("supla:server-device:8e6baab333:0#totalForwardActiveEnergy")
+	actions.resetElectricMeterCounters(0)
+end
+```
+
 ## FAQ 🤔
 
 ### SSL Problem

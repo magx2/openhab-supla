@@ -117,6 +117,17 @@ public class ChannelUtil {
         return findState(deviceChannel, deviceChannel.value());
     }
 
+    public boolean hasDeviceChannel(int channelNumber) {
+        return deviceChannels.containsKey(channelNumber);
+    }
+
+    public boolean hasElectricityMeterChannel(int channelNumber) {
+        return Optional.ofNullable(deviceChannels.get(channelNumber))
+                .map(DeviceChannel::type)
+                .filter(pl.grzeslowski.jsupla.protocol.api.ChannelType.SUPLA_CHANNELTYPE_ELECTRICITY_METER::equals)
+                .isPresent();
+    }
+
     public Stream<ChannelValueToState.ChannelState> findState(DeviceChannel deviceChannel, ChannelValue channelValue) {
         val valueSwitch = new ChannelValueToState(invoker.getThing().getUID(), deviceChannel);
         return valueSwitch.switchOn(channelValue);

@@ -42,6 +42,14 @@ public interface ServerDevice extends HandleCommand, StateCache {
 
     String setProperty(String name, @Nullable String value);
 
+    default boolean hasRegisteredDeviceChannel(int channelNumber) {
+        return false;
+    }
+
+    default boolean hasRegisteredElectricityMeterChannel(int channelNumber) {
+        return false;
+    }
+
     public static record ChannelAndPreviousState(
             ChannelUID channelUID, @Nullable State previousState) {}
 }

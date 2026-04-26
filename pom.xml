@@ -4,7 +4,7 @@
 
     <groupId>pl.grzeslowski.openhab</groupId>
     <artifactId>supla</artifactId>
-    <version>4.0.2-SNAPSHOT</version>
+    <version>4.1.0-SNAPSHOT</version>
 
     <scm>
         <connection>scm:git:${project.scm.url}</connection>
@@ -350,7 +350,7 @@ bcpkix-jdk15on-*.jar;lib:=true,\
 bcprov-jdk15on-*.jar;lib:=true,\
 bcutil-jdk15on-*.jar;lib:=true
 -exportcontents: \
-!pl.grzeslowski.supla.openhab.internal.*
+pl.grzeslowski.openhab.supla.actions
 -noimportjava: true
 -sources: false
 -removeheaders: Require-Capability,Provide-Capability
@@ -460,10 +460,10 @@ bcutil-jdk15on-*.jar;lib:=true
                         </includes>
                         <sortPom>
                             <predefinedSortOrder>recommended_2008_06</predefinedSortOrder>
-                            <sortDependencies />
-                            <sortDependencyManagement />
-                            <sortDependencyExclusions />
-                            <sortPlugins />
+                            <sortDependencies/>
+                            <sortDependencyManagement/>
+                            <sortDependencyExclusions/>
+                            <sortPlugins/>
                             <sortProperties>true</sortProperties>
                             <sortExecutions>true</sortExecutions>
                             <nrOfIndentSpace>4</nrOfIndentSpace>
@@ -491,8 +491,8 @@ bcutil-jdk15on-*.jar;lib:=true
                                 <exclude>imgs/**</exclude>
                                 <exclude>.codex</exclude>
                             </excludes>
-                            <trimTrailingWhitespace />
-                            <endWithNewline />
+                            <trimTrailingWhitespace/>
+                            <endWithNewline/>
                             <indent>
                                 <tabs>true</tabs>
                                 <spacesPerTab>4</spacesPerTab>
@@ -513,9 +513,9 @@ bcutil-jdk15on-*.jar;lib:=true
                             <include>src/test/java/**/*.java</include>
                             <include>src/integration-test/java/**/*.java</include>
                         </includes>
-                        <importOrder />
-                        <removeUnusedImports />
-                        <formatAnnotations />
+                        <importOrder/>
+                        <removeUnusedImports/>
+                        <formatAnnotations/>
                         <palantirJavaFormat>
                             <version>2.83.0</version>
                             <style>PALANTIR</style>

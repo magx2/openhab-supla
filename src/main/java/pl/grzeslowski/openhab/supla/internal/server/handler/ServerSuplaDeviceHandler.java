@@ -11,6 +11,7 @@ import static org.openhab.core.thing.ThingStatus.ONLINE;
 import static org.openhab.core.thing.ThingStatusDetail.*;
 import static pl.grzeslowski.jsupla.protocol.api.DeviceFlag.SUPLA_DEVICE_FLAG_SLEEP_MODE_ENABLED;
 import static pl.grzeslowski.jsupla.protocol.api.ResultCode.SUPLA_RESULTCODE_TRUE;
+import static pl.grzeslowski.jsupla.protocol.api.consts.ProtoConsts.SUPLA_CALCFG_RESULT_DONE;
 import static pl.grzeslowski.jsupla.protocol.api.consts.ProtoConsts.SUPLA_CONFIG_TYPE_DEFAULT;
 import static pl.grzeslowski.jsupla.protocol.api.consts.ProtoConsts.SUPLA_PROTO_VERSION_MIN;
 import static pl.grzeslowski.openhab.supla.internal.GuidLogger.attachGuid;
@@ -69,11 +70,11 @@ import pl.grzeslowski.jsupla.protocol.api.structs.sdc.UserLocalTimeResult;
 import pl.grzeslowski.jsupla.protocol.api.types.ToServerProto;
 import pl.grzeslowski.jsupla.server.MessageHandler;
 import pl.grzeslowski.jsupla.server.SuplaWriter;
+import pl.grzeslowski.openhab.supla.actions.SuplaServerDeviceActions;
 import pl.grzeslowski.openhab.supla.internal.GuidLogger.GuidLogged;
 import pl.grzeslowski.openhab.supla.internal.handler.InitializationException;
 import pl.grzeslowski.openhab.supla.internal.handler.OfflineInitializationException;
 import pl.grzeslowski.openhab.supla.internal.handler.SuplaDeviceHandler;
-import pl.grzeslowski.openhab.supla.internal.server.SuplaServerDeviceActions;
 import pl.grzeslowski.openhab.supla.internal.server.cache.InMemoryStateCache;
 import pl.grzeslowski.openhab.supla.internal.server.cache.StateCache;
 import pl.grzeslowski.openhab.supla.internal.server.device_config.DeviceConfigResult;
@@ -132,6 +133,7 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler
     private final AtomicReference<@Nullable SuplaWriter> writer = new AtomicReference<>();
 
     private final AtomicReference<@Nullable SetDeviceConfigResult> setDeviceConfigResult = new AtomicReference<>();
+    private final AtomicReference<@Nullable DeviceCalCfgResult> deviceCalCfgResult = new AtomicReference<>();
 
     @Delegate(types = StateCache.class)
     private final StateCache stateCache = new InMemoryStateCache(logger);
@@ -291,6 +293,7 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler
                 case SubdeviceDetails value -> consumeSubDeviceDetails(value);
                 case SuplaChannelNewValueResult value -> consumeSuplaChannelNewValueResult(value);
                 case SetDeviceConfigResult value -> consumeSetDeviceConfigResult(value);
+                case DeviceCalCfgResult value -> consumeDeviceCalCfgResult(value);
                 case SetDeviceConfig value -> consumeSetDeviceConfig(value);
                 case SetChannelConfigResult value -> consumeSetChannelConfigResult(value);
                 case GetChannelConfigRequest value -> consumeGetChannelConfigRequest(value, writer);
@@ -578,6 +581,18 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler
         }
     }
 
+    public void consumeDeviceCalCfgResult(DeviceCalCfgResult value) {
+        if (value.result() != SUPLA_CALCFG_RESULT_DONE) {
+            logger.warn("Did not succeed ({}) with device calcfg command. result={}", value.result(), value);
+        } else {
+            logger.debug("Finished device calcfg command. result={}", value);
+        }
+        var previous = deviceCalCfgResult.getAndSet(value);
+        if (previous != null) {
+            logger.warn("Previous deviceCalCfgResult was not null. Wierd thing might happen! previous={}", previous);
+        }
+    }
+
     public synchronized SetDeviceConfigResult listenForSetDeviceConfigResult(long maxTime, TimeUnit timeUnit)
             throws InterruptedException, TimeoutException {
         var maxMillis = timeUnit.toMillis(maxTime);
@@ -598,6 +613,29 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler
             throw new TimeoutException("Did not get SetDeviceConfigResult in " + Duration.ofMillis(maxMillis));
         }
         setDeviceConfigResult.set(null);
+        return result;
+    }
+
+    public synchronized DeviceCalCfgResult listenForDeviceCalCfgResult(long maxTime, TimeUnit timeUnit)
+            throws InterruptedException, TimeoutException {
+        var maxMillis = timeUnit.toMillis(maxTime);
+        var started = System.currentTimeMillis();
+        var sleep = Duration.ofSeconds(1L);
+        DeviceCalCfgResult result;
+        do {
+            result = deviceCalCfgResult.get();
+            if (result == null) {
+                var now = System.currentTimeMillis();
+                if (now > started + maxMillis) {
+                    break;
+                }
+                Thread.sleep(sleep.toMillis());
+            }
+        } while (result == null);
+        if (result == null) {
+            throw new TimeoutException("Did not get DeviceCalCfgResult in " + Duration.ofMillis(maxMillis));
+        }
+        deviceCalCfgResult.set(null);
         return result;
     }
 
