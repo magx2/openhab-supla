@@ -3,6 +3,7 @@ package pl.grzeslowski.openhab.supla.internal.server;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static pl.grzeslowski.jsupla.protocol.api.consts.ProtoConsts.SUPLA_CALCFG_CMD_RESET_COUNTERS;
@@ -68,7 +69,9 @@ class SuplaServerDeviceActionsTest {
 
         actions.resetElectricMeterCounters("supla:test:1:7#power");
 
-        verify(writer)
+        var inOrder = inOrder(handler, writer);
+        inOrder.verify(handler).clearDeviceCalCfgResult();
+        inOrder.verify(writer)
                 .write(argThat(proto -> proto instanceof DeviceCalCfgRequest request
                         && request.senderId() == 0
                         && request.channelNumber() == 7

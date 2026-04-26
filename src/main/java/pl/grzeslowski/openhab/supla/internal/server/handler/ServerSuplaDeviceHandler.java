@@ -601,6 +601,10 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler
         }
     }
 
+    public void clearDeviceCalCfgResult() {
+        deviceCalCfgResult.set(null);
+    }
+
     public synchronized SetDeviceConfigResult listenForSetDeviceConfigResult(long maxTime, TimeUnit timeUnit)
             throws InterruptedException, TimeoutException {
         var maxMillis = timeUnit.toMillis(maxTime);

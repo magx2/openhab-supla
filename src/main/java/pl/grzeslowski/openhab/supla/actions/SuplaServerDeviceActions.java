@@ -164,6 +164,7 @@ public class SuplaServerDeviceActions implements ThingActions {
 
         var message = new DeviceCalCfgRequest(
                 0, channelNumber, SUPLA_CALCFG_CMD_RESET_COUNTERS, SUPER_USER_AUTHORIZED, 0, 0L, EMPTY_DATA);
+        localHandler.clearDeviceCalCfgResult();
         writer.write(message).await(30, SECONDS);
 
         var result = localHandler.listenForDeviceCalCfgResult(30, SECONDS);
