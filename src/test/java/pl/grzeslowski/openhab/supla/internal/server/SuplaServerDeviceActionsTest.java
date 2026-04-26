@@ -19,6 +19,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.openhab.core.thing.Thing;
+import org.openhab.core.thing.ThingUID;
 import pl.grzeslowski.jsupla.protocol.api.structs.ds.DeviceCalCfgResult;
 import pl.grzeslowski.jsupla.protocol.api.structs.sd.DeviceCalCfgRequest;
 import pl.grzeslowski.jsupla.server.SuplaWriter;
@@ -33,6 +35,9 @@ class SuplaServerDeviceActionsTest {
     @Mock
     private SuplaWriter writer;
 
+    @Mock
+    private Thing thing;
+
     @InjectMocks
     private SuplaServerDeviceActions actions;
 
@@ -45,6 +50,8 @@ class SuplaServerDeviceActionsTest {
 
         actions.setThingHandler(handler);
         org.mockito.Mockito.lenient().when(handler.getWriter()).thenReturn(new AtomicReference<>(writer));
+        org.mockito.Mockito.lenient().when(handler.getThing()).thenReturn(thing);
+        org.mockito.Mockito.lenient().when(thing.getUID()).thenReturn(new ThingUID("supla:test:1"));
         org.mockito.Mockito.lenient()
                 .when(handler.hasRegisteredElectricityMeterChannel(7))
                 .thenReturn(true);
@@ -88,6 +95,13 @@ class SuplaServerDeviceActionsTest {
         assertThatThrownBy(() -> actions.resetElectricMeterCounters("supla:test:1:not-a-channel"))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("Cannot find channel number from");
+    }
+
+    @Test
+    void shouldFailWhenChannelUidBelongsToDifferentThing() {
+        assertThatThrownBy(() -> actions.resetElectricMeterCounters("supla:test:2:7#power"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("does not belong to thing");
     }
 
     @Test
