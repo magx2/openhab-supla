@@ -21,6 +21,7 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
+import org.openhab.core.automation.annotation.ActionInput;
 import org.openhab.core.automation.annotation.RuleAction;
 import org.openhab.core.thing.ChannelUID;
 import org.openhab.core.thing.binding.ThingActions;
@@ -62,13 +63,29 @@ public class SuplaServerDeviceActions implements ThingActions {
         this.thingHandler = suplaHandler;
     }
 
-    @RuleAction(label = "Device Config Config", description = "Set device config")
-    public void setDeviceConfig(String... deviceConfigs) throws InterruptedException, TimeoutException {
+    @RuleAction(
+            label = "@text/action.set-device-config.label",
+            description = "@text/action.set-device-config.description")
+    public void setDeviceConfig(
+            @ActionInput(
+                            name = "deviceConfigs",
+                            label = "@text/action.input.device-configs.label",
+                            description = "@text/action.input.device-configs.description")
+                    String... deviceConfigs)
+            throws InterruptedException, TimeoutException {
         setDeviceConfig(Arrays.asList(deviceConfigs));
     }
 
-    @RuleAction(label = "Device Config Config", description = "Set device config")
-    public void setDeviceConfig(Collection<String> configs) throws InterruptedException, TimeoutException {
+    @RuleAction(
+            label = "@text/action.set-device-config.label",
+            description = "@text/action.set-device-config.description")
+    public void setDeviceConfig(
+            @ActionInput(
+                            name = "configs",
+                            label = "@text/action.input.device-configs.label",
+                            description = "@text/action.input.device-configs.description")
+                    Collection<String> configs)
+            throws InterruptedException, TimeoutException {
         if (configs.isEmpty()) {
             throw new IllegalArgumentException("You need to pass configs!");
         }
@@ -123,9 +140,14 @@ public class SuplaServerDeviceActions implements ThingActions {
     }
 
     @RuleAction(
-            label = "Reset Electricity Meter Counters",
-            description = "Send SUPLA_CALCFG_CMD_RESET_COUNTERS to a Supla channel")
-    public synchronized void resetElectricMeterCounters(String channelUID)
+            label = "@text/action.reset-electric-meter-counters.label",
+            description = "@text/action.reset-electric-meter-counters.channel-uid.description")
+    public synchronized void resetElectricMeterCounters(
+            @ActionInput(
+                            name = "channelUID",
+                            label = "@text/action.input.channel-uid.label",
+                            description = "@text/action.input.channel-uid.description")
+                    String channelUID)
             throws InterruptedException, TimeoutException {
         var localHandler = thingHandler;
         if (localHandler == null) {
@@ -145,9 +167,14 @@ public class SuplaServerDeviceActions implements ThingActions {
     }
 
     @RuleAction(
-            label = "Reset Electricity Meter Counters",
-            description = "Send SUPLA_CALCFG_CMD_RESET_COUNTERS to a Supla channel number")
-    public synchronized void resetElectricMeterCounters(int channelNumber)
+            label = "@text/action.reset-electric-meter-counters.label",
+            description = "@text/action.reset-electric-meter-counters.channel-number.description")
+    public synchronized void resetElectricMeterCounters(
+            @ActionInput(
+                            name = "channelNumber",
+                            label = "@text/action.input.channel-number.label",
+                            description = "@text/action.input.channel-number.description")
+                    int channelNumber)
             throws InterruptedException, TimeoutException {
         var localHandler = thingHandler;
         if (localHandler == null) {
@@ -185,8 +212,8 @@ public class SuplaServerDeviceActions implements ThingActions {
     }
 
     @RuleAction(
-            label = "Enter Device Config Mode",
-            description = "Send SUPLA_CALCFG_CMD_ENTER_CFG_MODE to a Supla device")
+            label = "@text/action.enter-config-mode.label",
+            description = "@text/action.enter-config-mode.description")
     public synchronized void enterConfigMode() throws InterruptedException, TimeoutException {
         var localHandler = thingHandler;
         if (localHandler == null) {
