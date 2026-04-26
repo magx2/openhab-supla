@@ -209,4 +209,14 @@ public class SubDeviceHandler extends SuplaDeviceHandler implements ServerDevice
     public String setProperty(String name, @Nullable String value) {
         return thing.setProperty(name, value);
     }
+
+    @Override
+    public boolean hasRegisteredDeviceChannel(int channelNumber) {
+        return channelUtil.hasDeviceChannel(channelNumber);
+    }
+
+    @Override
+    public boolean hasRegisteredElectricityMeterChannel(int channelNumber) {
+        return channelUtil.hasElectricityMeterChannel(channelNumber);
+    }
 }

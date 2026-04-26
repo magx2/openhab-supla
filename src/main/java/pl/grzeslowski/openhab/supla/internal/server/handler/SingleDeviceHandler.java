@@ -114,4 +114,14 @@ public class SingleDeviceHandler extends ServerSuplaDeviceHandler {
         channelUtil.dispose();
         super.dispose();
     }
+
+    @Override
+    public boolean hasRegisteredDeviceChannel(int channelNumber) {
+        return channelUtil.hasDeviceChannel(channelNumber);
+    }
+
+    @Override
+    public boolean hasRegisteredElectricityMeterChannel(int channelNumber) {
+        return channelUtil.hasElectricityMeterChannel(channelNumber);
+    }
 }
