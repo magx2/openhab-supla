@@ -1,6 +1,7 @@
 package pl.grzeslowski.openhab.supla.internal.server;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.inOrder;
@@ -237,14 +238,22 @@ class SuplaServerDeviceActionsTest {
 
     @Test
     void shouldSendCheckFirmwareUpdateRequest() throws Exception {
-        actions.checkFirmwareUpdate();
+        when(handler.listenForDeviceCalCfgResult(30, SECONDS))
+                .thenReturn(new DeviceCalCfgResult(
+                        0, -1, SUPLA_CALCFG_CMD_CHECK_FIRMWARE_UPDATE, SUPLA_CALCFG_RESULT_DONE, 0L, new byte[0]));
+        when(handler.listenForOtaCheckResult(30, SECONDS)).thenReturn(ServerSuplaDeviceHandler.OtaStatus.AVAILABLE);
+
+        assertThat(actions.checkFirmwareUpdate()).isEqualTo("AVAILABLE");
 
         var inOrder = inOrder(handler, writer);
+        inOrder.verify(handler).clearDeviceCalCfgResult();
         inOrder.verify(handler).markOtaCheckPending();
         inOrder.verify(writer)
                 .write(argThat(proto -> proto instanceof DeviceCalCfgRequest request
                         && request.channelNumber() == -1
                         && request.command() == SUPLA_CALCFG_CMD_CHECK_FIRMWARE_UPDATE));
+        inOrder.verify(handler).listenForDeviceCalCfgResult(30, SECONDS);
+        inOrder.verify(handler).listenForOtaCheckResult(30, SECONDS);
     }
 
     @Test

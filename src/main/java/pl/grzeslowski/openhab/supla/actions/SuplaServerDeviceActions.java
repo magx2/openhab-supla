@@ -277,22 +277,45 @@ public class SuplaServerDeviceActions implements ThingActions {
     @RuleAction(
             label = "@text/action.check-firmware-update.label",
             description = "@text/action.check-firmware-update.description")
-    public synchronized String checkFirmwareUpdate() throws InterruptedException {
+    public synchronized String checkFirmwareUpdate() throws InterruptedException, TimeoutException {
         var localHandler = requireOtaReadyHandler();
-        localHandler.markOtaCheckPending();
-
         var writer = localHandler.getWriter().get();
-        requireNonNull(writer, "There is no socket writer!")
-                .write(new DeviceCalCfgRequest(
-                        SENDER_ID,
-                        NOT_BOUND_TO_CHANNEL,
-                        SUPLA_CALCFG_CMD_CHECK_FIRMWARE_UPDATE,
-                        SUPER_USER_AUTHORIZED,
-                        NO_DATA_TYPE,
-                        EMPTY_DATA.length,
-                        EMPTY_DATA))
-                .await(30, SECONDS);
-        return "ACCEPTED";
+        if (writer == null) {
+            throw new IllegalStateException("There is no socket writer!");
+        }
+
+        var message = new DeviceCalCfgRequest(
+                SENDER_ID,
+                NOT_BOUND_TO_CHANNEL,
+                SUPLA_CALCFG_CMD_CHECK_FIRMWARE_UPDATE,
+                SUPER_USER_AUTHORIZED,
+                NO_DATA_TYPE,
+                EMPTY_DATA.length,
+                EMPTY_DATA);
+
+        localHandler.clearDeviceCalCfgResult();
+        localHandler.markOtaCheckPending();
+        writer.write(message).await(30, SECONDS);
+
+        var result = localHandler.listenForDeviceCalCfgResult(30, SECONDS);
+        if (result.channelNumber() != NOT_BOUND_TO_CHANNEL) {
+            localHandler.markOtaCheckError();
+            throw new RuntimeException(
+                    "Check firmware update returned a different channel number! request=%s, result=%s"
+                            .formatted(message, result));
+        }
+        if (result.command() != SUPLA_CALCFG_CMD_CHECK_FIRMWARE_UPDATE) {
+            localHandler.markOtaCheckError();
+            throw new RuntimeException("Check firmware update returned a different command! request=%s, result=%s"
+                    .formatted(message, result));
+        }
+        if (result.result() != SUPLA_CALCFG_RESULT_DONE) {
+            localHandler.markOtaCheckError();
+            throw new RuntimeException(
+                    "Check firmware update did not succeed! request=%s, result=%s".formatted(message, result));
+        }
+
+        return localHandler.listenForOtaCheckResult(30, SECONDS).name();
     }
 
     @RuleAction(
@@ -399,7 +422,8 @@ public class SuplaServerDeviceActions implements ThingActions {
         ((SuplaServerDeviceActions) requireNonNull(actions)).enterConfigMode();
     }
 
-    public static String checkFirmwareUpdate(@Nullable ThingActions actions) throws InterruptedException {
+    public static String checkFirmwareUpdate(@Nullable ThingActions actions)
+            throws InterruptedException, TimeoutException {
         return ((SuplaServerDeviceActions) requireNonNull(actions)).checkFirmwareUpdate();
     }
 

@@ -143,6 +143,7 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler
     private final AtomicReference<@Nullable SetDeviceConfigResult> setDeviceConfigResult = new AtomicReference<>();
     private final AtomicReference<@Nullable DeviceCalCfgResult> deviceCalCfgResult = new AtomicReference<>();
     private final AtomicReference<@Nullable Integer> pendingOtaCommand = new AtomicReference<>();
+    private final AtomicReference<@Nullable OtaStatus> otaCheckResult = new AtomicReference<>();
 
     @Delegate(types = StateCache.class)
     private final StateCache stateCache = new InMemoryStateCache(logger);
@@ -611,9 +612,14 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler
     }
 
     public void consumeDeviceCalCfgResult(DeviceCalCfgResult value) {
-        if (value.command() == SUPLA_CALCFG_CMD_CHECK_FIRMWARE_UPDATE) {
+        if (value.command() == SUPLA_CALCFG_CMD_CHECK_FIRMWARE_UPDATE && isAsyncFirmwareCheckResult(value)) {
             consumeFirmwareCheckResult(value);
             return;
+        }
+        if (value.command() == SUPLA_CALCFG_CMD_CHECK_FIRMWARE_UPDATE
+                && pendingOtaCommand.get() != null
+                && value.result() != SUPLA_CALCFG_RESULT_DONE) {
+            markOtaCheckError();
         }
         if (value.result() != SUPLA_CALCFG_RESULT_DONE) {
             logger.warn("Did not succeed ({}) with device calcfg command. result={}", value.result(), value);
@@ -638,6 +644,7 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler
 
     public void markOtaCheckPending() {
         pendingOtaCommand.set(SUPLA_CALCFG_CMD_CHECK_FIRMWARE_UPDATE);
+        otaCheckResult.set(null);
         updateOtaState(OtaStatus.CHECKING, null, null, null);
     }
 
@@ -650,7 +657,14 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler
         updateOtaState(OtaStatus.UPDATE_TRIGGERED, null, null, now());
     }
 
+    public void markOtaCheckError() {
+        otaCheckResult.set(OtaStatus.ERROR);
+        pendingOtaCommand.set(null);
+        updateOtaState(OtaStatus.ERROR, null, null, now());
+    }
+
     public void clearOtaState() {
+        otaCheckResult.set(null);
         pendingOtaCommand.set(null);
         setProperty(OTA_STATUS_PROPERTY, null);
         setProperty(OTA_VERSION_AVAILABLE_PROPERTY, null);
@@ -704,10 +718,34 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler
         return result;
     }
 
+    public synchronized OtaStatus listenForOtaCheckResult(long maxTime, TimeUnit timeUnit)
+            throws InterruptedException, TimeoutException {
+        var maxMillis = timeUnit.toMillis(maxTime);
+        var started = System.currentTimeMillis();
+        var sleep = Duration.ofSeconds(1L);
+        OtaStatus result;
+        do {
+            result = otaCheckResult.get();
+            if (result == null) {
+                var now = System.currentTimeMillis();
+                if (now > started + maxMillis) {
+                    break;
+                }
+                Thread.sleep(sleep.toMillis());
+            }
+        } while (result == null);
+        if (result == null) {
+            throw new TimeoutException("Did not get OtaCheckResult in " + Duration.ofMillis(maxMillis));
+        }
+        otaCheckResult.set(null);
+        return result;
+    }
+
     private void consumeFirmwareCheckResult(DeviceCalCfgResult value) {
         try {
             if (value.result() != SUPLA_CALCFG_RESULT_DONE) {
                 logger.warn("Firmware update check failed before payload parsing. result={}", value);
+                otaCheckResult.set(OtaStatus.ERROR);
                 updateOtaState(OtaStatus.ERROR, null, null, now());
                 return;
             }
@@ -723,13 +761,19 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler
                             yield OtaStatus.ERROR;
                         }
                     };
+            otaCheckResult.set(status);
             updateOtaState(status, parseString(payload.softVer()), parseString(payload.changelogUrl()), now());
         } catch (RuntimeException ex) {
             logger.warn("Could not decode firmware check result {}", value, ex);
+            otaCheckResult.set(OtaStatus.ERROR);
             updateOtaState(OtaStatus.ERROR, null, null, now());
         } finally {
             pendingOtaCommand.set(null);
         }
+    }
+
+    private static boolean isAsyncFirmwareCheckResult(DeviceCalCfgResult value) {
+        return value.dataSize() >= FirmwareCheckResult.SIZE && value.data().length >= FirmwareCheckResult.SIZE;
     }
 
     private static FirmwareCheckResult decodeFirmwareCheckResult(DeviceCalCfgResult value) {
