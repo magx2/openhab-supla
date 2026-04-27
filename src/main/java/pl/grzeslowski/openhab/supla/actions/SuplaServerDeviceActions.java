@@ -4,6 +4,7 @@ import static java.lang.System.arraycopy;
 import static java.util.Objects.requireNonNull;
 import static java.util.Objects.requireNonNullElse;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static pl.grzeslowski.jsupla.protocol.api.CalCfgCommand.*;
 import static pl.grzeslowski.jsupla.protocol.api.CalCfgResult.SUPLA_CALCFG_RESULT_DONE;
 import static pl.grzeslowski.jsupla.protocol.api.DeviceFlag.SUPLA_DEVICE_FLAG_AUTOMATIC_FIRMWARE_UPDATE_SUPPORTED;
@@ -30,6 +31,7 @@ import org.openhab.core.thing.binding.ThingActionsScope;
 import org.openhab.core.thing.binding.ThingHandler;
 import pl.grzeslowski.jsupla.protocol.api.CalCfgCommand;
 import pl.grzeslowski.jsupla.protocol.api.DeviceConfigField;
+import pl.grzeslowski.jsupla.protocol.api.structs.ds.DeviceCalCfgResult;
 import pl.grzeslowski.jsupla.protocol.api.structs.sd.DeviceCalCfgRequest;
 import pl.grzeslowski.jsupla.protocol.api.structs.sd.SetDeviceConfig;
 import pl.grzeslowski.openhab.supla.internal.server.ChannelUtil;
@@ -296,9 +298,11 @@ public class SuplaServerDeviceActions implements ThingActions {
         localHandler.clearDeviceCalCfgResult();
         localHandler.markOtaCheckPending();
         var timeout = localHandler.getConfiguration().getCheckFirmwareUpdateActionTimeout();
+        var timeoutMillis = timeout.toMillis();
+        var checkFirmwareUpdateStart = System.nanoTime();
         try {
             var future = writer.write(message);
-            future.await(timeout.toMillis(), MILLISECONDS);
+            future.await(timeoutMillis, MILLISECONDS);
             if (!future.isSuccess()) {
                 throw new RuntimeException("Check firmware update dispatch failed! request=%s, cause=%s"
                         .formatted(message, future.cause()));
@@ -308,7 +312,13 @@ public class SuplaServerDeviceActions implements ThingActions {
             throw e;
         }
 
-        var result = localHandler.listenForDeviceCalCfgResult(timeout.toMillis(), MILLISECONDS);
+        DeviceCalCfgResult result;
+        try {
+            result = localHandler.listenForDeviceCalCfgResult(timeoutMillis, MILLISECONDS);
+        } catch (InterruptedException | TimeoutException | RuntimeException e) {
+            localHandler.markOtaCheckError();
+            throw e;
+        }
         if (result.channelNumber() != NOT_BOUND_TO_CHANNEL) {
             localHandler.markOtaCheckError();
             throw new RuntimeException(
@@ -326,9 +336,21 @@ public class SuplaServerDeviceActions implements ThingActions {
                     "Check firmware update did not succeed! request=%s, result=%s".formatted(message, result));
         }
 
-        return localHandler
-                .listenForOtaCheckResult(timeout.toMillis(), MILLISECONDS)
-                .name();
+        var checkFirmwareUpdateElapsed = System.nanoTime() - checkFirmwareUpdateStart;
+        var remainingTimeoutMillis =
+                Math.max(0L, timeoutMillis - MILLISECONDS.convert(checkFirmwareUpdateElapsed, NANOSECONDS));
+        if (remainingTimeoutMillis <= 0) {
+            localHandler.markOtaCheckError();
+            throw new TimeoutException("Check firmware update timeout budget exhausted before OTA result wait");
+        }
+        try {
+            return localHandler
+                    .listenForOtaCheckResult(remainingTimeoutMillis, MILLISECONDS)
+                    .name();
+        } catch (InterruptedException | TimeoutException | RuntimeException e) {
+            localHandler.markOtaCheckError();
+            throw e;
+        }
     }
 
     @RuleAction(
