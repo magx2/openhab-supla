@@ -339,6 +339,10 @@ public class SuplaServerDeviceActions implements ThingActions {
         var checkFirmwareUpdateElapsed = System.nanoTime() - checkFirmwareUpdateStart;
         var remainingTimeoutMillis =
                 Math.max(0L, timeoutMillis - MILLISECONDS.convert(checkFirmwareUpdateElapsed, NANOSECONDS));
+        if (remainingTimeoutMillis <= 0) {
+            localHandler.markOtaCheckError();
+            throw new TimeoutException("Check firmware update timeout budget exhausted before OTA result wait");
+        }
         try {
             return localHandler
                     .listenForOtaCheckResult(remainingTimeoutMillis, MILLISECONDS)

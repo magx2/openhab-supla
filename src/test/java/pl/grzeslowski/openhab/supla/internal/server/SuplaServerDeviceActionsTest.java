@@ -315,6 +315,25 @@ class SuplaServerDeviceActionsTest {
     }
 
     @Test
+    void shouldFailImmediatelyWhenNoTimeoutBudgetRemainsForOtaCheck() throws Exception {
+        configuration.setCheckFirmwareUpdateActionTimeout("PT0S");
+        when(handler.listenForDeviceCalCfgResult(0, MILLISECONDS))
+                .thenReturn(new DeviceCalCfgResult(
+                        0,
+                        -1,
+                        SUPLA_CALCFG_CMD_CHECK_FIRMWARE_UPDATE.getValue(),
+                        SUPLA_CALCFG_RESULT_DONE.getValue(),
+                        0L,
+                        new byte[0]));
+
+        assertThatThrownBy(() -> actions.checkFirmwareUpdate())
+                .isInstanceOf(TimeoutException.class)
+                .hasMessageContaining("timeout budget exhausted");
+        verify(handler, org.mockito.Mockito.never()).listenForOtaCheckResult(0, MILLISECONDS);
+        verify(handler).markOtaCheckError();
+    }
+
+    @Test
     void shouldMarkOtaCheckErrorWhenCheckFirmwareUpdateDispatchFails() {
         when(writer.write(argThat(proto -> proto instanceof DeviceCalCfgRequest)))
                 .thenThrow(new RuntimeException("dispatch failed"));
