@@ -17,7 +17,13 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
           cache: maven
+          server-id: github
+          server-username: GITHUB_USERNAME
+          server-password: GITHUB_TOKEN
       - name: Spotless
+        env:
+          GITHUB_USERNAME: x-access-token
+          GITHUB_TOKEN: ${{ secrets.PAT }}
         run: |
           mvn -B -ntp spotless:apply
           
@@ -47,7 +53,13 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
           cache: maven
+          server-id: github
+          server-username: GITHUB_USERNAME
+          server-password: GITHUB_TOKEN
       - name: Build with Maven
+        env:
+          GITHUB_USERNAME: x-access-token
+          GITHUB_TOKEN: ${{ secrets.PAT }}
         run: mvn -B -ntp spotless:check verify --file pom.xml
 
       - name: Upload test reports
@@ -61,4 +73,7 @@ jobs:
 
       # Optional: Uploads the full dependency graph to GitHub to improve the quality of Dependabot alerts this repository can receive
       - name: Maven Dependency Tree Dependency Submission
+        env:
+          GITHUB_USERNAME: x-access-token
+          GITHUB_TOKEN: ${{ secrets.PAT }}
         uses: advanced-security/maven-dependency-submission-action@v4.0.2
