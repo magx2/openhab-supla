@@ -278,17 +278,17 @@ class SuplaServerDeviceActionsTest {
 
         var inOrder = inOrder(handler, writer);
         inOrder.verify(handler).clearDeviceCalCfgResult();
+        inOrder.verify(handler).markOtaCheckPending();
         inOrder.verify(writer)
                 .write(argThat(proto -> proto instanceof DeviceCalCfgRequest request
                         && request.channelNumber() == -1
                         && request.command() == SUPLA_CALCFG_CMD_CHECK_FIRMWARE_UPDATE.getValue()));
-        inOrder.verify(handler).markOtaCheckPending();
         inOrder.verify(handler).listenForDeviceCalCfgResult(30_000, MILLISECONDS);
         inOrder.verify(handler).listenForOtaCheckResult(30_000, MILLISECONDS);
     }
 
     @Test
-    void shouldNotMarkOtaCheckPendingWhenCheckFirmwareUpdateDispatchFails() {
+    void shouldMarkOtaCheckErrorWhenCheckFirmwareUpdateDispatchFails() {
         when(writer.write(argThat(proto -> proto instanceof DeviceCalCfgRequest)))
                 .thenThrow(new RuntimeException("dispatch failed"));
 
@@ -296,7 +296,22 @@ class SuplaServerDeviceActionsTest {
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("dispatch failed");
         verify(handler).clearDeviceCalCfgResult();
-        verify(handler, org.mockito.Mockito.never()).markOtaCheckPending();
+        verify(handler).markOtaCheckPending();
+        verify(handler).markOtaCheckError();
+    }
+
+    @Test
+    void shouldFailWhenCheckFirmwareUpdateDispatchFutureIsFailed() {
+        var channel = new EmbeddedChannel();
+        var failedFuture = new DefaultChannelPromise(channel).setFailure(new IllegalStateException("write failed"));
+        when(writer.write(argThat(proto -> proto instanceof DeviceCalCfgRequest)))
+                .thenReturn(failedFuture);
+
+        assertThatThrownBy(() -> actions.checkFirmwareUpdate())
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("dispatch failed");
+        verify(handler).markOtaCheckPending();
+        verify(handler).markOtaCheckError();
     }
 
     @Test
