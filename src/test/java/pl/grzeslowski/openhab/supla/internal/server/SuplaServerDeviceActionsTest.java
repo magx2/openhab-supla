@@ -1,6 +1,6 @@
 package pl.grzeslowski.openhab.supla.internal.server;
 
-import static java.util.concurrent.TimeUnit.SECONDS;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -34,6 +34,7 @@ import pl.grzeslowski.jsupla.protocol.api.structs.sd.DeviceCalCfgRequest;
 import pl.grzeslowski.jsupla.server.SuplaWriter;
 import pl.grzeslowski.openhab.supla.actions.SuplaServerDeviceActions;
 import pl.grzeslowski.openhab.supla.internal.server.handler.ServerSuplaDeviceHandler;
+import pl.grzeslowski.openhab.supla.internal.server.oh_config.ServerDeviceHandlerConfiguration;
 import pl.grzeslowski.openhab.supla.internal.server.traits.SuplaDevice;
 
 @ExtendWith(MockitoExtension.class)
@@ -50,16 +51,19 @@ class SuplaServerDeviceActionsTest {
     @InjectMocks
     private SuplaServerDeviceActions actions;
 
+    private ServerDeviceHandlerConfiguration configuration;
     private ChannelFuture successfulFuture;
 
     @BeforeEach
     void setUp() {
         var channel = new EmbeddedChannel();
         successfulFuture = new DefaultChannelPromise(channel).setSuccess(null);
+        configuration = new ServerDeviceHandlerConfiguration();
 
         actions.setThingHandler(handler);
         org.mockito.Mockito.lenient().when(handler.getWriter()).thenReturn(new AtomicReference<>(writer));
         org.mockito.Mockito.lenient().when(handler.getThing()).thenReturn(thing);
+        org.mockito.Mockito.lenient().when(handler.getConfiguration()).thenReturn(configuration);
         org.mockito.Mockito.lenient().when(thing.getUID()).thenReturn(new ThingUID("supla:test:1"));
         org.mockito.Mockito.lenient().when(thing.getStatus()).thenReturn(ONLINE);
         org.mockito.Mockito.lenient()
@@ -88,7 +92,7 @@ class SuplaServerDeviceActionsTest {
 
     @Test
     void shouldSendResetCountersRequest() throws Exception {
-        when(handler.listenForDeviceCalCfgResult(30, SECONDS))
+        when(handler.listenForDeviceCalCfgResult(30_000, MILLISECONDS))
                 .thenReturn(new DeviceCalCfgResult(
                         0,
                         7,
@@ -114,7 +118,7 @@ class SuplaServerDeviceActionsTest {
 
     @Test
     void shouldFailWhenDeviceRejectsResetCounters() throws Exception {
-        when(handler.listenForDeviceCalCfgResult(30, SECONDS))
+        when(handler.listenForDeviceCalCfgResult(30_000, MILLISECONDS))
                 .thenReturn(new DeviceCalCfgResult(
                         0,
                         7,
@@ -144,7 +148,7 @@ class SuplaServerDeviceActionsTest {
 
     @Test
     void shouldSendResetCountersRequestForChannelNumber() throws Exception {
-        when(handler.listenForDeviceCalCfgResult(30, SECONDS))
+        when(handler.listenForDeviceCalCfgResult(30_000, MILLISECONDS))
                 .thenReturn(new DeviceCalCfgResult(
                         0,
                         7,
@@ -179,7 +183,7 @@ class SuplaServerDeviceActionsTest {
 
     @Test
     void shouldSendEnterConfigModeRequest() throws Exception {
-        when(handler.listenForDeviceCalCfgResult(30, SECONDS))
+        when(handler.listenForDeviceCalCfgResult(30_000, MILLISECONDS))
                 .thenReturn(new DeviceCalCfgResult(
                         0,
                         -1,
@@ -216,7 +220,7 @@ class SuplaServerDeviceActionsTest {
 
     @Test
     void shouldFailWhenDeviceRejectsEnterConfigMode() throws Exception {
-        when(handler.listenForDeviceCalCfgResult(30, SECONDS))
+        when(handler.listenForDeviceCalCfgResult(30_000, MILLISECONDS))
                 .thenReturn(new DeviceCalCfgResult(
                         0,
                         -1,
@@ -259,7 +263,7 @@ class SuplaServerDeviceActionsTest {
 
     @Test
     void shouldSendCheckFirmwareUpdateRequest() throws Exception {
-        when(handler.listenForDeviceCalCfgResult(30, SECONDS))
+        when(handler.listenForDeviceCalCfgResult(30_000, MILLISECONDS))
                 .thenReturn(new DeviceCalCfgResult(
                         0,
                         -1,
@@ -267,7 +271,8 @@ class SuplaServerDeviceActionsTest {
                         SUPLA_CALCFG_RESULT_DONE.getValue(),
                         0L,
                         new byte[0]));
-        when(handler.listenForOtaCheckResult(30, SECONDS)).thenReturn(ServerSuplaDeviceHandler.OtaStatus.AVAILABLE);
+        when(handler.listenForOtaCheckResult(30_000, MILLISECONDS))
+                .thenReturn(ServerSuplaDeviceHandler.OtaStatus.AVAILABLE);
 
         assertThat(actions.checkFirmwareUpdate()).isEqualTo("AVAILABLE");
 
@@ -278,13 +283,13 @@ class SuplaServerDeviceActionsTest {
                 .write(argThat(proto -> proto instanceof DeviceCalCfgRequest request
                         && request.channelNumber() == -1
                         && request.command() == SUPLA_CALCFG_CMD_CHECK_FIRMWARE_UPDATE.getValue()));
-        inOrder.verify(handler).listenForDeviceCalCfgResult(30, SECONDS);
-        inOrder.verify(handler).listenForOtaCheckResult(30, SECONDS);
+        inOrder.verify(handler).listenForDeviceCalCfgResult(30_000, MILLISECONDS);
+        inOrder.verify(handler).listenForOtaCheckResult(30_000, MILLISECONDS);
     }
 
     @Test
     void shouldSendStartFirmwareUpdateRequest() throws Exception {
-        when(handler.listenForDeviceCalCfgResult(30, SECONDS))
+        when(handler.listenForDeviceCalCfgResult(30_000, MILLISECONDS))
                 .thenReturn(new DeviceCalCfgResult(
                         0,
                         -1,
@@ -306,7 +311,7 @@ class SuplaServerDeviceActionsTest {
 
     @Test
     void shouldSendStartSecurityUpdateRequest() throws Exception {
-        when(handler.listenForDeviceCalCfgResult(30, SECONDS))
+        when(handler.listenForDeviceCalCfgResult(30_000, MILLISECONDS))
                 .thenReturn(new DeviceCalCfgResult(
                         0,
                         -1,

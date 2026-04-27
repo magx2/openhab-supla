@@ -3,7 +3,7 @@ package pl.grzeslowski.openhab.supla.actions;
 import static java.lang.System.arraycopy;
 import static java.util.Objects.requireNonNull;
 import static java.util.Objects.requireNonNullElse;
-import static java.util.concurrent.TimeUnit.SECONDS;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static pl.grzeslowski.jsupla.protocol.api.CalCfgCommand.*;
 import static pl.grzeslowski.jsupla.protocol.api.CalCfgResult.SUPLA_CALCFG_RESULT_DONE;
 import static pl.grzeslowski.jsupla.protocol.api.DeviceFlag.SUPLA_DEVICE_FLAG_AUTOMATIC_FIRMWARE_UPDATE_SUPPORTED;
@@ -132,8 +132,9 @@ public class SuplaServerDeviceActions implements ThingActions {
         if (writer == null) {
             throw new IllegalStateException("There is no socket writer!");
         }
-        writer.write(message).await(30, SECONDS);
-        var deviceConfigResult = localHandler.listenForSetDeviceConfigResult(30, SECONDS);
+        var timeout = localHandler.getConfiguration().getSetDeviceConfigActionTimeout();
+        writer.write(message).await(timeout.toMillis(), MILLISECONDS);
+        var deviceConfigResult = localHandler.listenForSetDeviceConfigResult(timeout.toMillis(), MILLISECONDS);
         var result = DeviceConfigResult.findConfigResult(deviceConfigResult.result());
         if (!result.isSuccess()) {
             throw new RuntimeException("Setting device config did not succeed! configs=%s. %s"
@@ -205,9 +206,10 @@ public class SuplaServerDeviceActions implements ThingActions {
                 EMPTY_DATA.length,
                 EMPTY_DATA);
         localHandler.clearDeviceCalCfgResult();
-        writer.write(message).await(30, SECONDS);
+        var timeout = localHandler.getConfiguration().getResetElectricMeterCountersActionTimeout();
+        writer.write(message).await(timeout.toMillis(), MILLISECONDS);
 
-        var result = localHandler.listenForDeviceCalCfgResult(30, SECONDS);
+        var result = localHandler.listenForDeviceCalCfgResult(timeout.toMillis(), MILLISECONDS);
         if (result.channelNumber() != channelNumber) {
             throw new RuntimeException("Reset counters returned a different channel number! request=%s, result=%s"
                     .formatted(message, result));
@@ -254,9 +256,10 @@ public class SuplaServerDeviceActions implements ThingActions {
                 EMPTY_DATA.length,
                 EMPTY_DATA);
         localHandler.clearDeviceCalCfgResult();
-        writer.write(message).await(30, SECONDS);
+        var timeout = localHandler.getConfiguration().getEnterConfigModeActionTimeout();
+        writer.write(message).await(timeout.toMillis(), MILLISECONDS);
 
-        var result = localHandler.listenForDeviceCalCfgResult(30, SECONDS);
+        var result = localHandler.listenForDeviceCalCfgResult(timeout.toMillis(), MILLISECONDS);
         if (result.channelNumber() != NOT_BOUND_TO_CHANNEL) {
             throw new RuntimeException("Enter config mode returned a different channel number! request=%s, result=%s"
                     .formatted(message, result));
@@ -292,9 +295,10 @@ public class SuplaServerDeviceActions implements ThingActions {
 
         localHandler.clearDeviceCalCfgResult();
         localHandler.markOtaCheckPending();
-        writer.write(message).await(30, SECONDS);
+        var timeout = localHandler.getConfiguration().getCheckFirmwareUpdateActionTimeout();
+        writer.write(message).await(timeout.toMillis(), MILLISECONDS);
 
-        var result = localHandler.listenForDeviceCalCfgResult(30, SECONDS);
+        var result = localHandler.listenForDeviceCalCfgResult(timeout.toMillis(), MILLISECONDS);
         if (result.channelNumber() != NOT_BOUND_TO_CHANNEL) {
             localHandler.markOtaCheckError();
             throw new RuntimeException(
@@ -312,7 +316,9 @@ public class SuplaServerDeviceActions implements ThingActions {
                     "Check firmware update did not succeed! request=%s, result=%s".formatted(message, result));
         }
 
-        return localHandler.listenForOtaCheckResult(30, SECONDS).name();
+        return localHandler
+                .listenForOtaCheckResult(timeout.toMillis(), MILLISECONDS)
+                .name();
     }
 
     @RuleAction(
@@ -332,6 +338,14 @@ public class SuplaServerDeviceActions implements ThingActions {
     private String sendWholeDeviceCalCfgCommand(CalCfgCommand command, String actionName)
             throws InterruptedException, TimeoutException {
         var localHandler = requireOtaReadyHandler();
+        var timeout =
+                switch (command) {
+                    case SUPLA_CALCFG_CMD_START_FIRMWARE_UPDATE ->
+                        localHandler.getConfiguration().getStartFirmwareUpdateActionTimeout();
+                    case SUPLA_CALCFG_CMD_START_SECURITY_UPDATE ->
+                        localHandler.getConfiguration().getStartSecurityUpdateActionTimeout();
+                    default -> localHandler.getConfiguration().getActionTimeout();
+                };
         var writer = localHandler.getWriter().get();
         if (writer == null) {
             throw new IllegalStateException("There is no socket writer!");
@@ -346,9 +360,9 @@ public class SuplaServerDeviceActions implements ThingActions {
                 EMPTY_DATA.length,
                 EMPTY_DATA);
         localHandler.clearDeviceCalCfgResult();
-        writer.write(message).await(30, SECONDS);
+        writer.write(message).await(timeout.toMillis(), MILLISECONDS);
 
-        var result = localHandler.listenForDeviceCalCfgResult(30, SECONDS);
+        var result = localHandler.listenForDeviceCalCfgResult(timeout.toMillis(), MILLISECONDS);
         if (result.channelNumber() != NOT_BOUND_TO_CHANNEL) {
             throw new RuntimeException("%s returned a different channel number! request=%s, result=%s"
                     .formatted(actionName, message, result));
