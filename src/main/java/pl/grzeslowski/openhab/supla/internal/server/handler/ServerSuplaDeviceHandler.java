@@ -9,16 +9,14 @@ import static java.util.stream.Collectors.joining;
 import static org.openhab.core.thing.ThingStatus.OFFLINE;
 import static org.openhab.core.thing.ThingStatus.ONLINE;
 import static org.openhab.core.thing.ThingStatusDetail.*;
+import static pl.grzeslowski.jsupla.protocol.api.CalCfgCommand.SUPLA_CALCFG_CMD_CHECK_FIRMWARE_UPDATE;
+import static pl.grzeslowski.jsupla.protocol.api.CalCfgResult.SUPLA_CALCFG_RESULT_DONE;
 import static pl.grzeslowski.jsupla.protocol.api.DeviceFlag.SUPLA_DEVICE_FLAG_AUTOMATIC_FIRMWARE_UPDATE_SUPPORTED;
 import static pl.grzeslowski.jsupla.protocol.api.DeviceFlag.SUPLA_DEVICE_FLAG_SLEEP_MODE_ENABLED;
+import static pl.grzeslowski.jsupla.protocol.api.FirmwareCheckResultCode.*;
 import static pl.grzeslowski.jsupla.protocol.api.ProtocolHelpers.parseString;
 import static pl.grzeslowski.jsupla.protocol.api.ResultCode.SUPLA_RESULTCODE_TRUE;
-import static pl.grzeslowski.jsupla.protocol.api.consts.ProtoConsts.SUPLA_CALCFG_CMD_CHECK_FIRMWARE_UPDATE;
-import static pl.grzeslowski.jsupla.protocol.api.consts.ProtoConsts.SUPLA_CALCFG_RESULT_DONE;
 import static pl.grzeslowski.jsupla.protocol.api.consts.ProtoConsts.SUPLA_CONFIG_TYPE_DEFAULT;
-import static pl.grzeslowski.jsupla.protocol.api.consts.ProtoConsts.SUPLA_FIRMWARE_CHECK_RESULT_ERROR;
-import static pl.grzeslowski.jsupla.protocol.api.consts.ProtoConsts.SUPLA_FIRMWARE_CHECK_RESULT_UPDATE_AVAILABLE;
-import static pl.grzeslowski.jsupla.protocol.api.consts.ProtoConsts.SUPLA_FIRMWARE_CHECK_RESULT_UPDATE_NOT_AVAILABLE;
 import static pl.grzeslowski.jsupla.protocol.api.consts.ProtoConsts.SUPLA_PROTO_VERSION_MIN;
 import static pl.grzeslowski.openhab.supla.internal.GuidLogger.attachGuid;
 import static pl.grzeslowski.openhab.supla.internal.Localization.text;
@@ -56,6 +54,7 @@ import org.openhab.core.types.Command;
 import org.openhab.core.types.State;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import pl.grzeslowski.jsupla.protocol.api.CalCfgCommand;
 import pl.grzeslowski.jsupla.protocol.api.ChannelFunction;
 import pl.grzeslowski.jsupla.protocol.api.ChannelType;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.value.ActionTrigger.Capabilities;
@@ -142,7 +141,7 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler
 
     private final AtomicReference<@Nullable SetDeviceConfigResult> setDeviceConfigResult = new AtomicReference<>();
     private final AtomicReference<@Nullable DeviceCalCfgResult> deviceCalCfgResult = new AtomicReference<>();
-    private final AtomicReference<@Nullable Integer> pendingOtaCommand = new AtomicReference<>();
+    private final AtomicReference<@Nullable CalCfgCommand> pendingOtaCommand = new AtomicReference<>();
     private final AtomicReference<@Nullable OtaStatus> otaCheckResult = new AtomicReference<>();
 
     @Delegate(types = StateCache.class)
@@ -612,16 +611,16 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler
     }
 
     public void consumeDeviceCalCfgResult(DeviceCalCfgResult value) {
-        if (value.command() == SUPLA_CALCFG_CMD_CHECK_FIRMWARE_UPDATE && isAsyncFirmwareCheckResult(value)) {
+        if (value.command() == SUPLA_CALCFG_CMD_CHECK_FIRMWARE_UPDATE.getValue() && isAsyncFirmwareCheckResult(value)) {
             consumeFirmwareCheckResult(value);
             return;
         }
-        if (value.command() == SUPLA_CALCFG_CMD_CHECK_FIRMWARE_UPDATE
+        if (value.command() == SUPLA_CALCFG_CMD_CHECK_FIRMWARE_UPDATE.getValue()
                 && pendingOtaCommand.get() != null
-                && value.result() != SUPLA_CALCFG_RESULT_DONE) {
+                && value.result() != SUPLA_CALCFG_RESULT_DONE.getValue()) {
             markOtaCheckError();
         }
-        if (value.result() != SUPLA_CALCFG_RESULT_DONE) {
+        if (value.result() != SUPLA_CALCFG_RESULT_DONE.getValue()) {
             logger.warn("Did not succeed ({}) with device calcfg command. result={}", value.result(), value);
         } else {
             logger.debug("Finished device calcfg command. result={}", value);
@@ -743,7 +742,7 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler
 
     private void consumeFirmwareCheckResult(DeviceCalCfgResult value) {
         try {
-            if (value.result() != SUPLA_CALCFG_RESULT_DONE) {
+            if (value.result() != SUPLA_CALCFG_RESULT_DONE.getValue()) {
                 logger.warn("Firmware update check failed before payload parsing. result={}", value);
                 otaCheckResult.set(OtaStatus.ERROR);
                 updateOtaState(OtaStatus.ERROR, null, null, now());
@@ -751,16 +750,16 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler
             }
 
             var payload = decodeFirmwareCheckResult(value);
-            var status =
-                    switch (payload.result()) {
+            var status = findByValue(payload.result())
+                    .map(f -> switch (f) {
                         case SUPLA_FIRMWARE_CHECK_RESULT_UPDATE_AVAILABLE -> OtaStatus.AVAILABLE;
                         case SUPLA_FIRMWARE_CHECK_RESULT_UPDATE_NOT_AVAILABLE -> OtaStatus.NOT_AVAILABLE;
                         case SUPLA_FIRMWARE_CHECK_RESULT_ERROR -> OtaStatus.ERROR;
-                        default -> {
-                            logger.warn("Unknown firmware check result code {}. payload={}", payload.result(), payload);
-                            yield OtaStatus.ERROR;
-                        }
-                    };
+                    })
+                    .orElseGet(() -> {
+                        logger.warn("Unknown firmware check result code {}. payload={}", payload.result(), payload);
+                        return OtaStatus.ERROR;
+                    });
             otaCheckResult.set(status);
             updateOtaState(status, parseString(payload.softVer()), parseString(payload.changelogUrl()), now());
         } catch (RuntimeException ex) {

@@ -4,14 +4,10 @@ import static java.lang.System.arraycopy;
 import static java.util.Objects.requireNonNull;
 import static java.util.Objects.requireNonNullElse;
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static pl.grzeslowski.jsupla.protocol.api.CalCfgCommand.*;
+import static pl.grzeslowski.jsupla.protocol.api.CalCfgResult.SUPLA_CALCFG_RESULT_DONE;
 import static pl.grzeslowski.jsupla.protocol.api.DeviceFlag.SUPLA_DEVICE_FLAG_AUTOMATIC_FIRMWARE_UPDATE_SUPPORTED;
 import static pl.grzeslowski.jsupla.protocol.api.DeviceFlag.SUPLA_DEVICE_FLAG_CALCFG_ENTER_CFG_MODE;
-import static pl.grzeslowski.jsupla.protocol.api.consts.ProtoConsts.SUPLA_CALCFG_CMD_CHECK_FIRMWARE_UPDATE;
-import static pl.grzeslowski.jsupla.protocol.api.consts.ProtoConsts.SUPLA_CALCFG_CMD_ENTER_CFG_MODE;
-import static pl.grzeslowski.jsupla.protocol.api.consts.ProtoConsts.SUPLA_CALCFG_CMD_RESET_COUNTERS;
-import static pl.grzeslowski.jsupla.protocol.api.consts.ProtoConsts.SUPLA_CALCFG_CMD_START_FIRMWARE_UPDATE;
-import static pl.grzeslowski.jsupla.protocol.api.consts.ProtoConsts.SUPLA_CALCFG_CMD_START_SECURITY_UPDATE;
-import static pl.grzeslowski.jsupla.protocol.api.consts.ProtoConsts.SUPLA_CALCFG_RESULT_DONE;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.BINDING_ID;
 
 import java.math.BigInteger;
@@ -32,6 +28,7 @@ import org.openhab.core.thing.ThingStatus;
 import org.openhab.core.thing.binding.ThingActions;
 import org.openhab.core.thing.binding.ThingActionsScope;
 import org.openhab.core.thing.binding.ThingHandler;
+import pl.grzeslowski.jsupla.protocol.api.CalCfgCommand;
 import pl.grzeslowski.jsupla.protocol.api.DeviceConfigField;
 import pl.grzeslowski.jsupla.protocol.api.structs.sd.DeviceCalCfgRequest;
 import pl.grzeslowski.jsupla.protocol.api.structs.sd.SetDeviceConfig;
@@ -202,7 +199,7 @@ public class SuplaServerDeviceActions implements ThingActions {
         var message = new DeviceCalCfgRequest(
                 SENDER_ID,
                 channelNumber,
-                SUPLA_CALCFG_CMD_RESET_COUNTERS,
+                SUPLA_CALCFG_CMD_RESET_COUNTERS.getValue(),
                 SUPER_USER_AUTHORIZED,
                 NO_DATA_TYPE,
                 EMPTY_DATA.length,
@@ -215,11 +212,11 @@ public class SuplaServerDeviceActions implements ThingActions {
             throw new RuntimeException("Reset counters returned a different channel number! request=%s, result=%s"
                     .formatted(message, result));
         }
-        if (result.command() != SUPLA_CALCFG_CMD_RESET_COUNTERS) {
+        if (result.command() != SUPLA_CALCFG_CMD_RESET_COUNTERS.getValue()) {
             throw new RuntimeException(
                     "Reset counters returned a different command! request=%s, result=%s".formatted(message, result));
         }
-        if (result.result() != SUPLA_CALCFG_RESULT_DONE) {
+        if (result.result() != SUPLA_CALCFG_RESULT_DONE.getValue()) {
             throw new RuntimeException(
                     "Reset counters did not succeed! request=%s, result=%s".formatted(message, result));
         }
@@ -251,7 +248,7 @@ public class SuplaServerDeviceActions implements ThingActions {
         var message = new DeviceCalCfgRequest(
                 SENDER_ID,
                 NOT_BOUND_TO_CHANNEL,
-                SUPLA_CALCFG_CMD_ENTER_CFG_MODE,
+                SUPLA_CALCFG_CMD_ENTER_CFG_MODE.getValue(),
                 SUPER_USER_AUTHORIZED,
                 NO_DATA_TYPE,
                 EMPTY_DATA.length,
@@ -264,11 +261,11 @@ public class SuplaServerDeviceActions implements ThingActions {
             throw new RuntimeException("Enter config mode returned a different channel number! request=%s, result=%s"
                     .formatted(message, result));
         }
-        if (result.command() != SUPLA_CALCFG_CMD_ENTER_CFG_MODE) {
+        if (result.command() != SUPLA_CALCFG_CMD_ENTER_CFG_MODE.getValue()) {
             throw new RuntimeException(
                     "Enter config mode returned a different command! request=%s, result=%s".formatted(message, result));
         }
-        if (result.result() != SUPLA_CALCFG_RESULT_DONE) {
+        if (result.result() != SUPLA_CALCFG_RESULT_DONE.getValue()) {
             throw new RuntimeException(
                     "Enter config mode did not succeed! request=%s, result=%s".formatted(message, result));
         }
@@ -287,7 +284,7 @@ public class SuplaServerDeviceActions implements ThingActions {
         var message = new DeviceCalCfgRequest(
                 SENDER_ID,
                 NOT_BOUND_TO_CHANNEL,
-                SUPLA_CALCFG_CMD_CHECK_FIRMWARE_UPDATE,
+                SUPLA_CALCFG_CMD_CHECK_FIRMWARE_UPDATE.getValue(),
                 SUPER_USER_AUTHORIZED,
                 NO_DATA_TYPE,
                 EMPTY_DATA.length,
@@ -304,12 +301,12 @@ public class SuplaServerDeviceActions implements ThingActions {
                     "Check firmware update returned a different channel number! request=%s, result=%s"
                             .formatted(message, result));
         }
-        if (result.command() != SUPLA_CALCFG_CMD_CHECK_FIRMWARE_UPDATE) {
+        if (result.command() != SUPLA_CALCFG_CMD_CHECK_FIRMWARE_UPDATE.getValue()) {
             localHandler.markOtaCheckError();
             throw new RuntimeException("Check firmware update returned a different command! request=%s, result=%s"
                     .formatted(message, result));
         }
-        if (result.result() != SUPLA_CALCFG_RESULT_DONE) {
+        if (result.result() != SUPLA_CALCFG_RESULT_DONE.getValue()) {
             localHandler.markOtaCheckError();
             throw new RuntimeException(
                     "Check firmware update did not succeed! request=%s, result=%s".formatted(message, result));
@@ -332,7 +329,7 @@ public class SuplaServerDeviceActions implements ThingActions {
         return sendWholeDeviceCalCfgCommand(SUPLA_CALCFG_CMD_START_SECURITY_UPDATE, "Start security update");
     }
 
-    private String sendWholeDeviceCalCfgCommand(int command, String actionName)
+    private String sendWholeDeviceCalCfgCommand(CalCfgCommand command, String actionName)
             throws InterruptedException, TimeoutException {
         var localHandler = requireOtaReadyHandler();
         var writer = localHandler.getWriter().get();
@@ -343,7 +340,7 @@ public class SuplaServerDeviceActions implements ThingActions {
         var message = new DeviceCalCfgRequest(
                 SENDER_ID,
                 NOT_BOUND_TO_CHANNEL,
-                command,
+                command.getValue(),
                 SUPER_USER_AUTHORIZED,
                 NO_DATA_TYPE,
                 EMPTY_DATA.length,
@@ -356,11 +353,11 @@ public class SuplaServerDeviceActions implements ThingActions {
             throw new RuntimeException("%s returned a different channel number! request=%s, result=%s"
                     .formatted(actionName, message, result));
         }
-        if (result.command() != command) {
+        if (result.command() != command.getValue()) {
             throw new RuntimeException(
                     "%s returned a different command! request=%s, result=%s".formatted(actionName, message, result));
         }
-        if (result.result() != SUPLA_CALCFG_RESULT_DONE) {
+        if (result.result() != SUPLA_CALCFG_RESULT_DONE.getValue()) {
             throw new RuntimeException(
                     "%s did not succeed! request=%s, result=%s".formatted(actionName, message, result));
         }

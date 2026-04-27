@@ -5,14 +5,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.when;
+import static pl.grzeslowski.jsupla.protocol.api.CalCfgCommand.SUPLA_CALCFG_CMD_CHECK_FIRMWARE_UPDATE;
+import static pl.grzeslowski.jsupla.protocol.api.CalCfgResult.SUPLA_CALCFG_RESULT_DONE;
+import static pl.grzeslowski.jsupla.protocol.api.CalCfgResult.SUPLA_CALCFG_RESULT_NOT_SUPPORTED;
 import static pl.grzeslowski.jsupla.protocol.api.ChannelFunction.SUPLA_CHANNELFNC_CONTROLLINGTHEROLLERSHUTTER;
 import static pl.grzeslowski.jsupla.protocol.api.ChannelType.SUPLA_CHANNELTYPE_DIMMER;
-import static pl.grzeslowski.jsupla.protocol.api.consts.ProtoConsts.SUPLA_CALCFG_CMD_CHECK_FIRMWARE_UPDATE;
-import static pl.grzeslowski.jsupla.protocol.api.consts.ProtoConsts.SUPLA_CALCFG_RESULT_DONE;
-import static pl.grzeslowski.jsupla.protocol.api.consts.ProtoConsts.SUPLA_CALCFG_RESULT_NOT_SUPPORTED;
-import static pl.grzeslowski.jsupla.protocol.api.consts.ProtoConsts.SUPLA_FIRMWARE_CHECK_RESULT_ERROR;
-import static pl.grzeslowski.jsupla.protocol.api.consts.ProtoConsts.SUPLA_FIRMWARE_CHECK_RESULT_UPDATE_AVAILABLE;
-import static pl.grzeslowski.jsupla.protocol.api.consts.ProtoConsts.SUPLA_FIRMWARE_CHECK_RESULT_UPDATE_NOT_AVAILABLE;
+import static pl.grzeslowski.jsupla.protocol.api.FirmwareCheckResultCode.*;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ServerDevicesProperties.OTA_CHANGELOG_URL_PROPERTY;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ServerDevicesProperties.OTA_LAST_CHECK_PROPERTY;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ServerDevicesProperties.OTA_STATUS_PROPERTY;
@@ -105,7 +103,12 @@ class ServerSuplaDeviceHandlerTest {
     void shouldTreatImmediateFirmwareCheckAcceptanceAsSeparateResult() throws Exception {
         handler.markOtaCheckPending();
         var immediateResult = new DeviceCalCfgResult(
-                0, -1, SUPLA_CALCFG_CMD_CHECK_FIRMWARE_UPDATE, SUPLA_CALCFG_RESULT_DONE, 0L, new byte[0]);
+                0,
+                -1,
+                SUPLA_CALCFG_CMD_CHECK_FIRMWARE_UPDATE.getValue(),
+                SUPLA_CALCFG_RESULT_DONE.getValue(),
+                0L,
+                new byte[0]);
 
         handler.consumeDeviceCalCfgResult(immediateResult);
 
@@ -121,11 +124,13 @@ class ServerSuplaDeviceHandlerTest {
         handler.consumeDeviceCalCfgResult(new DeviceCalCfgResult(
                 0,
                 -1,
-                SUPLA_CALCFG_CMD_CHECK_FIRMWARE_UPDATE,
-                SUPLA_CALCFG_RESULT_DONE,
+                SUPLA_CALCFG_CMD_CHECK_FIRMWARE_UPDATE.getValue(),
+                SUPLA_CALCFG_RESULT_DONE.getValue(),
                 FirmwareCheckResult.SIZE,
                 encodeFirmwareCheckResult(
-                        SUPLA_FIRMWARE_CHECK_RESULT_UPDATE_AVAILABLE, "1.2.3", "https://example.test/changelog")));
+                        SUPLA_FIRMWARE_CHECK_RESULT_UPDATE_AVAILABLE.getValue(),
+                        "1.2.3",
+                        "https://example.test/changelog")));
 
         assertThat(properties.get(OTA_STATUS_PROPERTY)).isEqualTo("AVAILABLE");
         assertThat(properties.get(OTA_VERSION_AVAILABLE_PROPERTY)).isEqualTo("1.2.3");
@@ -141,10 +146,10 @@ class ServerSuplaDeviceHandlerTest {
         handler.consumeDeviceCalCfgResult(new DeviceCalCfgResult(
                 0,
                 -1,
-                SUPLA_CALCFG_CMD_CHECK_FIRMWARE_UPDATE,
-                SUPLA_CALCFG_RESULT_DONE,
+                SUPLA_CALCFG_CMD_CHECK_FIRMWARE_UPDATE.getValue(),
+                SUPLA_CALCFG_RESULT_DONE.getValue(),
                 FirmwareCheckResult.SIZE,
-                encodeFirmwareCheckResult(SUPLA_FIRMWARE_CHECK_RESULT_UPDATE_NOT_AVAILABLE, "", "")));
+                encodeFirmwareCheckResult(SUPLA_FIRMWARE_CHECK_RESULT_UPDATE_NOT_AVAILABLE.getValue(), "", "")));
 
         assertThat(properties.get(OTA_STATUS_PROPERTY)).isEqualTo("NOT_AVAILABLE");
         assertThat(properties)
@@ -160,10 +165,10 @@ class ServerSuplaDeviceHandlerTest {
         handler.consumeDeviceCalCfgResult(new DeviceCalCfgResult(
                 0,
                 -1,
-                SUPLA_CALCFG_CMD_CHECK_FIRMWARE_UPDATE,
-                SUPLA_CALCFG_RESULT_DONE,
+                SUPLA_CALCFG_CMD_CHECK_FIRMWARE_UPDATE.getValue(),
+                SUPLA_CALCFG_RESULT_DONE.getValue(),
                 FirmwareCheckResult.SIZE,
-                encodeFirmwareCheckResult(SUPLA_FIRMWARE_CHECK_RESULT_ERROR, "", "")));
+                encodeFirmwareCheckResult(SUPLA_FIRMWARE_CHECK_RESULT_ERROR.getValue(), "", "")));
 
         assertThat(properties.get(OTA_STATUS_PROPERTY)).isEqualTo("ERROR");
         assertThat(handler.isOtaCheckPending()).isFalse();
@@ -174,7 +179,12 @@ class ServerSuplaDeviceHandlerTest {
         handler.markOtaCheckPending();
 
         handler.consumeDeviceCalCfgResult(new DeviceCalCfgResult(
-                0, -1, SUPLA_CALCFG_CMD_CHECK_FIRMWARE_UPDATE, SUPLA_CALCFG_RESULT_NOT_SUPPORTED, 0L, new byte[0]));
+                0,
+                -1,
+                SUPLA_CALCFG_CMD_CHECK_FIRMWARE_UPDATE.getValue(),
+                SUPLA_CALCFG_RESULT_NOT_SUPPORTED.getValue(),
+                0L,
+                new byte[0]));
 
         assertThat(properties.get(OTA_STATUS_PROPERTY)).isEqualTo("ERROR");
         assertThat(handler.isOtaCheckPending()).isFalse();
