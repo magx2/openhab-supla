@@ -18,7 +18,6 @@ import static pl.grzeslowski.jsupla.protocol.api.DeviceFlag.SUPLA_DEVICE_FLAG_CA
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.DefaultChannelPromise;
 import io.netty.channel.embedded.EmbeddedChannel;
-import java.time.Duration;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeoutException;
@@ -291,7 +290,7 @@ class SuplaServerDeviceActionsTest {
 
     @Test
     void shouldUseRemainingTimeoutForOtaCheckResult() throws Exception {
-        configuration.setCheckFirmwareUpdateActionTimeout(Duration.ofMillis(100));
+        configuration.setCheckFirmwareUpdateActionTimeout("PT0.1S");
         when(handler.listenForDeviceCalCfgResult(100, MILLISECONDS)).thenAnswer(invocation -> {
             Thread.sleep(40);
             return new DeviceCalCfgResult(
