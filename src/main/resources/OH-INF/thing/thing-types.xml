@@ -98,6 +98,92 @@
 				<description />
 				<advanced>true</advanced>
 			</parameter>
+			<parameter name="actionTimeout" type="text">
+				<label>Action Timeout</label>
+				<description>
+					Timeout for all actions. Supported formats:
+					&lt;em&gt;seconds&lt;/em&gt; as integer/decimal
+					(e.g. 30, 1.5) or
+					&lt;em&gt;ISO-8601 duration&lt;/em&gt; (e.g. PT30S).
+				</description>
+				<advanced>true</advanced>
+			</parameter>
+			<parameter name="setDeviceConfigActionTimeout" type="text">
+				<label>Set Device Config Action Timeout</label>
+				<description>
+					Overrides Action Timeout for
+					&lt;em&gt;Set Device
+					Config&lt;/em&gt; action.
+					Supported formats: seconds as
+					integer/decimal
+					(e.g. 30, 1.5) or ISO-8601 duration (e.g. PT30S).
+				</description>
+				<advanced>true</advanced>
+			</parameter>
+			<parameter name="resetElectricMeterCountersActionTimeout"
+				type="text">
+				<label>Reset Electricity Meter Counters Action Timeout</label>
+				<description>
+					Overrides Action Timeout for
+					&lt;em&gt;Reset Electricity
+					Meter Counters&lt;/em&gt;
+					action. Supported formats: seconds as
+					integer/decimal
+					(e.g. 30, 1.5) or ISO-8601 duration (e.g. PT30S).
+				</description>
+				<advanced>true</advanced>
+			</parameter>
+			<parameter name="enterConfigModeActionTimeout" type="text">
+				<label>Enter Config Mode Action Timeout</label>
+				<description>
+					Overrides Action Timeout for
+					&lt;em&gt;Enter Config
+					Mode&lt;/em&gt; action.
+					Supported formats: seconds as
+					integer/decimal
+					(e.g. 30, 1.5) or ISO-8601 duration (e.g. PT30S).
+				</description>
+				<advanced>true</advanced>
+			</parameter>
+			<parameter name="checkFirmwareUpdateActionTimeout"
+				type="text">
+				<label>Check Firmware Update Action Timeout</label>
+				<description>
+					Overrides Action Timeout for
+					&lt;em&gt;Check Firmware
+					Update&lt;/em&gt; action.
+					Supported formats: seconds as
+					integer/decimal
+					(e.g. 30, 1.5) or ISO-8601 duration (e.g. PT30S).
+				</description>
+				<advanced>true</advanced>
+			</parameter>
+			<parameter name="startFirmwareUpdateActionTimeout"
+				type="text">
+				<label>Start Firmware Update Action Timeout</label>
+				<description>
+					Overrides Action Timeout for
+					&lt;em&gt;Start Firmware
+					Update&lt;/em&gt; action.
+					Supported formats: seconds as
+					integer/decimal
+					(e.g. 30, 1.5) or ISO-8601 duration (e.g. PT30S).
+				</description>
+				<advanced>true</advanced>
+			</parameter>
+			<parameter name="startSecurityUpdateActionTimeout"
+				type="text">
+				<label>Start Security Update Action Timeout</label>
+				<description>
+					Overrides Action Timeout for
+					&lt;em&gt;Start Security
+					Update&lt;/em&gt; action.
+					Supported formats: seconds as
+					integer/decimal
+					(e.g. 30, 1.5) or ISO-8601 duration (e.g. PT30S).
+				</description>
+				<advanced>true</advanced>
+			</parameter>
 		</config-description>
 	</thing-type>
 	<thing-type id="cloud-device">
