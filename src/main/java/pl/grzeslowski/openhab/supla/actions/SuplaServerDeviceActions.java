@@ -304,10 +304,7 @@ public class SuplaServerDeviceActions implements ThingActions {
                 throw new RuntimeException("Check firmware update dispatch failed! request=%s, cause=%s"
                         .formatted(message, future.cause()));
             }
-        } catch (InterruptedException e) {
-            localHandler.markOtaCheckError();
-            throw e;
-        } catch (RuntimeException e) {
+        } catch (InterruptedException | RuntimeException e) {
             localHandler.markOtaCheckError();
             throw e;
         }
