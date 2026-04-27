@@ -36,7 +36,7 @@
         <dependency>
             <groupId>pl.grzeslowski.jSupla</groupId>
             <artifactId>server</artifactId>
-            <version>5.0.1</version>
+            <version>5.0.2-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
@@ -233,13 +233,11 @@
             <name>JCenter Repository</name>
             <url>https://jcenter.bintray.com</url>
         </repository>
-        <!-- for jSupla snapshots
         <repository>
             <id>github</id>
             <name>Git Hub</name>
             <url>https://maven.pkg.github.com/magx2/*</url>
         </repository>
-        -->
         <repository>
             <releases>
                 <enabled>true</enabled>
