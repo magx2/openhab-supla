@@ -288,6 +288,33 @@ class SuplaServerDeviceActionsTest {
     }
 
     @Test
+    void shouldMarkOtaCheckErrorWhenCheckFirmwareUpdateDispatchFails() {
+        when(writer.write(argThat(proto -> proto instanceof DeviceCalCfgRequest)))
+                .thenThrow(new RuntimeException("dispatch failed"));
+
+        assertThatThrownBy(() -> actions.checkFirmwareUpdate())
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("dispatch failed");
+        verify(handler).clearDeviceCalCfgResult();
+        verify(handler).markOtaCheckPending();
+        verify(handler).markOtaCheckError();
+    }
+
+    @Test
+    void shouldFailWhenCheckFirmwareUpdateDispatchFutureIsFailed() {
+        var channel = new EmbeddedChannel();
+        var failedFuture = new DefaultChannelPromise(channel).setFailure(new IllegalStateException("write failed"));
+        when(writer.write(argThat(proto -> proto instanceof DeviceCalCfgRequest)))
+                .thenReturn(failedFuture);
+
+        assertThatThrownBy(() -> actions.checkFirmwareUpdate())
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("dispatch failed");
+        verify(handler).markOtaCheckPending();
+        verify(handler).markOtaCheckError();
+    }
+
+    @Test
     void shouldSendStartFirmwareUpdateRequest() throws Exception {
         when(handler.listenForDeviceCalCfgResult(30_000, MILLISECONDS))
                 .thenReturn(new DeviceCalCfgResult(

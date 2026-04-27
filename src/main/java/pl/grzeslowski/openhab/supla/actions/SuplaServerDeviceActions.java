@@ -296,7 +296,17 @@ public class SuplaServerDeviceActions implements ThingActions {
         localHandler.clearDeviceCalCfgResult();
         localHandler.markOtaCheckPending();
         var timeout = localHandler.getConfiguration().getCheckFirmwareUpdateActionTimeout();
-        writer.write(message).await(timeout.toMillis(), MILLISECONDS);
+        try {
+            var future = writer.write(message);
+            future.await(timeout.toMillis(), MILLISECONDS);
+            if (!future.isSuccess()) {
+                throw new RuntimeException("Check firmware update dispatch failed! request=%s, cause=%s"
+                        .formatted(message, future.cause()));
+            }
+        } catch (InterruptedException | RuntimeException e) {
+            localHandler.markOtaCheckError();
+            throw e;
+        }
 
         var result = localHandler.listenForDeviceCalCfgResult(timeout.toMillis(), MILLISECONDS);
         if (result.channelNumber() != NOT_BOUND_TO_CHANNEL) {
