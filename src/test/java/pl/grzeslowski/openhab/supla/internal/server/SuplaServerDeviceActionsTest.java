@@ -9,15 +9,11 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.openhab.core.thing.ThingStatus.OFFLINE;
 import static org.openhab.core.thing.ThingStatus.ONLINE;
+import static pl.grzeslowski.jsupla.protocol.api.CalCfgCommand.*;
+import static pl.grzeslowski.jsupla.protocol.api.CalCfgResult.SUPLA_CALCFG_RESULT_DONE;
+import static pl.grzeslowski.jsupla.protocol.api.CalCfgResult.SUPLA_CALCFG_RESULT_NOT_SUPPORTED;
 import static pl.grzeslowski.jsupla.protocol.api.DeviceFlag.SUPLA_DEVICE_FLAG_AUTOMATIC_FIRMWARE_UPDATE_SUPPORTED;
 import static pl.grzeslowski.jsupla.protocol.api.DeviceFlag.SUPLA_DEVICE_FLAG_CALCFG_ENTER_CFG_MODE;
-import static pl.grzeslowski.jsupla.protocol.api.consts.ProtoConsts.SUPLA_CALCFG_CMD_CHECK_FIRMWARE_UPDATE;
-import static pl.grzeslowski.jsupla.protocol.api.consts.ProtoConsts.SUPLA_CALCFG_CMD_ENTER_CFG_MODE;
-import static pl.grzeslowski.jsupla.protocol.api.consts.ProtoConsts.SUPLA_CALCFG_CMD_RESET_COUNTERS;
-import static pl.grzeslowski.jsupla.protocol.api.consts.ProtoConsts.SUPLA_CALCFG_CMD_START_FIRMWARE_UPDATE;
-import static pl.grzeslowski.jsupla.protocol.api.consts.ProtoConsts.SUPLA_CALCFG_CMD_START_SECURITY_UPDATE;
-import static pl.grzeslowski.jsupla.protocol.api.consts.ProtoConsts.SUPLA_CALCFG_RESULT_DONE;
-import static pl.grzeslowski.jsupla.protocol.api.consts.ProtoConsts.SUPLA_CALCFG_RESULT_NOT_SUPPORTED;
 
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.DefaultChannelPromise;
@@ -94,7 +90,12 @@ class SuplaServerDeviceActionsTest {
     void shouldSendResetCountersRequest() throws Exception {
         when(handler.listenForDeviceCalCfgResult(30, SECONDS))
                 .thenReturn(new DeviceCalCfgResult(
-                        0, 7, SUPLA_CALCFG_CMD_RESET_COUNTERS, SUPLA_CALCFG_RESULT_DONE, 0L, new byte[0]));
+                        0,
+                        7,
+                        SUPLA_CALCFG_CMD_RESET_COUNTERS.getValue(),
+                        SUPLA_CALCFG_RESULT_DONE.getValue(),
+                        0L,
+                        new byte[0]));
 
         actions.resetElectricMeterCounters("supla:test:1:7#power");
 
@@ -104,7 +105,7 @@ class SuplaServerDeviceActionsTest {
                 .write(argThat(proto -> proto instanceof DeviceCalCfgRequest request
                         && request.senderId() == 1
                         && request.channelNumber() == 7
-                        && request.command() == SUPLA_CALCFG_CMD_RESET_COUNTERS
+                        && request.command() == SUPLA_CALCFG_CMD_RESET_COUNTERS.getValue()
                         && request.superUserAuthorized() == 1
                         && request.dataType() == 0
                         && request.dataSize() == 0L
@@ -115,7 +116,12 @@ class SuplaServerDeviceActionsTest {
     void shouldFailWhenDeviceRejectsResetCounters() throws Exception {
         when(handler.listenForDeviceCalCfgResult(30, SECONDS))
                 .thenReturn(new DeviceCalCfgResult(
-                        0, 7, SUPLA_CALCFG_CMD_RESET_COUNTERS, SUPLA_CALCFG_RESULT_NOT_SUPPORTED, 0L, new byte[0]));
+                        0,
+                        7,
+                        SUPLA_CALCFG_CMD_RESET_COUNTERS.getValue(),
+                        SUPLA_CALCFG_RESULT_NOT_SUPPORTED.getValue(),
+                        0L,
+                        new byte[0]));
 
         assertThatThrownBy(() -> actions.resetElectricMeterCounters("supla:test:1:7#power"))
                 .isInstanceOf(RuntimeException.class)
@@ -140,14 +146,19 @@ class SuplaServerDeviceActionsTest {
     void shouldSendResetCountersRequestForChannelNumber() throws Exception {
         when(handler.listenForDeviceCalCfgResult(30, SECONDS))
                 .thenReturn(new DeviceCalCfgResult(
-                        0, 7, SUPLA_CALCFG_CMD_RESET_COUNTERS, SUPLA_CALCFG_RESULT_DONE, 0L, new byte[0]));
+                        0,
+                        7,
+                        SUPLA_CALCFG_CMD_RESET_COUNTERS.getValue(),
+                        SUPLA_CALCFG_RESULT_DONE.getValue(),
+                        0L,
+                        new byte[0]));
 
         actions.resetElectricMeterCounters(7);
 
         verify(writer)
                 .write(argThat(proto -> proto instanceof DeviceCalCfgRequest request
                         && request.channelNumber() == 7
-                        && request.command() == SUPLA_CALCFG_CMD_RESET_COUNTERS));
+                        && request.command() == SUPLA_CALCFG_CMD_RESET_COUNTERS.getValue()));
     }
 
     @Test
@@ -170,7 +181,12 @@ class SuplaServerDeviceActionsTest {
     void shouldSendEnterConfigModeRequest() throws Exception {
         when(handler.listenForDeviceCalCfgResult(30, SECONDS))
                 .thenReturn(new DeviceCalCfgResult(
-                        0, -1, SUPLA_CALCFG_CMD_ENTER_CFG_MODE, SUPLA_CALCFG_RESULT_DONE, 0L, new byte[0]));
+                        0,
+                        -1,
+                        SUPLA_CALCFG_CMD_ENTER_CFG_MODE.getValue(),
+                        SUPLA_CALCFG_RESULT_DONE.getValue(),
+                        0L,
+                        new byte[0]));
 
         actions.enterConfigMode();
 
@@ -180,7 +196,7 @@ class SuplaServerDeviceActionsTest {
                 .write(argThat(proto -> proto instanceof DeviceCalCfgRequest request
                         && request.senderId() == 1
                         && request.channelNumber() == -1
-                        && request.command() == SUPLA_CALCFG_CMD_ENTER_CFG_MODE
+                        && request.command() == SUPLA_CALCFG_CMD_ENTER_CFG_MODE.getValue()
                         && request.superUserAuthorized() == 1
                         && request.dataType() == 0
                         && request.dataSize() == 0L
@@ -202,7 +218,12 @@ class SuplaServerDeviceActionsTest {
     void shouldFailWhenDeviceRejectsEnterConfigMode() throws Exception {
         when(handler.listenForDeviceCalCfgResult(30, SECONDS))
                 .thenReturn(new DeviceCalCfgResult(
-                        0, -1, SUPLA_CALCFG_CMD_ENTER_CFG_MODE, SUPLA_CALCFG_RESULT_NOT_SUPPORTED, 0L, new byte[0]));
+                        0,
+                        -1,
+                        SUPLA_CALCFG_CMD_ENTER_CFG_MODE.getValue(),
+                        SUPLA_CALCFG_RESULT_NOT_SUPPORTED.getValue(),
+                        0L,
+                        new byte[0]));
 
         assertThatThrownBy(() -> actions.enterConfigMode())
                 .isInstanceOf(RuntimeException.class)
@@ -240,7 +261,12 @@ class SuplaServerDeviceActionsTest {
     void shouldSendCheckFirmwareUpdateRequest() throws Exception {
         when(handler.listenForDeviceCalCfgResult(30, SECONDS))
                 .thenReturn(new DeviceCalCfgResult(
-                        0, -1, SUPLA_CALCFG_CMD_CHECK_FIRMWARE_UPDATE, SUPLA_CALCFG_RESULT_DONE, 0L, new byte[0]));
+                        0,
+                        -1,
+                        SUPLA_CALCFG_CMD_CHECK_FIRMWARE_UPDATE.getValue(),
+                        SUPLA_CALCFG_RESULT_DONE.getValue(),
+                        0L,
+                        new byte[0]));
         when(handler.listenForOtaCheckResult(30, SECONDS)).thenReturn(ServerSuplaDeviceHandler.OtaStatus.AVAILABLE);
 
         assertThat(actions.checkFirmwareUpdate()).isEqualTo("AVAILABLE");
@@ -251,7 +277,7 @@ class SuplaServerDeviceActionsTest {
         inOrder.verify(writer)
                 .write(argThat(proto -> proto instanceof DeviceCalCfgRequest request
                         && request.channelNumber() == -1
-                        && request.command() == SUPLA_CALCFG_CMD_CHECK_FIRMWARE_UPDATE));
+                        && request.command() == SUPLA_CALCFG_CMD_CHECK_FIRMWARE_UPDATE.getValue()));
         inOrder.verify(handler).listenForDeviceCalCfgResult(30, SECONDS);
         inOrder.verify(handler).listenForOtaCheckResult(30, SECONDS);
     }
@@ -260,7 +286,12 @@ class SuplaServerDeviceActionsTest {
     void shouldSendStartFirmwareUpdateRequest() throws Exception {
         when(handler.listenForDeviceCalCfgResult(30, SECONDS))
                 .thenReturn(new DeviceCalCfgResult(
-                        0, -1, SUPLA_CALCFG_CMD_START_FIRMWARE_UPDATE, SUPLA_CALCFG_RESULT_DONE, 0L, new byte[0]));
+                        0,
+                        -1,
+                        SUPLA_CALCFG_CMD_START_FIRMWARE_UPDATE.getValue(),
+                        SUPLA_CALCFG_RESULT_DONE.getValue(),
+                        0L,
+                        new byte[0]));
 
         actions.startFirmwareUpdate();
 
@@ -269,7 +300,7 @@ class SuplaServerDeviceActionsTest {
         inOrder.verify(writer)
                 .write(argThat(proto -> proto instanceof DeviceCalCfgRequest request
                         && request.channelNumber() == -1
-                        && request.command() == SUPLA_CALCFG_CMD_START_FIRMWARE_UPDATE));
+                        && request.command() == SUPLA_CALCFG_CMD_START_FIRMWARE_UPDATE.getValue()));
         inOrder.verify(handler).markOtaUpdateTriggered();
     }
 
@@ -277,14 +308,19 @@ class SuplaServerDeviceActionsTest {
     void shouldSendStartSecurityUpdateRequest() throws Exception {
         when(handler.listenForDeviceCalCfgResult(30, SECONDS))
                 .thenReturn(new DeviceCalCfgResult(
-                        0, -1, SUPLA_CALCFG_CMD_START_SECURITY_UPDATE, SUPLA_CALCFG_RESULT_DONE, 0L, new byte[0]));
+                        0,
+                        -1,
+                        SUPLA_CALCFG_CMD_START_SECURITY_UPDATE.getValue(),
+                        SUPLA_CALCFG_RESULT_DONE.getValue(),
+                        0L,
+                        new byte[0]));
 
         actions.startSecurityUpdate();
 
         verify(writer)
                 .write(argThat(proto -> proto instanceof DeviceCalCfgRequest request
                         && request.channelNumber() == -1
-                        && request.command() == SUPLA_CALCFG_CMD_START_SECURITY_UPDATE));
+                        && request.command() == SUPLA_CALCFG_CMD_START_SECURITY_UPDATE.getValue()));
         verify(handler).markOtaUpdateTriggered();
     }
 }

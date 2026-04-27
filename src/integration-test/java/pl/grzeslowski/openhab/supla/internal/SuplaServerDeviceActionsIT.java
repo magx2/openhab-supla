@@ -8,7 +8,10 @@ import static org.awaitility.Awaitility.await;
 import static org.openhab.core.thing.ThingStatus.ONLINE;
 import static org.openhab.core.thing.ThingStatus.UNKNOWN;
 import static org.openhab.core.thing.ThingStatusDetail.CONFIGURATION_PENDING;
+import static pl.grzeslowski.jsupla.protocol.api.CalCfgCommand.*;
+import static pl.grzeslowski.jsupla.protocol.api.CalCfgResult.SUPLA_CALCFG_RESULT_DONE;
 import static pl.grzeslowski.jsupla.protocol.api.DeviceFlag.SUPLA_DEVICE_FLAG_AUTOMATIC_FIRMWARE_UPDATE_SUPPORTED;
+import static pl.grzeslowski.jsupla.protocol.api.FirmwareCheckResultCode.SUPLA_FIRMWARE_CHECK_RESULT_UPDATE_AVAILABLE;
 import static pl.grzeslowski.jsupla.protocol.api.consts.ProtoConsts.*;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.SUPLA_SERVER_DEVICE_TYPE_ID;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.SUPLA_SERVER_TYPE_ID;
@@ -86,7 +89,7 @@ class SuplaServerDeviceActionsIT {
 
             var request = readDeviceCalCfgRequest(device::readDeviceCalCfgRequest);
             assertThat(request.channelNumber()).isEqualTo(-1);
-            assertThat(request.command()).isEqualTo(SUPLA_CALCFG_CMD_CHECK_FIRMWARE_UPDATE);
+            assertThat(request.command()).isEqualTo(SUPLA_CALCFG_CMD_CHECK_FIRMWARE_UPDATE.getValue());
             assertThat(request.superUserAuthorized()).isEqualTo((byte) 1);
 
             consumeDeviceCalCfgResult(
@@ -95,7 +98,7 @@ class SuplaServerDeviceActionsIT {
                             request.senderId(),
                             request.channelNumber(),
                             request.command(),
-                            SUPLA_CALCFG_RESULT_DONE,
+                            SUPLA_CALCFG_RESULT_DONE.getValue(),
                             0L,
                             new byte[0]));
             assertThat(action.isDone()).isFalse();
@@ -106,10 +109,10 @@ class SuplaServerDeviceActionsIT {
                             request.senderId(),
                             request.channelNumber(),
                             request.command(),
-                            SUPLA_CALCFG_RESULT_DONE,
+                            SUPLA_CALCFG_RESULT_DONE.getValue(),
                             FirmwareCheckResult.SIZE,
                             encodeFirmwareCheckResult(
-                                    SUPLA_FIRMWARE_CHECK_RESULT_UPDATE_AVAILABLE,
+                                    SUPLA_FIRMWARE_CHECK_RESULT_UPDATE_AVAILABLE.getValue(),
                                     "2.3.4",
                                     "https://example.test/changelog")));
             assertThat(action.get(30, SECONDS)).isEqualTo("AVAILABLE");
@@ -151,7 +154,7 @@ class SuplaServerDeviceActionsIT {
 
             var request = readDeviceCalCfgRequest(device::readDeviceCalCfgRequest);
             assertThat(request.channelNumber()).isEqualTo(-1);
-            assertThat(request.command()).isEqualTo(SUPLA_CALCFG_CMD_START_FIRMWARE_UPDATE);
+            assertThat(request.command()).isEqualTo(SUPLA_CALCFG_CMD_START_FIRMWARE_UPDATE.getValue());
             consumeDeviceCalCfgResult(deviceCtx.handler(), request);
             assertThat(action.get(30, SECONDS)).isEqualTo("ACCEPTED");
 
@@ -188,7 +191,7 @@ class SuplaServerDeviceActionsIT {
 
             var request = readDeviceCalCfgRequest(device::readDeviceCalCfgRequest);
             assertThat(request.channelNumber()).isEqualTo(-1);
-            assertThat(request.command()).isEqualTo(SUPLA_CALCFG_CMD_START_SECURITY_UPDATE);
+            assertThat(request.command()).isEqualTo(SUPLA_CALCFG_CMD_START_SECURITY_UPDATE.getValue());
             consumeDeviceCalCfgResult(deviceCtx.handler(), request);
             assertThat(action.get(30, SECONDS)).isEqualTo("ACCEPTED");
 
@@ -261,7 +264,7 @@ class SuplaServerDeviceActionsIT {
 
             var request = readDeviceCalCfgRequest(device::readDeviceCalCfgRequest);
             assertThat(request.channelNumber()).isEqualTo(0);
-            assertThat(request.command()).isEqualTo(SUPLA_CALCFG_CMD_RESET_COUNTERS);
+            assertThat(request.command()).isEqualTo(SUPLA_CALCFG_CMD_RESET_COUNTERS.getValue());
             assertThat(request.superUserAuthorized()).isEqualTo((byte) 1);
             consumeDeviceCalCfgResult(deviceCtx.handler(), request);
             action.get(30, SECONDS);
@@ -303,7 +306,7 @@ class SuplaServerDeviceActionsIT {
 
             var request = readDeviceCalCfgRequest(device::readDeviceCalCfgRequest);
             assertThat(request.channelNumber()).isEqualTo(-1);
-            assertThat(request.command()).isEqualTo(SUPLA_CALCFG_CMD_ENTER_CFG_MODE);
+            assertThat(request.command()).isEqualTo(SUPLA_CALCFG_CMD_ENTER_CFG_MODE.getValue());
             assertThat(request.superUserAuthorized()).isEqualTo((byte) 1);
             consumeDeviceCalCfgResult(deviceCtx.handler(), request);
             action.get(30, SECONDS);
@@ -327,7 +330,7 @@ class SuplaServerDeviceActionsIT {
                         request.senderId(),
                         request.channelNumber(),
                         request.command(),
-                        SUPLA_CALCFG_RESULT_DONE,
+                        SUPLA_CALCFG_RESULT_DONE.getValue(),
                         request.dataSize(),
                         request.data()));
     }
