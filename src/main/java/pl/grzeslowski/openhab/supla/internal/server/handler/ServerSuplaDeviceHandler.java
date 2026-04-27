@@ -137,6 +137,9 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler
     private ServerBridge bridgeHandler;
 
     @Getter
+    private ServerDeviceHandlerConfiguration configuration = new ServerDeviceHandlerConfiguration();
+
+    @Getter
     private final AtomicReference<@Nullable SuplaWriter> writer = new AtomicReference<>();
 
     private final AtomicReference<@Nullable SetDeviceConfigResult> setDeviceConfigResult = new AtomicReference<>();
@@ -192,7 +195,7 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler
         }
         var localBridgeHandler = this.bridgeHandler = (ServerBridge) rawBridgeHandler;
 
-        var config = getConfigAs(ServerDeviceHandlerConfiguration.class);
+        var config = this.configuration = getConfigAs(ServerDeviceHandlerConfiguration.class);
         guid = config.getGuid();
         if (guid == null || guid.isEmpty()) {
             guid = null;
