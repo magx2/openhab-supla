@@ -300,7 +300,6 @@ public class SuplaServerDeviceActions implements ThingActions {
             var future = writer.write(message);
             future.await(timeout.toMillis(), MILLISECONDS);
             if (!future.isSuccess()) {
-                localHandler.markOtaCheckError();
                 throw new RuntimeException("Check firmware update dispatch failed! request=%s, cause=%s"
                         .formatted(message, future.cause()));
             }
