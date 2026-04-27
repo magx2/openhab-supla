@@ -18,8 +18,10 @@ import static pl.grzeslowski.jsupla.protocol.api.DeviceFlag.SUPLA_DEVICE_FLAG_CA
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.DefaultChannelPromise;
 import io.netty.channel.embedded.EmbeddedChannel;
+import java.time.Duration;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -288,6 +290,32 @@ class SuplaServerDeviceActionsTest {
     }
 
     @Test
+    void shouldUseRemainingTimeoutForOtaCheckResult() throws Exception {
+        configuration.setCheckFirmwareUpdateActionTimeout(Duration.ofMillis(100));
+        when(handler.listenForDeviceCalCfgResult(100, MILLISECONDS)).thenAnswer(invocation -> {
+            Thread.sleep(40);
+            return new DeviceCalCfgResult(
+                    0,
+                    -1,
+                    SUPLA_CALCFG_CMD_CHECK_FIRMWARE_UPDATE.getValue(),
+                    SUPLA_CALCFG_RESULT_DONE.getValue(),
+                    0L,
+                    new byte[0]);
+        });
+        when(handler.listenForOtaCheckResult(
+                        org.mockito.ArgumentMatchers.longThat(timeout -> timeout < 100),
+                        org.mockito.ArgumentMatchers.eq(MILLISECONDS)))
+                .thenReturn(ServerSuplaDeviceHandler.OtaStatus.AVAILABLE);
+
+        assertThat(actions.checkFirmwareUpdate()).isEqualTo("AVAILABLE");
+
+        verify(handler)
+                .listenForOtaCheckResult(
+                        org.mockito.ArgumentMatchers.longThat(timeout -> timeout < 100),
+                        org.mockito.ArgumentMatchers.eq(MILLISECONDS));
+    }
+
+    @Test
     void shouldMarkOtaCheckErrorWhenCheckFirmwareUpdateDispatchFails() {
         when(writer.write(argThat(proto -> proto instanceof DeviceCalCfgRequest)))
                 .thenThrow(new RuntimeException("dispatch failed"));
@@ -297,6 +325,30 @@ class SuplaServerDeviceActionsTest {
                 .hasMessageContaining("dispatch failed");
         verify(handler).clearDeviceCalCfgResult();
         verify(handler).markOtaCheckPending();
+        verify(handler).markOtaCheckError();
+    }
+
+    @Test
+    void shouldMarkOtaCheckErrorWhenDeviceCalCfgResultWaitTimesOut() throws Exception {
+        when(handler.listenForDeviceCalCfgResult(30_000, MILLISECONDS)).thenThrow(new TimeoutException("timeout"));
+
+        assertThatThrownBy(() -> actions.checkFirmwareUpdate()).isInstanceOf(TimeoutException.class);
+        verify(handler).markOtaCheckError();
+    }
+
+    @Test
+    void shouldMarkOtaCheckErrorWhenOtaCheckWaitTimesOut() throws Exception {
+        when(handler.listenForDeviceCalCfgResult(30_000, MILLISECONDS))
+                .thenReturn(new DeviceCalCfgResult(
+                        0,
+                        -1,
+                        SUPLA_CALCFG_CMD_CHECK_FIRMWARE_UPDATE.getValue(),
+                        SUPLA_CALCFG_RESULT_DONE.getValue(),
+                        0L,
+                        new byte[0]));
+        when(handler.listenForOtaCheckResult(30_000, MILLISECONDS)).thenThrow(new TimeoutException("timeout"));
+
+        assertThatThrownBy(() -> actions.checkFirmwareUpdate()).isInstanceOf(TimeoutException.class);
         verify(handler).markOtaCheckError();
     }
 
