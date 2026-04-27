@@ -1,22 +1,21 @@
 package pl.grzeslowski.openhab.supla.internal;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.openhab.core.thing.ThingStatus.ONLINE;
 import static org.openhab.core.thing.ThingStatus.UNKNOWN;
 import static org.openhab.core.thing.ThingStatusDetail.CONFIGURATION_PENDING;
-import static pl.grzeslowski.jsupla.protocol.api.consts.ProtoConsts.SUPLA_CALCFG_CMD_ENTER_CFG_MODE;
-import static pl.grzeslowski.jsupla.protocol.api.consts.ProtoConsts.SUPLA_CALCFG_CMD_RESET_COUNTERS;
-import static pl.grzeslowski.jsupla.protocol.api.consts.ProtoConsts.SUPLA_CALCFG_RESULT_DONE;
+import static pl.grzeslowski.jsupla.protocol.api.consts.ProtoConsts.*;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.SUPLA_SERVER_DEVICE_TYPE_ID;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.SUPLA_SERVER_TYPE_ID;
 import static pl.grzeslowski.openhab.supla.internal.extension.supla.SuplaExtension.deviceInitialize;
 import static pl.grzeslowski.openhab.supla.internal.extension.supla.SuplaExtension.serverInitialize;
 
 import io.github.glytching.junit.extension.random.RandomBeansExtension;
-import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
+import lombok.SneakyThrows;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -80,12 +79,12 @@ class SuplaServerDeviceActionsIT {
                 }
             });
 
-            var request = device.readDeviceCalCfgRequest();
+            var request = readDeviceCalCfgRequest(device::readDeviceCalCfgRequest);
             assertThat(request.channelNumber()).isEqualTo(0);
             assertThat(request.command()).isEqualTo(SUPLA_CALCFG_CMD_RESET_COUNTERS);
             assertThat(request.superUserAuthorized()).isEqualTo((byte) 1);
-            consumeDeviceCalCfgResult(deviceCtx.handler(), request, SUPLA_CALCFG_RESULT_DONE);
-            action.get(30, TimeUnit.SECONDS);
+            consumeDeviceCalCfgResult(deviceCtx.handler(), request);
+            action.get(30, SECONDS);
         }
     }
 
@@ -122,12 +121,12 @@ class SuplaServerDeviceActionsIT {
                 }
             });
 
-            var request = device.readDeviceCalCfgRequest();
+            var request = readDeviceCalCfgRequest(device::readDeviceCalCfgRequest);
             assertThat(request.channelNumber()).isEqualTo(-1);
             assertThat(request.command()).isEqualTo(SUPLA_CALCFG_CMD_ENTER_CFG_MODE);
             assertThat(request.superUserAuthorized()).isEqualTo((byte) 1);
-            consumeDeviceCalCfgResult(deviceCtx.handler(), request, SUPLA_CALCFG_RESULT_DONE);
-            action.get(30, TimeUnit.SECONDS);
+            consumeDeviceCalCfgResult(deviceCtx.handler(), request);
+            action.get(30, SECONDS);
         }
     }
 
@@ -137,13 +136,18 @@ class SuplaServerDeviceActionsIT {
         return actions;
     }
 
-    private static void consumeDeviceCalCfgResult(ThingHandler handler, DeviceCalCfgRequest request, int result) {
+    private static DeviceCalCfgRequest readDeviceCalCfgRequest(Supplier<DeviceCalCfgRequest> requestSupplier)
+            throws Exception {
+        return CompletableFuture.supplyAsync(requestSupplier).get(30, SECONDS);
+    }
+
+    private static void consumeDeviceCalCfgResult(ThingHandler handler, DeviceCalCfgRequest request) {
         ((ServerSuplaDeviceHandler) handler)
                 .consumeDeviceCalCfgResult(new DeviceCalCfgResult(
                         request.senderId(),
                         request.channelNumber(),
                         request.command(),
-                        result,
+                        SUPLA_CALCFG_RESULT_DONE,
                         request.dataSize(),
                         request.data()));
     }
@@ -165,7 +169,8 @@ class SuplaServerDeviceActionsIT {
             super(guid, email, authKey);
         }
 
-        private DeviceCalCfgRequest readDeviceCalCfgRequest() throws IOException {
+        @SneakyThrows
+        private DeviceCalCfgRequest readDeviceCalCfgRequest() {
             var read = read();
             assertThat(read).isInstanceOf(DeviceCalCfgRequest.class);
             return (DeviceCalCfgRequest) read;
@@ -177,7 +182,8 @@ class SuplaServerDeviceActionsIT {
             super(guid, email, authKey);
         }
 
-        private DeviceCalCfgRequest readDeviceCalCfgRequest() throws IOException {
+        @SneakyThrows
+        private DeviceCalCfgRequest readDeviceCalCfgRequest() {
             var read = read();
             assertThat(read).isInstanceOf(DeviceCalCfgRequest.class);
             return (DeviceCalCfgRequest) read;
