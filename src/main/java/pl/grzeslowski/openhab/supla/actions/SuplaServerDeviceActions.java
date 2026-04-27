@@ -4,9 +4,13 @@ import static java.lang.System.arraycopy;
 import static java.util.Objects.requireNonNull;
 import static java.util.Objects.requireNonNullElse;
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static pl.grzeslowski.jsupla.protocol.api.DeviceFlag.SUPLA_DEVICE_FLAG_AUTOMATIC_FIRMWARE_UPDATE_SUPPORTED;
 import static pl.grzeslowski.jsupla.protocol.api.DeviceFlag.SUPLA_DEVICE_FLAG_CALCFG_ENTER_CFG_MODE;
+import static pl.grzeslowski.jsupla.protocol.api.consts.ProtoConsts.SUPLA_CALCFG_CMD_CHECK_FIRMWARE_UPDATE;
 import static pl.grzeslowski.jsupla.protocol.api.consts.ProtoConsts.SUPLA_CALCFG_CMD_ENTER_CFG_MODE;
 import static pl.grzeslowski.jsupla.protocol.api.consts.ProtoConsts.SUPLA_CALCFG_CMD_RESET_COUNTERS;
+import static pl.grzeslowski.jsupla.protocol.api.consts.ProtoConsts.SUPLA_CALCFG_CMD_START_FIRMWARE_UPDATE;
+import static pl.grzeslowski.jsupla.protocol.api.consts.ProtoConsts.SUPLA_CALCFG_CMD_START_SECURITY_UPDATE;
 import static pl.grzeslowski.jsupla.protocol.api.consts.ProtoConsts.SUPLA_CALCFG_RESULT_DONE;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.BINDING_ID;
 
@@ -24,6 +28,7 @@ import org.eclipse.jdt.annotation.Nullable;
 import org.openhab.core.automation.annotation.ActionInput;
 import org.openhab.core.automation.annotation.RuleAction;
 import org.openhab.core.thing.ChannelUID;
+import org.openhab.core.thing.ThingStatus;
 import org.openhab.core.thing.binding.ThingActions;
 import org.openhab.core.thing.binding.ThingActionsScope;
 import org.openhab.core.thing.binding.ThingHandler;
@@ -40,8 +45,11 @@ import pl.grzeslowski.openhab.supla.internal.server.handler.ServerSuplaDeviceHan
 @NonNullByDefault
 @Slf4j
 public class SuplaServerDeviceActions implements ThingActions {
+    private static final int NO_DATA_TYPE = 0;
     private static final byte[] EMPTY_DATA = new byte[0];
     private static final byte SUPER_USER_AUTHORIZED = 1;
+    private static final int NOT_BOUND_TO_CHANNEL = -1;
+    private static final int SENDER_ID = 1;
 
     @Getter
     @Nullable
@@ -192,7 +200,13 @@ public class SuplaServerDeviceActions implements ThingActions {
         }
 
         var message = new DeviceCalCfgRequest(
-                0, channelNumber, SUPLA_CALCFG_CMD_RESET_COUNTERS, SUPER_USER_AUTHORIZED, 0, 0L, EMPTY_DATA);
+                SENDER_ID,
+                channelNumber,
+                SUPLA_CALCFG_CMD_RESET_COUNTERS,
+                SUPER_USER_AUTHORIZED,
+                NO_DATA_TYPE,
+                EMPTY_DATA.length,
+                EMPTY_DATA);
         localHandler.clearDeviceCalCfgResult();
         writer.write(message).await(30, SECONDS);
 
@@ -235,12 +249,18 @@ public class SuplaServerDeviceActions implements ThingActions {
         }
 
         var message = new DeviceCalCfgRequest(
-                0, -1, SUPLA_CALCFG_CMD_ENTER_CFG_MODE, SUPER_USER_AUTHORIZED, 0, 0L, EMPTY_DATA);
+                SENDER_ID,
+                NOT_BOUND_TO_CHANNEL,
+                SUPLA_CALCFG_CMD_ENTER_CFG_MODE,
+                SUPER_USER_AUTHORIZED,
+                NO_DATA_TYPE,
+                EMPTY_DATA.length,
+                EMPTY_DATA);
         localHandler.clearDeviceCalCfgResult();
         writer.write(message).await(30, SECONDS);
 
         var result = localHandler.listenForDeviceCalCfgResult(30, SECONDS);
-        if (result.channelNumber() != -1) {
+        if (result.channelNumber() != NOT_BOUND_TO_CHANNEL) {
             throw new RuntimeException("Enter config mode returned a different channel number! request=%s, result=%s"
                     .formatted(message, result));
         }
@@ -252,6 +272,99 @@ public class SuplaServerDeviceActions implements ThingActions {
             throw new RuntimeException(
                     "Enter config mode did not succeed! request=%s, result=%s".formatted(message, result));
         }
+    }
+
+    @RuleAction(
+            label = "@text/action.check-firmware-update.label",
+            description = "@text/action.check-firmware-update.description")
+    public synchronized String checkFirmwareUpdate() throws InterruptedException {
+        var localHandler = requireOtaReadyHandler();
+        localHandler.markOtaCheckPending();
+
+        var writer = localHandler.getWriter().get();
+        requireNonNull(writer, "There is no socket writer!")
+                .write(new DeviceCalCfgRequest(
+                        SENDER_ID,
+                        NOT_BOUND_TO_CHANNEL,
+                        SUPLA_CALCFG_CMD_CHECK_FIRMWARE_UPDATE,
+                        SUPER_USER_AUTHORIZED,
+                        NO_DATA_TYPE,
+                        EMPTY_DATA.length,
+                        EMPTY_DATA))
+                .await(30, SECONDS);
+        return "ACCEPTED";
+    }
+
+    @RuleAction(
+            label = "@text/action.start-firmware-update.label",
+            description = "@text/action.start-firmware-update.description")
+    public synchronized String startFirmwareUpdate() throws InterruptedException, TimeoutException {
+        return sendWholeDeviceCalCfgCommand(SUPLA_CALCFG_CMD_START_FIRMWARE_UPDATE, "Start firmware update");
+    }
+
+    @RuleAction(
+            label = "@text/action.start-security-update.label",
+            description = "@text/action.start-security-update.description")
+    public synchronized String startSecurityUpdate() throws InterruptedException, TimeoutException {
+        return sendWholeDeviceCalCfgCommand(SUPLA_CALCFG_CMD_START_SECURITY_UPDATE, "Start security update");
+    }
+
+    private String sendWholeDeviceCalCfgCommand(int command, String actionName)
+            throws InterruptedException, TimeoutException {
+        var localHandler = requireOtaReadyHandler();
+        var writer = localHandler.getWriter().get();
+        if (writer == null) {
+            throw new IllegalStateException("There is no socket writer!");
+        }
+
+        var message = new DeviceCalCfgRequest(
+                SENDER_ID,
+                NOT_BOUND_TO_CHANNEL,
+                command,
+                SUPER_USER_AUTHORIZED,
+                NO_DATA_TYPE,
+                EMPTY_DATA.length,
+                EMPTY_DATA);
+        localHandler.clearDeviceCalCfgResult();
+        writer.write(message).await(30, SECONDS);
+
+        var result = localHandler.listenForDeviceCalCfgResult(30, SECONDS);
+        if (result.channelNumber() != NOT_BOUND_TO_CHANNEL) {
+            throw new RuntimeException("%s returned a different channel number! request=%s, result=%s"
+                    .formatted(actionName, message, result));
+        }
+        if (result.command() != command) {
+            throw new RuntimeException(
+                    "%s returned a different command! request=%s, result=%s".formatted(actionName, message, result));
+        }
+        if (result.result() != SUPLA_CALCFG_RESULT_DONE) {
+            throw new RuntimeException(
+                    "%s did not succeed! request=%s, result=%s".formatted(actionName, message, result));
+        }
+        localHandler.markOtaUpdateTriggered();
+        return "ACCEPTED";
+    }
+
+    private ServerSuplaDeviceHandler requireOtaReadyHandler() {
+        var localHandler = thingHandler;
+        if (localHandler == null) {
+            log.warn("Thing handler is null!");
+            throw new IllegalStateException("Thing handler is null");
+        }
+        if (localHandler.getThing().getStatus() == ThingStatus.OFFLINE
+                || localHandler.getWriter().get() == null) {
+            throw new IllegalStateException("Device is offline");
+        }
+
+        var suplaDevice = localHandler.getSuplaDevice();
+        if (suplaDevice == null) {
+            throw new IllegalStateException("There is no registered device!");
+        }
+        if (!suplaDevice.flags().contains(SUPLA_DEVICE_FLAG_AUTOMATIC_FIRMWARE_UPDATE_SUPPORTED)
+                || !localHandler.supportsAutomaticFirmwareUpdates()) {
+            throw new IllegalArgumentException("Device does not support automatic firmware updates");
+        }
+        return localHandler;
     }
 
     private static ChannelUID parseChannelUID(String channelUID) {
@@ -284,5 +397,19 @@ public class SuplaServerDeviceActions implements ThingActions {
 
     public static void enterConfigMode(@Nullable ThingActions actions) throws InterruptedException, TimeoutException {
         ((SuplaServerDeviceActions) requireNonNull(actions)).enterConfigMode();
+    }
+
+    public static String checkFirmwareUpdate(@Nullable ThingActions actions) throws InterruptedException {
+        return ((SuplaServerDeviceActions) requireNonNull(actions)).checkFirmwareUpdate();
+    }
+
+    public static String startFirmwareUpdate(@Nullable ThingActions actions)
+            throws InterruptedException, TimeoutException {
+        return ((SuplaServerDeviceActions) requireNonNull(actions)).startFirmwareUpdate();
+    }
+
+    public static String startSecurityUpdate(@Nullable ThingActions actions)
+            throws InterruptedException, TimeoutException {
+        return ((SuplaServerDeviceActions) requireNonNull(actions)).startSecurityUpdate();
     }
 }

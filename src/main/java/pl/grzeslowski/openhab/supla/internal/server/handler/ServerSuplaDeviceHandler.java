@@ -9,10 +9,16 @@ import static java.util.stream.Collectors.joining;
 import static org.openhab.core.thing.ThingStatus.OFFLINE;
 import static org.openhab.core.thing.ThingStatus.ONLINE;
 import static org.openhab.core.thing.ThingStatusDetail.*;
+import static pl.grzeslowski.jsupla.protocol.api.DeviceFlag.SUPLA_DEVICE_FLAG_AUTOMATIC_FIRMWARE_UPDATE_SUPPORTED;
 import static pl.grzeslowski.jsupla.protocol.api.DeviceFlag.SUPLA_DEVICE_FLAG_SLEEP_MODE_ENABLED;
+import static pl.grzeslowski.jsupla.protocol.api.ProtocolHelpers.parseString;
 import static pl.grzeslowski.jsupla.protocol.api.ResultCode.SUPLA_RESULTCODE_TRUE;
+import static pl.grzeslowski.jsupla.protocol.api.consts.ProtoConsts.SUPLA_CALCFG_CMD_CHECK_FIRMWARE_UPDATE;
 import static pl.grzeslowski.jsupla.protocol.api.consts.ProtoConsts.SUPLA_CALCFG_RESULT_DONE;
 import static pl.grzeslowski.jsupla.protocol.api.consts.ProtoConsts.SUPLA_CONFIG_TYPE_DEFAULT;
+import static pl.grzeslowski.jsupla.protocol.api.consts.ProtoConsts.SUPLA_FIRMWARE_CHECK_RESULT_ERROR;
+import static pl.grzeslowski.jsupla.protocol.api.consts.ProtoConsts.SUPLA_FIRMWARE_CHECK_RESULT_UPDATE_AVAILABLE;
+import static pl.grzeslowski.jsupla.protocol.api.consts.ProtoConsts.SUPLA_FIRMWARE_CHECK_RESULT_UPDATE_NOT_AVAILABLE;
 import static pl.grzeslowski.jsupla.protocol.api.consts.ProtoConsts.SUPLA_PROTO_VERSION_MIN;
 import static pl.grzeslowski.openhab.supla.internal.GuidLogger.attachGuid;
 import static pl.grzeslowski.openhab.supla.internal.Localization.text;
@@ -53,8 +59,10 @@ import org.slf4j.LoggerFactory;
 import pl.grzeslowski.jsupla.protocol.api.ChannelFunction;
 import pl.grzeslowski.jsupla.protocol.api.ChannelType;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.value.ActionTrigger.Capabilities;
+import pl.grzeslowski.jsupla.protocol.api.decoders.FirmwareCheckResultDecoder;
 import pl.grzeslowski.jsupla.protocol.api.encoders.ChannelConfigActionTriggerEncoder;
 import pl.grzeslowski.jsupla.protocol.api.structs.ChannelConfigActionTrigger;
+import pl.grzeslowski.jsupla.protocol.api.structs.FirmwareCheckResult;
 import pl.grzeslowski.jsupla.protocol.api.structs.SuplaTimeval;
 import pl.grzeslowski.jsupla.protocol.api.structs.dcs.LocalTimeRequest;
 import pl.grzeslowski.jsupla.protocol.api.structs.dcs.SetCaption;
@@ -134,6 +142,7 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler
 
     private final AtomicReference<@Nullable SetDeviceConfigResult> setDeviceConfigResult = new AtomicReference<>();
     private final AtomicReference<@Nullable DeviceCalCfgResult> deviceCalCfgResult = new AtomicReference<>();
+    private final AtomicReference<@Nullable Integer> pendingOtaCommand = new AtomicReference<>();
 
     @Delegate(types = StateCache.class)
     private final StateCache stateCache = new InMemoryStateCache(logger);
@@ -146,6 +155,14 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler
     record ActionChannelValue(
             pl.grzeslowski.jsupla.protocol.api.channeltype.value.ActionTrigger actionTrigger,
             ChannelFunction channelFunction) {}
+
+    public enum OtaStatus {
+        CHECKING,
+        AVAILABLE,
+        NOT_AVAILABLE,
+        ERROR,
+        UPDATE_TRIGGERED
+    }
 
     public ServerSuplaDeviceHandler(Thing thing) {
         super(thing);
@@ -384,6 +401,10 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler
         { // set properties for DeviceFlag
             var flags = registerEntity.flags().stream().map(Enum::name).collect(joining(", ", "[", "]"));
             setProperty("DEVICE_FLAGS", flags);
+            setProperty(
+                    OTA_SUPPORTED_PROPERTY,
+                    Boolean.toString(
+                            registerEntity.flags().contains(SUPLA_DEVICE_FLAG_AUTOMATIC_FIRMWARE_UPDATE_SUPPORTED)));
             logger.debug("Setting device flags: {}", flags);
         }
         {
@@ -590,6 +611,10 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler
     }
 
     public void consumeDeviceCalCfgResult(DeviceCalCfgResult value) {
+        if (value.command() == SUPLA_CALCFG_CMD_CHECK_FIRMWARE_UPDATE) {
+            consumeFirmwareCheckResult(value);
+            return;
+        }
         if (value.result() != SUPLA_CALCFG_RESULT_DONE) {
             logger.warn("Did not succeed ({}) with device calcfg command. result={}", value.result(), value);
         } else {
@@ -603,6 +628,34 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler
 
     public void clearDeviceCalCfgResult() {
         deviceCalCfgResult.set(null);
+    }
+
+    public boolean supportsAutomaticFirmwareUpdates() {
+        return Optional.ofNullable(suplaDevice).map(SuplaDevice::flags).stream()
+                .flatMap(Collection::stream)
+                .anyMatch(SUPLA_DEVICE_FLAG_AUTOMATIC_FIRMWARE_UPDATE_SUPPORTED::equals);
+    }
+
+    public void markOtaCheckPending() {
+        pendingOtaCommand.set(SUPLA_CALCFG_CMD_CHECK_FIRMWARE_UPDATE);
+        updateOtaState(OtaStatus.CHECKING, null, null, null);
+    }
+
+    public boolean isOtaCheckPending() {
+        return pendingOtaCommand.get() != null;
+    }
+
+    public void markOtaUpdateTriggered() {
+        pendingOtaCommand.set(null);
+        updateOtaState(OtaStatus.UPDATE_TRIGGERED, null, null, now());
+    }
+
+    public void clearOtaState() {
+        pendingOtaCommand.set(null);
+        setProperty(OTA_STATUS_PROPERTY, null);
+        setProperty(OTA_VERSION_AVAILABLE_PROPERTY, null);
+        setProperty(OTA_CHANGELOG_URL_PROPERTY, null);
+        setProperty(OTA_LAST_CHECK_PROPERTY, null);
     }
 
     public synchronized SetDeviceConfigResult listenForSetDeviceConfigResult(long maxTime, TimeUnit timeUnit)
@@ -649,6 +702,55 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler
         }
         deviceCalCfgResult.set(null);
         return result;
+    }
+
+    private void consumeFirmwareCheckResult(DeviceCalCfgResult value) {
+        try {
+            if (value.result() != SUPLA_CALCFG_RESULT_DONE) {
+                logger.warn("Firmware update check failed before payload parsing. result={}", value);
+                updateOtaState(OtaStatus.ERROR, null, null, now());
+                return;
+            }
+
+            var payload = decodeFirmwareCheckResult(value);
+            var status =
+                    switch (payload.result()) {
+                        case SUPLA_FIRMWARE_CHECK_RESULT_UPDATE_AVAILABLE -> OtaStatus.AVAILABLE;
+                        case SUPLA_FIRMWARE_CHECK_RESULT_UPDATE_NOT_AVAILABLE -> OtaStatus.NOT_AVAILABLE;
+                        case SUPLA_FIRMWARE_CHECK_RESULT_ERROR -> OtaStatus.ERROR;
+                        default -> {
+                            logger.warn("Unknown firmware check result code {}. payload={}", payload.result(), payload);
+                            yield OtaStatus.ERROR;
+                        }
+                    };
+            updateOtaState(status, parseString(payload.softVer()), parseString(payload.changelogUrl()), now());
+        } catch (RuntimeException ex) {
+            logger.warn("Could not decode firmware check result {}", value, ex);
+            updateOtaState(OtaStatus.ERROR, null, null, now());
+        } finally {
+            pendingOtaCommand.set(null);
+        }
+    }
+
+    private static FirmwareCheckResult decodeFirmwareCheckResult(DeviceCalCfgResult value) {
+        return FirmwareCheckResultDecoder.INSTANCE.decode(value.data(), 0);
+    }
+
+    private void updateOtaState(
+            OtaStatus status, @Nullable String version, @Nullable String changelogUrl, @Nullable Instant checkedAt) {
+        setProperty(OTA_STATUS_PROPERTY, status.name());
+        setProperty(OTA_VERSION_AVAILABLE_PROPERTY, emptyToNull(version));
+        setProperty(OTA_CHANGELOG_URL_PROPERTY, emptyToNull(changelogUrl));
+        setProperty(
+                OTA_LAST_CHECK_PROPERTY,
+                Optional.ofNullable(checkedAt).map(Instant::toString).orElse(null));
+    }
+
+    private static @Nullable String emptyToNull(@Nullable String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        return value;
     }
 
     public void consumeSetChannelConfigResult(SetChannelConfigResult value) {

@@ -245,6 +245,41 @@ then
 end
 ```
 
+### Firmware Update Actions
+
+Firmware update actions trigger the native SUPLA OTA control flow from an openHAB rule. The binding sends a device-level
+`TSD_DeviceCalCfgRequest` with `channelNumber = -1`, while the device contacts its configured OTA HTTPS endpoint and
+downloads the firmware on its own.
+
+Methods:
+
+- `checkFirmwareUpdate()`
+- `startFirmwareUpdate()`
+- `startSecurityUpdate()`
+
+Notes:
+
+- The action is available only for devices that declared `SUPLA_DEVICE_FLAG_AUTOMATIC_FIRMWARE_UPDATE_SUPPORTED` during registration.
+- `checkFirmwareUpdate()` returns after the command is accepted for delivery. The asynchronous result is stored in thing properties:
+	- `otaSupported`
+	- `otaStatus`
+	- `otaVersionAvailable`
+	- `otaChangelogUrl`
+	- `otaLastCheck`
+- `startFirmwareUpdate()` and `startSecurityUpdate()` only trigger the device-side OTA process. No firmware binary is transferred through the SUPLA session.
+
+#### Example
+
+```
+rule "Check device firmware update"
+when
+	<TRIGGER>
+then
+	val actions = getActions("supla", "supla:server-device:8e6baab333")
+	actions.checkFirmwareUpdate()
+end
+```
+
 ## FAQ 🤔
 
 ### SSL Problem
