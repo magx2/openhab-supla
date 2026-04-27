@@ -278,13 +278,25 @@ class SuplaServerDeviceActionsTest {
 
         var inOrder = inOrder(handler, writer);
         inOrder.verify(handler).clearDeviceCalCfgResult();
-        inOrder.verify(handler).markOtaCheckPending();
         inOrder.verify(writer)
                 .write(argThat(proto -> proto instanceof DeviceCalCfgRequest request
                         && request.channelNumber() == -1
                         && request.command() == SUPLA_CALCFG_CMD_CHECK_FIRMWARE_UPDATE.getValue()));
+        inOrder.verify(handler).markOtaCheckPending();
         inOrder.verify(handler).listenForDeviceCalCfgResult(30_000, MILLISECONDS);
         inOrder.verify(handler).listenForOtaCheckResult(30_000, MILLISECONDS);
+    }
+
+    @Test
+    void shouldNotMarkOtaCheckPendingWhenCheckFirmwareUpdateDispatchFails() {
+        when(writer.write(argThat(proto -> proto instanceof DeviceCalCfgRequest)))
+                .thenThrow(new RuntimeException("dispatch failed"));
+
+        assertThatThrownBy(() -> actions.checkFirmwareUpdate())
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("dispatch failed");
+        verify(handler).clearDeviceCalCfgResult();
+        verify(handler, org.mockito.Mockito.never()).markOtaCheckPending();
     }
 
     @Test

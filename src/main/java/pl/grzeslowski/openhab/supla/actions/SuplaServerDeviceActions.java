@@ -294,9 +294,9 @@ public class SuplaServerDeviceActions implements ThingActions {
                 EMPTY_DATA);
 
         localHandler.clearDeviceCalCfgResult();
-        localHandler.markOtaCheckPending();
         var timeout = localHandler.getConfiguration().getCheckFirmwareUpdateActionTimeout();
         writer.write(message).await(timeout.toMillis(), MILLISECONDS);
+        localHandler.markOtaCheckPending();
 
         var result = localHandler.listenForDeviceCalCfgResult(timeout.toMillis(), MILLISECONDS);
         if (result.channelNumber() != NOT_BOUND_TO_CHANNEL) {
