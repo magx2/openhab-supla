@@ -68,6 +68,11 @@ public class SuplaBindingConstants {
         public static final String CONFIG_AUTH_PROPERTY = "authKey";
         public static final String SERVER_NAME_PROPERTY = "serverName";
         public static final String SERIAL_NUMBER_PROPERTY = "serialNumber";
+        public static final String OTA_SUPPORTED_PROPERTY = "otaSupported";
+        public static final String OTA_STATUS_PROPERTY = "otaStatus";
+        public static final String OTA_VERSION_AVAILABLE_PROPERTY = "otaVersionAvailable";
+        public static final String OTA_CHANGELOG_URL_PROPERTY = "otaChangelogUrl";
+        public static final String OTA_LAST_CHECK_PROPERTY = "otaLastCheck";
     }
 
     // CloudBridgeHandler

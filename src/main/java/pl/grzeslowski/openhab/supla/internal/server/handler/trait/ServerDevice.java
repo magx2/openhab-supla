@@ -40,6 +40,7 @@ public interface ServerDevice extends HandleCommand, StateCache {
 
     ChannelFuture write(FromServerProto proto);
 
+    @Nullable
     String setProperty(String name, @Nullable String value);
 
     default boolean hasRegisteredDeviceChannel(int channelNumber) {
