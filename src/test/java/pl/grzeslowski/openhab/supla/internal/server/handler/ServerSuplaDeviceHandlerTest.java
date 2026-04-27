@@ -1,5 +1,6 @@
 package pl.grzeslowski.openhab.supla.internal.server.handler;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.nullable;
@@ -98,6 +99,19 @@ class ServerSuplaDeviceHandlerTest {
                 .startsWith("[")
                 .endsWith("]")
                 .contains("SUPLA_BIT_FUNC_LIGHTSWITCH");
+    }
+
+    @Test
+    void shouldTreatImmediateFirmwareCheckAcceptanceAsSeparateResult() throws Exception {
+        handler.markOtaCheckPending();
+        var immediateResult = new DeviceCalCfgResult(
+                0, -1, SUPLA_CALCFG_CMD_CHECK_FIRMWARE_UPDATE, SUPLA_CALCFG_RESULT_DONE, 0L, new byte[0]);
+
+        handler.consumeDeviceCalCfgResult(immediateResult);
+
+        assertThat(handler.listenForDeviceCalCfgResult(1, SECONDS)).isEqualTo(immediateResult);
+        assertThat(properties.get(OTA_STATUS_PROPERTY)).isEqualTo("CHECKING");
+        assertThat(handler.isOtaCheckPending()).isTrue();
     }
 
     @Test

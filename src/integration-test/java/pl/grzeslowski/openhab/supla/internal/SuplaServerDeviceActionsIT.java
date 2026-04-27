@@ -88,7 +88,17 @@ class SuplaServerDeviceActionsIT {
             assertThat(request.channelNumber()).isEqualTo(-1);
             assertThat(request.command()).isEqualTo(SUPLA_CALCFG_CMD_CHECK_FIRMWARE_UPDATE);
             assertThat(request.superUserAuthorized()).isEqualTo((byte) 1);
-            assertThat(action.get(30, SECONDS)).isEqualTo("ACCEPTED");
+
+            consumeDeviceCalCfgResult(
+                    deviceCtx.handler(),
+                    new DeviceCalCfgResult(
+                            request.senderId(),
+                            request.channelNumber(),
+                            request.command(),
+                            SUPLA_CALCFG_RESULT_DONE,
+                            0L,
+                            new byte[0]));
+            assertThat(action.isDone()).isFalse();
 
             consumeDeviceCalCfgResult(
                     deviceCtx.handler(),
@@ -102,6 +112,7 @@ class SuplaServerDeviceActionsIT {
                                     SUPLA_FIRMWARE_CHECK_RESULT_UPDATE_AVAILABLE,
                                     "2.3.4",
                                     "https://example.test/changelog")));
+            assertThat(action.get(30, SECONDS)).isEqualTo("AVAILABLE");
 
             await().untilAsserted(() -> {
                 var properties = deviceCtx.handler().getThing().getProperties();

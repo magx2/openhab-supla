@@ -260,7 +260,7 @@ Methods:
 Notes:
 
 - The action is available only for devices that declared `SUPLA_DEVICE_FLAG_AUTOMATIC_FIRMWARE_UPDATE_SUPPORTED` during registration.
-- `checkFirmwareUpdate()` returns after the command is accepted for delivery. The asynchronous result is stored in thing properties:
+- `checkFirmwareUpdate()` waits up to 30 seconds for the asynchronous firmware-check result and returns `AVAILABLE`, `NOT_AVAILABLE`, or `ERROR`. The result is also stored in thing properties:
 	- `otaSupported`
 	- `otaStatus`
 	- `otaVersionAvailable`
