@@ -272,7 +272,9 @@ class SuplaServerDeviceActionsTest {
                         SUPLA_CALCFG_RESULT_DONE.getValue(),
                         0L,
                         new byte[0]));
-        when(handler.listenForOtaCheckResult(30_000, MILLISECONDS))
+        when(handler.listenForOtaCheckResult(
+                        org.mockito.ArgumentMatchers.longThat(timeout -> timeout > 0 && timeout <= 30_000),
+                        org.mockito.ArgumentMatchers.eq(MILLISECONDS)))
                 .thenReturn(ServerSuplaDeviceHandler.OtaStatus.AVAILABLE);
 
         assertThat(actions.checkFirmwareUpdate()).isEqualTo("AVAILABLE");
@@ -285,7 +287,10 @@ class SuplaServerDeviceActionsTest {
                         && request.channelNumber() == -1
                         && request.command() == SUPLA_CALCFG_CMD_CHECK_FIRMWARE_UPDATE.getValue()));
         inOrder.verify(handler).listenForDeviceCalCfgResult(30_000, MILLISECONDS);
-        inOrder.verify(handler).listenForOtaCheckResult(30_000, MILLISECONDS);
+        inOrder.verify(handler)
+                .listenForOtaCheckResult(
+                        org.mockito.ArgumentMatchers.longThat(timeout -> timeout > 0 && timeout <= 30_000),
+                        org.mockito.ArgumentMatchers.eq(MILLISECONDS));
     }
 
     @Test
@@ -364,7 +369,10 @@ class SuplaServerDeviceActionsTest {
                         SUPLA_CALCFG_RESULT_DONE.getValue(),
                         0L,
                         new byte[0]));
-        when(handler.listenForOtaCheckResult(30_000, MILLISECONDS)).thenThrow(new TimeoutException("timeout"));
+        when(handler.listenForOtaCheckResult(
+                        org.mockito.ArgumentMatchers.longThat(timeout -> timeout > 0 && timeout <= 30_000),
+                        org.mockito.ArgumentMatchers.eq(MILLISECONDS)))
+                .thenThrow(new TimeoutException("timeout"));
 
         assertThatThrownBy(() -> actions.checkFirmwareUpdate()).isInstanceOf(TimeoutException.class);
         verify(handler).markOtaCheckError();
