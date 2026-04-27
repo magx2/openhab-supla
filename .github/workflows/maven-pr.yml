@@ -14,7 +14,13 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
           cache: maven
+          server-id: github
+          server-username: GITHUB_USERNAME
+          server-password: GITHUB_TOKEN
       - name: Build with Maven
+        env:
+          GITHUB_USERNAME: x-access-token
+          GITHUB_TOKEN: ${{ secrets.PAT }}
         run: mvn -B -ntp spotless:check verify
       - name: Upload test reports
         if: always()
