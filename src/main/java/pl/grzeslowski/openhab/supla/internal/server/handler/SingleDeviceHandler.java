@@ -45,8 +45,8 @@ public class SingleDeviceHandler extends ServerSuplaDeviceHandler {
     @Delegate(types = HandleCommand.class)
     private final HandlerCommandTrait handlerCommandTrait = new HandlerCommandTrait(this);
 
-    public SingleDeviceHandler(Thing thing) {
-        super(thing);
+    public SingleDeviceHandler(Thing thing, ServerDeviceActionServiceRegistry actionServiceRegistry) {
+        super(thing, actionServiceRegistry);
     }
 
     @Override

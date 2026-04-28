@@ -1,6 +1,7 @@
 package pl.grzeslowski.openhab.supla.internal.server;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.stream.Collectors.joining;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -18,6 +19,8 @@ import static pl.grzeslowski.jsupla.protocol.api.DeviceFlag.SUPLA_DEVICE_FLAG_CA
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.DefaultChannelPromise;
 import io.netty.channel.embedded.EmbeddedChannel;
+import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeoutException;
@@ -25,21 +28,24 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.openhab.core.automation.annotation.RuleAction;
 import org.openhab.core.thing.Thing;
 import org.openhab.core.thing.ThingUID;
 import pl.grzeslowski.jsupla.protocol.api.structs.ds.DeviceCalCfgResult;
 import pl.grzeslowski.jsupla.protocol.api.structs.sd.DeviceCalCfgRequest;
 import pl.grzeslowski.jsupla.server.SuplaWriter;
-import pl.grzeslowski.openhab.supla.actions.SuplaServerDeviceActions;
+import pl.grzeslowski.openhab.supla.actions.SuplaServerConfigModeActions;
+import pl.grzeslowski.openhab.supla.actions.SuplaServerDeviceConfigActions;
+import pl.grzeslowski.openhab.supla.actions.SuplaServerElectricityMeterActions;
+import pl.grzeslowski.openhab.supla.actions.SuplaServerFirmwareUpdateActions;
 import pl.grzeslowski.openhab.supla.internal.server.handler.ServerSuplaDeviceHandler;
 import pl.grzeslowski.openhab.supla.internal.server.oh_config.ServerDeviceHandlerConfiguration;
 import pl.grzeslowski.openhab.supla.internal.server.traits.SuplaDevice;
 
 @ExtendWith(MockitoExtension.class)
-class SuplaServerDeviceActionsTest {
+class SuplaServerActionsTest {
     @Mock
     private ServerSuplaDeviceHandler handler;
 
@@ -49,8 +55,9 @@ class SuplaServerDeviceActionsTest {
     @Mock
     private Thing thing;
 
-    @InjectMocks
-    private SuplaServerDeviceActions actions;
+    private SuplaServerElectricityMeterActions electricityMeterActions;
+    private SuplaServerConfigModeActions configModeActions;
+    private SuplaServerFirmwareUpdateActions firmwareUpdateActions;
 
     private ServerDeviceHandlerConfiguration configuration;
     private ChannelFuture successfulFuture;
@@ -60,8 +67,13 @@ class SuplaServerDeviceActionsTest {
         var channel = new EmbeddedChannel();
         successfulFuture = new DefaultChannelPromise(channel).setSuccess(null);
         configuration = new ServerDeviceHandlerConfiguration();
+        electricityMeterActions = new SuplaServerElectricityMeterActions();
+        configModeActions = new SuplaServerConfigModeActions();
+        firmwareUpdateActions = new SuplaServerFirmwareUpdateActions();
 
-        actions.setThingHandler(handler);
+        electricityMeterActions.setThingHandler(handler);
+        configModeActions.setThingHandler(handler);
+        firmwareUpdateActions.setThingHandler(handler);
         org.mockito.Mockito.lenient().when(handler.getWriter()).thenReturn(new AtomicReference<>(writer));
         org.mockito.Mockito.lenient().when(handler.getThing()).thenReturn(thing);
         org.mockito.Mockito.lenient().when(handler.getConfiguration()).thenReturn(configuration);
@@ -92,6 +104,19 @@ class SuplaServerDeviceActionsTest {
     }
 
     @Test
+    void shouldExposeOnlySupportedRuleActionsOnServiceClasses() {
+        assertThat(ruleActionSignatures(SuplaServerDeviceConfigActions.class))
+                .containsExactlyInAnyOrder(
+                        "setDeviceConfig(java.lang.String[])", "setDeviceConfig(java.util.Collection)");
+        assertThat(ruleActionSignatures(SuplaServerElectricityMeterActions.class))
+                .containsExactlyInAnyOrder(
+                        "resetElectricMeterCounters(java.lang.String)", "resetElectricMeterCounters(int)");
+        assertThat(ruleActionSignatures(SuplaServerConfigModeActions.class)).containsExactly("enterConfigMode()");
+        assertThat(ruleActionSignatures(SuplaServerFirmwareUpdateActions.class))
+                .containsExactlyInAnyOrder("checkFirmwareUpdate()", "startFirmwareUpdate()", "startSecurityUpdate()");
+    }
+
+    @Test
     void shouldSendResetCountersRequest() throws Exception {
         when(handler.listenForDeviceCalCfgResult(30_000, MILLISECONDS))
                 .thenReturn(new DeviceCalCfgResult(
@@ -102,7 +127,7 @@ class SuplaServerDeviceActionsTest {
                         0L,
                         new byte[0]));
 
-        actions.resetElectricMeterCounters("supla:test:1:7#power");
+        electricityMeterActions.resetElectricMeterCounters("supla:test:1:7#power");
 
         var inOrder = inOrder(handler, writer);
         inOrder.verify(handler).clearDeviceCalCfgResult();
@@ -128,21 +153,21 @@ class SuplaServerDeviceActionsTest {
                         0L,
                         new byte[0]));
 
-        assertThatThrownBy(() -> actions.resetElectricMeterCounters("supla:test:1:7#power"))
+        assertThatThrownBy(() -> electricityMeterActions.resetElectricMeterCounters("supla:test:1:7#power"))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("Reset counters did not succeed");
     }
 
     @Test
     void shouldFailWhenChannelNumberCannotBeParsed() {
-        assertThatThrownBy(() -> actions.resetElectricMeterCounters("supla:test:1:not-a-channel"))
+        assertThatThrownBy(() -> electricityMeterActions.resetElectricMeterCounters("supla:test:1:not-a-channel"))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("Cannot find channel number from");
     }
 
     @Test
     void shouldFailWhenChannelUidBelongsToDifferentThing() {
-        assertThatThrownBy(() -> actions.resetElectricMeterCounters("supla:test:2:7#power"))
+        assertThatThrownBy(() -> electricityMeterActions.resetElectricMeterCounters("supla:test:2:7#power"))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("does not belong to thing");
     }
@@ -158,7 +183,7 @@ class SuplaServerDeviceActionsTest {
                         0L,
                         new byte[0]));
 
-        actions.resetElectricMeterCounters(7);
+        electricityMeterActions.resetElectricMeterCounters(7);
 
         verify(writer)
                 .write(argThat(proto -> proto instanceof DeviceCalCfgRequest request
@@ -168,7 +193,7 @@ class SuplaServerDeviceActionsTest {
 
     @Test
     void shouldFailWhenChannelNumberIsNotRegistered() {
-        assertThatThrownBy(() -> actions.resetElectricMeterCounters(11))
+        assertThatThrownBy(() -> electricityMeterActions.resetElectricMeterCounters(11))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("Cannot find electricity meter device channel for channel number 11");
     }
@@ -177,7 +202,7 @@ class SuplaServerDeviceActionsTest {
     void shouldFailWhenRegisteredChannelIsNotElectricityMeter() {
         when(handler.hasRegisteredElectricityMeterChannel(9)).thenReturn(false);
 
-        assertThatThrownBy(() -> actions.resetElectricMeterCounters(9))
+        assertThatThrownBy(() -> electricityMeterActions.resetElectricMeterCounters(9))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("Cannot find electricity meter device channel for channel number 9");
     }
@@ -193,7 +218,7 @@ class SuplaServerDeviceActionsTest {
                         0L,
                         new byte[0]));
 
-        actions.enterConfigMode();
+        configModeActions.enterConfigMode();
 
         var inOrder = inOrder(handler, writer);
         inOrder.verify(handler).clearDeviceCalCfgResult();
@@ -214,7 +239,7 @@ class SuplaServerDeviceActionsTest {
                 .thenReturn(new SuplaDevice(
                         SuplaDevice.Type.EMAIL, "guid", "device", "soft", null, null, Set.of(), List.of()));
 
-        assertThatThrownBy(() -> actions.enterConfigMode())
+        assertThatThrownBy(() -> configModeActions.enterConfigMode())
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("Device does not support entering config mode");
     }
@@ -230,7 +255,7 @@ class SuplaServerDeviceActionsTest {
                         0L,
                         new byte[0]));
 
-        assertThatThrownBy(() -> actions.enterConfigMode())
+        assertThatThrownBy(() -> configModeActions.enterConfigMode())
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("Enter config mode did not succeed");
     }
@@ -239,7 +264,7 @@ class SuplaServerDeviceActionsTest {
     void shouldFailWhenFirmwareUpdateActionCalledForOfflineDevice() {
         when(thing.getStatus()).thenReturn(OFFLINE);
 
-        assertThatThrownBy(() -> actions.checkFirmwareUpdate())
+        assertThatThrownBy(() -> firmwareUpdateActions.checkFirmwareUpdate())
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Device is offline");
     }
@@ -257,7 +282,7 @@ class SuplaServerDeviceActionsTest {
                         Set.of(SUPLA_DEVICE_FLAG_CALCFG_ENTER_CFG_MODE),
                         List.of()));
 
-        assertThatThrownBy(() -> actions.checkFirmwareUpdate())
+        assertThatThrownBy(() -> firmwareUpdateActions.checkFirmwareUpdate())
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("Device does not support automatic firmware updates");
     }
@@ -277,7 +302,7 @@ class SuplaServerDeviceActionsTest {
                         org.mockito.ArgumentMatchers.eq(MILLISECONDS)))
                 .thenReturn(ServerSuplaDeviceHandler.OtaStatus.AVAILABLE);
 
-        assertThat(actions.checkFirmwareUpdate()).isEqualTo("AVAILABLE");
+        assertThat(firmwareUpdateActions.checkFirmwareUpdate()).isEqualTo("AVAILABLE");
 
         var inOrder = inOrder(handler, writer);
         inOrder.verify(handler).clearDeviceCalCfgResult();
@@ -311,7 +336,7 @@ class SuplaServerDeviceActionsTest {
                         org.mockito.ArgumentMatchers.eq(MILLISECONDS)))
                 .thenReturn(ServerSuplaDeviceHandler.OtaStatus.AVAILABLE);
 
-        assertThat(actions.checkFirmwareUpdate()).isEqualTo("AVAILABLE");
+        assertThat(firmwareUpdateActions.checkFirmwareUpdate()).isEqualTo("AVAILABLE");
 
         verify(handler)
                 .listenForOtaCheckResult(
@@ -331,7 +356,7 @@ class SuplaServerDeviceActionsTest {
                         0L,
                         new byte[0]));
 
-        assertThatThrownBy(() -> actions.checkFirmwareUpdate())
+        assertThatThrownBy(() -> firmwareUpdateActions.checkFirmwareUpdate())
                 .isInstanceOf(TimeoutException.class)
                 .hasMessageContaining("timeout budget exhausted");
         verify(handler, org.mockito.Mockito.never()).listenForOtaCheckResult(0, MILLISECONDS);
@@ -343,7 +368,7 @@ class SuplaServerDeviceActionsTest {
         when(writer.write(argThat(proto -> proto instanceof DeviceCalCfgRequest)))
                 .thenThrow(new RuntimeException("dispatch failed"));
 
-        assertThatThrownBy(() -> actions.checkFirmwareUpdate())
+        assertThatThrownBy(() -> firmwareUpdateActions.checkFirmwareUpdate())
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("dispatch failed");
         verify(handler).clearDeviceCalCfgResult();
@@ -355,7 +380,7 @@ class SuplaServerDeviceActionsTest {
     void shouldMarkOtaCheckErrorWhenDeviceCalCfgResultWaitTimesOut() throws Exception {
         when(handler.listenForDeviceCalCfgResult(30_000, MILLISECONDS)).thenThrow(new TimeoutException("timeout"));
 
-        assertThatThrownBy(() -> actions.checkFirmwareUpdate()).isInstanceOf(TimeoutException.class);
+        assertThatThrownBy(() -> firmwareUpdateActions.checkFirmwareUpdate()).isInstanceOf(TimeoutException.class);
         verify(handler).markOtaCheckError();
     }
 
@@ -374,7 +399,7 @@ class SuplaServerDeviceActionsTest {
                         org.mockito.ArgumentMatchers.eq(MILLISECONDS)))
                 .thenThrow(new TimeoutException("timeout"));
 
-        assertThatThrownBy(() -> actions.checkFirmwareUpdate()).isInstanceOf(TimeoutException.class);
+        assertThatThrownBy(() -> firmwareUpdateActions.checkFirmwareUpdate()).isInstanceOf(TimeoutException.class);
         verify(handler).markOtaCheckError();
     }
 
@@ -385,7 +410,7 @@ class SuplaServerDeviceActionsTest {
         when(writer.write(argThat(proto -> proto instanceof DeviceCalCfgRequest)))
                 .thenReturn(failedFuture);
 
-        assertThatThrownBy(() -> actions.checkFirmwareUpdate())
+        assertThatThrownBy(() -> firmwareUpdateActions.checkFirmwareUpdate())
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("dispatch failed");
         verify(handler).markOtaCheckPending();
@@ -403,7 +428,7 @@ class SuplaServerDeviceActionsTest {
                         0L,
                         new byte[0]));
 
-        actions.startFirmwareUpdate();
+        firmwareUpdateActions.startFirmwareUpdate();
 
         var inOrder = inOrder(handler, writer);
         inOrder.verify(handler).clearDeviceCalCfgResult();
@@ -425,12 +450,26 @@ class SuplaServerDeviceActionsTest {
                         0L,
                         new byte[0]));
 
-        actions.startSecurityUpdate();
+        firmwareUpdateActions.startSecurityUpdate();
 
         verify(writer)
                 .write(argThat(proto -> proto instanceof DeviceCalCfgRequest request
                         && request.channelNumber() == -1
                         && request.command() == SUPLA_CALCFG_CMD_START_SECURITY_UPDATE.getValue()));
         verify(handler).markOtaUpdateTriggered();
+    }
+
+    private static List<String> ruleActionSignatures(Class<?> actionService) {
+        return Arrays.stream(actionService.getDeclaredMethods())
+                .filter(method -> method.isAnnotationPresent(RuleAction.class))
+                .map(SuplaServerActionsTest::signature)
+                .toList();
+    }
+
+    private static String signature(Method method) {
+        var parameters = Arrays.stream(method.getParameterTypes())
+                .map(Class::getCanonicalName)
+                .collect(joining(","));
+        return "%s(%s)".formatted(method.getName(), parameters);
     }
 }

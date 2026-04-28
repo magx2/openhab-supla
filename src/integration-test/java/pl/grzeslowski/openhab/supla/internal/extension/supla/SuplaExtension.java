@@ -73,6 +73,9 @@ public class SuplaExtension implements BeforeEachCallback, AfterEachCallback, Pa
         lenient().when(bundleContext.getBundle()).thenReturn(bundle);
         lenient().when(bundle.getBundleId()).thenReturn(1L);
         lenient().when(bundleContext.registerService(anyString(), any(), any())).thenReturn(serviceRegistration);
+        lenient()
+                .when(bundleContext.registerService(any(Class.class), (Object) any(), any()))
+                .thenReturn(serviceRegistration);
         lenient().when(serviceRegistration.getReference()).thenReturn(serviceReference);
         var method = factory.getClass().getSuperclass().getDeclaredMethod("activate", ComponentContext.class);
         method.setAccessible(true);

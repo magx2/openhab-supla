@@ -34,7 +34,7 @@ final class TestServerSuplaDeviceHandler extends ServerSuplaDeviceHandler {
             Collections.synchronizedMap(new HashMap<>());
 
     TestServerSuplaDeviceHandler(Thing thing) {
-        super(thing);
+        super(thing, NoopServerDeviceActionServiceRegistry.INSTANCE);
     }
 
     @Override
