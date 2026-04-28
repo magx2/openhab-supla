@@ -15,6 +15,10 @@ import static pl.grzeslowski.jsupla.protocol.api.CalCfgResult.SUPLA_CALCFG_RESUL
 import static pl.grzeslowski.jsupla.protocol.api.DeviceFlag.SUPLA_DEVICE_FLAG_AUTOMATIC_FIRMWARE_UPDATE_SUPPORTED;
 import static pl.grzeslowski.jsupla.protocol.api.DeviceFlag.SUPLA_DEVICE_FLAG_CALCFG_ENTER_CFG_MODE;
 import static pl.grzeslowski.openhab.supla.internal.Localization.text;
+import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ACTION_SCOPE_CONFIG_MODE;
+import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ACTION_SCOPE_DEVICE_CONFIG;
+import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ACTION_SCOPE_ELECTRICITY_METER;
+import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ACTION_SCOPE_FIRMWARE_UPDATE;
 
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.DefaultChannelPromise;
@@ -34,6 +38,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.openhab.core.automation.annotation.RuleAction;
 import org.openhab.core.thing.Thing;
 import org.openhab.core.thing.ThingUID;
+import org.openhab.core.thing.binding.ThingActionsScope;
 import pl.grzeslowski.jsupla.protocol.api.structs.ds.DeviceCalCfgResult;
 import pl.grzeslowski.jsupla.protocol.api.structs.sd.DeviceCalCfgRequest;
 import pl.grzeslowski.jsupla.server.SuplaWriter;
@@ -124,6 +129,21 @@ class SuplaServerActionsTest {
                         SuplaServerConfigModeActions.class,
                         SuplaServerFirmwareUpdateActions.class))
                 .containsOnly(String.class);
+    }
+
+    @Test
+    void shouldUseSeparateActionScopesForSplitServices() {
+        assertThat(actionScopes(
+                        SuplaServerDeviceConfigActions.class,
+                        SuplaServerElectricityMeterActions.class,
+                        SuplaServerConfigModeActions.class,
+                        SuplaServerFirmwareUpdateActions.class))
+                .containsExactlyInAnyOrder(
+                        ACTION_SCOPE_DEVICE_CONFIG,
+                        ACTION_SCOPE_ELECTRICITY_METER,
+                        ACTION_SCOPE_CONFIG_MODE,
+                        ACTION_SCOPE_FIRMWARE_UPDATE)
+                .doesNotHaveDuplicates();
     }
 
     @Test
@@ -471,6 +491,13 @@ class SuplaServerActionsTest {
         return Arrays.stream(actionServices)
                 .flatMap(actionService -> ruleActionMethods(actionService).stream())
                 .map(Method::getReturnType)
+                .toList();
+    }
+
+    private static List<String> actionScopes(Class<?>... actionServices) {
+        return Arrays.stream(actionServices)
+                .map(actionService ->
+                        actionService.getAnnotation(ThingActionsScope.class).name())
                 .toList();
     }
 
