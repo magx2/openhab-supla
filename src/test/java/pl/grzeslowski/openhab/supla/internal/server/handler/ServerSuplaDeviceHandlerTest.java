@@ -59,7 +59,7 @@ import pl.grzeslowski.openhab.supla.internal.server.traits.RegisterEmailDeviceTr
 import pl.grzeslowski.openhab.supla.internal.updates.SuplaUpdatesClient;
 
 class ServerSuplaDeviceHandlerTest {
-    private static final int FIRMWARE_CHECK_SENDER_ID = 37;
+    private static final int FIRMWARE_CHECK_MESSAGE_ID = 37;
 
     private final Thing thing = Mockito.mock(Thing.class);
     private final Map<String, String> properties = new HashMap<>();
@@ -288,9 +288,9 @@ class ServerSuplaDeviceHandlerTest {
 
     @Test
     void shouldTreatImmediateFirmwareCheckAcceptanceAsSeparateResult() throws Exception {
-        handler.markOtaCheckPending(FIRMWARE_CHECK_SENDER_ID);
+        handler.markOtaCheckPending(FIRMWARE_CHECK_MESSAGE_ID);
         var immediateResult = new DeviceCalCfgResult(
-                FIRMWARE_CHECK_SENDER_ID,
+                FIRMWARE_CHECK_MESSAGE_ID,
                 -1,
                 SUPLA_CALCFG_CMD_CHECK_FIRMWARE_UPDATE.getValue(),
                 SUPLA_CALCFG_RESULT_DONE.getValue(),
@@ -306,10 +306,10 @@ class ServerSuplaDeviceHandlerTest {
 
     @Test
     void shouldPersistAvailableFirmwareCheckResult() {
-        handler.markOtaCheckPending(FIRMWARE_CHECK_SENDER_ID);
+        handler.markOtaCheckPending(FIRMWARE_CHECK_MESSAGE_ID);
 
         handler.consumeDeviceCalCfgResult(new DeviceCalCfgResult(
-                FIRMWARE_CHECK_SENDER_ID,
+                FIRMWARE_CHECK_MESSAGE_ID,
                 -1,
                 SUPLA_CALCFG_CMD_CHECK_FIRMWARE_UPDATE.getValue(),
                 SUPLA_CALCFG_RESULT_DONE.getValue(),
@@ -328,10 +328,10 @@ class ServerSuplaDeviceHandlerTest {
 
     @Test
     void shouldPersistNotAvailableFirmwareCheckResult() {
-        handler.markOtaCheckPending(FIRMWARE_CHECK_SENDER_ID);
+        handler.markOtaCheckPending(FIRMWARE_CHECK_MESSAGE_ID);
 
         handler.consumeDeviceCalCfgResult(new DeviceCalCfgResult(
-                FIRMWARE_CHECK_SENDER_ID,
+                FIRMWARE_CHECK_MESSAGE_ID,
                 -1,
                 SUPLA_CALCFG_CMD_CHECK_FIRMWARE_UPDATE.getValue(),
                 SUPLA_CALCFG_RESULT_DONE.getValue(),
@@ -347,10 +347,10 @@ class ServerSuplaDeviceHandlerTest {
 
     @Test
     void shouldPersistErrorFirmwareCheckResult() {
-        handler.markOtaCheckPending(FIRMWARE_CHECK_SENDER_ID);
+        handler.markOtaCheckPending(FIRMWARE_CHECK_MESSAGE_ID);
 
         handler.consumeDeviceCalCfgResult(new DeviceCalCfgResult(
-                FIRMWARE_CHECK_SENDER_ID,
+                FIRMWARE_CHECK_MESSAGE_ID,
                 -1,
                 SUPLA_CALCFG_CMD_CHECK_FIRMWARE_UPDATE.getValue(),
                 SUPLA_CALCFG_RESULT_DONE.getValue(),
@@ -363,10 +363,10 @@ class ServerSuplaDeviceHandlerTest {
 
     @Test
     void shouldPersistErrorWhenFirmwareCheckCommandIsRejected() {
-        handler.markOtaCheckPending(FIRMWARE_CHECK_SENDER_ID);
+        handler.markOtaCheckPending(FIRMWARE_CHECK_MESSAGE_ID);
 
         handler.consumeDeviceCalCfgResult(new DeviceCalCfgResult(
-                FIRMWARE_CHECK_SENDER_ID,
+                FIRMWARE_CHECK_MESSAGE_ID,
                 -1,
                 SUPLA_CALCFG_CMD_CHECK_FIRMWARE_UPDATE.getValue(),
                 SUPLA_CALCFG_RESULT_NOT_SUPPORTED.getValue(),
@@ -379,10 +379,10 @@ class ServerSuplaDeviceHandlerTest {
 
     @Test
     void shouldIgnoreFirmwareCheckResultFromPreviousRequest() {
-        handler.markOtaCheckPending(FIRMWARE_CHECK_SENDER_ID);
+        handler.markOtaCheckPending(FIRMWARE_CHECK_MESSAGE_ID);
 
         handler.consumeDeviceCalCfgResult(new DeviceCalCfgResult(
-                FIRMWARE_CHECK_SENDER_ID - 1,
+                FIRMWARE_CHECK_MESSAGE_ID - 1,
                 -1,
                 SUPLA_CALCFG_CMD_CHECK_FIRMWARE_UPDATE.getValue(),
                 SUPLA_CALCFG_RESULT_DONE.getValue(),
@@ -400,7 +400,7 @@ class ServerSuplaDeviceHandlerTest {
         assertThat(handler.isOtaCheckPending()).isTrue();
 
         handler.consumeDeviceCalCfgResult(new DeviceCalCfgResult(
-                FIRMWARE_CHECK_SENDER_ID,
+                FIRMWARE_CHECK_MESSAGE_ID,
                 -1,
                 SUPLA_CALCFG_CMD_CHECK_FIRMWARE_UPDATE.getValue(),
                 SUPLA_CALCFG_RESULT_DONE.getValue(),

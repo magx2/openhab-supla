@@ -12,7 +12,6 @@ import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.GATEWA
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ServerDevicesProperties.*;
 import static pl.grzeslowski.openhab.supla.internal.server.ChannelUtil.findId;
 
-import io.netty.channel.ChannelFuture;
 import java.util.*;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -34,6 +33,7 @@ import pl.grzeslowski.jsupla.protocol.api.structs.ds.SubdeviceDetails;
 import pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaChannelNewValueResult;
 import pl.grzeslowski.jsupla.protocol.api.structs.dsc.ChannelState;
 import pl.grzeslowski.jsupla.protocol.api.types.FromServerProto;
+import pl.grzeslowski.jsupla.server.SuplaWriteFuture;
 import pl.grzeslowski.openhab.supla.internal.GuidLogger;
 import pl.grzeslowski.openhab.supla.internal.handler.OfflineInitializationException;
 import pl.grzeslowski.openhab.supla.internal.server.ChannelUtil;
@@ -346,13 +346,8 @@ public class GatewayDeviceHandler extends ServerSuplaDeviceHandler implements Se
     }
 
     @Override
-    public AtomicInteger getSenderId() {
-        throw new UnsupportedOperationException("ServerGatewayDeviceHandler.getSenderId()");
-    }
-
-    @Override
-    public Map<Integer, ChannelAndPreviousState> getSenderIdToChannelUID() {
-        throw new UnsupportedOperationException("ServerGatewayDeviceHandler.getSenderIdToChannelUID()");
+    public Map<Long, ChannelAndPreviousState> getMessageIdToChannelUID() {
+        throw new UnsupportedOperationException("ServerGatewayDeviceHandler.getMessageIdToChannelUID()");
     }
 
     @Override
@@ -361,7 +356,7 @@ public class GatewayDeviceHandler extends ServerSuplaDeviceHandler implements Se
     }
 
     @Override
-    public ChannelFuture write(FromServerProto proto) {
+    public SuplaWriteFuture write(FromServerProto proto) {
         throw new UnsupportedOperationException("ServerGatewayDeviceHandler.write(proto)");
     }
 

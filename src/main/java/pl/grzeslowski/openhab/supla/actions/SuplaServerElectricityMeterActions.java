@@ -5,6 +5,7 @@ import static pl.grzeslowski.jsupla.protocol.api.CalCfgCommand.SUPLA_CALCFG_CMD_
 import static pl.grzeslowski.jsupla.protocol.api.CalCfgResult.SUPLA_CALCFG_RESULT_DONE;
 import static pl.grzeslowski.openhab.supla.internal.Localization.text;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ACTION_SCOPE_ELECTRICITY_METER;
+import static pl.grzeslowski.openhab.supla.internal.server.handler.trait.ServerDevice.SENDER_ID;
 
 import java.util.concurrent.TimeoutException;
 import org.eclipse.jdt.annotation.NonNullByDefault;
@@ -79,7 +80,7 @@ public class SuplaServerElectricityMeterActions extends SuplaServerActionsSuppor
         }
 
         var message = new DeviceCalCfgRequest(
-                nextSenderId(localHandler),
+                SENDER_ID,
                 channelNumber,
                 SUPLA_CALCFG_CMD_RESET_COUNTERS.getValue(),
                 SUPER_USER_AUTHORIZED,

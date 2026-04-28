@@ -118,11 +118,11 @@ class ChannelUtilTest {
     }
 
     @Test
-    void shouldDropStoredSenderEntryOnSuccess() {
-        var map = new HashMap<Integer, ServerDevice.ChannelAndPreviousState>();
+    void shouldDropStoredMessageEntryOnSuccess() {
+        var map = new HashMap<Long, ServerDevice.ChannelAndPreviousState>();
         var channelUID = new ChannelUID("supla:test:1:1");
-        map.put(5, new ServerDevice.ChannelAndPreviousState(channelUID, null));
-        when(serverDevice.getSenderIdToChannelUID()).thenReturn(map);
+        map.put(5L, new ServerDevice.ChannelAndPreviousState(channelUID, null));
+        when(serverDevice.getMessageIdToChannelUID()).thenReturn(map);
         var newValueResult =
                 new pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaChannelNewValueResult((short) 0, 5, (byte) 1);
 
@@ -133,9 +133,9 @@ class ChannelUtilTest {
     }
 
     @Test
-    void shouldRefreshWhenSenderMissing() {
-        var map = new HashMap<Integer, ServerDevice.ChannelAndPreviousState>();
-        when(serverDevice.getSenderIdToChannelUID()).thenReturn(map);
+    void shouldRefreshWhenMessageMissing() {
+        var map = new HashMap<Long, ServerDevice.ChannelAndPreviousState>();
+        when(serverDevice.getMessageIdToChannelUID()).thenReturn(map);
         var channelUID = new ChannelUID("supla:test:1:2");
         var channel = mock(Channel.class);
         when(channel.getUID()).thenReturn(channelUID);

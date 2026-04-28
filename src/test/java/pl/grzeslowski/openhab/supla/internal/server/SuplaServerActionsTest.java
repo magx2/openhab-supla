@@ -20,13 +20,13 @@ import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ACTION
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ACTION_SCOPE_DEVICE_CONFIG;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ACTION_SCOPE_ELECTRICITY_METER;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ACTION_SCOPE_FIRMWARE_UPDATE;
+import static pl.grzeslowski.openhab.supla.internal.server.handler.trait.ServerDevice.SENDER_ID;
 
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -51,7 +51,7 @@ import pl.grzeslowski.openhab.supla.internal.server.traits.SuplaDevice;
 
 @ExtendWith(MockitoExtension.class)
 class SuplaServerActionsTest {
-    private static final int ACTION_SENDER_ID = 37;
+    private static final int ACTION_MESSAGE_ID = 37;
 
     @Mock
     private ServerSuplaDeviceHandler handler;
@@ -62,17 +62,16 @@ class SuplaServerActionsTest {
     @Mock
     private Thing thing;
 
-    @Mock
-    private SuplaWriteFuture successfulFuture;
-
     private SuplaServerElectricityMeterActions electricityMeterActions;
     private SuplaServerConfigModeActions configModeActions;
     private SuplaServerFirmwareUpdateActions firmwareUpdateActions;
 
     private ServerDeviceHandlerConfiguration configuration;
+    private SuplaWriteFuture successfulFuture;
 
     @BeforeEach
     void setUp() {
+        successfulFuture = writeFuture(ACTION_MESSAGE_ID, true, null);
         configuration = new ServerDeviceHandlerConfiguration();
         electricityMeterActions = new SuplaServerElectricityMeterActions();
         configModeActions = new SuplaServerConfigModeActions();
@@ -82,7 +81,6 @@ class SuplaServerActionsTest {
         configModeActions.setThingHandler(handler);
         firmwareUpdateActions.setThingHandler(handler);
         org.mockito.Mockito.lenient().when(handler.getWriter()).thenReturn(new AtomicReference<>(writer));
-        org.mockito.Mockito.lenient().when(handler.getSenderId()).thenReturn(new AtomicInteger(ACTION_SENDER_ID));
         org.mockito.Mockito.lenient().when(handler.getThing()).thenReturn(thing);
         org.mockito.Mockito.lenient().when(handler.getConfiguration()).thenReturn(configuration);
         org.mockito.Mockito.lenient().when(thing.getUID()).thenReturn(new ThingUID("supla:test:1"));
@@ -164,7 +162,7 @@ class SuplaServerActionsTest {
         inOrder.verify(handler).clearDeviceCalCfgResult();
         inOrder.verify(writer)
                 .write(argThat(proto -> proto instanceof DeviceCalCfgRequest request
-                        && request.senderId() == ACTION_SENDER_ID
+                        && request.senderId() == SENDER_ID
                         && request.channelNumber() == 7
                         && request.command() == SUPLA_CALCFG_CMD_RESET_COUNTERS.getValue()
                         && request.superUserAuthorized() == 1
@@ -251,7 +249,7 @@ class SuplaServerActionsTest {
         inOrder.verify(handler).clearDeviceCalCfgResult();
         inOrder.verify(writer)
                 .write(argThat(proto -> proto instanceof DeviceCalCfgRequest request
-                        && request.senderId() == ACTION_SENDER_ID
+                        && request.senderId() == SENDER_ID
                         && request.channelNumber() == -1
                         && request.command() == SUPLA_CALCFG_CMD_ENTER_CFG_MODE.getValue()
                         && request.superUserAuthorized() == 1
@@ -312,7 +310,7 @@ class SuplaServerActionsTest {
     void shouldSendCheckFirmwareUpdateRequest() throws Exception {
         when(handler.listenForDeviceCalCfgResult(30_000, MILLISECONDS))
                 .thenReturn(new DeviceCalCfgResult(
-                        ACTION_SENDER_ID,
+                        ACTION_MESSAGE_ID,
                         -1,
                         SUPLA_CALCFG_CMD_CHECK_FIRMWARE_UPDATE.getValue(),
                         SUPLA_CALCFG_RESULT_DONE.getValue(),
@@ -328,12 +326,12 @@ class SuplaServerActionsTest {
 
         var inOrder = inOrder(handler, writer);
         inOrder.verify(handler).clearDeviceCalCfgResult();
-        inOrder.verify(handler).markOtaCheckPending(ACTION_SENDER_ID);
         inOrder.verify(writer)
                 .write(argThat(proto -> proto instanceof DeviceCalCfgRequest request
-                        && request.senderId() == ACTION_SENDER_ID
+                        && request.senderId() == SENDER_ID
                         && request.channelNumber() == -1
                         && request.command() == SUPLA_CALCFG_CMD_CHECK_FIRMWARE_UPDATE.getValue()));
+        inOrder.verify(handler).markOtaCheckPending(ACTION_MESSAGE_ID);
         inOrder.verify(handler).listenForDeviceCalCfgResult(30_000, MILLISECONDS);
         inOrder.verify(handler)
                 .listenForOtaCheckResult(
@@ -345,7 +343,7 @@ class SuplaServerActionsTest {
     void shouldFailWhenCheckFirmwareUpdateAcceptanceBelongsToDifferentRequest() throws Exception {
         when(handler.listenForDeviceCalCfgResult(30_000, MILLISECONDS))
                 .thenReturn(new DeviceCalCfgResult(
-                        ACTION_SENDER_ID - 1,
+                        ACTION_MESSAGE_ID - 1,
                         -1,
                         SUPLA_CALCFG_CMD_CHECK_FIRMWARE_UPDATE.getValue(),
                         SUPLA_CALCFG_RESULT_DONE.getValue(),
@@ -362,7 +360,7 @@ class SuplaServerActionsTest {
         when(handler.listenForDeviceCalCfgResult(100, MILLISECONDS)).thenAnswer(invocation -> {
             Thread.sleep(40);
             return new DeviceCalCfgResult(
-                    ACTION_SENDER_ID,
+                    ACTION_MESSAGE_ID,
                     -1,
                     SUPLA_CALCFG_CMD_CHECK_FIRMWARE_UPDATE.getValue(),
                     SUPLA_CALCFG_RESULT_DONE.getValue(),
@@ -388,7 +386,7 @@ class SuplaServerActionsTest {
         configuration.setCheckFirmwareUpdateActionTimeout("PT0S");
         when(handler.listenForDeviceCalCfgResult(0, MILLISECONDS))
                 .thenReturn(new DeviceCalCfgResult(
-                        ACTION_SENDER_ID,
+                        ACTION_MESSAGE_ID,
                         -1,
                         SUPLA_CALCFG_CMD_CHECK_FIRMWARE_UPDATE.getValue(),
                         SUPLA_CALCFG_RESULT_DONE.getValue(),
@@ -407,7 +405,7 @@ class SuplaServerActionsTest {
 
         assertThat(firmwareUpdateActions.checkFirmwareUpdate()).contains("dispatch failed");
         verify(handler).clearDeviceCalCfgResult();
-        verify(handler).markOtaCheckPending(ACTION_SENDER_ID);
+        verify(handler, org.mockito.Mockito.never()).markOtaCheckPending(org.mockito.ArgumentMatchers.anyLong());
         verify(handler).markOtaCheckError();
     }
 
@@ -423,7 +421,7 @@ class SuplaServerActionsTest {
     void shouldMarkOtaCheckErrorWhenOtaCheckWaitTimesOut() throws Exception {
         when(handler.listenForDeviceCalCfgResult(30_000, MILLISECONDS))
                 .thenReturn(new DeviceCalCfgResult(
-                        ACTION_SENDER_ID,
+                        ACTION_MESSAGE_ID,
                         -1,
                         SUPLA_CALCFG_CMD_CHECK_FIRMWARE_UPDATE.getValue(),
                         SUPLA_CALCFG_RESULT_DONE.getValue(),
@@ -440,15 +438,12 @@ class SuplaServerActionsTest {
 
     @Test
     void shouldFailWhenCheckFirmwareUpdateDispatchFutureIsFailed() {
-        var dispatchFailure = new IllegalStateException("write failed");
-        var failedFuture = mock(SuplaWriteFuture.class);
-        when(failedFuture.isSuccess()).thenReturn(false);
-        when(failedFuture.cause()).thenReturn(dispatchFailure);
+        var failedFuture = writeFuture(ACTION_MESSAGE_ID, false, new IllegalStateException("write failed"));
         when(writer.write(argThat(proto -> proto instanceof DeviceCalCfgRequest)))
                 .thenReturn(failedFuture);
 
         assertThat(firmwareUpdateActions.checkFirmwareUpdate()).contains("dispatch failed");
-        verify(handler).markOtaCheckPending(ACTION_SENDER_ID);
+        verify(handler).markOtaCheckPending(ACTION_MESSAGE_ID);
         verify(handler).markOtaCheckError();
     }
 
@@ -470,7 +465,7 @@ class SuplaServerActionsTest {
         inOrder.verify(handler).clearDeviceCalCfgResult();
         inOrder.verify(writer)
                 .write(argThat(proto -> proto instanceof DeviceCalCfgRequest request
-                        && request.senderId() == ACTION_SENDER_ID
+                        && request.senderId() == SENDER_ID
                         && request.channelNumber() == -1
                         && request.command() == SUPLA_CALCFG_CMD_START_FIRMWARE_UPDATE.getValue()));
         inOrder.verify(handler).markOtaUpdateTriggered();
@@ -492,7 +487,7 @@ class SuplaServerActionsTest {
 
         verify(writer)
                 .write(argThat(proto -> proto instanceof DeviceCalCfgRequest request
-                        && request.senderId() == ACTION_SENDER_ID
+                        && request.senderId() == SENDER_ID
                         && request.channelNumber() == -1
                         && request.command() == SUPLA_CALCFG_CMD_START_SECURITY_UPDATE.getValue()));
         verify(handler).markOtaUpdateTriggered();
@@ -516,6 +511,21 @@ class SuplaServerActionsTest {
                 .map(actionService ->
                         actionService.getAnnotation(ThingActionsScope.class).name())
                 .toList();
+    }
+
+    private static SuplaWriteFuture writeFuture(long messageId, boolean success, Throwable cause) {
+        var future = org.mockito.Mockito.mock(SuplaWriteFuture.class);
+        org.mockito.Mockito.lenient().when(future.msgId()).thenReturn(messageId);
+        org.mockito.Mockito.lenient().when(future.isSuccess()).thenReturn(success);
+        org.mockito.Mockito.lenient().when(future.cause()).thenReturn(cause);
+        try {
+            org.mockito.Mockito.lenient()
+                    .when(future.await(org.mockito.ArgumentMatchers.anyLong(), org.mockito.ArgumentMatchers.any()))
+                    .thenReturn(true);
+        } catch (InterruptedException e) {
+            throw new AssertionError(e);
+        }
+        return future;
     }
 
     private static List<Method> ruleActionMethods(Class<?> actionService) {

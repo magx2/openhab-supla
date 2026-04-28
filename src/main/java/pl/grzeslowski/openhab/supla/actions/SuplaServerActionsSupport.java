@@ -49,10 +49,6 @@ abstract class SuplaServerActionsSupport implements ThingActions {
         return localHandler;
     }
 
-    protected int nextSenderId(ServerSuplaDeviceHandler localHandler) {
-        return localHandler.getSenderId().getAndIncrement();
-    }
-
     protected String runAction(String actionName, Action action) {
         try {
             return action.run();

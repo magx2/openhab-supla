@@ -35,6 +35,8 @@ public abstract class Device implements AutoCloseable {
     private final short version;
     private @Nullable Socket socket;
 
+    protected record FromServerMessage(FromServerProto proto, long messageId) {}
+
     public Device(short version, String guid) {
         log = LoggerFactory.getLogger(getClass().getName() + "." + guid);
         this.guid = guid;
@@ -85,6 +87,10 @@ public abstract class Device implements AutoCloseable {
     }
 
     protected synchronized FromServerProto read() throws IOException {
+        return readWithMessageId().proto();
+    }
+
+    protected synchronized FromServerMessage readWithMessageId() throws IOException {
         requireConnection();
 
         var in = requireNonNull(socket).getInputStream();
@@ -143,7 +149,7 @@ public abstract class Device implements AutoCloseable {
                                     decode.getClass().getSimpleName(),
                                     decode));
         }
-        return fsp;
+        return new FromServerMessage(fsp, packet.rrId());
     }
 
     protected void requireConnection() {

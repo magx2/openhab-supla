@@ -1,11 +1,9 @@
 package pl.grzeslowski.openhab.supla.internal.server.handler;
 
-import io.netty.channel.ChannelFuture;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 import org.openhab.core.library.types.HSBType;
 import org.openhab.core.library.types.OnOffType;
 import org.openhab.core.library.types.OpenClosedType;
@@ -22,6 +20,7 @@ import pl.grzeslowski.jsupla.protocol.api.structs.ds.SubdeviceDetails;
 import pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaChannelNewValueResult;
 import pl.grzeslowski.jsupla.protocol.api.structs.dsc.ChannelState;
 import pl.grzeslowski.jsupla.protocol.api.types.FromServerProto;
+import pl.grzeslowski.jsupla.server.SuplaWriteFuture;
 import pl.grzeslowski.openhab.supla.internal.handler.InitializationException;
 import pl.grzeslowski.openhab.supla.internal.server.handler.trait.ServerBridge;
 import pl.grzeslowski.openhab.supla.internal.server.handler.trait.ServerDevice;
@@ -29,8 +28,7 @@ import pl.grzeslowski.openhab.supla.internal.server.traits.DeviceChannelValue;
 import pl.grzeslowski.openhab.supla.internal.server.traits.RegisterDeviceTrait;
 
 final class TestServerSuplaDeviceHandler extends ServerSuplaDeviceHandler {
-    private final AtomicInteger senderId = new AtomicInteger(1);
-    private final Map<Integer, ServerDevice.ChannelAndPreviousState> senderIdToChannelUID =
+    private final Map<Long, ServerDevice.ChannelAndPreviousState> messageIdToChannelUID =
             Collections.synchronizedMap(new HashMap<>());
 
     TestServerSuplaDeviceHandler(Thing thing) {
@@ -96,17 +94,12 @@ final class TestServerSuplaDeviceHandler extends ServerSuplaDeviceHandler {
     }
 
     @Override
-    public AtomicInteger getSenderId() {
-        return senderId;
+    public Map<Long, ChannelAndPreviousState> getMessageIdToChannelUID() {
+        return messageIdToChannelUID;
     }
 
     @Override
-    public Map<Integer, ChannelAndPreviousState> getSenderIdToChannelUID() {
-        return senderIdToChannelUID;
-    }
-
-    @Override
-    public ChannelFuture write(FromServerProto proto) {
+    public SuplaWriteFuture write(FromServerProto proto) {
         throw new UnsupportedOperationException();
     }
 }
