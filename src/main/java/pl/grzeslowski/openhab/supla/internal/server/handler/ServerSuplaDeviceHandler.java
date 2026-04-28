@@ -517,8 +517,9 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler
     }
 
     public final void consumeLocalTimeRequest(SuplaWriter writer) {
-        // Get current local date and time
-        var now = LocalDateTime.now();
+        var zoneId = timeZoneProvider.getTimeZone();
+        // Get current local date and time in OpenHAB configured timezone
+        var now = LocalDateTime.now(zoneId);
 
         // Extract year, month, day, etc.
         var year = now.getYear();
@@ -530,8 +531,6 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler
         var minute = (short) now.getMinute();
         var seconds = (short) now.getSecond();
 
-        // Get the system's default time zone
-        var zoneId = timeZoneProvider.getTimeZone();
         var timeZoneName = zoneId.getDisplayName(TextStyle.SHORT, Locale.getDefault());
         var timeZone = timeZoneName.getBytes(); // Convert to byte array
         var timeZoneSize = timeZone.length;
