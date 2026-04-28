@@ -38,6 +38,7 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.format.TextStyle;
 import java.util.*;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicLong;
@@ -112,6 +113,7 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler
         implements MessageHandler, ServerDevice, Ping.DeviceStatusUpdater {
     public static final byte ACTIVITY_TIMEOUT = (byte) 100;
     public static final String AVAILABLE_FIELDS = "AVAILABLE_FIELDS";
+    private static final String SOFTWARE_UPDATE_THREAD_POOL_NAME = BINDING_ID + "-software-update";
     private static final AtomicLong ID = new AtomicLong();
 
     private final long id = ID.incrementAndGet();
@@ -158,6 +160,7 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler
     private final AtomicReference<@Nullable DeviceCalCfgResult> deviceCalCfgResult = new AtomicReference<>();
     private final AtomicReference<@Nullable Integer> pendingOtaCheckSenderId = new AtomicReference<>();
     private final AtomicReference<@Nullable OtaStatus> otaCheckResult = new AtomicReference<>();
+    private final AtomicReference<@Nullable Future<?>> softwareUpdateCheckFuture = new AtomicReference<>();
     private final AtomicLong softwareUpdateCheckId = new AtomicLong();
 
     @Delegate(types = StateCache.class)
@@ -589,6 +592,7 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler
         attachGuid(findGuid(), () -> {
             logger.debug("Disposing handler");
             disposePing();
+            cancelSoftwareUpdateCheck();
             disposeHandler();
             disposeBridgeHandler();
             actionServiceRegistry.unregisterActionServices(this);
@@ -855,6 +859,7 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler
     }
 
     private void checkForSoftwareUpdate(RegisterDeviceTrait registerEntity) {
+        cancelSoftwareUpdateCheck();
         var request = buildSoftwareUpdateRequest(registerEntity);
         var checkId = softwareUpdateCheckId.incrementAndGet();
         if (request == null) {
@@ -862,8 +867,13 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler
             return;
         }
         updateSoftwareUpdateState(new SuplaUpdatesClient.Result(SuplaUpdatesClient.Status.CHECKING, null, null), null);
-        ThreadPoolManager.getPool(BINDING_ID)
-                .execute(() -> attachGuid(guid, () -> executeSoftwareUpdateCheck(checkId, request)));
+        softwareUpdateCheckFuture.set(ThreadPoolManager.getPool(SOFTWARE_UPDATE_THREAD_POOL_NAME)
+                .submit(() -> attachGuid(guid, () -> executeSoftwareUpdateCheck(checkId, request))));
+    }
+
+    private void cancelSoftwareUpdateCheck() {
+        softwareUpdateCheckId.incrementAndGet();
+        Optional.ofNullable(softwareUpdateCheckFuture.getAndSet(null)).ifPresent(future -> future.cancel(true));
     }
 
     private void executeSoftwareUpdateCheck(long checkId, SuplaUpdatesClient.Request request) {
@@ -881,11 +891,12 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler
     }
 
     private void markSoftwareUpdateCheckError(long checkId, SuplaUpdatesClient.Request request, Exception exception) {
-        logger.debug("Could not check software update. request={}", request, exception);
-        if (softwareUpdateCheckId.get() == checkId) {
-            updateSoftwareUpdateState(
-                    new SuplaUpdatesClient.Result(SuplaUpdatesClient.Status.ERROR, null, null), now());
+        if (softwareUpdateCheckId.get() != checkId) {
+            logger.trace("Ignoring software update check error for stale request. request={}", request);
+            return;
         }
+        logger.debug("Could not check software update. request={}", request, exception);
+        updateSoftwareUpdateState(new SuplaUpdatesClient.Result(SuplaUpdatesClient.Status.ERROR, null, null), now());
     }
 
     void updateSoftwareUpdateState(SuplaUpdatesClient.Result result, @Nullable Instant checkedAt) {
