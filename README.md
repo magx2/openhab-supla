@@ -62,6 +62,17 @@ However, it's important to note that by opting for this setup, you lose the inte
 won't have remote access through the Supla Cloud app or benefit from cloud-based services and updates provided by Supla.
 Ensure this trade-off aligns with your smart home requirements before proceeding with the native device configuration.
 
+After a native server device registers, the binding stores Supla product catalog metadata in thing properties when the
+manufacturer and product IDs are known:
+
+- `productManufacturer`
+- `productName`
+- `productUpdatesCount`
+- `productLatestReleaseAt`
+- `productLatestVersion`
+- `productLatestDescription`
+- `productUrl`
+
 ## Cloud
 
 To connect your Supla cloud devices to OpenHAB, you'll need to use the Supla Cloud Bridge. This bridge facilitates

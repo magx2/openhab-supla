@@ -68,8 +68,14 @@ public class SuplaBindingConstants {
         public static final String SOFT_VERSION_PROPERTY = "softVersion";
         public static final String MANUFACTURER_ID_PROPERTY = "manufacturerId";
         public static final String PRODUCT_ID_PROPERTY = "productId";
+        public static final String PRODUCT_MANUFACTURER_PROPERTY = "productManufacturer";
         public static final String PRODUCT_NAME_PROPERTY = "productName";
         public static final String PRODUCT_CODE_PROPERTY = "productCode";
+        public static final String PRODUCT_UPDATES_COUNT_PROPERTY = "productUpdatesCount";
+        public static final String PRODUCT_LATEST_RELEASE_AT_PROPERTY = "productLatestReleaseAt";
+        public static final String PRODUCT_LATEST_VERSION_PROPERTY = "productLatestVersion";
+        public static final String PRODUCT_LATEST_DESCRIPTION_PROPERTY = "productLatestDescription";
+        public static final String PRODUCT_URL_PROPERTY = "productUrl";
         public static final String CONFIG_AUTH_PROPERTY = "authKey";
         public static final String SERVER_NAME_PROPERTY = "serverName";
         public static final String SERIAL_NUMBER_PROPERTY = "serialNumber";

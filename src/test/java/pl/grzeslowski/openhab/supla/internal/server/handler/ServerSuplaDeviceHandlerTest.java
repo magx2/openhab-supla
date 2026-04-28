@@ -19,6 +19,13 @@ import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.Server
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ServerDevicesProperties.OTA_LAST_CHECK_PROPERTY;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ServerDevicesProperties.OTA_STATUS_PROPERTY;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ServerDevicesProperties.OTA_VERSION_AVAILABLE_PROPERTY;
+import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ServerDevicesProperties.PRODUCT_LATEST_DESCRIPTION_PROPERTY;
+import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ServerDevicesProperties.PRODUCT_LATEST_RELEASE_AT_PROPERTY;
+import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ServerDevicesProperties.PRODUCT_LATEST_VERSION_PROPERTY;
+import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ServerDevicesProperties.PRODUCT_MANUFACTURER_PROPERTY;
+import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ServerDevicesProperties.PRODUCT_NAME_PROPERTY;
+import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ServerDevicesProperties.PRODUCT_UPDATES_COUNT_PROPERTY;
+import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ServerDevicesProperties.PRODUCT_URL_PROPERTY;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ServerDevicesProperties.SOFTWARE_UPDATE_AVAILABLE_PROPERTY;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ServerDevicesProperties.SOFTWARE_UPDATE_LAST_CHECK_PROPERTY;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ServerDevicesProperties.SOFTWARE_UPDATE_STATUS_PROPERTY;
@@ -37,6 +44,7 @@ import org.mockito.Mockito;
 import org.openhab.core.thing.Thing;
 import pl.grzeslowski.jsupla.protocol.api.BitFunction;
 import pl.grzeslowski.jsupla.protocol.api.ChannelFlag;
+import pl.grzeslowski.jsupla.protocol.api.SuplaProducts;
 import pl.grzeslowski.jsupla.protocol.api.encoders.FirmwareCheckResultEncoder;
 import pl.grzeslowski.jsupla.protocol.api.structs.FirmwareCheckResult;
 import pl.grzeslowski.jsupla.protocol.api.structs.ds.DeviceCalCfgResult;
@@ -125,11 +133,32 @@ class ServerSuplaDeviceHandlerTest {
     }
 
     @Test
+    void shouldBuildProductInfoPropertiesFromManufacturerAndProductIds() {
+        var productInfo = SuplaProducts.findByIds(4, 6000).orElseThrow();
+
+        var properties = ServerSuplaDeviceHandler.buildProductInfoProperties(4, 6000);
+
+        assertThat(properties)
+                .containsEntry(PRODUCT_MANUFACTURER_PROPERTY, productInfo.manufacturer())
+                .containsEntry(PRODUCT_NAME_PROPERTY, productInfo.name())
+                .containsEntry(PRODUCT_UPDATES_COUNT_PROPERTY, Integer.toString(productInfo.updatesCount()))
+                .containsEntry(PRODUCT_LATEST_RELEASE_AT_PROPERTY, productInfo.latestReleaseAt())
+                .containsEntry(PRODUCT_LATEST_VERSION_PROPERTY, productInfo.latestVersion())
+                .containsEntry(PRODUCT_LATEST_DESCRIPTION_PROPERTY, productInfo.latestDescription())
+                .containsEntry(PRODUCT_URL_PROPERTY, productInfo.productUrl());
+    }
+
+    @Test
     void shouldNotBuildProductNamePropertyWhenAnyIdIsMissing() {
         assertThat(ServerSuplaDeviceHandler.buildProductNameProperty(null, 6000))
                 .isNull();
         assertThat(ServerSuplaDeviceHandler.buildProductNameProperty(4, null)).isNull();
         assertThat(ServerSuplaDeviceHandler.buildProductNameProperty(999, 999)).isNull();
+        assertThat(ServerSuplaDeviceHandler.buildProductInfoProperties(null, 6000))
+                .isEmpty();
+        assertThat(ServerSuplaDeviceHandler.buildProductInfoProperties(4, null)).isEmpty();
+        assertThat(ServerSuplaDeviceHandler.buildProductInfoProperties(999, 999))
+                .isEmpty();
     }
 
     @Test

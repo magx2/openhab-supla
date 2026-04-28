@@ -417,10 +417,8 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler
             if (registerEntity.productId() != null) {
                 thing.setProperty(PRODUCT_ID_PROPERTY, valueOf(registerEntity.productId()));
             }
-            var productName = buildProductNameProperty(registerEntity.manufacturerId(), registerEntity.productId());
-            if (productName != null) {
-                thing.setProperty(PRODUCT_NAME_PROPERTY, productName);
-            }
+            buildProductInfoProperties(registerEntity.manufacturerId(), registerEntity.productId())
+                    .forEach(thing::setProperty);
         }
 
         actionChannels = registerEntity.channels().stream()
@@ -983,8 +981,38 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler
             return null;
         }
         return SuplaProducts.findByIds(manufacturerId, productId)
-                .map(SuplaProducts.ProductInfo::description)
+                .map(SuplaProducts.ProductInfo::name)
                 .orElse(null);
+    }
+
+    static Map<String, String> buildProductInfoProperties(
+            @Nullable Integer manufacturerId, @Nullable Integer productId) {
+        if (manufacturerId == null || productId == null) {
+            return Map.of();
+        }
+        return SuplaProducts.findByIds(manufacturerId, productId)
+                .<Map<String, String>>map(productInfo -> {
+                    var properties = new LinkedHashMap<String, String>();
+                    putProductInfoProperty(properties, PRODUCT_MANUFACTURER_PROPERTY, productInfo.manufacturer());
+                    putProductInfoProperty(properties, PRODUCT_NAME_PROPERTY, productInfo.name());
+                    properties.put(PRODUCT_UPDATES_COUNT_PROPERTY, valueOf(productInfo.updatesCount()));
+                    putProductInfoProperty(
+                            properties, PRODUCT_LATEST_RELEASE_AT_PROPERTY, productInfo.latestReleaseAt());
+                    putProductInfoProperty(properties, PRODUCT_LATEST_VERSION_PROPERTY, productInfo.latestVersion());
+                    putProductInfoProperty(
+                            properties, PRODUCT_LATEST_DESCRIPTION_PROPERTY, productInfo.latestDescription());
+                    putProductInfoProperty(properties, PRODUCT_URL_PROPERTY, productInfo.productUrl());
+                    return properties;
+                })
+                .orElseGet(Map::of);
+    }
+
+    private static void putProductInfoProperty(
+            Map<String, String> properties, String property, @Nullable String value) {
+        var valueToSet = emptyToNull(value);
+        if (valueToSet != null) {
+            properties.put(property, valueToSet);
+        }
     }
 
     private static String formatEnums(Collection<? extends Enum<?>> values) {
