@@ -80,8 +80,10 @@ public class ServerDiscoveryService extends AbstractDiscoveryService {
         var name = trait.name();
         var gateway = trait.channels().stream().anyMatch(c -> c.subDeviceId() != null && c.subDeviceId() > 0);
         var type = gateway ? SUPLA_GATEWAY_DEVICE_TYPE : SUPLA_SERVER_DEVICE_TYPE;
+        var productLabelSuffix = SuplaProductsCatalog.findProductInfo(trait.manufacturerId(), trait.productId())
+                .map(SuplaProductsCatalog.ProductInfo::description);
 
-        var builder = buildDiscoveryResult(SUPLA_DEVICE_GUID, guid, name, type);
+        var builder = buildDiscoveryResult(SUPLA_DEVICE_GUID, guid, name, type, productLabelSuffix);
         if (trait instanceof RegisterEmailDeviceTrait registerDevice) {
             var authKey = registerDevice.authKey();
             var serverName = registerDevice.serverName();
@@ -92,14 +94,23 @@ public class ServerDiscoveryService extends AbstractDiscoveryService {
     }
 
     private DiscoveryResult buildDiscoveryResult(int id, String name) {
-        return buildDiscoveryResult(SUPLA_SUB_DEVICE_ID, String.valueOf(id), name + " #" + id, SUPLA_SUB_DEVICE_TYPE)
+        return buildDiscoveryResult(
+                        SUPLA_SUB_DEVICE_ID,
+                        String.valueOf(id),
+                        name + " #" + id,
+                        SUPLA_SUB_DEVICE_TYPE,
+                        java.util.Optional.empty())
                 .build();
     }
 
     private DiscoveryResultBuilder buildDiscoveryResult(
-            String idKey, String id, @Nullable String name, ThingTypeUID type) {
+            String idKey,
+            String id,
+            @Nullable String name,
+            ThingTypeUID type,
+            java.util.Optional<String> productLabelSuffix) {
         var thingUID = new ThingUID(type, bridgeThingUID, id);
-        var label = buildLabel(id, name);
+        var label = buildLabel(id, name, productLabelSuffix);
         return DiscoveryResultBuilder.create(thingUID)
                 .withBridge(bridgeThingUID)
                 .withProperties(Map.of(idKey, id))
@@ -107,10 +118,14 @@ public class ServerDiscoveryService extends AbstractDiscoveryService {
                 .withLabel(label);
     }
 
-    private static String buildLabel(String guid, @Nullable String name) {
+    private static String buildLabel(
+            String guid, @Nullable String name, java.util.Optional<String> productLabelSuffix) {
+        var baseLabel = guid;
         if (name == null || name.isEmpty()) {
-            return guid;
+            baseLabel = guid;
+        } else {
+            baseLabel = name;
         }
-        return name;
+        return productLabelSuffix.map(suffix -> baseLabel + " (" + suffix + ")").orElse(baseLabel);
     }
 }
