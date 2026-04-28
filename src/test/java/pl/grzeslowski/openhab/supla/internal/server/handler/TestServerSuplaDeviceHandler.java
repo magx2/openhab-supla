@@ -4,6 +4,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.openhab.core.i18n.TimeZoneProvider;
 import org.openhab.core.library.types.HSBType;
 import org.openhab.core.library.types.OnOffType;
 import org.openhab.core.library.types.OpenClosedType;
@@ -31,8 +32,8 @@ final class TestServerSuplaDeviceHandler extends ServerSuplaDeviceHandler {
     private final Map<Integer, ServerDevice.ChannelAndPreviousState> channelNumberToChannelUID =
             Collections.synchronizedMap(new HashMap<>());
 
-    TestServerSuplaDeviceHandler(Thing thing) {
-        super(thing, NoopServerDeviceActionServiceRegistry.INSTANCE);
+    TestServerSuplaDeviceHandler(Thing thing, TimeZoneProvider timeZoneProvider) {
+        super(thing, NoopServerDeviceActionServiceRegistry.INSTANCE, timeZoneProvider);
     }
 
     @Override

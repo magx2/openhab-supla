@@ -9,6 +9,7 @@ import org.eclipse.jdt.annotation.NonNull;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
 import org.openhab.core.config.discovery.DiscoveryService;
+import org.openhab.core.i18n.TimeZoneProvider;
 import org.openhab.core.thing.Bridge;
 import org.openhab.core.thing.Thing;
 import org.openhab.core.thing.ThingTypeUID;
@@ -21,6 +22,7 @@ import org.openhab.core.thing.binding.ThingHandlerFactory;
 import org.osgi.framework.ServiceReference;
 import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import pl.grzeslowski.openhab.supla.internal.cloud.discovery.CloudDiscovery;
@@ -36,6 +38,15 @@ public class SuplaHandlerFactory extends BaseThingHandlerFactory implements Serv
     private final Logger logger = LoggerFactory.getLogger(SuplaHandlerFactory.class);
     private final Map<BridgeHandler, ServiceReference<?>> servicesToDispose = synchronizedMap(new HashMap<>());
     private final Map<ThingUID, ActionServiceRegistrations> actionServicesToDispose = synchronizedMap(new HashMap<>());
+
+    @Reference
+    private TimeZoneProvider timeZoneProvider;
+
+    public SuplaHandlerFactory() {}
+
+    public SuplaHandlerFactory(TimeZoneProvider timeZoneProvider) {
+        this.timeZoneProvider = timeZoneProvider;
+    }
 
     @Override
     public boolean supportsThingType(ThingTypeUID thingTypeUID) {
@@ -90,7 +101,7 @@ public class SuplaHandlerFactory extends BaseThingHandlerFactory implements Serv
 
     @NonNull
     private ThingHandler newServerDeviceHandler(final Thing thing) {
-        return new SingleDeviceHandler(thing, this);
+        return new SingleDeviceHandler(thing, this, timeZoneProvider());
     }
 
     @NonNull
@@ -134,7 +145,7 @@ public class SuplaHandlerFactory extends BaseThingHandlerFactory implements Serv
 
     private ThingHandler newGatewayDeviceHandler(Thing thing) {
         var discovery = new ServerDiscoveryService(thing.getUID());
-        var bridgeHandler = new GatewayDeviceHandler(thing, discovery, this);
+        var bridgeHandler = new GatewayDeviceHandler(thing, discovery, this, timeZoneProvider());
         var serviceRegistration = registerThingDiscovery(discovery);
         servicesToDispose.put(bridgeHandler, serviceRegistration.getReference());
         return bridgeHandler;
@@ -142,6 +153,10 @@ public class SuplaHandlerFactory extends BaseThingHandlerFactory implements Serv
 
     private ThingHandler newSubDeviceHandler(Thing thing) {
         return new SubDeviceHandler(thing);
+    }
+
+    private TimeZoneProvider timeZoneProvider() {
+        return Objects.requireNonNull(timeZoneProvider, "timeZoneProvider");
     }
 
     @Override

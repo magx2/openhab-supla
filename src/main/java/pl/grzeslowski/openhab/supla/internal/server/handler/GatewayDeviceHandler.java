@@ -21,6 +21,7 @@ import lombok.Getter;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
 import org.openhab.core.common.ThreadPoolManager;
+import org.openhab.core.i18n.TimeZoneProvider;
 import org.openhab.core.library.types.*;
 import org.openhab.core.thing.ChannelUID;
 import org.openhab.core.thing.Thing;
@@ -71,8 +72,9 @@ public class GatewayDeviceHandler extends ServerSuplaDeviceHandler implements Se
     public GatewayDeviceHandler(
             Thing thing,
             ServerDiscoveryService serverDiscoveryService,
-            ServerDeviceActionServiceRegistry actionServiceRegistry) {
-        super(thing, actionServiceRegistry);
+            ServerDeviceActionServiceRegistry actionServiceRegistry,
+            TimeZoneProvider timeZoneProvider) {
+        super(thing, actionServiceRegistry, timeZoneProvider);
         this.serverDiscoveryService = serverDiscoveryService;
     }
 

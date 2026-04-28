@@ -15,6 +15,7 @@ import lombok.Getter;
 import lombok.experimental.Delegate;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
+import org.openhab.core.i18n.TimeZoneProvider;
 import org.openhab.core.thing.Thing;
 import pl.grzeslowski.jsupla.protocol.api.ChannelType;
 import pl.grzeslowski.jsupla.protocol.api.structs.dcs.SetCaption;
@@ -41,8 +42,9 @@ public class SingleDeviceHandler extends ServerSuplaDeviceHandler {
     @Delegate(types = HandleCommand.class)
     private final HandlerCommandTrait handlerCommandTrait = new HandlerCommandTrait(this);
 
-    public SingleDeviceHandler(Thing thing, ServerDeviceActionServiceRegistry actionServiceRegistry) {
-        super(thing, actionServiceRegistry);
+    public SingleDeviceHandler(
+            Thing thing, ServerDeviceActionServiceRegistry actionServiceRegistry, TimeZoneProvider timeZoneProvider) {
+        super(thing, actionServiceRegistry, timeZoneProvider);
     }
 
     @Override

@@ -10,6 +10,7 @@ import static org.openhab.core.thing.ThingStatusDetail.HANDLER_CONFIGURATION_PEN
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.SUPLA_SERVER_TYPE;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.SUPPORTED_THING_TYPES_UIDS;
 
+import java.time.ZoneId;
 import java.util.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.MultiValuedMap;
@@ -17,6 +18,7 @@ import org.apache.commons.collections4.multimap.ArrayListValuedHashMap;
 import org.eclipse.jdt.annotation.Nullable;
 import org.junit.jupiter.api.extension.*;
 import org.openhab.core.config.core.Configuration;
+import org.openhab.core.i18n.TimeZoneProvider;
 import org.openhab.core.thing.ThingStatusInfo;
 import org.openhab.core.thing.ThingTypeUID;
 import org.openhab.core.thing.binding.BridgeHandler;
@@ -33,7 +35,9 @@ import pl.grzeslowski.openhab.supla.internal.server.oh_config.TimeoutConfigurati
 @SuppressWarnings("StaticMethodOnlyUsedInOneClass")
 @Slf4j
 public class SuplaExtension implements BeforeEachCallback, AfterEachCallback, ParameterResolver {
-    private final SuplaHandlerFactory factory = new SuplaHandlerFactory();
+    private static final TimeZoneProvider TIME_ZONE_PROVIDER = () -> ZoneId.of("America/New_York");
+
+    private final SuplaHandlerFactory factory = new SuplaHandlerFactory(TIME_ZONE_PROVIDER);
     private final MultiValuedMap<String, ThingHandler> handlers = new ArrayListValuedHashMap<>();
 
     @Override
