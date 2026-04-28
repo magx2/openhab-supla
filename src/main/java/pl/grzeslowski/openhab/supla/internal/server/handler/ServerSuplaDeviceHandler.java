@@ -113,6 +113,7 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler
         implements MessageHandler, ServerDevice, Ping.DeviceStatusUpdater {
     public static final byte ACTIVITY_TIMEOUT = (byte) 100;
     public static final String AVAILABLE_FIELDS = "AVAILABLE_FIELDS";
+    private static final long OTA_CHECK_PENDING_WITHOUT_MESSAGE_ID = -1L;
     private static final String SOFTWARE_UPDATE_THREAD_POOL_NAME = BINDING_ID + "-software-update";
     private static final AtomicLong ID = new AtomicLong();
     private static final Set<String> PRODUCT_INFO_PROPERTIES = Set.of(
@@ -169,6 +170,8 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler
     private final AtomicReference<@Nullable SetDeviceConfigResult> setDeviceConfigResult = new AtomicReference<>();
     private final AtomicReference<@Nullable DeviceCalCfgResult> deviceCalCfgResult = new AtomicReference<>();
     private final AtomicReference<@Nullable Long> pendingOtaCheckMessageId = new AtomicReference<>();
+    private final Object otaCheckLock = new Object();
+    private final Queue<DeviceCalCfgResult> otaCheckResultsBeforeMessageId = new ArrayDeque<>();
     private final AtomicReference<@Nullable OtaStatus> otaCheckResult = new AtomicReference<>();
     private final AtomicReference<@Nullable Future<?>> softwareUpdateCheckFuture = new AtomicReference<>();
     private final AtomicLong softwareUpdateCheckId = new AtomicLong();
@@ -671,17 +674,29 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler
 
     public void consumeDeviceCalCfgResult(DeviceCalCfgResult value) {
         if (value.command() == SUPLA_CALCFG_CMD_CHECK_FIRMWARE_UPDATE.getValue()) {
-            if (!isCurrentOtaCheckResult(value)) {
-                return;
+            synchronized (otaCheckLock) {
+                if (isOtaCheckPendingWithoutMessageId()) {
+                    deferOtaCheckResult(value);
+                    return;
+                }
+                if (!isCurrentOtaCheckResult(value)) {
+                    return;
+                }
+                if (isAsyncFirmwareCheckResult(value)) {
+                    consumeFirmwareCheckResult(value);
+                    return;
+                }
+                if (value.result() != SUPLA_CALCFG_RESULT_DONE.getValue()) {
+                    markOtaCheckError();
+                }
+                storeDeviceCalCfgResult(value);
             }
-            if (isAsyncFirmwareCheckResult(value)) {
-                consumeFirmwareCheckResult(value);
-                return;
-            }
-            if (value.result() != SUPLA_CALCFG_RESULT_DONE.getValue()) {
-                markOtaCheckError();
-            }
+            return;
         }
+        storeDeviceCalCfgResult(value);
+    }
+
+    private void storeDeviceCalCfgResult(DeviceCalCfgResult value) {
         if (value.result() != SUPLA_CALCFG_RESULT_DONE.getValue()) {
             logger.warn("Did not succeed ({}) with device calcfg command. result={}", value.result(), value);
         } else {
@@ -690,6 +705,18 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler
         var previous = deviceCalCfgResult.getAndSet(value);
         if (previous != null) {
             logger.warn("Previous deviceCalCfgResult was not null. Wierd thing might happen! previous={}", previous);
+        }
+    }
+
+    private boolean isOtaCheckPendingWithoutMessageId() {
+        var pendingMessageId = pendingOtaCheckMessageId.get();
+        return pendingMessageId != null && pendingMessageId == OTA_CHECK_PENDING_WITHOUT_MESSAGE_ID;
+    }
+
+    private void deferOtaCheckResult(DeviceCalCfgResult value) {
+        otaCheckResultsBeforeMessageId.add(value);
+        if (!isOtaCheckPendingWithoutMessageId()) {
+            consumeDeferredOtaCheckResults();
         }
     }
 
@@ -719,10 +746,35 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler
                 .anyMatch(SUPLA_DEVICE_FLAG_AUTOMATIC_FIRMWARE_UPDATE_SUPPORTED::equals);
     }
 
+    public void markOtaCheckPending() {
+        synchronized (otaCheckLock) {
+            otaCheckResultsBeforeMessageId.clear();
+            pendingOtaCheckMessageId.set(OTA_CHECK_PENDING_WITHOUT_MESSAGE_ID);
+            otaCheckResult.set(null);
+            updateOtaState(OtaStatus.CHECKING, null, null, null);
+        }
+    }
+
+    public void markOtaCheckMessageId(long messageId) {
+        synchronized (otaCheckLock) {
+            pendingOtaCheckMessageId.set(messageId);
+            consumeDeferredOtaCheckResults();
+        }
+    }
+
     public void markOtaCheckPending(long messageId) {
-        pendingOtaCheckMessageId.set(messageId);
-        otaCheckResult.set(null);
-        updateOtaState(OtaStatus.CHECKING, null, null, null);
+        markOtaCheckPending();
+        markOtaCheckMessageId(messageId);
+    }
+
+    private void consumeDeferredOtaCheckResults() {
+        if (isOtaCheckPendingWithoutMessageId()) {
+            return;
+        }
+        DeviceCalCfgResult value;
+        while ((value = otaCheckResultsBeforeMessageId.poll()) != null) {
+            consumeDeviceCalCfgResult(value);
+        }
     }
 
     public boolean isOtaCheckPending() {
@@ -730,23 +782,32 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler
     }
 
     public void markOtaUpdateTriggered() {
-        pendingOtaCheckMessageId.set(null);
-        updateOtaState(OtaStatus.UPDATE_TRIGGERED, null, null, now());
+        synchronized (otaCheckLock) {
+            pendingOtaCheckMessageId.set(null);
+            otaCheckResultsBeforeMessageId.clear();
+            updateOtaState(OtaStatus.UPDATE_TRIGGERED, null, null, now());
+        }
     }
 
     public void markOtaCheckError() {
-        otaCheckResult.set(OtaStatus.ERROR);
-        pendingOtaCheckMessageId.set(null);
-        updateOtaState(OtaStatus.ERROR, null, null, now());
+        synchronized (otaCheckLock) {
+            otaCheckResult.set(OtaStatus.ERROR);
+            pendingOtaCheckMessageId.set(null);
+            otaCheckResultsBeforeMessageId.clear();
+            updateOtaState(OtaStatus.ERROR, null, null, now());
+        }
     }
 
     public void clearOtaState() {
-        otaCheckResult.set(null);
-        pendingOtaCheckMessageId.set(null);
-        setProperty(OTA_STATUS_PROPERTY, null);
-        setProperty(OTA_VERSION_AVAILABLE_PROPERTY, null);
-        setProperty(OTA_CHANGELOG_URL_PROPERTY, null);
-        setProperty(OTA_LAST_CHECK_PROPERTY, null);
+        synchronized (otaCheckLock) {
+            otaCheckResult.set(null);
+            pendingOtaCheckMessageId.set(null);
+            otaCheckResultsBeforeMessageId.clear();
+            setProperty(OTA_STATUS_PROPERTY, null);
+            setProperty(OTA_VERSION_AVAILABLE_PROPERTY, null);
+            setProperty(OTA_CHANGELOG_URL_PROPERTY, null);
+            setProperty(OTA_LAST_CHECK_PROPERTY, null);
+        }
     }
 
     public synchronized SetDeviceConfigResult listenForSetDeviceConfigResult(long maxTime, TimeUnit timeUnit)
@@ -846,6 +907,7 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler
             updateOtaState(OtaStatus.ERROR, null, null, now());
         } finally {
             pendingOtaCheckMessageId.set(null);
+            otaCheckResultsBeforeMessageId.clear();
         }
     }
 

@@ -50,6 +50,7 @@ public class SuplaServerFirmwareUpdateActions extends SuplaServerActionsSupport 
                 EMPTY_DATA);
 
         localHandler.clearDeviceCalCfgResult();
+        localHandler.markOtaCheckPending();
         var timeout = localHandler.getConfiguration().getCheckFirmwareUpdateActionTimeout();
         var timeoutMillis = timeout.toMillis();
         var checkFirmwareUpdateStart = System.nanoTime();
@@ -57,7 +58,7 @@ public class SuplaServerFirmwareUpdateActions extends SuplaServerActionsSupport 
         try {
             var future = writer.write(message);
             messageId = future.msgId();
-            localHandler.markOtaCheckPending(messageId);
+            localHandler.markOtaCheckMessageId(messageId);
             future.await(timeoutMillis, MILLISECONDS);
             if (!future.isSuccess()) {
                 throw new RuntimeException("Check firmware update dispatch failed! request=%s, cause=%s"
