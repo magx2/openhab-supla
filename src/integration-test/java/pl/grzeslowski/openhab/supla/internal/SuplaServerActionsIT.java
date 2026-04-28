@@ -23,6 +23,7 @@ import io.github.glytching.junit.extension.random.RandomBeansExtension;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executors;
 import java.util.function.Supplier;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.DisplayName;
@@ -84,7 +85,7 @@ class SuplaServerActionsIT {
             awaitOnline(deviceCtx);
 
             var actions = createFirmwareUpdateActions(deviceCtx.handler());
-            var action = CompletableFuture.supplyAsync(actions::checkFirmwareUpdate);
+            var action = runActionAsync(actions::checkFirmwareUpdate);
 
             var request = readDeviceCalCfgRequest(device::readDeviceCalCfgRequest);
             assertThat(request.channelNumber()).isEqualTo(-1);
@@ -145,7 +146,7 @@ class SuplaServerActionsIT {
             initializeAndAwaitOnline(deviceCtx, device, port);
 
             var actions = createFirmwareUpdateActions(deviceCtx.handler());
-            var action = CompletableFuture.supplyAsync(actions::startFirmwareUpdate);
+            var action = runActionAsync(actions::startFirmwareUpdate);
 
             var request = readDeviceCalCfgRequest(device::readDeviceCalCfgRequest);
             assertThat(request.channelNumber()).isEqualTo(-1);
@@ -177,7 +178,7 @@ class SuplaServerActionsIT {
             initializeAndAwaitOnline(deviceCtx, device, port);
 
             var actions = createFirmwareUpdateActions(deviceCtx.handler());
-            var action = CompletableFuture.supplyAsync(actions::startSecurityUpdate);
+            var action = runActionAsync(actions::startSecurityUpdate);
 
             var request = readDeviceCalCfgRequest(device::readDeviceCalCfgRequest);
             assertThat(request.channelNumber()).isEqualTo(-1);
@@ -243,7 +244,7 @@ class SuplaServerActionsIT {
                     assertThat(deviceCtx.openHabDevice().getChannelStates()).hasSize(2));
 
             var actions = createElectricityMeterActions(deviceCtx.handler());
-            var action = CompletableFuture.supplyAsync(() -> actions.resetElectricMeterCounters(
+            var action = runActionAsync(() -> actions.resetElectricMeterCounters(
                     "supla:server-device:%s:0#totalForwardActiveEnergy".formatted(guid)));
 
             var request = readDeviceCalCfgRequest(device::readDeviceCalCfgRequest);
@@ -282,7 +283,7 @@ class SuplaServerActionsIT {
             awaitOnline(deviceCtx);
 
             var actions = createConfigModeActions(deviceCtx.handler());
-            var action = CompletableFuture.supplyAsync(actions::enterConfigMode);
+            var action = runActionAsync(actions::enterConfigMode);
 
             var request = readDeviceCalCfgRequest(device::readDeviceCalCfgRequest);
             assertThat(request.channelNumber()).isEqualTo(-1);
@@ -314,7 +315,18 @@ class SuplaServerActionsIT {
 
     private static DeviceCalCfgRequestWithMessageId readDeviceCalCfgRequest(
             Supplier<DeviceCalCfgRequestWithMessageId> requestSupplier) throws Exception {
-        return CompletableFuture.supplyAsync(requestSupplier).get(30, SECONDS);
+        var executor = Executors.newSingleThreadExecutor();
+        try {
+            return CompletableFuture.supplyAsync(requestSupplier, executor).get(30, SECONDS);
+        } finally {
+            executor.shutdownNow();
+        }
+    }
+
+    private static CompletableFuture<String> runActionAsync(Supplier<String> actionSupplier) {
+        var executor = Executors.newSingleThreadExecutor();
+        return CompletableFuture.supplyAsync(actionSupplier, executor)
+                .whenComplete((result, failure) -> executor.shutdownNow());
     }
 
     private static void consumeDeviceCalCfgResult(ThingHandler handler, DeviceCalCfgRequestWithMessageId request) {
