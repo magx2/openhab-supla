@@ -115,6 +115,16 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler
     public static final String AVAILABLE_FIELDS = "AVAILABLE_FIELDS";
     private static final String SOFTWARE_UPDATE_THREAD_POOL_NAME = BINDING_ID + "-software-update";
     private static final AtomicLong ID = new AtomicLong();
+    private static final Set<String> PRODUCT_INFO_PROPERTIES = Set.of(
+            MANUFACTURER_ID_PROPERTY,
+            PRODUCT_ID_PROPERTY,
+            PRODUCT_MANUFACTURER_PROPERTY,
+            PRODUCT_NAME_PROPERTY,
+            PRODUCT_UPDATES_COUNT_PROPERTY,
+            PRODUCT_LATEST_RELEASE_AT_PROPERTY,
+            PRODUCT_LATEST_VERSION_PROPERTY,
+            PRODUCT_LATEST_DESCRIPTION_PROPERTY,
+            PRODUCT_URL_PROPERTY);
 
     private final long id = ID.incrementAndGet();
     private final ServerDeviceActionServiceRegistry actionServiceRegistry;
@@ -410,6 +420,7 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler
         }
 
         { // set properties
+            clearProductInfoProperties();
             thing.setProperty(SOFT_VERSION_PROPERTY, registerEntity.softVer());
             if (registerEntity.manufacturerId() != null) {
                 thing.setProperty(MANUFACTURER_ID_PROPERTY, valueOf(registerEntity.manufacturerId()));
@@ -1031,6 +1042,13 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler
                 .filter(key -> key.startsWith("CHANNEL_FLAGS_")
                         || key.startsWith("CHANNEL_FUNCTION_")
                         || key.startsWith("CHANNEL_FUNCTIONS_"))
+                .forEach(key -> thing.setProperty(key, null));
+    }
+
+    void clearProductInfoProperties() {
+        thing.getProperties().keySet().stream()
+                .filter(PRODUCT_INFO_PROPERTIES::contains)
+                .toList()
                 .forEach(key -> thing.setProperty(key, null));
     }
 
