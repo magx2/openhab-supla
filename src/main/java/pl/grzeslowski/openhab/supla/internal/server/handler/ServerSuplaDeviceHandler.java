@@ -36,6 +36,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.time.format.TextStyle;
 import java.util.*;
 import java.util.concurrent.Future;
@@ -51,6 +52,7 @@ import lombok.experimental.Delegate;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
 import org.openhab.core.common.ThreadPoolManager;
+import org.openhab.core.i18n.TimeZoneProvider;
 import org.openhab.core.thing.ChannelUID;
 import org.openhab.core.thing.Thing;
 import org.openhab.core.thing.ThingStatus;
@@ -130,6 +132,7 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler
     private final long id = ID.incrementAndGet();
     private final ServerDeviceActionServiceRegistry actionServiceRegistry;
     private final SuplaUpdatesClient updatesClient;
+    private final TimeZoneProvider timeZoneProvider;
 
     @Getter
     protected Logger logger = LoggerFactory.getLogger(baseLogger());
@@ -196,15 +199,20 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler
         UPDATE_TRIGGERED
     }
 
-    public ServerSuplaDeviceHandler(Thing thing, ServerDeviceActionServiceRegistry actionServiceRegistry) {
-        this(thing, actionServiceRegistry, new SuplaUpdatesClient());
+    public ServerSuplaDeviceHandler(
+            Thing thing, ServerDeviceActionServiceRegistry actionServiceRegistry, TimeZoneProvider timeZoneProvider) {
+        this(thing, actionServiceRegistry, new SuplaUpdatesClient(), timeZoneProvider);
     }
 
     ServerSuplaDeviceHandler(
-            Thing thing, ServerDeviceActionServiceRegistry actionServiceRegistry, SuplaUpdatesClient updatesClient) {
+            Thing thing,
+            ServerDeviceActionServiceRegistry actionServiceRegistry,
+            SuplaUpdatesClient updatesClient,
+            TimeZoneProvider timeZoneProvider) {
         super(thing);
         this.actionServiceRegistry = actionServiceRegistry;
         this.updatesClient = updatesClient;
+        this.timeZoneProvider = timeZoneProvider;
     }
 
     @Override
@@ -431,7 +439,7 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler
             if (registerEntity.productId() != null) {
                 thing.setProperty(PRODUCT_ID_PROPERTY, valueOf(registerEntity.productId()));
             }
-            buildProductInfoProperties(registerEntity.manufacturerId(), registerEntity.productId())
+            buildProductInfoProperties(registerEntity.manufacturerId(), registerEntity.productId(), timeZoneProvider)
                     .forEach(thing::setProperty);
         }
 
@@ -523,7 +531,7 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler
         var seconds = (short) now.getSecond();
 
         // Get the system's default time zone
-        var zoneId = ZoneId.systemDefault();
+        var zoneId = timeZoneProvider.getTimeZone();
         var timeZoneName = zoneId.getDisplayName(TextStyle.SHORT, Locale.getDefault());
         var timeZone = timeZoneName.getBytes(); // Convert to byte array
         var timeZoneSize = timeZone.length;
@@ -539,7 +547,9 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler
             var millis =
                     SECONDS.toMillis(response.now().tvSec()) + response.now().tvUsec();
             var formatter = DateTimeFormatter.ofPattern("HH:mm:ss.SSS z");
-            var date = Instant.ofEpochMilli(millis).atZone(ZoneId.of("UTC")).withZoneSameLocal(ZoneId.systemDefault());
+            var date = Instant.ofEpochMilli(millis)
+                    .atZone(ZoneId.of("UTC"))
+                    .withZoneSameLocal(timeZoneProvider.getTimeZone());
             logger.trace(
                     "pingServer {} ({}s {}ms)",
                     formatter.format(date),
@@ -979,7 +989,9 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler
         setProperty(SOFTWARE_UPDATE_URL_PROPERTY, result.updateAvailable() ? emptyToNull(result.updateUrl()) : null);
         setProperty(
                 SOFTWARE_UPDATE_LAST_CHECK_PROPERTY,
-                Optional.ofNullable(checkedAt).map(Instant::toString).orElse(null));
+                Optional.ofNullable(checkedAt)
+                        .map(this::toOpenHabTimezoneDateTime)
+                        .orElse(null));
     }
 
     private void clearSoftwareUpdateState() {
@@ -1060,6 +1072,11 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler
 
     static Map<String, String> buildProductInfoProperties(
             @Nullable Integer manufacturerId, @Nullable Integer productId) {
+        return buildProductInfoProperties(manufacturerId, productId, ZoneId::systemDefault);
+    }
+
+    static Map<String, String> buildProductInfoProperties(
+            @Nullable Integer manufacturerId, @Nullable Integer productId, TimeZoneProvider timeZoneProvider) {
         if (manufacturerId == null || productId == null) {
             return Map.of();
         }
@@ -1070,7 +1087,9 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler
                     putProductInfoProperty(properties, PRODUCT_NAME_PROPERTY, productInfo.name());
                     properties.put(PRODUCT_UPDATES_COUNT_PROPERTY, valueOf(productInfo.updatesCount()));
                     putProductInfoProperty(
-                            properties, PRODUCT_LATEST_RELEASE_AT_PROPERTY, productInfo.latestReleaseAt());
+                            properties,
+                            PRODUCT_LATEST_RELEASE_AT_PROPERTY,
+                            toOpenHabTimezoneDateTime(productInfo.latestReleaseAt(), timeZoneProvider));
                     putProductInfoProperty(properties, PRODUCT_LATEST_VERSION_PROPERTY, productInfo.latestVersion());
                     putProductInfoProperty(
                             properties, PRODUCT_LATEST_DESCRIPTION_PROPERTY, productInfo.latestDescription());
@@ -1085,6 +1104,25 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler
         var valueToSet = emptyToNull(value);
         if (valueToSet != null) {
             properties.put(property, valueToSet);
+        }
+    }
+
+    private String toOpenHabTimezoneDateTime(Instant instant) {
+        return instant.atZone(timeZoneProvider.getTimeZone()).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+    }
+
+    private static @Nullable String toOpenHabTimezoneDateTime(
+            @Nullable String dateTime, TimeZoneProvider timeZoneProvider) {
+        var value = emptyToNull(dateTime);
+        if (value == null) {
+            return null;
+        }
+        try {
+            return Instant.from(DateTimeFormatter.ISO_OFFSET_DATE_TIME.parse(value))
+                    .atZone(timeZoneProvider.getTimeZone())
+                    .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+        } catch (DateTimeParseException e) {
+            return value;
         }
     }
 

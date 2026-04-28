@@ -36,6 +36,8 @@ import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.Server
 
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -144,7 +146,11 @@ class ServerSuplaDeviceHandlerTest {
                 .containsEntry(PRODUCT_MANUFACTURER_PROPERTY, productInfo.manufacturer())
                 .containsEntry(PRODUCT_NAME_PROPERTY, productInfo.name())
                 .containsEntry(PRODUCT_UPDATES_COUNT_PROPERTY, Integer.toString(productInfo.updatesCount()))
-                .containsEntry(PRODUCT_LATEST_RELEASE_AT_PROPERTY, productInfo.latestReleaseAt())
+                .containsEntry(
+                        PRODUCT_LATEST_RELEASE_AT_PROPERTY,
+                        Instant.from(DateTimeFormatter.ISO_OFFSET_DATE_TIME.parse(productInfo.latestReleaseAt()))
+                                .atZone(ZoneId.systemDefault())
+                                .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME))
                 .containsEntry(PRODUCT_LATEST_VERSION_PROPERTY, productInfo.latestVersion())
                 .containsEntry(PRODUCT_LATEST_DESCRIPTION_PROPERTY, productInfo.latestDescription())
                 .containsEntry(PRODUCT_URL_PROPERTY, productInfo.productUrl());
@@ -199,7 +205,8 @@ class ServerSuplaDeviceHandlerTest {
         assertThat(properties.get(SOFTWARE_UPDATE_AVAILABLE_PROPERTY)).isEqualTo("true");
         assertThat(properties.get(SOFTWARE_UPDATE_VERSION_PROPERTY)).isEqualTo("2.0.0");
         assertThat(properties.get(SOFTWARE_UPDATE_URL_PROPERTY)).isEqualTo("https://updates.example/device");
-        assertThat(properties.get(SOFTWARE_UPDATE_LAST_CHECK_PROPERTY)).isEqualTo(checkedAt.toString());
+        assertThat(properties.get(SOFTWARE_UPDATE_LAST_CHECK_PROPERTY))
+                .isEqualTo(checkedAt.atZone(ZoneId.systemDefault()).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
     }
 
     @Test
@@ -218,7 +225,8 @@ class ServerSuplaDeviceHandlerTest {
         assertThat(properties)
                 .doesNotContainKey(SOFTWARE_UPDATE_VERSION_PROPERTY)
                 .doesNotContainKey(SOFTWARE_UPDATE_URL_PROPERTY);
-        assertThat(properties.get(SOFTWARE_UPDATE_LAST_CHECK_PROPERTY)).isEqualTo(checkedAt.toString());
+        assertThat(properties.get(SOFTWARE_UPDATE_LAST_CHECK_PROPERTY))
+                .isEqualTo(checkedAt.atZone(ZoneId.systemDefault()).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
     }
 
     @Test
