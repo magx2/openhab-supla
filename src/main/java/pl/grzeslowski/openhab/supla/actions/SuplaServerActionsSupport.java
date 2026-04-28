@@ -18,7 +18,6 @@ abstract class SuplaServerActionsSupport implements ThingActions {
     protected static final byte[] EMPTY_DATA = new byte[0];
     protected static final byte SUPER_USER_AUTHORIZED = 1;
     protected static final int NOT_BOUND_TO_CHANNEL = -1;
-    protected static final int SENDER_ID = 1;
 
     @Getter
     @Nullable
@@ -48,6 +47,10 @@ abstract class SuplaServerActionsSupport implements ThingActions {
             log.warn("Thing handler is null!");
         }
         return localHandler;
+    }
+
+    protected int nextSenderId(ServerSuplaDeviceHandler localHandler) {
+        return localHandler.getSenderId().getAndIncrement();
     }
 
     protected String runAction(String actionName, Action action) {

@@ -40,7 +40,7 @@ public class SuplaServerFirmwareUpdateActions extends SuplaServerActionsSupport 
         }
 
         var message = new DeviceCalCfgRequest(
-                SENDER_ID,
+                nextSenderId(localHandler),
                 NOT_BOUND_TO_CHANNEL,
                 SUPLA_CALCFG_CMD_CHECK_FIRMWARE_UPDATE.getValue(),
                 SUPER_USER_AUTHORIZED,
@@ -163,7 +163,7 @@ public class SuplaServerFirmwareUpdateActions extends SuplaServerActionsSupport 
         }
 
         var message = new DeviceCalCfgRequest(
-                SENDER_ID,
+                nextSenderId(localHandler),
                 NOT_BOUND_TO_CHANNEL,
                 command.getValue(),
                 SUPER_USER_AUTHORIZED,
