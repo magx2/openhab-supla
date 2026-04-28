@@ -3,7 +3,6 @@ package pl.grzeslowski.openhab.supla.internal;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
 import static org.openhab.core.thing.ThingStatus.ONLINE;
 import static org.openhab.core.thing.ThingStatus.UNKNOWN;
@@ -13,6 +12,7 @@ import static pl.grzeslowski.jsupla.protocol.api.CalCfgResult.SUPLA_CALCFG_RESUL
 import static pl.grzeslowski.jsupla.protocol.api.DeviceFlag.SUPLA_DEVICE_FLAG_AUTOMATIC_FIRMWARE_UPDATE_SUPPORTED;
 import static pl.grzeslowski.jsupla.protocol.api.FirmwareCheckResultCode.SUPLA_FIRMWARE_CHECK_RESULT_UPDATE_AVAILABLE;
 import static pl.grzeslowski.jsupla.protocol.api.consts.ProtoConsts.*;
+import static pl.grzeslowski.openhab.supla.internal.Localization.text;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.SUPLA_SERVER_DEVICE_TYPE_ID;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.SUPLA_SERVER_TYPE_ID;
 import static pl.grzeslowski.openhab.supla.internal.extension.supla.SuplaExtension.deviceInitialize;
@@ -81,13 +81,7 @@ class SuplaServerActionsIT {
             awaitOnline(deviceCtx);
 
             var actions = createFirmwareUpdateActions(deviceCtx.handler());
-            var action = CompletableFuture.supplyAsync(() -> {
-                try {
-                    return actions.checkFirmwareUpdate();
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
-            });
+            var action = CompletableFuture.supplyAsync(actions::checkFirmwareUpdate);
 
             var request = readDeviceCalCfgRequest(device::readDeviceCalCfgRequest);
             assertThat(request.channelNumber()).isEqualTo(-1);
@@ -117,7 +111,8 @@ class SuplaServerActionsIT {
                                     SUPLA_FIRMWARE_CHECK_RESULT_UPDATE_AVAILABLE.getValue(),
                                     "2.3.4",
                                     "https://example.test/changelog")));
-            assertThat(action.get(30, SECONDS)).isEqualTo("AVAILABLE");
+            assertThat(action.get(30, SECONDS))
+                    .isEqualTo(text("action.check-firmware-update.result.success", "AVAILABLE"));
 
             await().untilAsserted(() -> {
                 var properties = deviceCtx.handler().getThing().getProperties();
@@ -146,19 +141,13 @@ class SuplaServerActionsIT {
             initializeAndAwaitOnline(deviceCtx, device, port);
 
             var actions = createFirmwareUpdateActions(deviceCtx.handler());
-            var action = CompletableFuture.supplyAsync(() -> {
-                try {
-                    return actions.startFirmwareUpdate();
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
-            });
+            var action = CompletableFuture.supplyAsync(actions::startFirmwareUpdate);
 
             var request = readDeviceCalCfgRequest(device::readDeviceCalCfgRequest);
             assertThat(request.channelNumber()).isEqualTo(-1);
             assertThat(request.command()).isEqualTo(SUPLA_CALCFG_CMD_START_FIRMWARE_UPDATE.getValue());
             consumeDeviceCalCfgResult(deviceCtx.handler(), request);
-            assertThat(action.get(30, SECONDS)).isEqualTo("ACCEPTED");
+            assertThat(action.get(30, SECONDS)).isEqualTo(text("action.start-firmware-update.result.success"));
 
             await().untilAsserted(() -> assertThat(
                             deviceCtx.handler().getThing().getProperties().get("otaStatus"))
@@ -183,19 +172,13 @@ class SuplaServerActionsIT {
             initializeAndAwaitOnline(deviceCtx, device, port);
 
             var actions = createFirmwareUpdateActions(deviceCtx.handler());
-            var action = CompletableFuture.supplyAsync(() -> {
-                try {
-                    return actions.startSecurityUpdate();
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
-            });
+            var action = CompletableFuture.supplyAsync(actions::startSecurityUpdate);
 
             var request = readDeviceCalCfgRequest(device::readDeviceCalCfgRequest);
             assertThat(request.channelNumber()).isEqualTo(-1);
             assertThat(request.command()).isEqualTo(SUPLA_CALCFG_CMD_START_SECURITY_UPDATE.getValue());
             consumeDeviceCalCfgResult(deviceCtx.handler(), request);
-            assertThat(action.get(30, SECONDS)).isEqualTo("ACCEPTED");
+            assertThat(action.get(30, SECONDS)).isEqualTo(text("action.start-security-update.result.success"));
 
             await().untilAsserted(() -> assertThat(
                             deviceCtx.handler().getThing().getProperties().get("otaStatus"))
@@ -220,9 +203,8 @@ class SuplaServerActionsIT {
             initializeAndAwaitOnline(deviceCtx, device, port);
 
             var actions = createFirmwareUpdateActions(deviceCtx.handler());
-            assertThatThrownBy(actions::startFirmwareUpdate)
-                    .isInstanceOf(IllegalArgumentException.class)
-                    .hasMessageContaining("Device does not support automatic firmware updates");
+            assertThat(actions.startFirmwareUpdate())
+                    .isEqualTo(text("action.result.failure", "Device does not support automatic firmware updates"));
         }
     }
 
@@ -255,21 +237,16 @@ class SuplaServerActionsIT {
                     assertThat(deviceCtx.openHabDevice().getChannelStates()).hasSize(2));
 
             var actions = createElectricityMeterActions(deviceCtx.handler());
-            var action = CompletableFuture.runAsync(() -> {
-                try {
-                    actions.resetElectricMeterCounters(
-                            "supla:server-device:%s:0#totalForwardActiveEnergy".formatted(guid));
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
-            });
+            var action = CompletableFuture.supplyAsync(() -> actions.resetElectricMeterCounters(
+                    "supla:server-device:%s:0#totalForwardActiveEnergy".formatted(guid)));
 
             var request = readDeviceCalCfgRequest(device::readDeviceCalCfgRequest);
             assertThat(request.channelNumber()).isEqualTo(0);
             assertThat(request.command()).isEqualTo(SUPLA_CALCFG_CMD_RESET_COUNTERS.getValue());
             assertThat(request.superUserAuthorized()).isEqualTo((byte) 1);
             consumeDeviceCalCfgResult(deviceCtx.handler(), request);
-            action.get(30, SECONDS);
+            assertThat(action.get(30, SECONDS))
+                    .isEqualTo(text("action.reset-electric-meter-counters.result.success", 0));
         }
     }
 
@@ -298,20 +275,14 @@ class SuplaServerActionsIT {
             awaitOnline(deviceCtx);
 
             var actions = createConfigModeActions(deviceCtx.handler());
-            var action = CompletableFuture.runAsync(() -> {
-                try {
-                    actions.enterConfigMode();
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
-            });
+            var action = CompletableFuture.supplyAsync(actions::enterConfigMode);
 
             var request = readDeviceCalCfgRequest(device::readDeviceCalCfgRequest);
             assertThat(request.channelNumber()).isEqualTo(-1);
             assertThat(request.command()).isEqualTo(SUPLA_CALCFG_CMD_ENTER_CFG_MODE.getValue());
             assertThat(request.superUserAuthorized()).isEqualTo((byte) 1);
             consumeDeviceCalCfgResult(deviceCtx.handler(), request);
-            action.get(30, SECONDS);
+            assertThat(action.get(30, SECONDS)).isEqualTo(text("action.enter-config-mode.result.success"));
         }
     }
 

@@ -139,6 +139,7 @@ devices into your OpenHAB environment.
 
 Native server device actions are exposed after the device registers with the binding. The rule UI only offers action
 groups supported by the registered device, while direct script calls still validate support at execution time.
+Every native server action returns a localized text result describing whether the request was accepted or why it failed.
 
 ### Set Device Config
 

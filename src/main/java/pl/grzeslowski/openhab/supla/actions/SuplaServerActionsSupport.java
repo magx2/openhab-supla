@@ -1,5 +1,7 @@
 package pl.grzeslowski.openhab.supla.actions;
 
+import static pl.grzeslowski.openhab.supla.internal.Localization.text;
+
 import java.util.Optional;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -46,5 +48,44 @@ abstract class SuplaServerActionsSupport implements ThingActions {
             log.warn("Thing handler is null!");
         }
         return localHandler;
+    }
+
+    protected String runAction(String actionName, Action action) {
+        try {
+            return action.run();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return logAndReturnFailure(actionName, e);
+        } catch (Exception e) {
+            return logAndReturnFailure(actionName, e);
+        }
+    }
+
+    protected static String unavailableActionService(
+            String actionName, @Nullable ThingActions actions, Class<?> expectedClass) {
+        var actualClass = Optional.ofNullable(actions)
+                .map(Object::getClass)
+                .map(Class::getSimpleName)
+                .orElse("<null>");
+        var exception = new IllegalArgumentException("Action service %s is not available. actualClass=%s"
+                .formatted(expectedClass.getSimpleName(), actualClass));
+        return logAndReturnFailure(actionName, exception);
+    }
+
+    private static String logAndReturnFailure(String actionName, Exception exception) {
+        var result = text("action.result.failure", exceptionMessage(exception));
+        log.warn("Action {} failed", actionName, exception);
+        return result;
+    }
+
+    private static String exceptionMessage(Exception exception) {
+        return Optional.ofNullable(exception.getLocalizedMessage())
+                .filter(message -> !message.isBlank())
+                .orElse(exception.getClass().getSimpleName());
+    }
+
+    @FunctionalInterface
+    protected interface Action {
+        String run() throws Exception;
     }
 }

@@ -1,6 +1,5 @@
 package pl.grzeslowski.openhab.supla.actions;
 
-import static java.util.Objects.requireNonNull;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static pl.grzeslowski.jsupla.protocol.api.CalCfgCommand.SUPLA_CALCFG_CMD_CHECK_FIRMWARE_UPDATE;
@@ -8,6 +7,7 @@ import static pl.grzeslowski.jsupla.protocol.api.CalCfgCommand.SUPLA_CALCFG_CMD_
 import static pl.grzeslowski.jsupla.protocol.api.CalCfgCommand.SUPLA_CALCFG_CMD_START_SECURITY_UPDATE;
 import static pl.grzeslowski.jsupla.protocol.api.CalCfgResult.SUPLA_CALCFG_RESULT_DONE;
 import static pl.grzeslowski.jsupla.protocol.api.DeviceFlag.SUPLA_DEVICE_FLAG_AUTOMATIC_FIRMWARE_UPDATE_SUPPORTED;
+import static pl.grzeslowski.openhab.supla.internal.Localization.text;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.BINDING_ID;
 
 import java.util.concurrent.TimeoutException;
@@ -28,7 +28,11 @@ public class SuplaServerFirmwareUpdateActions extends SuplaServerActionsSupport 
     @RuleAction(
             label = "@text/action.check-firmware-update.label",
             description = "@text/action.check-firmware-update.description")
-    public synchronized String checkFirmwareUpdate() throws InterruptedException, TimeoutException {
+    public synchronized String checkFirmwareUpdate() {
+        return runAction("checkFirmwareUpdate", this::checkFirmwareUpdateOrThrow);
+    }
+
+    private String checkFirmwareUpdateOrThrow() throws InterruptedException, TimeoutException {
         var localHandler = requireOtaReadyHandler();
         var writer = localHandler.getWriter().get();
         if (writer == null) {
@@ -93,9 +97,10 @@ public class SuplaServerFirmwareUpdateActions extends SuplaServerActionsSupport 
             throw new TimeoutException("Check firmware update timeout budget exhausted before OTA result wait");
         }
         try {
-            return localHandler
+            var otaStatus = localHandler
                     .listenForOtaCheckResult(remainingTimeoutMillis, MILLISECONDS)
                     .name();
+            return text("action.check-firmware-update.result.success", otaStatus);
         } catch (InterruptedException | TimeoutException | RuntimeException e) {
             localHandler.markOtaCheckError();
             throw e;
@@ -105,33 +110,43 @@ public class SuplaServerFirmwareUpdateActions extends SuplaServerActionsSupport 
     @RuleAction(
             label = "@text/action.start-firmware-update.label",
             description = "@text/action.start-firmware-update.description")
-    public synchronized String startFirmwareUpdate() throws InterruptedException, TimeoutException {
+    public synchronized String startFirmwareUpdate() {
         return sendWholeDeviceCalCfgCommand(SUPLA_CALCFG_CMD_START_FIRMWARE_UPDATE, "Start firmware update");
     }
 
     @RuleAction(
             label = "@text/action.start-security-update.label",
             description = "@text/action.start-security-update.description")
-    public synchronized String startSecurityUpdate() throws InterruptedException, TimeoutException {
+    public synchronized String startSecurityUpdate() {
         return sendWholeDeviceCalCfgCommand(SUPLA_CALCFG_CMD_START_SECURITY_UPDATE, "Start security update");
     }
 
-    public static String checkFirmwareUpdate(@Nullable ThingActions actions)
-            throws InterruptedException, TimeoutException {
-        return ((SuplaServerFirmwareUpdateActions) requireNonNull(actions)).checkFirmwareUpdate();
+    public static String checkFirmwareUpdate(@Nullable ThingActions actions) {
+        if (actions instanceof SuplaServerFirmwareUpdateActions serverActions) {
+            return serverActions.checkFirmwareUpdate();
+        }
+        return unavailableActionService("checkFirmwareUpdate", actions, SuplaServerFirmwareUpdateActions.class);
     }
 
-    public static String startFirmwareUpdate(@Nullable ThingActions actions)
-            throws InterruptedException, TimeoutException {
-        return ((SuplaServerFirmwareUpdateActions) requireNonNull(actions)).startFirmwareUpdate();
+    public static String startFirmwareUpdate(@Nullable ThingActions actions) {
+        if (actions instanceof SuplaServerFirmwareUpdateActions serverActions) {
+            return serverActions.startFirmwareUpdate();
+        }
+        return unavailableActionService("startFirmwareUpdate", actions, SuplaServerFirmwareUpdateActions.class);
     }
 
-    public static String startSecurityUpdate(@Nullable ThingActions actions)
-            throws InterruptedException, TimeoutException {
-        return ((SuplaServerFirmwareUpdateActions) requireNonNull(actions)).startSecurityUpdate();
+    public static String startSecurityUpdate(@Nullable ThingActions actions) {
+        if (actions instanceof SuplaServerFirmwareUpdateActions serverActions) {
+            return serverActions.startSecurityUpdate();
+        }
+        return unavailableActionService("startSecurityUpdate", actions, SuplaServerFirmwareUpdateActions.class);
     }
 
-    private String sendWholeDeviceCalCfgCommand(CalCfgCommand command, String actionName)
+    private String sendWholeDeviceCalCfgCommand(CalCfgCommand command, String actionName) {
+        return runAction(actionName, () -> sendWholeDeviceCalCfgCommandOrThrow(command, actionName));
+    }
+
+    private String sendWholeDeviceCalCfgCommandOrThrow(CalCfgCommand command, String actionName)
             throws InterruptedException, TimeoutException {
         var localHandler = requireOtaReadyHandler();
         var timeout =
@@ -172,7 +187,11 @@ public class SuplaServerFirmwareUpdateActions extends SuplaServerActionsSupport 
                     "%s did not succeed! request=%s, result=%s".formatted(actionName, message, result));
         }
         localHandler.markOtaUpdateTriggered();
-        return "ACCEPTED";
+        return switch (command) {
+            case SUPLA_CALCFG_CMD_START_FIRMWARE_UPDATE -> text("action.start-firmware-update.result.success");
+            case SUPLA_CALCFG_CMD_START_SECURITY_UPDATE -> text("action.start-security-update.result.success");
+            default -> text("action.result.success");
+        };
     }
 
     private ServerSuplaDeviceHandler requireOtaReadyHandler() {

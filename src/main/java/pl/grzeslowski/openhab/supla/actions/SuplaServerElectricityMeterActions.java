@@ -1,9 +1,9 @@
 package pl.grzeslowski.openhab.supla.actions;
 
-import static java.util.Objects.requireNonNull;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static pl.grzeslowski.jsupla.protocol.api.CalCfgCommand.SUPLA_CALCFG_CMD_RESET_COUNTERS;
 import static pl.grzeslowski.jsupla.protocol.api.CalCfgResult.SUPLA_CALCFG_RESULT_DONE;
+import static pl.grzeslowski.openhab.supla.internal.Localization.text;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.BINDING_ID;
 
 import java.util.concurrent.TimeoutException;
@@ -23,16 +23,20 @@ public class SuplaServerElectricityMeterActions extends SuplaServerActionsSuppor
     @RuleAction(
             label = "@text/action.reset-electric-meter-counters.label",
             description = "@text/action.reset-electric-meter-counters.channel-uid.description")
-    public synchronized void resetElectricMeterCounters(
+    public synchronized String resetElectricMeterCounters(
             @ActionInput(
                             name = "channelUID",
                             label = "@text/action.input.channel-uid.label",
                             description = "@text/action.input.channel-uid.description")
-                    String channelUID)
+                    String channelUID) {
+        return runAction("resetElectricMeterCounters", () -> resetElectricMeterCountersByChannelUid(channelUID));
+    }
+
+    private String resetElectricMeterCountersByChannelUid(String channelUID)
             throws InterruptedException, TimeoutException {
         var localHandler = getThingHandlerOrWarn();
         if (localHandler == null) {
-            return;
+            throw new IllegalStateException("Thing handler is null");
         }
         var parsedChannelUID = parseChannelUID(channelUID);
         var thingUID = localHandler.getThing().getUID();
@@ -43,22 +47,26 @@ public class SuplaServerElectricityMeterActions extends SuplaServerActionsSuppor
         int channelNumber = ChannelUtil.findSuplaChannelNumber(parsedChannelUID)
                 .map(Short::intValue)
                 .orElseThrow(() -> new IllegalArgumentException("Cannot find channel number from " + parsedChannelUID));
-        resetElectricMeterCounters(channelNumber);
+        return resetElectricMeterCountersByChannelNumber(channelNumber);
     }
 
     @RuleAction(
             label = "@text/action.reset-electric-meter-counters.label",
             description = "@text/action.reset-electric-meter-counters.channel-number.description")
-    public synchronized void resetElectricMeterCounters(
+    public synchronized String resetElectricMeterCounters(
             @ActionInput(
                             name = "channelNumber",
                             label = "@text/action.input.channel-number.label",
                             description = "@text/action.input.channel-number.description")
-                    int channelNumber)
+                    int channelNumber) {
+        return runAction("resetElectricMeterCounters", () -> resetElectricMeterCountersByChannelNumber(channelNumber));
+    }
+
+    private String resetElectricMeterCountersByChannelNumber(int channelNumber)
             throws InterruptedException, TimeoutException {
         var localHandler = getThingHandlerOrWarn();
         if (localHandler == null) {
-            return;
+            throw new IllegalStateException("Thing handler is null");
         }
         if (!localHandler.hasRegisteredElectricityMeterChannel(channelNumber)) {
             throw new IllegalArgumentException(
@@ -95,16 +103,23 @@ public class SuplaServerElectricityMeterActions extends SuplaServerActionsSuppor
             throw new RuntimeException(
                     "Reset counters did not succeed! request=%s, result=%s".formatted(message, result));
         }
+        return text("action.reset-electric-meter-counters.result.success", channelNumber);
     }
 
-    public static void resetElectricMeterCounters(@Nullable ThingActions actions, String channelUID)
-            throws InterruptedException, TimeoutException {
-        ((SuplaServerElectricityMeterActions) requireNonNull(actions)).resetElectricMeterCounters(channelUID);
+    public static String resetElectricMeterCounters(@Nullable ThingActions actions, String channelUID) {
+        if (actions instanceof SuplaServerElectricityMeterActions serverActions) {
+            return serverActions.resetElectricMeterCounters(channelUID);
+        }
+        return unavailableActionService(
+                "resetElectricMeterCounters", actions, SuplaServerElectricityMeterActions.class);
     }
 
-    public static void resetElectricMeterCounters(@Nullable ThingActions actions, int channelNumber)
-            throws InterruptedException, TimeoutException {
-        ((SuplaServerElectricityMeterActions) requireNonNull(actions)).resetElectricMeterCounters(channelNumber);
+    public static String resetElectricMeterCounters(@Nullable ThingActions actions, int channelNumber) {
+        if (actions instanceof SuplaServerElectricityMeterActions serverActions) {
+            return serverActions.resetElectricMeterCounters(channelNumber);
+        }
+        return unavailableActionService(
+                "resetElectricMeterCounters", actions, SuplaServerElectricityMeterActions.class);
     }
 
     private static ChannelUID parseChannelUID(String channelUID) {

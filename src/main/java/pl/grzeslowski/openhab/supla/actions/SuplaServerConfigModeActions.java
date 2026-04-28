@@ -1,10 +1,10 @@
 package pl.grzeslowski.openhab.supla.actions;
 
-import static java.util.Objects.requireNonNull;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static pl.grzeslowski.jsupla.protocol.api.CalCfgCommand.SUPLA_CALCFG_CMD_ENTER_CFG_MODE;
 import static pl.grzeslowski.jsupla.protocol.api.CalCfgResult.SUPLA_CALCFG_RESULT_DONE;
 import static pl.grzeslowski.jsupla.protocol.api.DeviceFlag.SUPLA_DEVICE_FLAG_CALCFG_ENTER_CFG_MODE;
+import static pl.grzeslowski.openhab.supla.internal.Localization.text;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.BINDING_ID;
 
 import java.util.concurrent.TimeoutException;
@@ -21,10 +21,14 @@ public class SuplaServerConfigModeActions extends SuplaServerActionsSupport {
     @RuleAction(
             label = "@text/action.enter-config-mode.label",
             description = "@text/action.enter-config-mode.description")
-    public synchronized void enterConfigMode() throws InterruptedException, TimeoutException {
+    public synchronized String enterConfigMode() {
+        return runAction("enterConfigMode", this::enterConfigModeOrThrow);
+    }
+
+    private String enterConfigModeOrThrow() throws InterruptedException, TimeoutException {
         var localHandler = getThingHandlerOrWarn();
         if (localHandler == null) {
-            return;
+            throw new IllegalStateException("Thing handler is null");
         }
 
         var suplaDevice = localHandler.getSuplaDevice();
@@ -65,9 +69,13 @@ public class SuplaServerConfigModeActions extends SuplaServerActionsSupport {
             throw new RuntimeException(
                     "Enter config mode did not succeed! request=%s, result=%s".formatted(message, result));
         }
+        return text("action.enter-config-mode.result.success");
     }
 
-    public static void enterConfigMode(@Nullable ThingActions actions) throws InterruptedException, TimeoutException {
-        ((SuplaServerConfigModeActions) requireNonNull(actions)).enterConfigMode();
+    public static String enterConfigMode(@Nullable ThingActions actions) {
+        if (actions instanceof SuplaServerConfigModeActions serverActions) {
+            return serverActions.enterConfigMode();
+        }
+        return unavailableActionService("enterConfigMode", actions, SuplaServerConfigModeActions.class);
     }
 }
