@@ -154,6 +154,7 @@ class SuplaUpdatesClientTest {
                         [
                           {
                             "version": "2.8.61",
+                            "releasedAt": "2024-07-23T09:52:50+00:00",
                             "platform": 1,
                             "param1": 5,
                             "param2": 1,
@@ -161,6 +162,7 @@ class SuplaUpdatesClientTest {
                           },
                           {
                             "version": "2.8.61",
+                            "releasedAt": "2024-07-23T09:52:50+00:00",
                             "platform": 1,
                             "param1": 5,
                             "param2": 0,
@@ -174,6 +176,50 @@ class SuplaUpdatesClientTest {
         assertThat(result.status()).isEqualTo(SuplaUpdatesClient.Status.UPDATE_AVAILABLE);
         assertThat(result.latestVersion()).isEqualTo("2.8.61");
         assertThat(result.updateUrl()).isEqualTo("https://updates.example/user1");
+    }
+
+    @Test
+    void shouldInferNewestListedUpdateWhenUpdatesAreNotOrdered() throws Exception {
+        givenResponses(response(200, """
+                        [
+                          {
+                            "version": "2.8.61",
+                            "releasedAt": "2024-07-23T09:52:50+00:00",
+                            "updateUrl": "https://updates.example/older"
+                          },
+                          {
+                            "version": "2.8.62",
+                            "releasedAt": "2025-03-03T16:35:59+00:00",
+                            "updateUrl": "https://updates.example/newer"
+                          }
+                        ]
+                        """), response(404, "{\"status\":\"Unknown product\"}"));
+
+        var result = client.checkUpdates(new SuplaUpdatesClient.Request(0, 0, "ZAMEL mSRW-01", "2.8.61"));
+
+        assertThat(result.status()).isEqualTo(SuplaUpdatesClient.Status.UPDATE_AVAILABLE);
+        assertThat(result.latestVersion()).isEqualTo("2.8.62");
+        assertThat(result.updateUrl()).isEqualTo("https://updates.example/newer");
+    }
+
+    @Test
+    void shouldNotInferDowngradeFromListedUpdates() throws Exception {
+        givenResponses(response(200, """
+                        [
+                          {
+                            "version": "2.8.61",
+                            "releasedAt": "2024-07-23T09:52:50+00:00",
+                            "updateUrl": "https://updates.example/older"
+                          }
+                        ]
+                        """), response(404, "{\"status\":\"Unknown product\"}"));
+
+        var result = client.checkUpdates(new SuplaUpdatesClient.Request(0, 0, "ZAMEL MEW-01", "2.8.62"));
+
+        assertThat(result.status()).isEqualTo(SuplaUpdatesClient.Status.UPDATE_NOT_AVAILABLE);
+        assertThat(result.updateAvailable()).isFalse();
+        assertThat(result.latestVersion()).isNull();
+        assertThat(result.updateUrl()).isNull();
     }
 
     private void givenResponses(HttpResponse<String> first, HttpResponse<String>... rest)
