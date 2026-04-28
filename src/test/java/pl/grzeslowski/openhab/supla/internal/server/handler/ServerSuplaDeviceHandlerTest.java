@@ -15,10 +15,12 @@ import static pl.grzeslowski.jsupla.protocol.api.ChannelType.SUPLA_CHANNELTYPE_E
 import static pl.grzeslowski.jsupla.protocol.api.DeviceFlag.SUPLA_DEVICE_FLAG_AUTOMATIC_FIRMWARE_UPDATE_SUPPORTED;
 import static pl.grzeslowski.jsupla.protocol.api.DeviceFlag.SUPLA_DEVICE_FLAG_CALCFG_ENTER_CFG_MODE;
 import static pl.grzeslowski.jsupla.protocol.api.FirmwareCheckResultCode.*;
+import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ServerDevicesProperties.MANUFACTURER_ID_PROPERTY;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ServerDevicesProperties.OTA_CHANGELOG_URL_PROPERTY;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ServerDevicesProperties.OTA_LAST_CHECK_PROPERTY;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ServerDevicesProperties.OTA_STATUS_PROPERTY;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ServerDevicesProperties.OTA_VERSION_AVAILABLE_PROPERTY;
+import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ServerDevicesProperties.PRODUCT_ID_PROPERTY;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ServerDevicesProperties.PRODUCT_LATEST_DESCRIPTION_PROPERTY;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ServerDevicesProperties.PRODUCT_LATEST_RELEASE_AT_PROPERTY;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ServerDevicesProperties.PRODUCT_LATEST_VERSION_PROPERTY;
@@ -217,6 +219,35 @@ class ServerSuplaDeviceHandlerTest {
                 .doesNotContainKey(SOFTWARE_UPDATE_VERSION_PROPERTY)
                 .doesNotContainKey(SOFTWARE_UPDATE_URL_PROPERTY);
         assertThat(properties.get(SOFTWARE_UPDATE_LAST_CHECK_PROPERTY)).isEqualTo(checkedAt.toString());
+    }
+
+    @Test
+    void shouldClearProductInfoProperties() {
+        properties.put("OTHER", "preserved");
+        properties.put(MANUFACTURER_ID_PROPERTY, "4");
+        properties.put(PRODUCT_ID_PROPERTY, "6000");
+        properties.put(PRODUCT_MANUFACTURER_PROPERTY, "Zamel");
+        properties.put(PRODUCT_NAME_PROPERTY, "THW-01");
+        properties.put(PRODUCT_UPDATES_COUNT_PROPERTY, "1");
+        properties.put(PRODUCT_LATEST_RELEASE_AT_PROPERTY, "2024-09-05");
+        properties.put(PRODUCT_LATEST_VERSION_PROPERTY, "1.0.0");
+        properties.put(PRODUCT_LATEST_DESCRIPTION_PROPERTY, "desc");
+        properties.put(PRODUCT_URL_PROPERTY, "https://example.org");
+
+        handler.clearProductInfoProperties();
+
+        assertThat(properties)
+                .containsEntry("OTHER", "preserved")
+                .doesNotContainKeys(
+                        MANUFACTURER_ID_PROPERTY,
+                        PRODUCT_ID_PROPERTY,
+                        PRODUCT_MANUFACTURER_PROPERTY,
+                        PRODUCT_NAME_PROPERTY,
+                        PRODUCT_UPDATES_COUNT_PROPERTY,
+                        PRODUCT_LATEST_RELEASE_AT_PROPERTY,
+                        PRODUCT_LATEST_VERSION_PROPERTY,
+                        PRODUCT_LATEST_DESCRIPTION_PROPERTY,
+                        PRODUCT_URL_PROPERTY);
     }
 
     @Test
