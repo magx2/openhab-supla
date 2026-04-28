@@ -11,7 +11,9 @@ import static org.openhab.core.thing.ThingStatus.ONLINE;
 import static org.openhab.core.thing.ThingStatusDetail.*;
 import static pl.grzeslowski.jsupla.protocol.api.CalCfgCommand.SUPLA_CALCFG_CMD_CHECK_FIRMWARE_UPDATE;
 import static pl.grzeslowski.jsupla.protocol.api.CalCfgResult.SUPLA_CALCFG_RESULT_DONE;
+import static pl.grzeslowski.jsupla.protocol.api.ChannelType.SUPLA_CHANNELTYPE_ELECTRICITY_METER;
 import static pl.grzeslowski.jsupla.protocol.api.DeviceFlag.SUPLA_DEVICE_FLAG_AUTOMATIC_FIRMWARE_UPDATE_SUPPORTED;
+import static pl.grzeslowski.jsupla.protocol.api.DeviceFlag.SUPLA_DEVICE_FLAG_CALCFG_ENTER_CFG_MODE;
 import static pl.grzeslowski.jsupla.protocol.api.DeviceFlag.SUPLA_DEVICE_FLAG_SLEEP_MODE_ENABLED;
 import static pl.grzeslowski.jsupla.protocol.api.FirmwareCheckResultCode.*;
 import static pl.grzeslowski.jsupla.protocol.api.ProtocolHelpers.parseString;
@@ -48,7 +50,7 @@ import org.eclipse.jdt.annotation.Nullable;
 import org.openhab.core.thing.ChannelUID;
 import org.openhab.core.thing.Thing;
 import org.openhab.core.thing.ThingStatus;
-import org.openhab.core.thing.binding.ThingHandlerService;
+import org.openhab.core.thing.binding.ThingActions;
 import org.openhab.core.thing.binding.builder.ThingBuilder;
 import org.openhab.core.types.Command;
 import org.openhab.core.types.State;
@@ -77,7 +79,10 @@ import pl.grzeslowski.jsupla.protocol.api.structs.sdc.UserLocalTimeResult;
 import pl.grzeslowski.jsupla.protocol.api.types.ToServerProto;
 import pl.grzeslowski.jsupla.server.MessageHandler;
 import pl.grzeslowski.jsupla.server.SuplaWriter;
-import pl.grzeslowski.openhab.supla.actions.SuplaServerDeviceActions;
+import pl.grzeslowski.openhab.supla.actions.SuplaServerConfigModeActions;
+import pl.grzeslowski.openhab.supla.actions.SuplaServerDeviceConfigActions;
+import pl.grzeslowski.openhab.supla.actions.SuplaServerElectricityMeterActions;
+import pl.grzeslowski.openhab.supla.actions.SuplaServerFirmwareUpdateActions;
 import pl.grzeslowski.openhab.supla.internal.GuidLogger.GuidLogged;
 import pl.grzeslowski.openhab.supla.internal.handler.InitializationException;
 import pl.grzeslowski.openhab.supla.internal.handler.OfflineInitializationException;
@@ -105,6 +110,7 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler
     private static final AtomicLong ID = new AtomicLong();
 
     private final long id = ID.incrementAndGet();
+    private final ServerDeviceActionServiceRegistry actionServiceRegistry;
 
     @Getter
     protected Logger logger = LoggerFactory.getLogger(baseLogger());
@@ -167,8 +173,9 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler
         UPDATE_TRIGGERED
     }
 
-    public ServerSuplaDeviceHandler(Thing thing) {
+    public ServerSuplaDeviceHandler(Thing thing, ServerDeviceActionServiceRegistry actionServiceRegistry) {
         super(thing);
+        this.actionServiceRegistry = actionServiceRegistry;
     }
 
     @Override
@@ -371,6 +378,7 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler
         }
         this.handler = handler;
         disposePing();
+        actionServiceRegistry.unregisterActionServices(this);
 
         // auth
         logger.debug("Authorizing {}", registerEntity);
@@ -420,6 +428,7 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler
         }
 
         afterRegister(registerEntity);
+        actionServiceRegistry.updateActionServices(this, actionServicesFor(registerEntity));
 
         {
             var w = requireNonNull(getWriter().get(), "There is no writer!");
@@ -564,6 +573,7 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler
             disposePing();
             disposeHandler();
             disposeBridgeHandler();
+            actionServiceRegistry.unregisterActionServices(this);
             stateCache.close();
             logger = LoggerFactory.getLogger(baseLogger());
             authorized = false;
@@ -593,9 +603,24 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler
         }
     }
 
-    @Override
-    public Collection<Class<? extends ThingHandlerService>> getServices() {
-        return Set.of(SuplaServerDeviceActions.class);
+    static Set<Class<? extends ThingActions>> actionServicesFor(RegisterDeviceTrait registerEntity) {
+        var resetElectricMeterCounters = registerEntity.channels().stream()
+                .map(DeviceChannel::type)
+                .anyMatch(SUPLA_CHANNELTYPE_ELECTRICITY_METER::equals);
+        var enterConfigMode = registerEntity.flags().contains(SUPLA_DEVICE_FLAG_CALCFG_ENTER_CFG_MODE);
+        var firmwareUpdate = registerEntity.flags().contains(SUPLA_DEVICE_FLAG_AUTOMATIC_FIRMWARE_UPDATE_SUPPORTED);
+        var services = new ArrayList<Class<? extends ThingActions>>();
+        services.add(SuplaServerDeviceConfigActions.class);
+        if (resetElectricMeterCounters) {
+            services.add(SuplaServerElectricityMeterActions.class);
+        }
+        if (enterConfigMode) {
+            services.add(SuplaServerConfigModeActions.class);
+        }
+        if (firmwareUpdate) {
+            services.add(SuplaServerFirmwareUpdateActions.class);
+        }
+        return Set.copyOf(services);
     }
 
     public void consumeSetDeviceConfigResult(SetDeviceConfigResult value) {

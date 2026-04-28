@@ -9,7 +9,11 @@ import static pl.grzeslowski.jsupla.protocol.api.CalCfgCommand.SUPLA_CALCFG_CMD_
 import static pl.grzeslowski.jsupla.protocol.api.CalCfgResult.SUPLA_CALCFG_RESULT_DONE;
 import static pl.grzeslowski.jsupla.protocol.api.CalCfgResult.SUPLA_CALCFG_RESULT_NOT_SUPPORTED;
 import static pl.grzeslowski.jsupla.protocol.api.ChannelFunction.SUPLA_CHANNELFNC_CONTROLLINGTHEROLLERSHUTTER;
+import static pl.grzeslowski.jsupla.protocol.api.ChannelFunction.SUPLA_CHANNELFNC_ELECTRICITY_METER;
 import static pl.grzeslowski.jsupla.protocol.api.ChannelType.SUPLA_CHANNELTYPE_DIMMER;
+import static pl.grzeslowski.jsupla.protocol.api.ChannelType.SUPLA_CHANNELTYPE_ELECTRICITY_METER;
+import static pl.grzeslowski.jsupla.protocol.api.DeviceFlag.SUPLA_DEVICE_FLAG_AUTOMATIC_FIRMWARE_UPDATE_SUPPORTED;
+import static pl.grzeslowski.jsupla.protocol.api.DeviceFlag.SUPLA_DEVICE_FLAG_CALCFG_ENTER_CFG_MODE;
 import static pl.grzeslowski.jsupla.protocol.api.FirmwareCheckResultCode.*;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ServerDevicesProperties.OTA_CHANGELOG_URL_PROPERTY;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ServerDevicesProperties.OTA_LAST_CHECK_PROPERTY;
@@ -30,7 +34,12 @@ import pl.grzeslowski.jsupla.protocol.api.ChannelFlag;
 import pl.grzeslowski.jsupla.protocol.api.encoders.FirmwareCheckResultEncoder;
 import pl.grzeslowski.jsupla.protocol.api.structs.FirmwareCheckResult;
 import pl.grzeslowski.jsupla.protocol.api.structs.ds.DeviceCalCfgResult;
+import pl.grzeslowski.openhab.supla.actions.SuplaServerConfigModeActions;
+import pl.grzeslowski.openhab.supla.actions.SuplaServerDeviceConfigActions;
+import pl.grzeslowski.openhab.supla.actions.SuplaServerElectricityMeterActions;
+import pl.grzeslowski.openhab.supla.actions.SuplaServerFirmwareUpdateActions;
 import pl.grzeslowski.openhab.supla.internal.server.traits.DeviceChannel;
+import pl.grzeslowski.openhab.supla.internal.server.traits.RegisterEmailDeviceTrait;
 
 class ServerSuplaDeviceHandlerTest {
     private final Thing thing = Mockito.mock(Thing.class);
@@ -97,6 +106,42 @@ class ServerSuplaDeviceHandlerTest {
                 .startsWith("[")
                 .endsWith("]")
                 .contains("SUPLA_BIT_FUNC_LIGHTSWITCH");
+    }
+
+    @Test
+    void shouldSelectActionServicesFromRegisteredDeviceCapabilities() {
+        var electricityMeterChannel = new DeviceChannel(
+                0,
+                false,
+                SUPLA_CHANNELTYPE_ELECTRICITY_METER,
+                Set.of(),
+                SUPLA_CHANNELFNC_ELECTRICITY_METER,
+                Set.of(),
+                new byte[8],
+                null,
+                null,
+                null,
+                0L,
+                Set.of(),
+                0);
+        var registerEntity = new RegisterEmailDeviceTrait(
+                "guid",
+                "device",
+                "soft",
+                null,
+                null,
+                Set.of(SUPLA_DEVICE_FLAG_CALCFG_ENTER_CFG_MODE, SUPLA_DEVICE_FLAG_AUTOMATIC_FIRMWARE_UPDATE_SUPPORTED),
+                List.of(electricityMeterChannel),
+                "test@example.org",
+                new byte[0],
+                "server");
+
+        assertThat(ServerSuplaDeviceHandler.actionServicesFor(registerEntity))
+                .isEqualTo(Set.of(
+                        SuplaServerDeviceConfigActions.class,
+                        SuplaServerElectricityMeterActions.class,
+                        SuplaServerConfigModeActions.class,
+                        SuplaServerFirmwareUpdateActions.class));
     }
 
     @Test

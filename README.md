@@ -137,6 +137,9 @@ devices into your OpenHAB environment.
 
 ## Actions
 
+Native server device actions are exposed after the device registers with the binding. The rule UI only offers action
+groups supported by the registered device, while direct script calls still validate support at execution time.
+
 ### Set Device Config
 
 Set Device Config action allows to send new configuration to the given device.

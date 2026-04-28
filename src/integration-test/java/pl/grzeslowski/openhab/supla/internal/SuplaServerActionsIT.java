@@ -38,7 +38,9 @@ import pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaDeviceChannelC;
 import pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaRegisterDeviceE;
 import pl.grzeslowski.jsupla.protocol.api.structs.sd.DeviceCalCfgRequest;
 import pl.grzeslowski.jsupla.protocol.api.structs.sd.SuplaRegisterDeviceResultA;
-import pl.grzeslowski.openhab.supla.actions.SuplaServerDeviceActions;
+import pl.grzeslowski.openhab.supla.actions.SuplaServerConfigModeActions;
+import pl.grzeslowski.openhab.supla.actions.SuplaServerElectricityMeterActions;
+import pl.grzeslowski.openhab.supla.actions.SuplaServerFirmwareUpdateActions;
 import pl.grzeslowski.openhab.supla.internal.device.Device;
 import pl.grzeslowski.openhab.supla.internal.device.ZamelMew01;
 import pl.grzeslowski.openhab.supla.internal.device.ZamelThw01;
@@ -53,7 +55,7 @@ import pl.grzeslowski.openhab.supla.internal.extension.supla.SuplaExtension;
 import pl.grzeslowski.openhab.supla.internal.server.handler.ServerSuplaDeviceHandler;
 
 @ExtendWith({MockitoExtension.class, RandomExtension.class, RandomBeansExtension.class, SuplaExtension.class})
-class SuplaServerDeviceActionsIT {
+class SuplaServerActionsIT {
     @Test
     @DisplayName("should send check firmware update action to ota-capable device and persist async result")
     void checkFirmwareUpdate(
@@ -78,7 +80,7 @@ class SuplaServerDeviceActionsIT {
             assertThat(device.readPing().now()).isNotNull();
             awaitOnline(deviceCtx);
 
-            var actions = createActions(deviceCtx.handler());
+            var actions = createFirmwareUpdateActions(deviceCtx.handler());
             var action = CompletableFuture.supplyAsync(() -> {
                 try {
                     return actions.checkFirmwareUpdate();
@@ -143,7 +145,7 @@ class SuplaServerDeviceActionsIT {
         try (var device = new OtaAwareDevice(guid, email, authKey)) {
             initializeAndAwaitOnline(deviceCtx, device, port);
 
-            var actions = createActions(deviceCtx.handler());
+            var actions = createFirmwareUpdateActions(deviceCtx.handler());
             var action = CompletableFuture.supplyAsync(() -> {
                 try {
                     return actions.startFirmwareUpdate();
@@ -180,7 +182,7 @@ class SuplaServerDeviceActionsIT {
         try (var device = new OtaAwareDevice(guid, email, authKey)) {
             initializeAndAwaitOnline(deviceCtx, device, port);
 
-            var actions = createActions(deviceCtx.handler());
+            var actions = createFirmwareUpdateActions(deviceCtx.handler());
             var action = CompletableFuture.supplyAsync(() -> {
                 try {
                     return actions.startSecurityUpdate();
@@ -217,7 +219,7 @@ class SuplaServerDeviceActionsIT {
         try (var device = new ActionAwareThw01(guid, email, authKey)) {
             initializeAndAwaitOnline(deviceCtx, device, port);
 
-            var actions = createActions(deviceCtx.handler());
+            var actions = createFirmwareUpdateActions(deviceCtx.handler());
             assertThatThrownBy(actions::startFirmwareUpdate)
                     .isInstanceOf(IllegalArgumentException.class)
                     .hasMessageContaining("Device does not support automatic firmware updates");
@@ -252,7 +254,7 @@ class SuplaServerDeviceActionsIT {
             await().untilAsserted(() ->
                     assertThat(deviceCtx.openHabDevice().getChannelStates()).hasSize(2));
 
-            var actions = createActions(deviceCtx.handler());
+            var actions = createElectricityMeterActions(deviceCtx.handler());
             var action = CompletableFuture.runAsync(() -> {
                 try {
                     actions.resetElectricMeterCounters(
@@ -295,7 +297,7 @@ class SuplaServerDeviceActionsIT {
             assertThat(device.readPing().now()).isNotNull();
             awaitOnline(deviceCtx);
 
-            var actions = createActions(deviceCtx.handler());
+            var actions = createConfigModeActions(deviceCtx.handler());
             var action = CompletableFuture.runAsync(() -> {
                 try {
                     actions.enterConfigMode();
@@ -313,8 +315,20 @@ class SuplaServerDeviceActionsIT {
         }
     }
 
-    private static SuplaServerDeviceActions createActions(ThingHandler handler) {
-        var actions = new SuplaServerDeviceActions();
+    private static SuplaServerFirmwareUpdateActions createFirmwareUpdateActions(ThingHandler handler) {
+        var actions = new SuplaServerFirmwareUpdateActions();
+        actions.setThingHandler(handler);
+        return actions;
+    }
+
+    private static SuplaServerElectricityMeterActions createElectricityMeterActions(ThingHandler handler) {
+        var actions = new SuplaServerElectricityMeterActions();
+        actions.setThingHandler(handler);
+        return actions;
+    }
+
+    private static SuplaServerConfigModeActions createConfigModeActions(ThingHandler handler) {
+        var actions = new SuplaServerConfigModeActions();
         actions.setThingHandler(handler);
         return actions;
     }
