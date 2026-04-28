@@ -27,6 +27,7 @@ import java.util.function.Supplier;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.openhab.core.thing.ThingStatusInfo;
@@ -56,6 +57,7 @@ import pl.grzeslowski.openhab.supla.internal.extension.supla.SuplaExtension;
 import pl.grzeslowski.openhab.supla.internal.server.handler.ServerSuplaDeviceHandler;
 
 @ExtendWith({MockitoExtension.class, RandomExtension.class, RandomBeansExtension.class, SuplaExtension.class})
+@Timeout(value = 60, unit = SECONDS)
 class SuplaServerActionsIT {
     @Test
     @DisplayName("should send check firmware update action to ota-capable device and persist async result")
