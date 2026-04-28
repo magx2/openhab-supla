@@ -451,6 +451,14 @@ public class MainIT {
                 // but value validity time expires
                 // which means channels should be UNDEF
                 device.temperatureAndHumidityUpdated();
+                await().untilAsserted(() -> {
+                    var temperatureState = deviceCtx.openHabDevice().findChannelState("0", "temperature");
+                    assertThat(temperatureState).isEqualTo(new QuantityType<>(device.getTemperature(), CELSIUS));
+                });
+                await().untilAsserted(() -> {
+                    var humidityState = deviceCtx.openHabDevice().findChannelState("0", "humidity");
+                    assertThat(humidityState).isEqualTo(new QuantityType<>(device.getHumidity(), PERCENT));
+                });
                 log.info("Waiting for temperature channel to invalidate");
                 var temperatureChannelUid = new ChannelUID("supla:server-device:%s:0#temperature".formatted(guid));
                 await().timeout(device.getValidityTime().multipliedBy(2))
