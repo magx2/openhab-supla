@@ -42,6 +42,12 @@ public class SuplaHandlerFactory extends BaseThingHandlerFactory implements Serv
     @Reference
     private TimeZoneProvider timeZoneProvider;
 
+    public SuplaHandlerFactory() {}
+
+    public SuplaHandlerFactory(TimeZoneProvider timeZoneProvider) {
+        this.timeZoneProvider = timeZoneProvider;
+    }
+
     @Override
     public boolean supportsThingType(ThingTypeUID thingTypeUID) {
         return SUPPORTED_THING_TYPES_UIDS.contains(thingTypeUID);
@@ -95,7 +101,7 @@ public class SuplaHandlerFactory extends BaseThingHandlerFactory implements Serv
 
     @NonNull
     private ThingHandler newServerDeviceHandler(final Thing thing) {
-        return new SingleDeviceHandler(thing, this, timeZoneProvider);
+        return new SingleDeviceHandler(thing, this, timeZoneProvider());
     }
 
     @NonNull
@@ -139,7 +145,7 @@ public class SuplaHandlerFactory extends BaseThingHandlerFactory implements Serv
 
     private ThingHandler newGatewayDeviceHandler(Thing thing) {
         var discovery = new ServerDiscoveryService(thing.getUID());
-        var bridgeHandler = new GatewayDeviceHandler(thing, discovery, this, timeZoneProvider);
+        var bridgeHandler = new GatewayDeviceHandler(thing, discovery, this, timeZoneProvider());
         var serviceRegistration = registerThingDiscovery(discovery);
         servicesToDispose.put(bridgeHandler, serviceRegistration.getReference());
         return bridgeHandler;
@@ -147,6 +153,10 @@ public class SuplaHandlerFactory extends BaseThingHandlerFactory implements Serv
 
     private ThingHandler newSubDeviceHandler(Thing thing) {
         return new SubDeviceHandler(thing);
+    }
+
+    private TimeZoneProvider timeZoneProvider() {
+        return Objects.requireNonNull(timeZoneProvider, "timeZoneProvider");
     }
 
     @Override

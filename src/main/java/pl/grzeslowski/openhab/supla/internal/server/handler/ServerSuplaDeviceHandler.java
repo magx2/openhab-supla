@@ -1070,11 +1070,6 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler
     }
 
     static Map<String, String> buildProductInfoProperties(
-            @Nullable Integer manufacturerId, @Nullable Integer productId) {
-        return buildProductInfoProperties(manufacturerId, productId, ZoneId::systemDefault);
-    }
-
-    static Map<String, String> buildProductInfoProperties(
             @Nullable Integer manufacturerId, @Nullable Integer productId, TimeZoneProvider timeZoneProvider) {
         if (manufacturerId == null || productId == null) {
             return Map.of();

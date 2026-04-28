@@ -1,6 +1,5 @@
 package pl.grzeslowski.openhab.supla.internal.server.handler;
 
-import java.time.ZoneId;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -30,13 +29,11 @@ import pl.grzeslowski.openhab.supla.internal.server.traits.DeviceChannelValue;
 import pl.grzeslowski.openhab.supla.internal.server.traits.RegisterDeviceTrait;
 
 final class TestServerSuplaDeviceHandler extends ServerSuplaDeviceHandler {
-    private static final TimeZoneProvider TIME_ZONE_PROVIDER = () -> ZoneId.systemDefault();
-
     private final Map<Integer, ServerDevice.ChannelAndPreviousState> channelNumberToChannelUID =
             Collections.synchronizedMap(new HashMap<>());
 
-    TestServerSuplaDeviceHandler(Thing thing) {
-        super(thing, NoopServerDeviceActionServiceRegistry.INSTANCE, TIME_ZONE_PROVIDER);
+    TestServerSuplaDeviceHandler(Thing thing, TimeZoneProvider timeZoneProvider) {
+        super(thing, NoopServerDeviceActionServiceRegistry.INSTANCE, timeZoneProvider);
     }
 
     @Override
