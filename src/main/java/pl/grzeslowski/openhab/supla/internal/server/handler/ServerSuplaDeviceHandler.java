@@ -58,6 +58,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import pl.grzeslowski.jsupla.protocol.api.ChannelFunction;
 import pl.grzeslowski.jsupla.protocol.api.ChannelType;
+import pl.grzeslowski.jsupla.protocol.api.SuplaProducts;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.value.ActionTrigger.Capabilities;
 import pl.grzeslowski.jsupla.protocol.api.decoders.FirmwareCheckResultDecoder;
 import pl.grzeslowski.jsupla.protocol.api.encoders.ChannelConfigActionTriggerEncoder;
@@ -399,6 +400,10 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler
             }
             if (registerEntity.productId() != null) {
                 thing.setProperty(PRODUCT_ID_PROPERTY, valueOf(registerEntity.productId()));
+            }
+            var productName = buildProductNameProperty(registerEntity.manufacturerId(), registerEntity.productId());
+            if (productName != null) {
+                thing.setProperty(PRODUCT_NAME_PROPERTY, productName);
             }
         }
 
@@ -877,6 +882,13 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler
             properties.put("CHANNEL_FUNCTIONS_" + channel.number(), formatEnums(channel.functions()));
         });
         return properties;
+    }
+
+    static @Nullable String buildProductNameProperty(@Nullable Integer manufacturerId, @Nullable Integer productId) {
+        if (manufacturerId == null || productId == null) {
+            return null;
+        }
+        return SuplaProducts.describe(manufacturerId, productId);
     }
 
     private static String formatEnums(Collection<? extends Enum<?>> values) {
