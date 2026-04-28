@@ -3,17 +3,15 @@ package pl.grzeslowski.openhab.supla.internal.server.handler.trait;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.*;
 import static org.openhab.core.library.types.OnOffType.OFF;
 import static org.openhab.core.library.types.OnOffType.ON;
 import static org.openhab.core.thing.ThingStatus.ONLINE;
 
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.DefaultChannelPromise;
-import io.netty.channel.embedded.EmbeddedChannel;
+import io.netty.util.concurrent.GenericFutureListener;
 import java.util.HashMap;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -24,9 +22,13 @@ import org.openhab.core.library.types.OnOffType;
 import org.openhab.core.thing.ChannelUID;
 import org.openhab.core.types.State;
 import org.slf4j.Logger;
+import pl.grzeslowski.jsupla.protocol.api.structs.sd.SuplaChannelNewValue;
+import pl.grzeslowski.jsupla.server.SuplaWriteFuture;
 
 @ExtendWith(MockitoExtension.class)
 class HandlerCommandTraitTest {
+    private static final long MESSAGE_ID = 13L;
+
     @Mock
     private ServerDevice serverDevice;
 
@@ -36,20 +38,16 @@ class HandlerCommandTraitTest {
     @InjectMocks
     private HandlerCommandTrait handlerCommandTrait;
 
-    private AtomicInteger senderId;
-    private HashMap<Integer, ServerDevice.ChannelAndPreviousState> senderMap;
-    private ChannelFuture successfulFuture;
+    private HashMap<Long, ServerDevice.ChannelAndPreviousState> messageMap;
+    private SuplaWriteFuture successfulFuture;
 
     @BeforeEach
     void setUp() {
-        senderId = new AtomicInteger();
-        senderMap = new HashMap<>();
-        var channel = new EmbeddedChannel();
-        successfulFuture = new DefaultChannelPromise(channel).setSuccess(null);
+        messageMap = new HashMap<>();
+        successfulFuture = successfulWriteFuture(MESSAGE_ID);
 
         lenient().when(serverDevice.getLogger()).thenReturn(logger);
-        lenient().when(serverDevice.getSenderId()).thenReturn(senderId);
-        lenient().when(serverDevice.getSenderIdToChannelUID()).thenReturn(senderMap);
+        lenient().when(serverDevice.getMessageIdToChannelUID()).thenReturn(messageMap);
         lenient().when(serverDevice.write(any())).thenReturn(successfulFuture);
     }
 
@@ -95,13 +93,15 @@ class HandlerCommandTraitTest {
 
         handlerCommandTrait.handleOnOffCommand(channelUID, ON);
 
-        assertThat(senderMap).hasSize(1);
-        var entry = senderMap.entrySet().iterator().next();
-        assertThat(entry.getKey()).isZero();
+        assertThat(messageMap).hasSize(1);
+        var entry = messageMap.entrySet().iterator().next();
+        assertThat(entry.getKey()).isEqualTo(MESSAGE_ID);
         ServerDevice.ChannelAndPreviousState value = entry.getValue();
         assertThat(value.channelUID()).isEqualTo(channelUID);
         assertThat((OnOffType) value.previousState()).isEqualTo(OFF);
-        verify(serverDevice).write(any());
+        verify(serverDevice)
+                .write(argThat(proto -> proto instanceof SuplaChannelNewValue newValue
+                        && newValue.senderId() == ServerDevice.SENDER_ID));
         verify(serverDevice).updateStatus(ONLINE);
     }
 
@@ -112,5 +112,17 @@ class HandlerCommandTraitTest {
         assertThatThrownBy(() -> handlerCommandTrait.handleOnOffCommand(channelUID, ON))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("Cannot find channel number from");
+    }
+
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private static SuplaWriteFuture successfulWriteFuture(long messageId) {
+        var future = mock(SuplaWriteFuture.class);
+        lenient().when(future.msgId()).thenReturn(messageId);
+        lenient().when(future.addListener(any())).thenAnswer(invocation -> {
+            var listener = (GenericFutureListener) invocation.getArgument(0);
+            listener.operationComplete(future);
+            return future;
+        });
+        return future;
     }
 }

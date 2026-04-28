@@ -9,6 +9,7 @@ import static pl.grzeslowski.jsupla.protocol.api.CalCfgResult.SUPLA_CALCFG_RESUL
 import static pl.grzeslowski.jsupla.protocol.api.DeviceFlag.SUPLA_DEVICE_FLAG_AUTOMATIC_FIRMWARE_UPDATE_SUPPORTED;
 import static pl.grzeslowski.openhab.supla.internal.Localization.text;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ACTION_SCOPE_FIRMWARE_UPDATE;
+import static pl.grzeslowski.openhab.supla.internal.server.handler.trait.ServerDevice.SENDER_ID;
 
 import java.util.concurrent.TimeoutException;
 import org.eclipse.jdt.annotation.NonNullByDefault;
@@ -40,7 +41,7 @@ public class SuplaServerFirmwareUpdateActions extends SuplaServerActionsSupport 
         }
 
         var message = new DeviceCalCfgRequest(
-                nextSenderId(localHandler),
+                SENDER_ID,
                 NOT_BOUND_TO_CHANNEL,
                 SUPLA_CALCFG_CMD_CHECK_FIRMWARE_UPDATE.getValue(),
                 SUPER_USER_AUTHORIZED,
@@ -49,12 +50,14 @@ public class SuplaServerFirmwareUpdateActions extends SuplaServerActionsSupport 
                 EMPTY_DATA);
 
         localHandler.clearDeviceCalCfgResult();
-        localHandler.markOtaCheckPending(message.senderId());
         var timeout = localHandler.getConfiguration().getCheckFirmwareUpdateActionTimeout();
         var timeoutMillis = timeout.toMillis();
         var checkFirmwareUpdateStart = System.nanoTime();
+        long messageId;
         try {
             var future = writer.write(message);
+            messageId = future.msgId();
+            localHandler.markOtaCheckPending(messageId);
             future.await(timeoutMillis, MILLISECONDS);
             if (!future.isSuccess()) {
                 throw new RuntimeException("Check firmware update dispatch failed! request=%s, cause=%s"
@@ -72,7 +75,7 @@ public class SuplaServerFirmwareUpdateActions extends SuplaServerActionsSupport 
             localHandler.markOtaCheckError();
             throw e;
         }
-        if (result.receiverId() != message.senderId()) {
+        if (Integer.toUnsignedLong(result.receiverId()) != messageId) {
             localHandler.markOtaCheckError();
             throw new RuntimeException("Check firmware update returned a different receiver id! request=%s, result=%s"
                     .formatted(message, result));
@@ -168,7 +171,7 @@ public class SuplaServerFirmwareUpdateActions extends SuplaServerActionsSupport 
         }
 
         var message = new DeviceCalCfgRequest(
-                nextSenderId(localHandler),
+                SENDER_ID,
                 NOT_BOUND_TO_CHANNEL,
                 command.getValue(),
                 SUPER_USER_AUTHORIZED,

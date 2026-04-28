@@ -17,6 +17,7 @@ import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.SUPLA_
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.SUPLA_SERVER_TYPE_ID;
 import static pl.grzeslowski.openhab.supla.internal.extension.supla.SuplaExtension.deviceInitialize;
 import static pl.grzeslowski.openhab.supla.internal.extension.supla.SuplaExtension.serverInitialize;
+import static pl.grzeslowski.openhab.supla.internal.server.handler.trait.ServerDevice.SENDER_ID;
 
 import io.github.glytching.junit.extension.random.RandomBeansExtension;
 import java.io.IOException;
@@ -87,11 +88,12 @@ class SuplaServerActionsIT {
             assertThat(request.channelNumber()).isEqualTo(-1);
             assertThat(request.command()).isEqualTo(SUPLA_CALCFG_CMD_CHECK_FIRMWARE_UPDATE.getValue());
             assertThat(request.superUserAuthorized()).isEqualTo((byte) 1);
+            assertThat(request.senderId()).isEqualTo(SENDER_ID);
 
             consumeDeviceCalCfgResult(
                     deviceCtx.handler(),
                     new DeviceCalCfgResult(
-                            request.senderId(),
+                            request.receiverId(),
                             request.channelNumber(),
                             request.command(),
                             SUPLA_CALCFG_RESULT_DONE.getValue(),
@@ -102,7 +104,7 @@ class SuplaServerActionsIT {
             consumeDeviceCalCfgResult(
                     deviceCtx.handler(),
                     new DeviceCalCfgResult(
-                            request.senderId(),
+                            request.receiverId(),
                             request.channelNumber(),
                             request.command(),
                             SUPLA_CALCFG_RESULT_DONE.getValue(),
@@ -146,6 +148,7 @@ class SuplaServerActionsIT {
             var request = readDeviceCalCfgRequest(device::readDeviceCalCfgRequest);
             assertThat(request.channelNumber()).isEqualTo(-1);
             assertThat(request.command()).isEqualTo(SUPLA_CALCFG_CMD_START_FIRMWARE_UPDATE.getValue());
+            assertThat(request.senderId()).isEqualTo(SENDER_ID);
             consumeDeviceCalCfgResult(deviceCtx.handler(), request);
             assertThat(action.get(30, SECONDS)).isEqualTo(text("action.start-firmware-update.result.success"));
 
@@ -177,6 +180,7 @@ class SuplaServerActionsIT {
             var request = readDeviceCalCfgRequest(device::readDeviceCalCfgRequest);
             assertThat(request.channelNumber()).isEqualTo(-1);
             assertThat(request.command()).isEqualTo(SUPLA_CALCFG_CMD_START_SECURITY_UPDATE.getValue());
+            assertThat(request.senderId()).isEqualTo(SENDER_ID);
             consumeDeviceCalCfgResult(deviceCtx.handler(), request);
             assertThat(action.get(30, SECONDS)).isEqualTo(text("action.start-security-update.result.success"));
 
@@ -244,6 +248,7 @@ class SuplaServerActionsIT {
             assertThat(request.channelNumber()).isEqualTo(0);
             assertThat(request.command()).isEqualTo(SUPLA_CALCFG_CMD_RESET_COUNTERS.getValue());
             assertThat(request.superUserAuthorized()).isEqualTo((byte) 1);
+            assertThat(request.senderId()).isEqualTo(SENDER_ID);
             consumeDeviceCalCfgResult(deviceCtx.handler(), request);
             assertThat(action.get(30, SECONDS))
                     .isEqualTo(text("action.reset-electric-meter-counters.result.success", 0));
@@ -281,6 +286,7 @@ class SuplaServerActionsIT {
             assertThat(request.channelNumber()).isEqualTo(-1);
             assertThat(request.command()).isEqualTo(SUPLA_CALCFG_CMD_ENTER_CFG_MODE.getValue());
             assertThat(request.superUserAuthorized()).isEqualTo((byte) 1);
+            assertThat(request.senderId()).isEqualTo(SENDER_ID);
             consumeDeviceCalCfgResult(deviceCtx.handler(), request);
             assertThat(action.get(30, SECONDS)).isEqualTo(text("action.enter-config-mode.result.success"));
         }
@@ -304,15 +310,15 @@ class SuplaServerActionsIT {
         return actions;
     }
 
-    private static DeviceCalCfgRequest readDeviceCalCfgRequest(Supplier<DeviceCalCfgRequest> requestSupplier)
-            throws Exception {
+    private static DeviceCalCfgRequestWithMessageId readDeviceCalCfgRequest(
+            Supplier<DeviceCalCfgRequestWithMessageId> requestSupplier) throws Exception {
         return CompletableFuture.supplyAsync(requestSupplier).get(30, SECONDS);
     }
 
-    private static void consumeDeviceCalCfgResult(ThingHandler handler, DeviceCalCfgRequest request) {
+    private static void consumeDeviceCalCfgResult(ThingHandler handler, DeviceCalCfgRequestWithMessageId request) {
         ((ServerSuplaDeviceHandler) handler)
                 .consumeDeviceCalCfgResult(new DeviceCalCfgResult(
-                        request.senderId(),
+                        request.receiverId(),
                         request.channelNumber(),
                         request.command(),
                         SUPLA_CALCFG_RESULT_DONE.getValue(),
@@ -356,16 +362,46 @@ class SuplaServerActionsIT {
         awaitOnline(deviceCtx);
     }
 
+    private record DeviceCalCfgRequestWithMessageId(DeviceCalCfgRequest request, long messageId) {
+        private int receiverId() {
+            return (int) messageId;
+        }
+
+        private int senderId() {
+            return request.senderId();
+        }
+
+        private int channelNumber() {
+            return request.channelNumber();
+        }
+
+        private int command() {
+            return request.command();
+        }
+
+        private byte superUserAuthorized() {
+            return request.superUserAuthorized();
+        }
+
+        private long dataSize() {
+            return request.dataSize();
+        }
+
+        private byte[] data() {
+            return request.data();
+        }
+    }
+
     private static final class ActionAwareMew01 extends ZamelMew01 {
         private ActionAwareMew01(String guid, String email, String authKey) {
             super(guid, email, authKey);
         }
 
         @SneakyThrows
-        private DeviceCalCfgRequest readDeviceCalCfgRequest() {
-            var read = read();
-            assertThat(read).isInstanceOf(DeviceCalCfgRequest.class);
-            return (DeviceCalCfgRequest) read;
+        private DeviceCalCfgRequestWithMessageId readDeviceCalCfgRequest() {
+            var read = readWithMessageId();
+            assertThat(read.proto()).isInstanceOf(DeviceCalCfgRequest.class);
+            return new DeviceCalCfgRequestWithMessageId((DeviceCalCfgRequest) read.proto(), read.messageId());
         }
     }
 
@@ -375,10 +411,10 @@ class SuplaServerActionsIT {
         }
 
         @SneakyThrows
-        private DeviceCalCfgRequest readDeviceCalCfgRequest() {
-            var read = read();
-            assertThat(read).isInstanceOf(DeviceCalCfgRequest.class);
-            return (DeviceCalCfgRequest) read;
+        private DeviceCalCfgRequestWithMessageId readDeviceCalCfgRequest() {
+            var read = readWithMessageId();
+            assertThat(read.proto()).isInstanceOf(DeviceCalCfgRequest.class);
+            return new DeviceCalCfgRequestWithMessageId((DeviceCalCfgRequest) read.proto(), read.messageId());
         }
     }
 
@@ -410,10 +446,10 @@ class SuplaServerActionsIT {
         }
 
         @SneakyThrows
-        private DeviceCalCfgRequest readDeviceCalCfgRequest() {
-            var read = read();
-            assertThat(read).isInstanceOf(DeviceCalCfgRequest.class);
-            return (DeviceCalCfgRequest) read;
+        private DeviceCalCfgRequestWithMessageId readDeviceCalCfgRequest() {
+            var read = readWithMessageId();
+            assertThat(read.proto()).isInstanceOf(DeviceCalCfgRequest.class);
+            return new DeviceCalCfgRequestWithMessageId((DeviceCalCfgRequest) read.proto(), read.messageId());
         }
 
         @Override

@@ -7,12 +7,10 @@ import static org.openhab.core.thing.ThingStatus.ONLINE;
 import static org.openhab.core.thing.ThingStatusDetail.*;
 import static pl.grzeslowski.openhab.supla.internal.Localization.text;
 
-import io.netty.channel.ChannelFuture;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicInteger;
 import lombok.Getter;
 import lombok.ToString;
 import lombok.experimental.Delegate;
@@ -26,6 +24,7 @@ import org.slf4j.LoggerFactory;
 import pl.grzeslowski.jsupla.protocol.api.structs.dcs.SetCaption;
 import pl.grzeslowski.jsupla.protocol.api.structs.ds.*;
 import pl.grzeslowski.jsupla.protocol.api.types.FromServerProto;
+import pl.grzeslowski.jsupla.server.SuplaWriteFuture;
 import pl.grzeslowski.openhab.supla.internal.handler.SuplaDeviceHandler;
 import pl.grzeslowski.openhab.supla.internal.server.ChannelUtil;
 import pl.grzeslowski.openhab.supla.internal.server.cache.InMemoryStateCache;
@@ -61,10 +60,7 @@ public class SubDeviceHandler extends SuplaDeviceHandler implements ServerDevice
     private GatewayDeviceHandler bridgeHandler;
 
     @Getter
-    private final AtomicInteger senderId = new AtomicInteger(1);
-
-    @Getter
-    private final Map<Integer, ChannelAndPreviousState> senderIdToChannelUID = synchronizedMap(new HashMap<>());
+    private final Map<Long, ChannelAndPreviousState> messageIdToChannelUID = synchronizedMap(new HashMap<>());
 
     @Getter
     private List<DeviceChannel> channels = List.of();
@@ -197,7 +193,7 @@ public class SubDeviceHandler extends SuplaDeviceHandler implements ServerDevice
     }
 
     @Override
-    public ChannelFuture write(FromServerProto proto) {
+    public SuplaWriteFuture write(FromServerProto proto) {
         var local = requireNonNull(bridgeHandler, "There is not bridge!");
         var writer = requireNonNull(local.getWriter().get(), "There is not writer!");
         logger.debug("Writing proto {}", proto);

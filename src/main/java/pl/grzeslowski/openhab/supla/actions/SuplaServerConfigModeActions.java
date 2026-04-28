@@ -6,6 +6,7 @@ import static pl.grzeslowski.jsupla.protocol.api.CalCfgResult.SUPLA_CALCFG_RESUL
 import static pl.grzeslowski.jsupla.protocol.api.DeviceFlag.SUPLA_DEVICE_FLAG_CALCFG_ENTER_CFG_MODE;
 import static pl.grzeslowski.openhab.supla.internal.Localization.text;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ACTION_SCOPE_CONFIG_MODE;
+import static pl.grzeslowski.openhab.supla.internal.server.handler.trait.ServerDevice.SENDER_ID;
 
 import java.util.concurrent.TimeoutException;
 import org.eclipse.jdt.annotation.NonNullByDefault;
@@ -45,7 +46,7 @@ public class SuplaServerConfigModeActions extends SuplaServerActionsSupport {
         }
 
         var message = new DeviceCalCfgRequest(
-                nextSenderId(localHandler),
+                SENDER_ID,
                 NOT_BOUND_TO_CHANNEL,
                 SUPLA_CALCFG_CMD_ENTER_CFG_MODE.getValue(),
                 SUPER_USER_AUTHORIZED,

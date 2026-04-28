@@ -8,11 +8,9 @@ import static pl.grzeslowski.openhab.supla.internal.Documentation.THING_BRIDGE;
 import static pl.grzeslowski.openhab.supla.internal.Localization.text;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.SUPLA_GATEWAY_DEVICE_TYPE;
 
-import io.netty.channel.ChannelFuture;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 import lombok.Getter;
 import lombok.experimental.Delegate;
 import org.eclipse.jdt.annotation.NonNullByDefault;
@@ -24,6 +22,7 @@ import pl.grzeslowski.jsupla.protocol.api.structs.ds.SubdeviceDetails;
 import pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaChannelNewValueResult;
 import pl.grzeslowski.jsupla.protocol.api.structs.dsc.ChannelState;
 import pl.grzeslowski.jsupla.protocol.api.types.FromServerProto;
+import pl.grzeslowski.jsupla.server.SuplaWriteFuture;
 import pl.grzeslowski.openhab.supla.internal.handler.OfflineInitializationException;
 import pl.grzeslowski.openhab.supla.internal.server.ChannelUtil;
 import pl.grzeslowski.openhab.supla.internal.server.handler.trait.HandleCommand;
@@ -35,10 +34,7 @@ import pl.grzeslowski.openhab.supla.internal.server.traits.RegisterDeviceTrait;
 @NonNullByDefault
 public class SingleDeviceHandler extends ServerSuplaDeviceHandler {
     @Getter
-    private final AtomicInteger senderId = new AtomicInteger(1);
-
-    @Getter
-    private final Map<Integer, ChannelAndPreviousState> senderIdToChannelUID = synchronizedMap(new HashMap<>());
+    private final Map<Long, ChannelAndPreviousState> messageIdToChannelUID = synchronizedMap(new HashMap<>());
 
     private final ChannelUtil channelUtil = new ChannelUtil(this);
 
@@ -97,7 +93,7 @@ public class SingleDeviceHandler extends ServerSuplaDeviceHandler {
     }
 
     @Override
-    public ChannelFuture write(FromServerProto proto) {
+    public SuplaWriteFuture write(FromServerProto proto) {
         var writer = requireNonNull(getWriter().get(), "There is no writer!");
         logger.debug("Writing proto {}", proto);
         return writer.write(proto);

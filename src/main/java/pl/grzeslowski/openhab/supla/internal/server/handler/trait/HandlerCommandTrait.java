@@ -13,7 +13,6 @@ import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.Channe
 import static pl.grzeslowski.openhab.supla.internal.server.ChannelUtil.findSuplaChannelNumber;
 import static tech.units.indriya.unit.Units.CELSIUS;
 
-import io.netty.channel.ChannelFuture;
 import jakarta.annotation.Nullable;
 import java.math.BigDecimal;
 import java.util.Optional;
@@ -32,6 +31,7 @@ import pl.grzeslowski.jsupla.protocol.api.HvacMode;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.encoders.ChannelTypeEncoder;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.value.*;
 import pl.grzeslowski.jsupla.protocol.api.structs.sd.SuplaChannelNewValue;
+import pl.grzeslowski.jsupla.server.SuplaWriteFuture;
 import pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ChannelIds.RgbwLed;
 
 @NonNullByDefault
@@ -250,11 +250,12 @@ public class HandlerCommandTrait implements HandleCommand {
     }
 
     @SuppressWarnings("UnusedReturnValue")
-    private ChannelFuture sendCommandToSuplaServer(ChannelUID channelUID, ChannelValue channelValue, Command command) {
+    private SuplaWriteFuture sendCommandToSuplaServer(
+            ChannelUID channelUID, ChannelValue channelValue, Command command) {
         return sendCommandToSuplaServer(channelUID, channelValue, command, null);
     }
 
-    private ChannelFuture sendCommandToSuplaServer(
+    private SuplaWriteFuture sendCommandToSuplaServer(
             ChannelUID channelUID, ChannelValue channelValue, Command command, @Nullable State previousState) {
         var maybeChannelNumber = findSuplaChannelNumber(channelUID);
         if (maybeChannelNumber.isEmpty()) {
@@ -263,13 +264,12 @@ public class HandlerCommandTrait implements HandleCommand {
         var channelNumber = maybeChannelNumber.get();
 
         var encode = ChannelTypeEncoder.INSTANCE.encode(channelValue);
-        var senderId = serverDevice.getSenderId().getAndIncrement();
-        serverDevice
-                .getSenderIdToChannelUID()
-                .put(senderId, new ServerDevice.ChannelAndPreviousState(channelUID, previousState));
-        var channelNewValue = new SuplaChannelNewValue(senderId, channelNumber, 100L, null, encode);
+        var channelNewValue = new SuplaChannelNewValue(ServerDevice.SENDER_ID, channelNumber, 100L, null, encode);
         try {
-            ChannelFuture future = serverDevice.write(channelNewValue);
+            var future = serverDevice.write(channelNewValue);
+            serverDevice
+                    .getMessageIdToChannelUID()
+                    .put(future.msgId(), new ServerDevice.ChannelAndPreviousState(channelUID, previousState));
             future.addListener(__ -> {
                 serverDevice.getLogger().debug("Changed value of channel for {} command {}", channelUID, command);
                 serverDevice.updateStatus(ONLINE);

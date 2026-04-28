@@ -1,8 +1,6 @@
 package pl.grzeslowski.openhab.supla.internal.server.handler.trait;
 
-import io.netty.channel.ChannelFuture;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
 import org.openhab.core.thing.ChannelUID;
@@ -13,10 +11,13 @@ import org.openhab.core.thing.binding.builder.ThingBuilder;
 import org.openhab.core.types.State;
 import org.slf4j.Logger;
 import pl.grzeslowski.jsupla.protocol.api.types.FromServerProto;
+import pl.grzeslowski.jsupla.server.SuplaWriteFuture;
 import pl.grzeslowski.openhab.supla.internal.server.cache.StateCache;
 
 @NonNullByDefault
 public interface ServerDevice extends HandleCommand, StateCache {
+    static final int SENDER_ID = 0;
+
     Logger getLogger();
 
     Thing getThing();
@@ -28,9 +29,7 @@ public interface ServerDevice extends HandleCommand, StateCache {
     @Nullable
     ServerBridge getBridgeHandler();
 
-    AtomicInteger getSenderId();
-
-    Map<Integer, ChannelAndPreviousState> getSenderIdToChannelUID();
+    Map<Long, ChannelAndPreviousState> getMessageIdToChannelUID();
 
     void updateState(ChannelUID uid, State state);
 
@@ -38,7 +37,7 @@ public interface ServerDevice extends HandleCommand, StateCache {
 
     void updateStatus(ThingStatus thingStatus);
 
-    ChannelFuture write(FromServerProto proto);
+    SuplaWriteFuture write(FromServerProto proto);
 
     @Nullable
     String setProperty(String name, @Nullable String value);
