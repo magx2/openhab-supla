@@ -112,7 +112,7 @@ public class RandomExtension implements ParameterResolver {
 
     public HSBType randomHsb() {
         return new HSBType(
-                new DecimalType(random.nextInt(361)),
+                new DecimalType(random.nextInt(360)),
                 new PercentType(random.nextInt(101)),
                 new PercentType(random.nextInt(101)));
     }
