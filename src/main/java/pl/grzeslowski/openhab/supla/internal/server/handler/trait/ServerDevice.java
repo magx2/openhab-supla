@@ -29,7 +29,7 @@ public interface ServerDevice extends HandleCommand, StateCache {
     @Nullable
     ServerBridge getBridgeHandler();
 
-    Map<Long, ChannelAndPreviousState> getMessageIdToChannelUID();
+    Map<Integer, ChannelAndPreviousState> getChannelNumberToChannelUID();
 
     void updateState(ChannelUID uid, State state);
 

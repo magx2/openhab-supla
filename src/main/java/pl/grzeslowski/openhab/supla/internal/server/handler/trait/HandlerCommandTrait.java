@@ -268,8 +268,10 @@ public class HandlerCommandTrait implements HandleCommand {
         try {
             var future = serverDevice.write(channelNewValue);
             serverDevice
-                    .getMessageIdToChannelUID()
-                    .put(future.msgId(), new ServerDevice.ChannelAndPreviousState(channelUID, previousState));
+                    .getChannelNumberToChannelUID()
+                    .put(
+                            Integer.valueOf(channelNumber),
+                            new ServerDevice.ChannelAndPreviousState(channelUID, previousState));
             future.addListener(__ -> {
                 serverDevice.getLogger().debug("Changed value of channel for {} command {}", channelUID, command);
                 serverDevice.updateStatus(ONLINE);

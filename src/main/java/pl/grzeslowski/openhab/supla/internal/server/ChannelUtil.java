@@ -327,7 +327,7 @@ public class ChannelUtil {
 
     public void consumeSuplaChannelNewValueResult(SuplaChannelNewValueResult value) {
         var channelAndPreviousState =
-                invoker.getMessageIdToChannelUID().remove(Integer.toUnsignedLong(value.senderId()));
+                invoker.getChannelNumberToChannelUID().remove(Integer.valueOf(value.channelNumber()));
         if (value.success() != 0) {
             // operation was successful; can terminate
             return;

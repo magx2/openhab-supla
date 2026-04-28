@@ -60,7 +60,7 @@ public class SubDeviceHandler extends SuplaDeviceHandler implements ServerDevice
     private GatewayDeviceHandler bridgeHandler;
 
     @Getter
-    private final Map<Long, ChannelAndPreviousState> messageIdToChannelUID = synchronizedMap(new HashMap<>());
+    private final Map<Integer, ChannelAndPreviousState> channelNumberToChannelUID = synchronizedMap(new HashMap<>());
 
     @Getter
     private List<DeviceChannel> channels = List.of();

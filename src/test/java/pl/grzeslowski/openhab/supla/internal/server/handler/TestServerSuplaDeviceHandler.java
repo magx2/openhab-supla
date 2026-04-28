@@ -28,7 +28,7 @@ import pl.grzeslowski.openhab.supla.internal.server.traits.DeviceChannelValue;
 import pl.grzeslowski.openhab.supla.internal.server.traits.RegisterDeviceTrait;
 
 final class TestServerSuplaDeviceHandler extends ServerSuplaDeviceHandler {
-    private final Map<Long, ServerDevice.ChannelAndPreviousState> messageIdToChannelUID =
+    private final Map<Integer, ServerDevice.ChannelAndPreviousState> channelNumberToChannelUID =
             Collections.synchronizedMap(new HashMap<>());
 
     TestServerSuplaDeviceHandler(Thing thing) {
@@ -94,8 +94,8 @@ final class TestServerSuplaDeviceHandler extends ServerSuplaDeviceHandler {
     }
 
     @Override
-    public Map<Long, ChannelAndPreviousState> getMessageIdToChannelUID() {
-        return messageIdToChannelUID;
+    public Map<Integer, ChannelAndPreviousState> getChannelNumberToChannelUID() {
+        return channelNumberToChannelUID;
     }
 
     @Override

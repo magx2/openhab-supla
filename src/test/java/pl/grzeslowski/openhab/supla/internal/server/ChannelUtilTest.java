@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.*;
+import static org.openhab.core.library.types.OnOffType.OFF;
 import static pl.grzeslowski.jsupla.protocol.api.ChannelType.EV_TYPE_ELECTRICITY_METER_MEASUREMENT_V1;
 import static pl.grzeslowski.jsupla.protocol.api.ChannelType.SUPLA_CHANNELTYPE_ACTIONTRIGGER;
 import static pl.grzeslowski.jsupla.protocol.api.ChannelType.SUPLA_CHANNELTYPE_ELECTRICITY_METER;
@@ -118,11 +119,11 @@ class ChannelUtilTest {
     }
 
     @Test
-    void shouldDropStoredMessageEntryOnSuccess() {
-        var map = new HashMap<Long, ServerDevice.ChannelAndPreviousState>();
+    void shouldDropStoredChannelNumberEntryOnSuccess() {
+        var map = new HashMap<Integer, ServerDevice.ChannelAndPreviousState>();
         var channelUID = new ChannelUID("supla:test:1:1");
-        map.put(5L, new ServerDevice.ChannelAndPreviousState(channelUID, null));
-        when(serverDevice.getMessageIdToChannelUID()).thenReturn(map);
+        map.put(0, new ServerDevice.ChannelAndPreviousState(channelUID, null));
+        when(serverDevice.getChannelNumberToChannelUID()).thenReturn(map);
         var newValueResult =
                 new pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaChannelNewValueResult((short) 0, 5, (byte) 1);
 
@@ -133,9 +134,25 @@ class ChannelUtilTest {
     }
 
     @Test
-    void shouldRefreshWhenMessageMissing() {
-        var map = new HashMap<Long, ServerDevice.ChannelAndPreviousState>();
-        when(serverDevice.getMessageIdToChannelUID()).thenReturn(map);
+    void shouldUseChannelNumberWhenNewValueResultFailed() {
+        var map = new HashMap<Integer, ServerDevice.ChannelAndPreviousState>();
+        var channelUID = new ChannelUID("supla:test:1:2");
+        map.put(2, new ServerDevice.ChannelAndPreviousState(channelUID, OFF));
+        when(serverDevice.getChannelNumberToChannelUID()).thenReturn(map);
+        var newValueResult =
+                new pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaChannelNewValueResult((short) 2, 8, (byte) 0);
+
+        channelUtil.consumeSuplaChannelNewValueResult(newValueResult);
+
+        assertThat(map).isEmpty();
+        verify(serverDevice).updateState(channelUID, OFF);
+        verify(serverDevice).handleRefreshCommand(channelUID);
+    }
+
+    @Test
+    void shouldRefreshWhenChannelNumberMissing() {
+        var map = new HashMap<Integer, ServerDevice.ChannelAndPreviousState>();
+        when(serverDevice.getChannelNumberToChannelUID()).thenReturn(map);
         var channelUID = new ChannelUID("supla:test:1:2");
         var channel = mock(Channel.class);
         when(channel.getUID()).thenReturn(channelUID);
