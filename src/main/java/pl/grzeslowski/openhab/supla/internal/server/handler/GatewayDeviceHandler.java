@@ -346,8 +346,8 @@ public class GatewayDeviceHandler extends ServerSuplaDeviceHandler implements Se
     }
 
     @Override
-    public Map<Long, ChannelAndPreviousState> getMessageIdToChannelUID() {
-        throw new UnsupportedOperationException("ServerGatewayDeviceHandler.getMessageIdToChannelUID()");
+    public Map<Integer, ChannelAndPreviousState> getChannelNumberToChannelUID() {
+        throw new UnsupportedOperationException("ServerGatewayDeviceHandler.getChannelNumberToChannelUID()");
     }
 
     @Override

@@ -27,8 +27,6 @@ import pl.grzeslowski.jsupla.server.SuplaWriteFuture;
 
 @ExtendWith(MockitoExtension.class)
 class HandlerCommandTraitTest {
-    private static final long MESSAGE_ID = 13L;
-
     @Mock
     private ServerDevice serverDevice;
 
@@ -38,16 +36,16 @@ class HandlerCommandTraitTest {
     @InjectMocks
     private HandlerCommandTrait handlerCommandTrait;
 
-    private HashMap<Long, ServerDevice.ChannelAndPreviousState> messageMap;
+    private HashMap<Integer, ServerDevice.ChannelAndPreviousState> channelNumberMap;
     private SuplaWriteFuture successfulFuture;
 
     @BeforeEach
     void setUp() {
-        messageMap = new HashMap<>();
-        successfulFuture = successfulWriteFuture(MESSAGE_ID);
+        channelNumberMap = new HashMap<>();
+        successfulFuture = successfulWriteFuture();
 
         lenient().when(serverDevice.getLogger()).thenReturn(logger);
-        lenient().when(serverDevice.getMessageIdToChannelUID()).thenReturn(messageMap);
+        lenient().when(serverDevice.getChannelNumberToChannelUID()).thenReturn(channelNumberMap);
         lenient().when(serverDevice.write(any())).thenReturn(successfulFuture);
     }
 
@@ -93,9 +91,9 @@ class HandlerCommandTraitTest {
 
         handlerCommandTrait.handleOnOffCommand(channelUID, ON);
 
-        assertThat(messageMap).hasSize(1);
-        var entry = messageMap.entrySet().iterator().next();
-        assertThat(entry.getKey()).isEqualTo(MESSAGE_ID);
+        assertThat(channelNumberMap).hasSize(1);
+        var entry = channelNumberMap.entrySet().iterator().next();
+        assertThat(entry.getKey()).isEqualTo(1);
         ServerDevice.ChannelAndPreviousState value = entry.getValue();
         assertThat(value.channelUID()).isEqualTo(channelUID);
         assertThat((OnOffType) value.previousState()).isEqualTo(OFF);
@@ -115,9 +113,8 @@ class HandlerCommandTraitTest {
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})
-    private static SuplaWriteFuture successfulWriteFuture(long messageId) {
+    private static SuplaWriteFuture successfulWriteFuture() {
         var future = mock(SuplaWriteFuture.class);
-        lenient().when(future.msgId()).thenReturn(messageId);
         lenient().when(future.addListener(any())).thenAnswer(invocation -> {
             var listener = (GenericFutureListener) invocation.getArgument(0);
             listener.operationComplete(future);

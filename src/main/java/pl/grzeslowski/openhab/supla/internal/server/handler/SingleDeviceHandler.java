@@ -34,7 +34,7 @@ import pl.grzeslowski.openhab.supla.internal.server.traits.RegisterDeviceTrait;
 @NonNullByDefault
 public class SingleDeviceHandler extends ServerSuplaDeviceHandler {
     @Getter
-    private final Map<Long, ChannelAndPreviousState> messageIdToChannelUID = synchronizedMap(new HashMap<>());
+    private final Map<Integer, ChannelAndPreviousState> channelNumberToChannelUID = synchronizedMap(new HashMap<>());
 
     private final ChannelUtil channelUtil = new ChannelUtil(this);
 
