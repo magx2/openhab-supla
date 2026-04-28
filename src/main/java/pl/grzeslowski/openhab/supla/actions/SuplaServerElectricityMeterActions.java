@@ -79,7 +79,7 @@ public class SuplaServerElectricityMeterActions extends SuplaServerActionsSuppor
         }
 
         var message = new DeviceCalCfgRequest(
-                SENDER_ID,
+                nextSenderId(localHandler),
                 channelNumber,
                 SUPLA_CALCFG_CMD_RESET_COUNTERS.getValue(),
                 SUPER_USER_AUTHORIZED,

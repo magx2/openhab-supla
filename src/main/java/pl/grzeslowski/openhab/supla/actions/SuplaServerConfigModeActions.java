@@ -45,7 +45,7 @@ public class SuplaServerConfigModeActions extends SuplaServerActionsSupport {
         }
 
         var message = new DeviceCalCfgRequest(
-                SENDER_ID,
+                nextSenderId(localHandler),
                 NOT_BOUND_TO_CHANNEL,
                 SUPLA_CALCFG_CMD_ENTER_CFG_MODE.getValue(),
                 SUPER_USER_AUTHORIZED,

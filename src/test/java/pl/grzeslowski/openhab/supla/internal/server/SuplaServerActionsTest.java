@@ -24,6 +24,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -46,6 +47,8 @@ import pl.grzeslowski.openhab.supla.internal.server.traits.SuplaDevice;
 
 @ExtendWith(MockitoExtension.class)
 class SuplaServerActionsTest {
+    private static final int ACTION_SENDER_ID = 37;
+
     @Mock
     private ServerSuplaDeviceHandler handler;
 
@@ -75,6 +78,7 @@ class SuplaServerActionsTest {
         configModeActions.setThingHandler(handler);
         firmwareUpdateActions.setThingHandler(handler);
         org.mockito.Mockito.lenient().when(handler.getWriter()).thenReturn(new AtomicReference<>(writer));
+        org.mockito.Mockito.lenient().when(handler.getSenderId()).thenReturn(new AtomicInteger(ACTION_SENDER_ID));
         org.mockito.Mockito.lenient().when(handler.getThing()).thenReturn(thing);
         org.mockito.Mockito.lenient().when(handler.getConfiguration()).thenReturn(configuration);
         org.mockito.Mockito.lenient().when(thing.getUID()).thenReturn(new ThingUID("supla:test:1"));
@@ -140,7 +144,7 @@ class SuplaServerActionsTest {
         inOrder.verify(handler).clearDeviceCalCfgResult();
         inOrder.verify(writer)
                 .write(argThat(proto -> proto instanceof DeviceCalCfgRequest request
-                        && request.senderId() == 1
+                        && request.senderId() == ACTION_SENDER_ID
                         && request.channelNumber() == 7
                         && request.command() == SUPLA_CALCFG_CMD_RESET_COUNTERS.getValue()
                         && request.superUserAuthorized() == 1
@@ -227,7 +231,7 @@ class SuplaServerActionsTest {
         inOrder.verify(handler).clearDeviceCalCfgResult();
         inOrder.verify(writer)
                 .write(argThat(proto -> proto instanceof DeviceCalCfgRequest request
-                        && request.senderId() == 1
+                        && request.senderId() == ACTION_SENDER_ID
                         && request.channelNumber() == -1
                         && request.command() == SUPLA_CALCFG_CMD_ENTER_CFG_MODE.getValue()
                         && request.superUserAuthorized() == 1
@@ -307,6 +311,7 @@ class SuplaServerActionsTest {
         inOrder.verify(handler).markOtaCheckPending();
         inOrder.verify(writer)
                 .write(argThat(proto -> proto instanceof DeviceCalCfgRequest request
+                        && request.senderId() == ACTION_SENDER_ID
                         && request.channelNumber() == -1
                         && request.command() == SUPLA_CALCFG_CMD_CHECK_FIRMWARE_UPDATE.getValue()));
         inOrder.verify(handler).listenForDeviceCalCfgResult(30_000, MILLISECONDS);
@@ -428,6 +433,7 @@ class SuplaServerActionsTest {
         inOrder.verify(handler).clearDeviceCalCfgResult();
         inOrder.verify(writer)
                 .write(argThat(proto -> proto instanceof DeviceCalCfgRequest request
+                        && request.senderId() == ACTION_SENDER_ID
                         && request.channelNumber() == -1
                         && request.command() == SUPLA_CALCFG_CMD_START_FIRMWARE_UPDATE.getValue()));
         inOrder.verify(handler).markOtaUpdateTriggered();
@@ -449,6 +455,7 @@ class SuplaServerActionsTest {
 
         verify(writer)
                 .write(argThat(proto -> proto instanceof DeviceCalCfgRequest request
+                        && request.senderId() == ACTION_SENDER_ID
                         && request.channelNumber() == -1
                         && request.command() == SUPLA_CALCFG_CMD_START_SECURITY_UPDATE.getValue()));
         verify(handler).markOtaUpdateTriggered();
