@@ -888,7 +888,9 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler
         if (manufacturerId == null || productId == null) {
             return null;
         }
-        return SuplaProducts.describe(manufacturerId, productId);
+        return SuplaProducts.findByIds(manufacturerId, productId)
+                .map(SuplaProducts.ProductInfo::description)
+                .orElse(null);
     }
 
     private static String formatEnums(Collection<? extends Enum<?>> values) {
