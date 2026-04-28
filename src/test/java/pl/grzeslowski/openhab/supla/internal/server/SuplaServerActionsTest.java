@@ -326,12 +326,13 @@ class SuplaServerActionsTest {
 
         var inOrder = inOrder(handler, writer);
         inOrder.verify(handler).clearDeviceCalCfgResult();
+        inOrder.verify(handler).markOtaCheckPending();
         inOrder.verify(writer)
                 .write(argThat(proto -> proto instanceof DeviceCalCfgRequest request
                         && request.senderId() == SENDER_ID
                         && request.channelNumber() == -1
                         && request.command() == SUPLA_CALCFG_CMD_CHECK_FIRMWARE_UPDATE.getValue()));
-        inOrder.verify(handler).markOtaCheckPending(ACTION_MESSAGE_ID);
+        inOrder.verify(handler).markOtaCheckMessageId(ACTION_MESSAGE_ID);
         inOrder.verify(handler).listenForDeviceCalCfgResult(30_000, MILLISECONDS);
         inOrder.verify(handler)
                 .listenForOtaCheckResult(
@@ -405,7 +406,8 @@ class SuplaServerActionsTest {
 
         assertThat(firmwareUpdateActions.checkFirmwareUpdate()).contains("dispatch failed");
         verify(handler).clearDeviceCalCfgResult();
-        verify(handler, org.mockito.Mockito.never()).markOtaCheckPending(org.mockito.ArgumentMatchers.anyLong());
+        verify(handler).markOtaCheckPending();
+        verify(handler, org.mockito.Mockito.never()).markOtaCheckMessageId(org.mockito.ArgumentMatchers.anyLong());
         verify(handler).markOtaCheckError();
     }
 
@@ -443,7 +445,8 @@ class SuplaServerActionsTest {
                 .thenReturn(failedFuture);
 
         assertThat(firmwareUpdateActions.checkFirmwareUpdate()).contains("dispatch failed");
-        verify(handler).markOtaCheckPending(ACTION_MESSAGE_ID);
+        verify(handler).markOtaCheckPending();
+        verify(handler).markOtaCheckMessageId(ACTION_MESSAGE_ID);
         verify(handler).markOtaCheckError();
     }
 

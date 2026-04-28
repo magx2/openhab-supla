@@ -378,6 +378,49 @@ class ServerSuplaDeviceHandlerTest {
     }
 
     @Test
+    void shouldDeferFirmwareCheckResultUntilMessageIdIsKnown() throws Exception {
+        handler.markOtaCheckPending();
+        var immediateResult = new DeviceCalCfgResult(
+                FIRMWARE_CHECK_MESSAGE_ID,
+                -1,
+                SUPLA_CALCFG_CMD_CHECK_FIRMWARE_UPDATE.getValue(),
+                SUPLA_CALCFG_RESULT_DONE.getValue(),
+                0L,
+                new byte[0]);
+
+        handler.consumeDeviceCalCfgResult(immediateResult);
+        handler.markOtaCheckMessageId(FIRMWARE_CHECK_MESSAGE_ID);
+
+        assertThat(handler.listenForDeviceCalCfgResult(1, SECONDS)).isEqualTo(immediateResult);
+        assertThat(properties.get(OTA_STATUS_PROPERTY)).isEqualTo("CHECKING");
+        assertThat(handler.isOtaCheckPending()).isTrue();
+    }
+
+    @Test
+    void shouldIgnoreDeferredFirmwareCheckResultFromPreviousRequest() {
+        handler.markOtaCheckPending();
+
+        handler.consumeDeviceCalCfgResult(new DeviceCalCfgResult(
+                FIRMWARE_CHECK_MESSAGE_ID - 1,
+                -1,
+                SUPLA_CALCFG_CMD_CHECK_FIRMWARE_UPDATE.getValue(),
+                SUPLA_CALCFG_RESULT_DONE.getValue(),
+                FirmwareCheckResult.SIZE,
+                encodeFirmwareCheckResult(
+                        SUPLA_FIRMWARE_CHECK_RESULT_UPDATE_AVAILABLE.getValue(),
+                        "9.9.9",
+                        "https://example.test/stale")));
+        handler.markOtaCheckMessageId(FIRMWARE_CHECK_MESSAGE_ID);
+
+        assertThat(properties.get(OTA_STATUS_PROPERTY)).isEqualTo("CHECKING");
+        assertThat(properties)
+                .doesNotContainKey(OTA_VERSION_AVAILABLE_PROPERTY)
+                .doesNotContainKey(OTA_CHANGELOG_URL_PROPERTY)
+                .doesNotContainKey(OTA_LAST_CHECK_PROPERTY);
+        assertThat(handler.isOtaCheckPending()).isTrue();
+    }
+
+    @Test
     void shouldIgnoreFirmwareCheckResultFromPreviousRequest() {
         handler.markOtaCheckPending(FIRMWARE_CHECK_MESSAGE_ID);
 
