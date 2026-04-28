@@ -14,6 +14,9 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse.BodyHandlers;
 import java.time.Duration;
+import java.time.Instant;
+import java.time.OffsetDateTime;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -205,7 +208,7 @@ public class SuplaUpdatesClient {
     private static @Nullable Result inferResultFromUpdates(Request request, List<UpdateEntry> updates) {
         var latestUpdate = updates.stream()
                 .filter(UpdateEntry::isDefaultUpdate)
-                .findFirst()
+                .max(SuplaUpdatesClient::compareUpdates)
                 .orElse(null);
         if (latestUpdate == null) {
             return null;
@@ -214,7 +217,7 @@ public class SuplaUpdatesClient {
         if (latestVersion == null) {
             return null;
         }
-        if (sameVersion(request.version(), latestVersion)) {
+        if (request.version() != null && compareVersions(latestVersion, request.version()) <= 0) {
             return new Result(Status.UPDATE_NOT_AVAILABLE, null, null);
         }
         return new Result(Status.UPDATE_AVAILABLE, latestVersion, emptyToNull(latestUpdate.updateUrl));
@@ -224,6 +227,84 @@ public class SuplaUpdatesClient {
         var firstVersion = emptyToNull(first);
         var secondVersion = emptyToNull(second);
         return firstVersion != null && firstVersion.equals(secondVersion);
+    }
+
+    private static int compareUpdates(UpdateEntry first, UpdateEntry second) {
+        var releaseDateComparison =
+                compareNullableInstants(parseInstant(first.releasedAt), parseInstant(second.releasedAt));
+        if (releaseDateComparison != 0) {
+            return releaseDateComparison;
+        }
+        return compareVersions(first.version, second.version);
+    }
+
+    private static int compareNullableInstants(@Nullable Instant first, @Nullable Instant second) {
+        if (first == null && second == null) {
+            return 0;
+        }
+        if (first == null) {
+            return -1;
+        }
+        if (second == null) {
+            return 1;
+        }
+        return first.compareTo(second);
+    }
+
+    private static @Nullable Instant parseInstant(@Nullable String value) {
+        var instant = emptyToNull(value);
+        if (instant == null) {
+            return null;
+        }
+        try {
+            return OffsetDateTime.parse(instant).toInstant();
+        } catch (DateTimeParseException e) {
+            return null;
+        }
+    }
+
+    private static int compareVersions(@Nullable String first, @Nullable String second) {
+        var firstVersion = emptyToNull(first);
+        var secondVersion = emptyToNull(second);
+        if (firstVersion == null && secondVersion == null) {
+            return 0;
+        }
+        if (firstVersion == null) {
+            return -1;
+        }
+        if (secondVersion == null) {
+            return 1;
+        }
+        var firstParts = firstVersion.split("[._-]");
+        var secondParts = secondVersion.split("[._-]");
+        var maxLength = Math.max(firstParts.length, secondParts.length);
+        for (var i = 0; i < maxLength; i++) {
+            var firstPart = i < firstParts.length ? firstParts[i] : "0";
+            var secondPart = i < secondParts.length ? secondParts[i] : "0";
+            var comparison = compareVersionParts(firstPart, secondPart);
+            if (comparison != 0) {
+                return comparison;
+            }
+        }
+        return 0;
+    }
+
+    private static int compareVersionParts(String first, String second) {
+        if (first.chars().allMatch(Character::isDigit) && second.chars().allMatch(Character::isDigit)) {
+            var normalizedFirst = removeLeadingZeroes(first);
+            var normalizedSecond = removeLeadingZeroes(second);
+            var lengthComparison = Integer.compare(normalizedFirst.length(), normalizedSecond.length());
+            if (lengthComparison != 0) {
+                return lengthComparison;
+            }
+            return normalizedFirst.compareTo(normalizedSecond);
+        }
+        return first.compareToIgnoreCase(second);
+    }
+
+    private static String removeLeadingZeroes(String value) {
+        var stripped = value.replaceFirst("^0+", "");
+        return stripped.isEmpty() ? "0" : stripped;
     }
 
     private static @Nullable String emptyToNull(@Nullable String value) {
@@ -351,6 +432,9 @@ public class SuplaUpdatesClient {
 
         @Nullable
         String updateUrl;
+
+        @Nullable
+        String releasedAt;
 
         @Nullable
         Integer platform;
