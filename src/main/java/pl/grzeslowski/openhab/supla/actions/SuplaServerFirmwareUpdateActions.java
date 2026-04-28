@@ -49,7 +49,7 @@ public class SuplaServerFirmwareUpdateActions extends SuplaServerActionsSupport 
                 EMPTY_DATA);
 
         localHandler.clearDeviceCalCfgResult();
-        localHandler.markOtaCheckPending();
+        localHandler.markOtaCheckPending(message.senderId());
         var timeout = localHandler.getConfiguration().getCheckFirmwareUpdateActionTimeout();
         var timeoutMillis = timeout.toMillis();
         var checkFirmwareUpdateStart = System.nanoTime();
@@ -71,6 +71,11 @@ public class SuplaServerFirmwareUpdateActions extends SuplaServerActionsSupport 
         } catch (InterruptedException | TimeoutException | RuntimeException e) {
             localHandler.markOtaCheckError();
             throw e;
+        }
+        if (result.receiverId() != message.senderId()) {
+            localHandler.markOtaCheckError();
+            throw new RuntimeException("Check firmware update returned a different receiver id! request=%s, result=%s"
+                    .formatted(message, result));
         }
         if (result.channelNumber() != NOT_BOUND_TO_CHANNEL) {
             localHandler.markOtaCheckError();

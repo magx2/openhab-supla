@@ -56,7 +56,6 @@ import org.openhab.core.types.Command;
 import org.openhab.core.types.State;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import pl.grzeslowski.jsupla.protocol.api.CalCfgCommand;
 import pl.grzeslowski.jsupla.protocol.api.ChannelFunction;
 import pl.grzeslowski.jsupla.protocol.api.ChannelType;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.value.ActionTrigger.Capabilities;
@@ -150,7 +149,7 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler
 
     private final AtomicReference<@Nullable SetDeviceConfigResult> setDeviceConfigResult = new AtomicReference<>();
     private final AtomicReference<@Nullable DeviceCalCfgResult> deviceCalCfgResult = new AtomicReference<>();
-    private final AtomicReference<@Nullable CalCfgCommand> pendingOtaCommand = new AtomicReference<>();
+    private final AtomicReference<@Nullable Integer> pendingOtaCheckSenderId = new AtomicReference<>();
     private final AtomicReference<@Nullable OtaStatus> otaCheckResult = new AtomicReference<>();
 
     @Delegate(types = StateCache.class)
@@ -639,14 +638,17 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler
     }
 
     public void consumeDeviceCalCfgResult(DeviceCalCfgResult value) {
-        if (value.command() == SUPLA_CALCFG_CMD_CHECK_FIRMWARE_UPDATE.getValue() && isAsyncFirmwareCheckResult(value)) {
-            consumeFirmwareCheckResult(value);
-            return;
-        }
-        if (value.command() == SUPLA_CALCFG_CMD_CHECK_FIRMWARE_UPDATE.getValue()
-                && pendingOtaCommand.get() != null
-                && value.result() != SUPLA_CALCFG_RESULT_DONE.getValue()) {
-            markOtaCheckError();
+        if (value.command() == SUPLA_CALCFG_CMD_CHECK_FIRMWARE_UPDATE.getValue()) {
+            if (!isCurrentOtaCheckResult(value)) {
+                return;
+            }
+            if (isAsyncFirmwareCheckResult(value)) {
+                consumeFirmwareCheckResult(value);
+                return;
+            }
+            if (value.result() != SUPLA_CALCFG_RESULT_DONE.getValue()) {
+                markOtaCheckError();
+            }
         }
         if (value.result() != SUPLA_CALCFG_RESULT_DONE.getValue()) {
             logger.warn("Did not succeed ({}) with device calcfg command. result={}", value.result(), value);
@@ -659,6 +661,22 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler
         }
     }
 
+    private boolean isCurrentOtaCheckResult(DeviceCalCfgResult value) {
+        var pendingSenderId = pendingOtaCheckSenderId.get();
+        if (pendingSenderId == null) {
+            logger.debug("Ignoring firmware check result without a pending request. result={}", value);
+            return false;
+        }
+        if (value.receiverId() != pendingSenderId) {
+            logger.debug(
+                    "Ignoring firmware check result for a different request. pendingSenderId={}, result={}",
+                    pendingSenderId,
+                    value);
+            return false;
+        }
+        return true;
+    }
+
     public void clearDeviceCalCfgResult() {
         deviceCalCfgResult.set(null);
     }
@@ -669,30 +687,30 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler
                 .anyMatch(SUPLA_DEVICE_FLAG_AUTOMATIC_FIRMWARE_UPDATE_SUPPORTED::equals);
     }
 
-    public void markOtaCheckPending() {
-        pendingOtaCommand.set(SUPLA_CALCFG_CMD_CHECK_FIRMWARE_UPDATE);
+    public void markOtaCheckPending(int senderId) {
+        pendingOtaCheckSenderId.set(senderId);
         otaCheckResult.set(null);
         updateOtaState(OtaStatus.CHECKING, null, null, null);
     }
 
     public boolean isOtaCheckPending() {
-        return pendingOtaCommand.get() != null;
+        return pendingOtaCheckSenderId.get() != null;
     }
 
     public void markOtaUpdateTriggered() {
-        pendingOtaCommand.set(null);
+        pendingOtaCheckSenderId.set(null);
         updateOtaState(OtaStatus.UPDATE_TRIGGERED, null, null, now());
     }
 
     public void markOtaCheckError() {
         otaCheckResult.set(OtaStatus.ERROR);
-        pendingOtaCommand.set(null);
+        pendingOtaCheckSenderId.set(null);
         updateOtaState(OtaStatus.ERROR, null, null, now());
     }
 
     public void clearOtaState() {
         otaCheckResult.set(null);
-        pendingOtaCommand.set(null);
+        pendingOtaCheckSenderId.set(null);
         setProperty(OTA_STATUS_PROPERTY, null);
         setProperty(OTA_VERSION_AVAILABLE_PROPERTY, null);
         setProperty(OTA_CHANGELOG_URL_PROPERTY, null);
@@ -795,7 +813,7 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler
             otaCheckResult.set(OtaStatus.ERROR);
             updateOtaState(OtaStatus.ERROR, null, null, now());
         } finally {
-            pendingOtaCommand.set(null);
+            pendingOtaCheckSenderId.set(null);
         }
     }
 

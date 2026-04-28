@@ -42,6 +42,8 @@ import pl.grzeslowski.openhab.supla.internal.server.traits.DeviceChannel;
 import pl.grzeslowski.openhab.supla.internal.server.traits.RegisterEmailDeviceTrait;
 
 class ServerSuplaDeviceHandlerTest {
+    private static final int FIRMWARE_CHECK_SENDER_ID = 37;
+
     private final Thing thing = Mockito.mock(Thing.class);
     private final Map<String, String> properties = new HashMap<>();
     private TestServerSuplaDeviceHandler handler;
@@ -146,9 +148,9 @@ class ServerSuplaDeviceHandlerTest {
 
     @Test
     void shouldTreatImmediateFirmwareCheckAcceptanceAsSeparateResult() throws Exception {
-        handler.markOtaCheckPending();
+        handler.markOtaCheckPending(FIRMWARE_CHECK_SENDER_ID);
         var immediateResult = new DeviceCalCfgResult(
-                0,
+                FIRMWARE_CHECK_SENDER_ID,
                 -1,
                 SUPLA_CALCFG_CMD_CHECK_FIRMWARE_UPDATE.getValue(),
                 SUPLA_CALCFG_RESULT_DONE.getValue(),
@@ -164,10 +166,10 @@ class ServerSuplaDeviceHandlerTest {
 
     @Test
     void shouldPersistAvailableFirmwareCheckResult() {
-        handler.markOtaCheckPending();
+        handler.markOtaCheckPending(FIRMWARE_CHECK_SENDER_ID);
 
         handler.consumeDeviceCalCfgResult(new DeviceCalCfgResult(
-                0,
+                FIRMWARE_CHECK_SENDER_ID,
                 -1,
                 SUPLA_CALCFG_CMD_CHECK_FIRMWARE_UPDATE.getValue(),
                 SUPLA_CALCFG_RESULT_DONE.getValue(),
@@ -186,10 +188,10 @@ class ServerSuplaDeviceHandlerTest {
 
     @Test
     void shouldPersistNotAvailableFirmwareCheckResult() {
-        handler.markOtaCheckPending();
+        handler.markOtaCheckPending(FIRMWARE_CHECK_SENDER_ID);
 
         handler.consumeDeviceCalCfgResult(new DeviceCalCfgResult(
-                0,
+                FIRMWARE_CHECK_SENDER_ID,
                 -1,
                 SUPLA_CALCFG_CMD_CHECK_FIRMWARE_UPDATE.getValue(),
                 SUPLA_CALCFG_RESULT_DONE.getValue(),
@@ -205,10 +207,10 @@ class ServerSuplaDeviceHandlerTest {
 
     @Test
     void shouldPersistErrorFirmwareCheckResult() {
-        handler.markOtaCheckPending();
+        handler.markOtaCheckPending(FIRMWARE_CHECK_SENDER_ID);
 
         handler.consumeDeviceCalCfgResult(new DeviceCalCfgResult(
-                0,
+                FIRMWARE_CHECK_SENDER_ID,
                 -1,
                 SUPLA_CALCFG_CMD_CHECK_FIRMWARE_UPDATE.getValue(),
                 SUPLA_CALCFG_RESULT_DONE.getValue(),
@@ -221,10 +223,10 @@ class ServerSuplaDeviceHandlerTest {
 
     @Test
     void shouldPersistErrorWhenFirmwareCheckCommandIsRejected() {
-        handler.markOtaCheckPending();
+        handler.markOtaCheckPending(FIRMWARE_CHECK_SENDER_ID);
 
         handler.consumeDeviceCalCfgResult(new DeviceCalCfgResult(
-                0,
+                FIRMWARE_CHECK_SENDER_ID,
                 -1,
                 SUPLA_CALCFG_CMD_CHECK_FIRMWARE_UPDATE.getValue(),
                 SUPLA_CALCFG_RESULT_NOT_SUPPORTED.getValue(),
@@ -232,6 +234,40 @@ class ServerSuplaDeviceHandlerTest {
                 new byte[0]));
 
         assertThat(properties.get(OTA_STATUS_PROPERTY)).isEqualTo("ERROR");
+        assertThat(handler.isOtaCheckPending()).isFalse();
+    }
+
+    @Test
+    void shouldIgnoreFirmwareCheckResultFromPreviousRequest() {
+        handler.markOtaCheckPending(FIRMWARE_CHECK_SENDER_ID);
+
+        handler.consumeDeviceCalCfgResult(new DeviceCalCfgResult(
+                FIRMWARE_CHECK_SENDER_ID - 1,
+                -1,
+                SUPLA_CALCFG_CMD_CHECK_FIRMWARE_UPDATE.getValue(),
+                SUPLA_CALCFG_RESULT_DONE.getValue(),
+                FirmwareCheckResult.SIZE,
+                encodeFirmwareCheckResult(
+                        SUPLA_FIRMWARE_CHECK_RESULT_UPDATE_AVAILABLE.getValue(),
+                        "9.9.9",
+                        "https://example.test/stale")));
+
+        assertThat(properties.get(OTA_STATUS_PROPERTY)).isEqualTo("CHECKING");
+        assertThat(properties)
+                .doesNotContainKey(OTA_VERSION_AVAILABLE_PROPERTY)
+                .doesNotContainKey(OTA_CHANGELOG_URL_PROPERTY)
+                .doesNotContainKey(OTA_LAST_CHECK_PROPERTY);
+        assertThat(handler.isOtaCheckPending()).isTrue();
+
+        handler.consumeDeviceCalCfgResult(new DeviceCalCfgResult(
+                FIRMWARE_CHECK_SENDER_ID,
+                -1,
+                SUPLA_CALCFG_CMD_CHECK_FIRMWARE_UPDATE.getValue(),
+                SUPLA_CALCFG_RESULT_DONE.getValue(),
+                FirmwareCheckResult.SIZE,
+                encodeFirmwareCheckResult(SUPLA_FIRMWARE_CHECK_RESULT_UPDATE_NOT_AVAILABLE.getValue(), "", "")));
+
+        assertThat(properties.get(OTA_STATUS_PROPERTY)).isEqualTo("NOT_AVAILABLE");
         assertThat(handler.isOtaCheckPending()).isFalse();
     }
 

@@ -312,7 +312,7 @@ class SuplaServerActionsTest {
     void shouldSendCheckFirmwareUpdateRequest() throws Exception {
         when(handler.listenForDeviceCalCfgResult(30_000, MILLISECONDS))
                 .thenReturn(new DeviceCalCfgResult(
-                        0,
+                        ACTION_SENDER_ID,
                         -1,
                         SUPLA_CALCFG_CMD_CHECK_FIRMWARE_UPDATE.getValue(),
                         SUPLA_CALCFG_RESULT_DONE.getValue(),
@@ -328,7 +328,7 @@ class SuplaServerActionsTest {
 
         var inOrder = inOrder(handler, writer);
         inOrder.verify(handler).clearDeviceCalCfgResult();
-        inOrder.verify(handler).markOtaCheckPending();
+        inOrder.verify(handler).markOtaCheckPending(ACTION_SENDER_ID);
         inOrder.verify(writer)
                 .write(argThat(proto -> proto instanceof DeviceCalCfgRequest request
                         && request.senderId() == ACTION_SENDER_ID
@@ -342,12 +342,27 @@ class SuplaServerActionsTest {
     }
 
     @Test
+    void shouldFailWhenCheckFirmwareUpdateAcceptanceBelongsToDifferentRequest() throws Exception {
+        when(handler.listenForDeviceCalCfgResult(30_000, MILLISECONDS))
+                .thenReturn(new DeviceCalCfgResult(
+                        ACTION_SENDER_ID - 1,
+                        -1,
+                        SUPLA_CALCFG_CMD_CHECK_FIRMWARE_UPDATE.getValue(),
+                        SUPLA_CALCFG_RESULT_DONE.getValue(),
+                        0L,
+                        new byte[0]));
+
+        assertThat(firmwareUpdateActions.checkFirmwareUpdate()).contains("different receiver id");
+        verify(handler).markOtaCheckError();
+    }
+
+    @Test
     void shouldUseRemainingTimeoutForOtaCheckResult() throws Exception {
         configuration.setCheckFirmwareUpdateActionTimeout("PT0.1S");
         when(handler.listenForDeviceCalCfgResult(100, MILLISECONDS)).thenAnswer(invocation -> {
             Thread.sleep(40);
             return new DeviceCalCfgResult(
-                    0,
+                    ACTION_SENDER_ID,
                     -1,
                     SUPLA_CALCFG_CMD_CHECK_FIRMWARE_UPDATE.getValue(),
                     SUPLA_CALCFG_RESULT_DONE.getValue(),
@@ -373,7 +388,7 @@ class SuplaServerActionsTest {
         configuration.setCheckFirmwareUpdateActionTimeout("PT0S");
         when(handler.listenForDeviceCalCfgResult(0, MILLISECONDS))
                 .thenReturn(new DeviceCalCfgResult(
-                        0,
+                        ACTION_SENDER_ID,
                         -1,
                         SUPLA_CALCFG_CMD_CHECK_FIRMWARE_UPDATE.getValue(),
                         SUPLA_CALCFG_RESULT_DONE.getValue(),
@@ -392,7 +407,7 @@ class SuplaServerActionsTest {
 
         assertThat(firmwareUpdateActions.checkFirmwareUpdate()).contains("dispatch failed");
         verify(handler).clearDeviceCalCfgResult();
-        verify(handler).markOtaCheckPending();
+        verify(handler).markOtaCheckPending(ACTION_SENDER_ID);
         verify(handler).markOtaCheckError();
     }
 
@@ -408,7 +423,7 @@ class SuplaServerActionsTest {
     void shouldMarkOtaCheckErrorWhenOtaCheckWaitTimesOut() throws Exception {
         when(handler.listenForDeviceCalCfgResult(30_000, MILLISECONDS))
                 .thenReturn(new DeviceCalCfgResult(
-                        0,
+                        ACTION_SENDER_ID,
                         -1,
                         SUPLA_CALCFG_CMD_CHECK_FIRMWARE_UPDATE.getValue(),
                         SUPLA_CALCFG_RESULT_DONE.getValue(),
@@ -431,7 +446,7 @@ class SuplaServerActionsTest {
                 .thenReturn(failedFuture);
 
         assertThat(firmwareUpdateActions.checkFirmwareUpdate()).contains("dispatch failed");
-        verify(handler).markOtaCheckPending();
+        verify(handler).markOtaCheckPending(ACTION_SENDER_ID);
         verify(handler).markOtaCheckError();
     }
 
