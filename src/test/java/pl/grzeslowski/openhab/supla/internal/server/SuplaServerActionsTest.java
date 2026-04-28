@@ -5,6 +5,7 @@ import static java.util.stream.Collectors.joining;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.openhab.core.thing.ThingStatus.OFFLINE;
@@ -20,9 +21,6 @@ import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ACTION
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ACTION_SCOPE_ELECTRICITY_METER;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ACTION_SCOPE_FIRMWARE_UPDATE;
 
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.DefaultChannelPromise;
-import io.netty.channel.embedded.EmbeddedChannel;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.List;
@@ -41,6 +39,7 @@ import org.openhab.core.thing.ThingUID;
 import org.openhab.core.thing.binding.ThingActionsScope;
 import pl.grzeslowski.jsupla.protocol.api.structs.ds.DeviceCalCfgResult;
 import pl.grzeslowski.jsupla.protocol.api.structs.sd.DeviceCalCfgRequest;
+import pl.grzeslowski.jsupla.server.SuplaWriteFuture;
 import pl.grzeslowski.jsupla.server.SuplaWriter;
 import pl.grzeslowski.openhab.supla.actions.SuplaServerConfigModeActions;
 import pl.grzeslowski.openhab.supla.actions.SuplaServerDeviceConfigActions;
@@ -63,17 +62,17 @@ class SuplaServerActionsTest {
     @Mock
     private Thing thing;
 
+    @Mock
+    private SuplaWriteFuture successfulFuture;
+
     private SuplaServerElectricityMeterActions electricityMeterActions;
     private SuplaServerConfigModeActions configModeActions;
     private SuplaServerFirmwareUpdateActions firmwareUpdateActions;
 
     private ServerDeviceHandlerConfiguration configuration;
-    private ChannelFuture successfulFuture;
 
     @BeforeEach
     void setUp() {
-        var channel = new EmbeddedChannel();
-        successfulFuture = new DefaultChannelPromise(channel).setSuccess(null);
         configuration = new ServerDeviceHandlerConfiguration();
         electricityMeterActions = new SuplaServerElectricityMeterActions();
         configModeActions = new SuplaServerConfigModeActions();
@@ -107,6 +106,7 @@ class SuplaServerActionsTest {
         org.mockito.Mockito.lenient()
                 .when(handler.supportsAutomaticFirmwareUpdates())
                 .thenReturn(true);
+        org.mockito.Mockito.lenient().when(successfulFuture.isSuccess()).thenReturn(true);
         org.mockito.Mockito.lenient()
                 .when(writer.write(argThat(proto -> proto instanceof DeviceCalCfgRequest)))
                 .thenReturn(successfulFuture);
@@ -440,8 +440,10 @@ class SuplaServerActionsTest {
 
     @Test
     void shouldFailWhenCheckFirmwareUpdateDispatchFutureIsFailed() {
-        var channel = new EmbeddedChannel();
-        var failedFuture = new DefaultChannelPromise(channel).setFailure(new IllegalStateException("write failed"));
+        var dispatchFailure = new IllegalStateException("write failed");
+        var failedFuture = mock(SuplaWriteFuture.class);
+        when(failedFuture.isSuccess()).thenReturn(false);
+        when(failedFuture.cause()).thenReturn(dispatchFailure);
         when(writer.write(argThat(proto -> proto instanceof DeviceCalCfgRequest)))
                 .thenReturn(failedFuture);
 
