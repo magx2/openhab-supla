@@ -276,6 +276,12 @@ Notes:
 	- `otaVersionAvailable`
 	- `otaChangelogUrl`
 	- `otaLastCheck`
+- After a native server device registers, the binding also checks `https://updates.supla.org/check-updates` and stores the direct update service result in thing properties:
+	- `softwareUpdateStatus`
+	- `softwareUpdateAvailable`
+	- `softwareUpdateVersion`
+	- `softwareUpdateUrl`
+	- `softwareUpdateLastCheck`
 - `startFirmwareUpdate()` and `startSecurityUpdate()` only trigger the device-side OTA process. No firmware binary is transferred through the SUPLA session.
 
 #### Example

@@ -22,10 +22,12 @@ import static pl.grzeslowski.jsupla.protocol.api.consts.ProtoConsts.SUPLA_CONFIG
 import static pl.grzeslowski.jsupla.protocol.api.consts.ProtoConsts.SUPLA_PROTO_VERSION_MIN;
 import static pl.grzeslowski.openhab.supla.internal.GuidLogger.attachGuid;
 import static pl.grzeslowski.openhab.supla.internal.Localization.text;
+import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.BINDING_ID;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ServerDevicesProperties.*;
 import static pl.grzeslowski.openhab.supla.internal.server.ByteArrayToHex.hexToBytes;
 
 import io.netty.handler.timeout.ReadTimeoutException;
+import java.io.IOException;
 import java.math.BigInteger;
 import java.net.SocketException;
 import java.text.SimpleDateFormat;
@@ -47,6 +49,7 @@ import lombok.ToString;
 import lombok.experimental.Delegate;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
+import org.openhab.core.common.ThreadPoolManager;
 import org.openhab.core.thing.ChannelUID;
 import org.openhab.core.thing.Thing;
 import org.openhab.core.thing.ThingStatus;
@@ -99,6 +102,8 @@ import pl.grzeslowski.openhab.supla.internal.server.oh_config.DeviceConfiguratio
 import pl.grzeslowski.openhab.supla.internal.server.oh_config.ServerDeviceHandlerConfiguration;
 import pl.grzeslowski.openhab.supla.internal.server.oh_config.TimeoutConfiguration;
 import pl.grzeslowski.openhab.supla.internal.server.traits.*;
+import pl.grzeslowski.openhab.supla.internal.updates.SuplaUpdatesClient;
+import pl.grzeslowski.openhab.supla.internal.updates.SuplaUpdatesClient.Request;
 
 /** The {@link ServerSuplaDeviceHandler} is responsible for handling commands, which are sent to one of the channels. */
 @NonNullByDefault
@@ -111,6 +116,7 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler
 
     private final long id = ID.incrementAndGet();
     private final ServerDeviceActionServiceRegistry actionServiceRegistry;
+    private final SuplaUpdatesClient updatesClient;
 
     @Getter
     protected Logger logger = LoggerFactory.getLogger(baseLogger());
@@ -152,6 +158,7 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler
     private final AtomicReference<@Nullable DeviceCalCfgResult> deviceCalCfgResult = new AtomicReference<>();
     private final AtomicReference<@Nullable Integer> pendingOtaCheckSenderId = new AtomicReference<>();
     private final AtomicReference<@Nullable OtaStatus> otaCheckResult = new AtomicReference<>();
+    private final AtomicLong softwareUpdateCheckId = new AtomicLong();
 
     @Delegate(types = StateCache.class)
     private final StateCache stateCache = new InMemoryStateCache(logger);
@@ -174,8 +181,14 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler
     }
 
     public ServerSuplaDeviceHandler(Thing thing, ServerDeviceActionServiceRegistry actionServiceRegistry) {
+        this(thing, actionServiceRegistry, new SuplaUpdatesClient());
+    }
+
+    ServerSuplaDeviceHandler(
+            Thing thing, ServerDeviceActionServiceRegistry actionServiceRegistry, SuplaUpdatesClient updatesClient) {
         super(thing);
         this.actionServiceRegistry = actionServiceRegistry;
+        this.updatesClient = updatesClient;
     }
 
     @Override
@@ -452,6 +465,7 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler
 
         ping.start(requireNonNull(deviceConfiguration).timeoutConfiguration());
         ping.ping();
+        checkForSoftwareUpdate(registerEntity);
     }
 
     private void authorize(RegisterDeviceTrait registerEntity) throws InitializationException {
@@ -838,6 +852,75 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler
         setProperty(
                 OTA_LAST_CHECK_PROPERTY,
                 Optional.ofNullable(checkedAt).map(Instant::toString).orElse(null));
+    }
+
+    private void checkForSoftwareUpdate(RegisterDeviceTrait registerEntity) {
+        var request = buildSoftwareUpdateRequest(registerEntity);
+        var checkId = softwareUpdateCheckId.incrementAndGet();
+        if (request == null) {
+            clearSoftwareUpdateState();
+            return;
+        }
+        updateSoftwareUpdateState(new SuplaUpdatesClient.Result(SuplaUpdatesClient.Status.CHECKING, null, null), null);
+        ThreadPoolManager.getPool(BINDING_ID)
+                .execute(() -> attachGuid(guid, () -> executeSoftwareUpdateCheck(checkId, request)));
+    }
+
+    private void executeSoftwareUpdateCheck(long checkId, SuplaUpdatesClient.Request request) {
+        try {
+            var result = updatesClient.checkUpdates(request);
+            if (softwareUpdateCheckId.get() == checkId) {
+                updateSoftwareUpdateState(result, now());
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            markSoftwareUpdateCheckError(checkId, request, e);
+        } catch (IOException | RuntimeException e) {
+            markSoftwareUpdateCheckError(checkId, request, e);
+        }
+    }
+
+    private void markSoftwareUpdateCheckError(long checkId, SuplaUpdatesClient.Request request, Exception exception) {
+        logger.debug("Could not check software update. request={}", request, exception);
+        if (softwareUpdateCheckId.get() == checkId) {
+            updateSoftwareUpdateState(
+                    new SuplaUpdatesClient.Result(SuplaUpdatesClient.Status.ERROR, null, null), now());
+        }
+    }
+
+    void updateSoftwareUpdateState(SuplaUpdatesClient.Result result, @Nullable Instant checkedAt) {
+        setProperty(SOFTWARE_UPDATE_STATUS_PROPERTY, result.status().name());
+        setProperty(SOFTWARE_UPDATE_AVAILABLE_PROPERTY, Boolean.toString(result.updateAvailable()));
+        setProperty(
+                SOFTWARE_UPDATE_VERSION_PROPERTY,
+                result.updateAvailable() ? emptyToNull(result.latestVersion()) : null);
+        setProperty(SOFTWARE_UPDATE_URL_PROPERTY, result.updateAvailable() ? emptyToNull(result.updateUrl()) : null);
+        setProperty(
+                SOFTWARE_UPDATE_LAST_CHECK_PROPERTY,
+                Optional.ofNullable(checkedAt).map(Instant::toString).orElse(null));
+    }
+
+    private void clearSoftwareUpdateState() {
+        setProperty(SOFTWARE_UPDATE_STATUS_PROPERTY, null);
+        setProperty(SOFTWARE_UPDATE_AVAILABLE_PROPERTY, null);
+        setProperty(SOFTWARE_UPDATE_VERSION_PROPERTY, null);
+        setProperty(SOFTWARE_UPDATE_URL_PROPERTY, null);
+        setProperty(SOFTWARE_UPDATE_LAST_CHECK_PROPERTY, null);
+    }
+
+    static @Nullable Request buildSoftwareUpdateRequest(RegisterDeviceTrait registerEntity) {
+        var manufacturerId = registerEntity.manufacturerId();
+        var productId = registerEntity.productId();
+        if (manufacturerId == null || productId == null) {
+            return null;
+        }
+        var productName = Optional.ofNullable(buildProductNameProperty(manufacturerId, productId))
+                .or(() -> Optional.ofNullable(emptyToNull(registerEntity.name())))
+                .orElse(null);
+        if (productName == null) {
+            return null;
+        }
+        return new Request(manufacturerId, productId, productName, emptyToNull(registerEntity.softVer()));
     }
 
     private static @Nullable String emptyToNull(@Nullable String value) {

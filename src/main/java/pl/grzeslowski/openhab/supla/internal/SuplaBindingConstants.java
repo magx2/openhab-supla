@@ -78,6 +78,11 @@ public class SuplaBindingConstants {
         public static final String OTA_VERSION_AVAILABLE_PROPERTY = "otaVersionAvailable";
         public static final String OTA_CHANGELOG_URL_PROPERTY = "otaChangelogUrl";
         public static final String OTA_LAST_CHECK_PROPERTY = "otaLastCheck";
+        public static final String SOFTWARE_UPDATE_AVAILABLE_PROPERTY = "softwareUpdateAvailable";
+        public static final String SOFTWARE_UPDATE_STATUS_PROPERTY = "softwareUpdateStatus";
+        public static final String SOFTWARE_UPDATE_VERSION_PROPERTY = "softwareUpdateVersion";
+        public static final String SOFTWARE_UPDATE_URL_PROPERTY = "softwareUpdateUrl";
+        public static final String SOFTWARE_UPDATE_LAST_CHECK_PROPERTY = "softwareUpdateLastCheck";
     }
 
     // CloudBridgeHandler

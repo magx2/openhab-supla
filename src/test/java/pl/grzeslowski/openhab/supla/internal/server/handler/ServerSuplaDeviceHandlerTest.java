@@ -19,8 +19,14 @@ import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.Server
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ServerDevicesProperties.OTA_LAST_CHECK_PROPERTY;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ServerDevicesProperties.OTA_STATUS_PROPERTY;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ServerDevicesProperties.OTA_VERSION_AVAILABLE_PROPERTY;
+import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ServerDevicesProperties.SOFTWARE_UPDATE_AVAILABLE_PROPERTY;
+import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ServerDevicesProperties.SOFTWARE_UPDATE_LAST_CHECK_PROPERTY;
+import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ServerDevicesProperties.SOFTWARE_UPDATE_STATUS_PROPERTY;
+import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ServerDevicesProperties.SOFTWARE_UPDATE_URL_PROPERTY;
+import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ServerDevicesProperties.SOFTWARE_UPDATE_VERSION_PROPERTY;
 
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -40,6 +46,7 @@ import pl.grzeslowski.openhab.supla.actions.SuplaServerElectricityMeterActions;
 import pl.grzeslowski.openhab.supla.actions.SuplaServerFirmwareUpdateActions;
 import pl.grzeslowski.openhab.supla.internal.server.traits.DeviceChannel;
 import pl.grzeslowski.openhab.supla.internal.server.traits.RegisterEmailDeviceTrait;
+import pl.grzeslowski.openhab.supla.internal.updates.SuplaUpdatesClient;
 
 class ServerSuplaDeviceHandlerTest {
     private static final int FIRMWARE_CHECK_SENDER_ID = 37;
@@ -123,6 +130,64 @@ class ServerSuplaDeviceHandlerTest {
                 .isNull();
         assertThat(ServerSuplaDeviceHandler.buildProductNameProperty(4, null)).isNull();
         assertThat(ServerSuplaDeviceHandler.buildProductNameProperty(999, 999)).isNull();
+    }
+
+    @Test
+    void shouldBuildSoftwareUpdateRequestFromRegisteredDevice() {
+        var registerEntity = new RegisterEmailDeviceTrait(
+                "guid", "device", "1.2.3", 4, 6000, Set.of(), List.of(), "test@example.org", new byte[0], "server");
+
+        var request = ServerSuplaDeviceHandler.buildSoftwareUpdateRequest(registerEntity);
+
+        assertThat(request).isNotNull();
+        assertThat(request.manufacturerId()).isEqualTo(4);
+        assertThat(request.productId()).isEqualTo(6000);
+        assertThat(request.productName()).isEqualTo("ZAMEL THW-01");
+        assertThat(request.version()).isEqualTo("1.2.3");
+    }
+
+    @Test
+    void shouldNotBuildSoftwareUpdateRequestWhenIdsAreMissing() {
+        var registerEntity = new RegisterEmailDeviceTrait(
+                "guid", "device", "1.2.3", null, 6000, Set.of(), List.of(), "test@example.org", new byte[0], "server");
+
+        assertThat(ServerSuplaDeviceHandler.buildSoftwareUpdateRequest(registerEntity))
+                .isNull();
+    }
+
+    @Test
+    void shouldPersistAvailableSoftwareUpdateResult() {
+        var checkedAt = Instant.parse("2026-04-28T10:15:30Z");
+
+        handler.updateSoftwareUpdateState(
+                new SuplaUpdatesClient.Result(
+                        SuplaUpdatesClient.Status.UPDATE_AVAILABLE, "2.0.0", "https://updates.example/device"),
+                checkedAt);
+
+        assertThat(properties.get(SOFTWARE_UPDATE_STATUS_PROPERTY)).isEqualTo("UPDATE_AVAILABLE");
+        assertThat(properties.get(SOFTWARE_UPDATE_AVAILABLE_PROPERTY)).isEqualTo("true");
+        assertThat(properties.get(SOFTWARE_UPDATE_VERSION_PROPERTY)).isEqualTo("2.0.0");
+        assertThat(properties.get(SOFTWARE_UPDATE_URL_PROPERTY)).isEqualTo("https://updates.example/device");
+        assertThat(properties.get(SOFTWARE_UPDATE_LAST_CHECK_PROPERTY)).isEqualTo(checkedAt.toString());
+    }
+
+    @Test
+    void shouldClearSoftwareUpdateVersionWhenUpdateIsNotAvailable() {
+        properties.put(SOFTWARE_UPDATE_VERSION_PROPERTY, "2.0.0");
+        properties.put(SOFTWARE_UPDATE_URL_PROPERTY, "https://updates.example/device");
+        var checkedAt = Instant.parse("2026-04-28T10:15:30Z");
+
+        handler.updateSoftwareUpdateState(
+                new SuplaUpdatesClient.Result(
+                        SuplaUpdatesClient.Status.UPDATE_NOT_AVAILABLE, "2.0.0", "https://updates.example/device"),
+                checkedAt);
+
+        assertThat(properties.get(SOFTWARE_UPDATE_STATUS_PROPERTY)).isEqualTo("UPDATE_NOT_AVAILABLE");
+        assertThat(properties.get(SOFTWARE_UPDATE_AVAILABLE_PROPERTY)).isEqualTo("false");
+        assertThat(properties)
+                .doesNotContainKey(SOFTWARE_UPDATE_VERSION_PROPERTY)
+                .doesNotContainKey(SOFTWARE_UPDATE_URL_PROPERTY);
+        assertThat(properties.get(SOFTWARE_UPDATE_LAST_CHECK_PROPERTY)).isEqualTo(checkedAt.toString());
     }
 
     @Test
