@@ -21,8 +21,13 @@ jobs:
         run: |
           git config user.email "actions@github.com"
           git config user.name "GitHub Actions"
+      - name: Verify with Maven
+        run: mvn -B -ntp spotless:check verify
+        env:
+          GITHUB_USERNAME: x-access-token
+          GITHUB_TOKEN: ${{ secrets.PAT }}
       - name: Release with Maven
-        run: mvn -DperformRelease=true -Dspotless.check.skip=true -B spotless:check verify release:prepare release:perform
+        run: mvn -B -ntp release:prepare release:perform
         env:
           GITHUB_USERNAME: x-access-token
           GITHUB_TOKEN: ${{ secrets.PAT }}

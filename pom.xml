@@ -280,6 +280,7 @@
                 <version>3.0.1</version>
                 <configuration>
                     <scmCommentPrefix>[ci skip]</scmCommentPrefix>
+                    <releaseProfiles>release</releaseProfiles>
                     <arguments>-Dspotless.check.skip=true -DskipTests</arguments>
                 </configuration>
             </plugin>
