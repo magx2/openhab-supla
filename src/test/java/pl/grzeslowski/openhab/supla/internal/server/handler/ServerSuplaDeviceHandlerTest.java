@@ -111,6 +111,21 @@ class ServerSuplaDeviceHandlerTest {
     }
 
     @Test
+    void shouldBuildProductNamePropertyFromManufacturerAndProductIds() {
+        var productName = ServerSuplaDeviceHandler.buildProductNameProperty(4, 6000);
+
+        assertThat(productName).isEqualTo("ZAMEL THW-01");
+    }
+
+    @Test
+    void shouldNotBuildProductNamePropertyWhenAnyIdIsMissing() {
+        assertThat(ServerSuplaDeviceHandler.buildProductNameProperty(null, 6000))
+                .isNull();
+        assertThat(ServerSuplaDeviceHandler.buildProductNameProperty(4, null)).isNull();
+        assertThat(ServerSuplaDeviceHandler.buildProductNameProperty(999, 999)).isNull();
+    }
+
+    @Test
     void shouldSelectActionServicesFromRegisteredDeviceCapabilities() {
         var electricityMeterChannel = new DeviceChannel(
                 0,
