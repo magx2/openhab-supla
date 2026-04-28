@@ -28,13 +28,18 @@ public class ZamelThw01 extends Device {
     private BigDecimal humidity = BigDecimal.valueOf(33.837);
 
     @Getter
-    private final Duration validityTime = Duration.ofSeconds(60);
+    private final Duration validityTime;
 
     private final byte[] email;
     private final byte[] authKey;
 
     public ZamelThw01(String guid, String email, String authKey) {
+        this(guid, email, authKey, Duration.ofSeconds(60));
+    }
+
+    public ZamelThw01(String guid, String email, String authKey, Duration validityTime) {
         super((short) 18, guid);
+        this.validityTime = validityTime;
         assertThat(email.getBytes(UTF_8)).hasSizeLessThanOrEqualTo(SUPLA_EMAIL_MAXSIZE);
         this.email = Arrays.copyOf(email.getBytes(UTF_8), SUPLA_EMAIL_MAXSIZE);
         this.authKey = hexToBytes(authKey);

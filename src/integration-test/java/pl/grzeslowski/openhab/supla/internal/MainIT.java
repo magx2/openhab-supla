@@ -7,6 +7,7 @@ import static org.openhab.core.thing.ThingStatus.OFFLINE;
 import static org.openhab.core.thing.ThingStatus.ONLINE;
 import static org.openhab.core.thing.ThingStatus.UNKNOWN;
 import static org.openhab.core.thing.ThingStatusDetail.*;
+import static org.openhab.core.types.RefreshType.REFRESH;
 import static org.openhab.core.types.UnDefType.UNDEF;
 import static pl.grzeslowski.jsupla.protocol.api.HvacMode.SUPLA_HVAC_MODE_OFF;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.SUPLA_SERVER_DEVICE_TYPE_ID;
@@ -18,6 +19,7 @@ import static tech.units.indriya.unit.Units.PERCENT;
 
 import io.github.glytching.junit.extension.random.RandomBeansExtension;
 import java.math.BigDecimal;
+import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.DisplayName;
@@ -399,7 +401,7 @@ public class MainIT {
         var timeout = new TimeoutConfiguration(3, 1, 4);
         deviceInitialize(deviceCtx, serverCtx, email, authKey, guid, timeout);
         // DEVICE
-        try (var device = new ZamelThw01(guid, email, authKey)) {
+        try (var device = new ZamelThw01(guid, email, authKey, Duration.ofSeconds(2))) {
             device.initialize("localhost", port);
             // register
             device.register();
@@ -450,18 +452,22 @@ public class MainIT {
                 // which means channels should be UNDEF
                 device.temperatureAndHumidityUpdated();
                 log.info("Waiting for temperature channel to invalidate");
+                var temperatureChannelUid = new ChannelUID("supla:server-device:%s:0#temperature".formatted(guid));
                 await().timeout(device.getValidityTime().multipliedBy(2))
                         .pollInterval(timeout.min())
                         .untilAsserted(() -> {
                             device.ping();
+                            deviceCtx.handler().handleCommand(temperatureChannelUid, REFRESH);
                             var temperatureState = deviceCtx.openHabDevice().findChannelState("0", "temperature");
                             assertThat(temperatureState).isEqualTo(UNDEF);
                         });
                 log.info("Waiting for humidity channel to invalidate");
+                var humidityChannelUid = new ChannelUID("supla:server-device:%s:0#humidity".formatted(guid));
                 await().timeout(device.getValidityTime().multipliedBy(2))
                         .pollInterval(timeout.min())
                         .untilAsserted(() -> {
                             device.ping();
+                            deviceCtx.handler().handleCommand(humidityChannelUid, REFRESH);
                             var humidityState = deviceCtx.openHabDevice().findChannelState("0", "humidity");
                             assertThat(humidityState).isEqualTo(UNDEF);
                         });
