@@ -4,7 +4,7 @@ import static java.lang.System.arraycopy;
 import static java.util.Objects.requireNonNullElse;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static pl.grzeslowski.openhab.supla.internal.Localization.text;
-import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.BINDING_ID;
+import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ACTION_SCOPE_DEVICE_CONFIG;
 
 import java.math.BigInteger;
 import java.util.Arrays;
@@ -24,7 +24,7 @@ import pl.grzeslowski.openhab.supla.internal.server.device_config.DeviceConfig;
 import pl.grzeslowski.openhab.supla.internal.server.device_config.DeviceConfigResult;
 import pl.grzeslowski.openhab.supla.internal.server.device_config.DeviceConfigUtil;
 
-@ThingActionsScope(name = BINDING_ID)
+@ThingActionsScope(name = ACTION_SCOPE_DEVICE_CONFIG)
 @NonNullByDefault
 public class SuplaServerDeviceConfigActions extends SuplaServerActionsSupport {
     @RuleAction(

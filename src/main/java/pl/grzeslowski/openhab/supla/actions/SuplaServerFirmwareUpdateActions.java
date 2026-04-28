@@ -8,7 +8,7 @@ import static pl.grzeslowski.jsupla.protocol.api.CalCfgCommand.SUPLA_CALCFG_CMD_
 import static pl.grzeslowski.jsupla.protocol.api.CalCfgResult.SUPLA_CALCFG_RESULT_DONE;
 import static pl.grzeslowski.jsupla.protocol.api.DeviceFlag.SUPLA_DEVICE_FLAG_AUTOMATIC_FIRMWARE_UPDATE_SUPPORTED;
 import static pl.grzeslowski.openhab.supla.internal.Localization.text;
-import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.BINDING_ID;
+import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ACTION_SCOPE_FIRMWARE_UPDATE;
 
 import java.util.concurrent.TimeoutException;
 import org.eclipse.jdt.annotation.NonNullByDefault;
@@ -22,7 +22,7 @@ import pl.grzeslowski.jsupla.protocol.api.structs.ds.DeviceCalCfgResult;
 import pl.grzeslowski.jsupla.protocol.api.structs.sd.DeviceCalCfgRequest;
 import pl.grzeslowski.openhab.supla.internal.server.handler.ServerSuplaDeviceHandler;
 
-@ThingActionsScope(name = BINDING_ID)
+@ThingActionsScope(name = ACTION_SCOPE_FIRMWARE_UPDATE)
 @NonNullByDefault
 public class SuplaServerFirmwareUpdateActions extends SuplaServerActionsSupport {
     @RuleAction(

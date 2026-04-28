@@ -4,7 +4,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static pl.grzeslowski.jsupla.protocol.api.CalCfgCommand.SUPLA_CALCFG_CMD_RESET_COUNTERS;
 import static pl.grzeslowski.jsupla.protocol.api.CalCfgResult.SUPLA_CALCFG_RESULT_DONE;
 import static pl.grzeslowski.openhab.supla.internal.Localization.text;
-import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.BINDING_ID;
+import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ACTION_SCOPE_ELECTRICITY_METER;
 
 import java.util.concurrent.TimeoutException;
 import org.eclipse.jdt.annotation.NonNullByDefault;
@@ -17,7 +17,7 @@ import org.openhab.core.thing.binding.ThingActionsScope;
 import pl.grzeslowski.jsupla.protocol.api.structs.sd.DeviceCalCfgRequest;
 import pl.grzeslowski.openhab.supla.internal.server.ChannelUtil;
 
-@ThingActionsScope(name = BINDING_ID)
+@ThingActionsScope(name = ACTION_SCOPE_ELECTRICITY_METER)
 @NonNullByDefault
 public class SuplaServerElectricityMeterActions extends SuplaServerActionsSupport {
     @RuleAction(

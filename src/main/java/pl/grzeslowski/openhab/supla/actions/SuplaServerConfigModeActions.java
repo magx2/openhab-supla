@@ -5,7 +5,7 @@ import static pl.grzeslowski.jsupla.protocol.api.CalCfgCommand.SUPLA_CALCFG_CMD_
 import static pl.grzeslowski.jsupla.protocol.api.CalCfgResult.SUPLA_CALCFG_RESULT_DONE;
 import static pl.grzeslowski.jsupla.protocol.api.DeviceFlag.SUPLA_DEVICE_FLAG_CALCFG_ENTER_CFG_MODE;
 import static pl.grzeslowski.openhab.supla.internal.Localization.text;
-import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.BINDING_ID;
+import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ACTION_SCOPE_CONFIG_MODE;
 
 import java.util.concurrent.TimeoutException;
 import org.eclipse.jdt.annotation.NonNullByDefault;
@@ -15,7 +15,7 @@ import org.openhab.core.thing.binding.ThingActions;
 import org.openhab.core.thing.binding.ThingActionsScope;
 import pl.grzeslowski.jsupla.protocol.api.structs.sd.DeviceCalCfgRequest;
 
-@ThingActionsScope(name = BINDING_ID)
+@ThingActionsScope(name = ACTION_SCOPE_CONFIG_MODE)
 @NonNullByDefault
 public class SuplaServerConfigModeActions extends SuplaServerActionsSupport {
     @RuleAction(

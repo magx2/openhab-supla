@@ -140,6 +140,12 @@ devices into your OpenHAB environment.
 Native server device actions are exposed after the device registers with the binding. The rule UI only offers action
 groups supported by the registered device, while direct script calls still validate support at execution time.
 Every native server action returns a localized text result describing whether the request was accepted or why it failed.
+Use the action scope matching the action group:
+
+- `supla-device-config` for Set Device Config
+- `supla-electricity-meter` for Reset Electricity Meter Counters
+- `supla-config-mode` for Enter Device Config Mode
+- `supla-firmware-update` for Firmware Update Actions
 
 ### Set Device Config
 
@@ -189,7 +195,7 @@ rule "Set Device Config"
 when
 	<TRIGGER>
 then
-val actions = getActions("supla", "supla:gateway-device:8e6baab333")
+val actions = getActions("supla-device-config", "supla:gateway-device:8e6baab333")
 									// or server-bridge
 									// or server-device
 actions.setDeviceConfig("PowerStatusLedConfig:false", "StatusLedConfig:OFF_WHEN_CONNECTED")
@@ -218,7 +224,7 @@ rule "Reset meter counters"
 when
 	<TRIGGER>
 then
-	val actions = getActions("supla", "supla:server-device:8e6baab333")
+	val actions = getActions("supla-electricity-meter", "supla:server-device:8e6baab333")
 	actions.resetElectricMeterCounters("supla:server-device:8e6baab333:0#totalForwardActiveEnergy")
 	actions.resetElectricMeterCounters(0)
 end
@@ -244,7 +250,7 @@ rule "Enter device config mode"
 when
 	<TRIGGER>
 then
-	val actions = getActions("supla", "supla:server-device:8e6baab333")
+	val actions = getActions("supla-config-mode", "supla:server-device:8e6baab333")
 	actions.enterConfigMode()
 end
 ```
@@ -279,7 +285,7 @@ rule "Check device firmware update"
 when
 	<TRIGGER>
 then
-	val actions = getActions("supla", "supla:server-device:8e6baab333")
+	val actions = getActions("supla-firmware-update", "supla:server-device:8e6baab333")
 	actions.checkFirmwareUpdate()
 end
 ```

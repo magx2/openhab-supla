@@ -13,6 +13,10 @@ import pl.grzeslowski.jsupla.server.NettyConfig;
 public class SuplaBindingConstants {
 
     public static final String BINDING_ID = "supla";
+    public static final String ACTION_SCOPE_DEVICE_CONFIG = BINDING_ID + "-device-config";
+    public static final String ACTION_SCOPE_ELECTRICITY_METER = BINDING_ID + "-electricity-meter";
+    public static final String ACTION_SCOPE_CONFIG_MODE = BINDING_ID + "-config-mode";
+    public static final String ACTION_SCOPE_FIRMWARE_UPDATE = BINDING_ID + "-firmware-update";
     public static final int DEVICE_REGISTER_MAX_DELAY = (int) MINUTES.toSeconds(1);
 
     // List of all Thing Type IDs
