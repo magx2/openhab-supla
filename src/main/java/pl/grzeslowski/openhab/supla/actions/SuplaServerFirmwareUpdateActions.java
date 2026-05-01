@@ -18,11 +18,14 @@ import org.openhab.core.automation.annotation.RuleAction;
 import org.openhab.core.thing.ThingStatus;
 import org.openhab.core.thing.binding.ThingActions;
 import org.openhab.core.thing.binding.ThingActionsScope;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.ServiceScope;
 import pl.grzeslowski.jsupla.protocol.api.CalCfgCommand;
 import pl.grzeslowski.jsupla.protocol.api.structs.ds.DeviceCalCfgResult;
 import pl.grzeslowski.jsupla.protocol.api.structs.sd.DeviceCalCfgRequest;
 import pl.grzeslowski.openhab.supla.internal.server.handler.ServerSuplaDeviceHandler;
 
+@Component(scope = ServiceScope.PROTOTYPE, service = SuplaServerFirmwareUpdateActions.class)
 @ThingActionsScope(name = ACTION_SCOPE_FIRMWARE_UPDATE)
 @NonNullByDefault
 public class SuplaServerFirmwareUpdateActions extends SuplaServerActionsSupport {

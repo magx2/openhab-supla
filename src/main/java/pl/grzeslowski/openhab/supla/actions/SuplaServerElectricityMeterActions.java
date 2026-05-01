@@ -15,9 +15,12 @@ import org.openhab.core.automation.annotation.RuleAction;
 import org.openhab.core.thing.ChannelUID;
 import org.openhab.core.thing.binding.ThingActions;
 import org.openhab.core.thing.binding.ThingActionsScope;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.ServiceScope;
 import pl.grzeslowski.jsupla.protocol.api.structs.sd.DeviceCalCfgRequest;
 import pl.grzeslowski.openhab.supla.internal.server.ChannelUtil;
 
+@Component(scope = ServiceScope.PROTOTYPE, service = SuplaServerElectricityMeterActions.class)
 @ThingActionsScope(name = ACTION_SCOPE_ELECTRICITY_METER)
 @NonNullByDefault
 public class SuplaServerElectricityMeterActions extends SuplaServerActionsSupport {

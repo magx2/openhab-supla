@@ -33,7 +33,7 @@ final class TestServerSuplaDeviceHandler extends ServerSuplaDeviceHandler {
             Collections.synchronizedMap(new HashMap<>());
 
     TestServerSuplaDeviceHandler(Thing thing, TimeZoneProvider timeZoneProvider) {
-        super(thing, NoopServerDeviceActionServiceRegistry.INSTANCE, timeZoneProvider);
+        super(thing, timeZoneProvider);
     }
 
     @Override

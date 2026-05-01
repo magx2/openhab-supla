@@ -9,11 +9,7 @@ import static pl.grzeslowski.jsupla.protocol.api.CalCfgCommand.SUPLA_CALCFG_CMD_
 import static pl.grzeslowski.jsupla.protocol.api.CalCfgResult.SUPLA_CALCFG_RESULT_DONE;
 import static pl.grzeslowski.jsupla.protocol.api.CalCfgResult.SUPLA_CALCFG_RESULT_NOT_SUPPORTED;
 import static pl.grzeslowski.jsupla.protocol.api.ChannelFunction.SUPLA_CHANNELFNC_CONTROLLINGTHEROLLERSHUTTER;
-import static pl.grzeslowski.jsupla.protocol.api.ChannelFunction.SUPLA_CHANNELFNC_ELECTRICITY_METER;
 import static pl.grzeslowski.jsupla.protocol.api.ChannelType.SUPLA_CHANNELTYPE_DIMMER;
-import static pl.grzeslowski.jsupla.protocol.api.ChannelType.SUPLA_CHANNELTYPE_ELECTRICITY_METER;
-import static pl.grzeslowski.jsupla.protocol.api.DeviceFlag.SUPLA_DEVICE_FLAG_AUTOMATIC_FIRMWARE_UPDATE_SUPPORTED;
-import static pl.grzeslowski.jsupla.protocol.api.DeviceFlag.SUPLA_DEVICE_FLAG_CALCFG_ENTER_CFG_MODE;
 import static pl.grzeslowski.jsupla.protocol.api.FirmwareCheckResultCode.*;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ServerDevicesProperties.MANUFACTURER_ID_PROPERTY;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ServerDevicesProperties.OTA_CHANGELOG_URL_PROPERTY;
@@ -263,39 +259,13 @@ class ServerSuplaDeviceHandlerTest {
     }
 
     @Test
-    void shouldSelectActionServicesFromRegisteredDeviceCapabilities() {
-        var electricityMeterChannel = new DeviceChannel(
-                0,
-                false,
-                SUPLA_CHANNELTYPE_ELECTRICITY_METER,
-                Set.of(),
-                SUPLA_CHANNELFNC_ELECTRICITY_METER,
-                Set.of(),
-                new byte[8],
-                null,
-                null,
-                null,
-                0L,
-                Set.of(),
-                0);
-        var registerEntity = new RegisterEmailDeviceTrait(
-                "guid",
-                "device",
-                "soft",
-                null,
-                null,
-                Set.of(SUPLA_DEVICE_FLAG_CALCFG_ENTER_CFG_MODE, SUPLA_DEVICE_FLAG_AUTOMATIC_FIRMWARE_UPDATE_SUPPORTED),
-                List.of(electricityMeterChannel),
-                "test@example.org",
-                new byte[0],
-                "server");
-
-        assertThat(ServerSuplaDeviceHandler.actionServicesFor(registerEntity))
-                .isEqualTo(Set.of(
+    void shouldExposeStableActionServicesForServerDevices() {
+        assertThat(handler.getServices())
+                .containsExactlyInAnyOrder(
                         SuplaServerDeviceConfigActions.class,
                         SuplaServerElectricityMeterActions.class,
                         SuplaServerConfigModeActions.class,
-                        SuplaServerFirmwareUpdateActions.class));
+                        SuplaServerFirmwareUpdateActions.class);
     }
 
     @Test

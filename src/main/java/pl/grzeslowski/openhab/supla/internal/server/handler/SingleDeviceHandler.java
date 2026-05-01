@@ -42,9 +42,8 @@ public class SingleDeviceHandler extends ServerSuplaDeviceHandler {
     @Delegate(types = HandleCommand.class)
     private final HandlerCommandTrait handlerCommandTrait = new HandlerCommandTrait(this);
 
-    public SingleDeviceHandler(
-            Thing thing, ServerDeviceActionServiceRegistry actionServiceRegistry, TimeZoneProvider timeZoneProvider) {
-        super(thing, actionServiceRegistry, timeZoneProvider);
+    public SingleDeviceHandler(Thing thing, TimeZoneProvider timeZoneProvider) {
+        super(thing, timeZoneProvider);
     }
 
     @Override

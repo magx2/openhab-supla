@@ -14,8 +14,11 @@ import org.eclipse.jdt.annotation.Nullable;
 import org.openhab.core.automation.annotation.RuleAction;
 import org.openhab.core.thing.binding.ThingActions;
 import org.openhab.core.thing.binding.ThingActionsScope;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.ServiceScope;
 import pl.grzeslowski.jsupla.protocol.api.structs.sd.DeviceCalCfgRequest;
 
+@Component(scope = ServiceScope.PROTOTYPE, service = SuplaServerConfigModeActions.class)
 @ThingActionsScope(name = ACTION_SCOPE_CONFIG_MODE)
 @NonNullByDefault
 public class SuplaServerConfigModeActions extends SuplaServerActionsSupport {
