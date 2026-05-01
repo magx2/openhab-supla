@@ -4,6 +4,7 @@ import static java.util.Collections.synchronizedMap;
 import static java.util.stream.Collectors.toSet;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.*;
 
+import java.time.ZoneId;
 import java.util.*;
 import org.eclipse.jdt.annotation.NonNull;
 import org.eclipse.jdt.annotation.NonNullByDefault;
@@ -39,10 +40,16 @@ public class SuplaHandlerFactory extends BaseThingHandlerFactory implements Serv
     private final Map<BridgeHandler, ServiceReference<?>> servicesToDispose = synchronizedMap(new HashMap<>());
     private final Map<ThingUID, ActionServiceRegistrations> actionServicesToDispose = synchronizedMap(new HashMap<>());
 
+    @SuppressWarnings("FieldMayBeFinal") // set by OSGi by reflection
     @Reference
     private TimeZoneProvider timeZoneProvider;
 
-    public SuplaHandlerFactory() {}
+    public SuplaHandlerFactory() {
+        timeZoneProvider = () -> {
+            logger.warn("Using mock TimeZoneProvider");
+            return ZoneId.systemDefault();
+        };
+    }
 
     public SuplaHandlerFactory(TimeZoneProvider timeZoneProvider) {
         this.timeZoneProvider = timeZoneProvider;
