@@ -22,6 +22,7 @@ import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ACTION
 import static pl.grzeslowski.openhab.supla.internal.server.handler.trait.ServerDevice.SENDER_ID;
 
 import java.lang.reflect.Method;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
@@ -141,6 +142,14 @@ class SuplaServerActionsTest {
                         ACTION_SCOPE_CONFIG_MODE,
                         ACTION_SCOPE_FIRMWARE_UPDATE)
                 .doesNotHaveDuplicates();
+    }
+
+    @Test
+    void shouldExposeActionsAsPrototypeThingHandlerServices() throws Exception {
+        assertPrototypeComponent(SuplaServerDeviceConfigActions.class);
+        assertPrototypeComponent(SuplaServerElectricityMeterActions.class);
+        assertPrototypeComponent(SuplaServerConfigModeActions.class);
+        assertPrototypeComponent(SuplaServerFirmwareUpdateActions.class);
     }
 
     @Test
@@ -513,6 +522,18 @@ class SuplaServerActionsTest {
                 .map(actionService ->
                         actionService.getAnnotation(ThingActionsScope.class).name())
                 .toList();
+    }
+
+    private static void assertPrototypeComponent(Class<?> actionService) throws Exception {
+        var resourceName = "OSGI-INF/" + actionService.getCanonicalName() + ".xml";
+        try (var stream = actionService.getClassLoader().getResourceAsStream(resourceName)) {
+            assertThat(stream).as(resourceName).isNotNull();
+            var componentXml = new String(stream.readAllBytes(), StandardCharsets.UTF_8);
+            assertThat(componentXml)
+                    .contains("<service scope=\"prototype\">")
+                    .contains("<provide interface=\"%s\"/>".formatted(actionService.getCanonicalName()))
+                    .contains("<implementation class=\"%s\"/>".formatted(actionService.getCanonicalName()));
+        }
     }
 
     private static SuplaWriteFuture writeFuture(long messageId, boolean success, Throwable cause) {

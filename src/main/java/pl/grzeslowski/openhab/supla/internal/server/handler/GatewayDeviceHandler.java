@@ -70,11 +70,8 @@ public class GatewayDeviceHandler extends ServerSuplaDeviceHandler implements Se
     private final Set<Integer> discoveredIds = Collections.synchronizedSet(new HashSet<>());
 
     public GatewayDeviceHandler(
-            Thing thing,
-            ServerDiscoveryService serverDiscoveryService,
-            ServerDeviceActionServiceRegistry actionServiceRegistry,
-            TimeZoneProvider timeZoneProvider) {
-        super(thing, actionServiceRegistry, timeZoneProvider);
+            Thing thing, ServerDiscoveryService serverDiscoveryService, TimeZoneProvider timeZoneProvider) {
+        super(thing, timeZoneProvider);
         this.serverDiscoveryService = serverDiscoveryService;
     }
 

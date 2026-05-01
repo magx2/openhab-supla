@@ -18,12 +18,15 @@ import org.openhab.core.automation.annotation.ActionInput;
 import org.openhab.core.automation.annotation.RuleAction;
 import org.openhab.core.thing.binding.ThingActions;
 import org.openhab.core.thing.binding.ThingActionsScope;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.ServiceScope;
 import pl.grzeslowski.jsupla.protocol.api.DeviceConfigField;
 import pl.grzeslowski.jsupla.protocol.api.structs.sd.SetDeviceConfig;
 import pl.grzeslowski.openhab.supla.internal.server.device_config.DeviceConfig;
 import pl.grzeslowski.openhab.supla.internal.server.device_config.DeviceConfigResult;
 import pl.grzeslowski.openhab.supla.internal.server.device_config.DeviceConfigUtil;
 
+@Component(scope = ServiceScope.PROTOTYPE, service = SuplaServerDeviceConfigActions.class)
 @ThingActionsScope(name = ACTION_SCOPE_DEVICE_CONFIG)
 @NonNullByDefault
 public class SuplaServerDeviceConfigActions extends SuplaServerActionsSupport {
