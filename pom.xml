@@ -4,12 +4,12 @@
 
     <groupId>pl.grzeslowski.openhab</groupId>
     <artifactId>supla</artifactId>
-    <version>4.3.0-SNAPSHOT</version>
+    <version>4.3.0</version>
 
     <scm>
         <connection>scm:git:${project.scm.url}</connection>
         <developerConnection>scm:git:https://github.com/magx2/openhab-supla.git</developerConnection>
-        <tag>HEAD</tag>
+        <tag>supla-4.3.0</tag>
         <url>git@github.com:magx2/openhab-supla.git</url>
     </scm>
 
@@ -466,10 +466,10 @@ pl.grzeslowski.openhab.supla.actions
                         </includes>
                         <sortPom>
                             <predefinedSortOrder>recommended_2008_06</predefinedSortOrder>
-                            <sortDependencies/>
-                            <sortDependencyManagement/>
-                            <sortDependencyExclusions/>
-                            <sortPlugins/>
+                            <sortDependencies />
+                            <sortDependencyManagement />
+                            <sortDependencyExclusions />
+                            <sortPlugins />
                             <sortProperties>true</sortProperties>
                             <sortExecutions>true</sortExecutions>
                             <nrOfIndentSpace>4</nrOfIndentSpace>
@@ -497,8 +497,8 @@ pl.grzeslowski.openhab.supla.actions
                                 <exclude>imgs/**</exclude>
                                 <exclude>.codex</exclude>
                             </excludes>
-                            <trimTrailingWhitespace/>
-                            <endWithNewline/>
+                            <trimTrailingWhitespace />
+                            <endWithNewline />
                             <indent>
                                 <tabs>true</tabs>
                                 <spacesPerTab>4</spacesPerTab>
@@ -519,9 +519,9 @@ pl.grzeslowski.openhab.supla.actions
                             <include>src/test/java/**/*.java</include>
                             <include>src/integration-test/java/**/*.java</include>
                         </includes>
-                        <importOrder/>
-                        <removeUnusedImports/>
-                        <formatAnnotations/>
+                        <importOrder />
+                        <removeUnusedImports />
+                        <formatAnnotations />
                         <palantirJavaFormat>
                             <version>2.83.0</version>
                             <style>PALANTIR</style>
