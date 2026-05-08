@@ -80,7 +80,7 @@ public class ZamelGkw02 extends Device {
                     (short) 0,
                     0L,
                     null,
-                    new ActionTriggerProperties((short) 0, 0),
+                    new ActionTriggerProperties((short) 0, 0, (short) 0, (short) 0),
                     null,
                     (short) 0),
             new SuplaDeviceChannelD(
@@ -93,7 +93,7 @@ public class ZamelGkw02 extends Device {
                     (short) 0,
                     0L,
                     null,
-                    new ActionTriggerProperties((short) 0, 0),
+                    new ActionTriggerProperties((short) 0, 0, (short) 0, (short) 0),
                     null,
                     (short) 0),
             new SuplaDeviceChannelD(
@@ -106,7 +106,7 @@ public class ZamelGkw02 extends Device {
                     (short) 0,
                     0L,
                     null,
-                    new ActionTriggerProperties((short) 0, 0),
+                    new ActionTriggerProperties((short) 0, 0, (short) 0, (short) 0),
                     null,
                     (short) 0)
         };

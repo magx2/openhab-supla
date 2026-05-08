@@ -109,7 +109,8 @@ class DeviceChannelTest {
     @Test
     void shouldBuildFromProtoCWithActionTrigger() {
         int actionMask = ActionTrigger.Capabilities.TURN_ON.toMask();
-        ActionTriggerProperties actionTriggerProperties = new ActionTriggerProperties((short) 1, 0L);
+        ActionTriggerProperties actionTriggerProperties =
+                new ActionTriggerProperties((short) 1, 0L, (short) 0, (short) 0);
         SuplaDeviceChannelC channelC = new SuplaDeviceChannelC(
                 (short) 7,
                 ChannelType.SUPLA_CHANNELTYPE_ACTIONTRIGGER.getValue(),
