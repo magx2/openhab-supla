@@ -51,7 +51,7 @@ public class ZamelMslw01 extends Device {
                     700,
                     65536,
                     null,
-                    new ActionTriggerProperties((short) 1, 3072),
+                    new ActionTriggerProperties((short) 1, 3072, (short) 0, (short) 0),
                     null)
         };
         var proto = new SuplaRegisterDeviceE(
