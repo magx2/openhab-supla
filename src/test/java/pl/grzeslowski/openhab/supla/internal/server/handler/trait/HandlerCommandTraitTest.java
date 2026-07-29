@@ -7,9 +7,14 @@ import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.*;
 import static org.openhab.core.library.types.OnOffType.OFF;
 import static org.openhab.core.library.types.OnOffType.ON;
+import static org.openhab.core.library.types.OpenClosedType.OPEN;
 import static org.openhab.core.thing.ThingStatus.ONLINE;
+import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.BINDING_ID;
+import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.Channels.GATEWAY_LOCK_VALUE_CHANNEL_ID;
+import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.Channels.GATE_VALUE_CHANNEL_ID;
 
 import io.netty.util.concurrent.GenericFutureListener;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
@@ -19,9 +24,15 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.openhab.core.library.types.OnOffType;
+import org.openhab.core.thing.Channel;
 import org.openhab.core.thing.ChannelUID;
+import org.openhab.core.thing.Thing;
+import org.openhab.core.thing.type.ChannelTypeUID;
 import org.openhab.core.types.State;
 import org.slf4j.Logger;
+import pl.grzeslowski.jsupla.protocol.api.channeltype.encoders.ChannelTypeEncoder;
+import pl.grzeslowski.jsupla.protocol.api.channeltype.value.GateValue;
+import pl.grzeslowski.jsupla.protocol.api.channeltype.value.GatewayLockValue;
 import pl.grzeslowski.jsupla.protocol.api.structs.sd.SuplaChannelNewValue;
 import pl.grzeslowski.jsupla.server.SuplaWriteFuture;
 
@@ -104,6 +115,33 @@ class HandlerCommandTraitTest {
     }
 
     @Test
+    void shouldSendSemanticOnOffCommand() {
+        ChannelUID channelUID = new ChannelUID("binding:thing:sub:1");
+        var thing = thingWithChannelType(channelUID, GATEWAY_LOCK_VALUE_CHANNEL_ID);
+        when(serverDevice.getThing()).thenReturn(thing);
+
+        handlerCommandTrait.handleOnOffCommand(channelUID, ON);
+
+        verify(serverDevice)
+                .write(argThat(proto -> proto instanceof SuplaChannelNewValue newValue
+                        && Arrays.equals(
+                                newValue.value(), ChannelTypeEncoder.INSTANCE.encode(GatewayLockValue.LOCKED))));
+    }
+
+    @Test
+    void shouldSendSemanticOpenClosedCommand() {
+        ChannelUID channelUID = new ChannelUID("binding:thing:sub:1");
+        var thing = thingWithChannelType(channelUID, GATE_VALUE_CHANNEL_ID);
+        when(serverDevice.getThing()).thenReturn(thing);
+
+        handlerCommandTrait.handleOpenClosedCommand(channelUID, OPEN);
+
+        verify(serverDevice)
+                .write(argThat(proto -> proto instanceof SuplaChannelNewValue newValue
+                        && Arrays.equals(newValue.value(), ChannelTypeEncoder.INSTANCE.encode(GateValue.OPEN))));
+    }
+
+    @Test
     void shouldFailWhenChannelNumberCannotBeParsed() {
         ChannelUID channelUID = new ChannelUID("binding:thing:sub:notANumber");
 
@@ -121,5 +159,13 @@ class HandlerCommandTraitTest {
             return future;
         });
         return future;
+    }
+
+    private static Thing thingWithChannelType(ChannelUID channelUID, String channelTypeId) {
+        var thing = mock(Thing.class);
+        var channel = mock(Channel.class);
+        when(thing.getChannel(channelUID)).thenReturn(channel);
+        when(channel.getChannelTypeUID()).thenReturn(new ChannelTypeUID(BINDING_ID, channelTypeId));
+        return thing;
     }
 }

@@ -31,6 +31,7 @@ import org.slf4j.LoggerFactory;
 import pl.grzeslowski.jsupla.protocol.api.ChannelStateField;
 import pl.grzeslowski.jsupla.protocol.api.ChannelType;
 import pl.grzeslowski.jsupla.protocol.api.LastConnectionResetCause;
+import pl.grzeslowski.jsupla.protocol.api.channeltype.ChannelDescription;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.decoders.ChannelTypeDecoder;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.value.ChannelClassSwitch;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.value.ChannelValue;
@@ -110,7 +111,11 @@ public class ChannelUtil {
         if (deviceChannel.hvacValue() != null) {
             return pl.grzeslowski.jsupla.protocol.api.channeltype.value.HvacValue.class;
         }
-        return ChannelTypeDecoder.INSTANCE.findClass(deviceChannel.type());
+        return ChannelTypeDecoder.INSTANCE.findClass(channelDescription(deviceChannel));
+    }
+
+    private static ChannelDescription channelDescription(DeviceChannel deviceChannel) {
+        return new ChannelDescription(deviceChannel.type(), deviceChannel.flags(), deviceChannel.functions());
     }
 
     public Stream<ChannelValueToState.ChannelState> findState(DeviceChannel deviceChannel) {
@@ -137,7 +142,7 @@ public class ChannelUtil {
             DeviceChannel deviceChannel, @jakarta.annotation.Nullable byte[] value) {
         ChannelValue channelValue;
         if (value != null) {
-            channelValue = ChannelTypeDecoder.INSTANCE.decode(deviceChannel.type(), value);
+            channelValue = ChannelTypeDecoder.INSTANCE.decode(channelDescription(deviceChannel), value);
         } else if (deviceChannel.action() != null) {
             channelValue = deviceChannel.action();
         } else if (deviceChannel.hvacValue() != null) {
@@ -183,7 +188,14 @@ public class ChannelUtil {
     }
 
     public void updateExtendedStatus(int channelNumber, ChannelType extendedType, byte[] channelValue) {
-        updateStatus(channelNumber, ChannelTypeDecoder.INSTANCE.decode(extendedType, channelValue), null);
+        updateStatus(
+                channelNumber,
+                ChannelTypeDecoder.INSTANCE.decode(channelDescription(extendedType), channelValue),
+                null);
+    }
+
+    private static ChannelDescription channelDescription(ChannelType type) {
+        return new ChannelDescription(type, Set.of(), Set.of());
     }
 
     private void updateStatus(int channelNumber, byte[] channelValue, @Nullable Long validityTimeSec) {
@@ -193,7 +205,9 @@ public class ChannelUtil {
             return;
         }
         updateStatus(
-                channelNumber, ChannelTypeDecoder.INSTANCE.decode(deviceChannel.type(), channelValue), validityTimeSec);
+                channelNumber,
+                ChannelTypeDecoder.INSTANCE.decode(channelDescription(deviceChannel), channelValue),
+                validityTimeSec);
     }
 
     private void updateStatus(int channelNumber, @Nullable ChannelValue channelValue, @Nullable Long validityTimeSec) {

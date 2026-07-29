@@ -1,12 +1,16 @@
 package pl.grzeslowski.openhab.supla.internal.handler;
 
+import static java.util.Optional.ofNullable;
 import static org.openhab.core.thing.ThingStatus.OFFLINE;
 import static org.openhab.core.thing.ThingStatusDetail.CONFIGURATION_ERROR;
 import static pl.grzeslowski.openhab.supla.internal.GuidLogger.attachGuid;
+import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.Channels.*;
 
+import java.util.Set;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
 import org.openhab.core.library.types.*;
+import org.openhab.core.thing.Channel;
 import org.openhab.core.thing.ChannelUID;
 import org.openhab.core.thing.Thing;
 import org.openhab.core.thing.ThingStatus;
@@ -20,6 +24,8 @@ import pl.grzeslowski.openhab.supla.internal.server.handler.trait.HandleCommand;
 
 @NonNullByDefault
 public abstract class SuplaDeviceHandler extends BaseThingHandler implements HandleCommand {
+    private static final Set<String> READ_ONLY_SEMANTIC_CHANNEL_TYPES =
+            Set.of(PUMP_SWITCH_VALUE_CHANNEL_ID, HEAT_OR_COLD_SOURCE_SWITCH_VALUE_CHANNEL_ID);
 
     public SuplaDeviceHandler(final Thing thing) {
         super(thing);
@@ -53,6 +59,10 @@ public abstract class SuplaDeviceHandler extends BaseThingHandler implements Han
         attachGuid(findGuid(), () -> {
             getLogger().debug("handleCommand({}, {})", channelUID, command);
             try {
+                if (!(command instanceof RefreshType) && isReadOnlySemanticChannel(channelUID)) {
+                    getLogger().warn("Ignoring command `{}` on read-only channel `{}`", command, channelUID);
+                    return;
+                }
                 switch (command) {
                     case RefreshType refreshType -> handleRefreshCommand(channelUID);
                     case OnOffType onOffValue -> handleOnOffCommand(channelUID, onOffValue);
@@ -81,6 +91,13 @@ public abstract class SuplaDeviceHandler extends BaseThingHandler implements Han
                                 ex);
             }
         });
+    }
+
+    private boolean isReadOnlySemanticChannel(ChannelUID channelUID) {
+        return ofNullable(getThing().getChannel(channelUID))
+                .map(Channel::getChannelTypeUID)
+                .map(typeUID -> READ_ONLY_SEMANTIC_CHANNEL_TYPES.contains(typeUID.getId()))
+                .orElse(false);
     }
 
     protected abstract Logger getLogger();
