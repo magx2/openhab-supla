@@ -66,15 +66,32 @@ public class ChannelValueToState {
             case HeatpolThermostatValue value -> onHeatpolThermostatValue(value);
             case HumidityValue value -> onHumidityValue(value);
             case HvacValue value -> onHvacValue(value);
+            case CurtainValue value -> onOpenClosed(value);
+            case DoorLockValue value -> onLocked(value);
+            case FacadeBlindValue value -> onOpenClosed(value);
+            case GateValue value -> onOpenClosed(value);
+            case GarageDoorValue value -> onOpenClosed(value);
+            case GatewayLockValue value -> onLocked(value);
+            case HeatOrColdSourceSwitchValue value -> onOnOff(value);
+            case LightSwitchValue value -> onOnOff(value);
             case OnOffValue value -> onOnOff(value);
             case PercentValue value -> onPercentValue(value);
+            case PowerSwitchValue value -> onOnOff(value);
+            case ProjectorScreenValue value -> onOpenClosed(value);
+            case PumpSwitchValue value -> onOnOff(value);
             case PressureValue value -> onPressureValue(value);
             case RainValue value -> onRainValue(value);
             case RgbValue value -> onRgbValue(value);
+            case RollerGarageDoorValue value -> onOpenClosed(value);
+            case RollerShutterValue value -> onOpenClosed(value);
+            case RoofWindowValue value -> onOpenClosed(value);
+            case StaircaseTimerValue value -> onOnOff(value);
+            case TerraceAwningValue value -> onOpenClosed(value);
             case TemperatureAndHumidityValue value -> onTemperatureAndHumidityValue(value);
             case TemperatureDoubleValue value -> onTemperatureValue(value);
             case TimerValue value -> onTimerValue(value);
             case UnknownValue value -> onUnknownValue(value);
+            case VerticalBlindValue value -> onOpenClosed(value);
             case WeightValue value -> onWeightValue(value);
             case WindValue value -> onWindValue(value);
             case ActionTrigger value -> onActionTrigger(value);
@@ -125,6 +142,21 @@ public class ChannelValueToState {
             case ON -> Stream.of(new ChannelState(id, OnOffType.ON));
             case OFF -> Stream.of(new ChannelState(id, OnOffType.OFF));
         };
+    }
+
+    private Stream<ChannelState> onOpenClosed(Enum<?> value) {
+        val state = "OPEN".equals(value.name()) ? OpenClosedType.OPEN : OpenClosedType.CLOSED;
+        return Stream.of(new ChannelState(createChannelUid(), state));
+    }
+
+    private Stream<ChannelState> onOnOff(Enum<?> value) {
+        val state = "ON".equals(value.name()) ? OnOffType.ON : OnOffType.OFF;
+        return Stream.of(new ChannelState(createChannelUid(), state));
+    }
+
+    private Stream<ChannelState> onLocked(Enum<?> value) {
+        val state = "LOCKED".equals(value.name()) ? OnOffType.ON : OnOffType.OFF;
+        return Stream.of(new ChannelState(createChannelUid(), state));
     }
 
     private Stream<ChannelState> onPercentValue(PercentValue percentValue) {

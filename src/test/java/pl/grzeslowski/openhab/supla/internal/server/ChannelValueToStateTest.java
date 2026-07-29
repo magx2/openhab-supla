@@ -38,6 +38,8 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.openhab.core.library.types.HSBType;
+import org.openhab.core.library.types.OnOffType;
+import org.openhab.core.library.types.OpenClosedType;
 import org.openhab.core.library.types.PercentType;
 import org.openhab.core.library.types.QuantityType;
 import org.openhab.core.library.types.StringType;
@@ -63,6 +65,27 @@ class ChannelValueToStateTest {
                 Arguments.of(SUPLA_RGBW_BIT_FUNC_DIMMER_CCT_AND_RGB, List.of(RgbwLed.COLOR, RgbwLed.BRIGHTNESS_CCT)),
                 Arguments.of(SUPLA_RGBW_BIT_FUNC_DIMMER, List.of(RgbwLed.BRIGHTNESS)),
                 Arguments.of(SUPLA_RGBW_BIT_FUNC_DIMMER_CCT, List.of(RgbwLed.BRIGHTNESS_CCT)));
+    }
+
+    private static Stream<Arguments> semanticValues() {
+        return Stream.of(
+                Arguments.of(CurtainValue.OPEN, OpenClosedType.OPEN),
+                Arguments.of(DoorLockValue.LOCKED, OnOffType.ON),
+                Arguments.of(FacadeBlindValue.CLOSE, OpenClosedType.CLOSED),
+                Arguments.of(GateValue.OPEN, OpenClosedType.OPEN),
+                Arguments.of(GarageDoorValue.CLOSE, OpenClosedType.CLOSED),
+                Arguments.of(GatewayLockValue.UNLOCKED, OnOffType.OFF),
+                Arguments.of(HeatOrColdSourceSwitchValue.ON, OnOffType.ON),
+                Arguments.of(LightSwitchValue.OFF, OnOffType.OFF),
+                Arguments.of(PowerSwitchValue.ON, OnOffType.ON),
+                Arguments.of(ProjectorScreenValue.CLOSE, OpenClosedType.CLOSED),
+                Arguments.of(PumpSwitchValue.OFF, OnOffType.OFF),
+                Arguments.of(RollerGarageDoorValue.OPEN, OpenClosedType.OPEN),
+                Arguments.of(RollerShutterValue.CLOSE, OpenClosedType.CLOSED),
+                Arguments.of(RoofWindowValue.OPEN, OpenClosedType.OPEN),
+                Arguments.of(StaircaseTimerValue.ON, OnOffType.ON),
+                Arguments.of(TerraceAwningValue.CLOSE, OpenClosedType.CLOSED),
+                Arguments.of(VerticalBlindValue.OPEN, OpenClosedType.OPEN));
     }
 
     private DeviceChannel mockDeviceChannel(int number) {
@@ -148,6 +171,16 @@ class ChannelValueToStateTest {
                 converter.switchOn(temperatureValue).findFirst().orElseThrow().state();
 
         assertThat(state).isEqualTo(UNDEF);
+    }
+
+    @ParameterizedTest
+    @MethodSource("semanticValues")
+    void shouldConvertSemanticValuesToNativeState(ChannelValue value, State expected) {
+        var converter = new ChannelValueToState(thingUID, mockDeviceChannel(4));
+
+        var state = converter.switchOn(value).findFirst().orElseThrow().state();
+
+        assertThat(state).isEqualTo(expected);
     }
 
     @Test

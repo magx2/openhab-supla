@@ -12,7 +12,9 @@ import static pl.grzeslowski.openhab.supla.internal.server.ByteArrayToHex.hexToB
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Set;
 import lombok.Getter;
+import pl.grzeslowski.jsupla.protocol.api.channeltype.ChannelDescription;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.decoders.ChannelTypeDecoder;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.encoders.ChannelTypeEncoder;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.value.ActionTrigger.Capabilities;
@@ -88,7 +90,8 @@ public class ZamelMslw01 extends Device {
     }
 
     private void updateRgb(byte[] value) {
-        var rgbwValue = (RgbValue) ChannelTypeDecoder.INSTANCE.decode(SUPLA_CHANNELTYPE_DIMMERANDRGBLED, value);
+        var rgbwValue = (RgbValue) ChannelTypeDecoder.INSTANCE.decode(
+                new ChannelDescription(SUPLA_CHANNELTYPE_DIMMERANDRGBLED, Set.of(), Set.of()), value);
         if (rgbwValue.command().equals(TURN_ON_DIMMER) || rgbwValue.command().equals(TURN_OFF_DIMMER)) {
             this.rgbwValue = new RgbValue(
                     rgbwValue.brightness(),

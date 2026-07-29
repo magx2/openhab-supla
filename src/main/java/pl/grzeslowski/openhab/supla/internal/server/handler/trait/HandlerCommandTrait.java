@@ -10,6 +10,7 @@ import static pl.grzeslowski.jsupla.protocol.api.HvacMode.*;
 import static pl.grzeslowski.jsupla.protocol.api.channeltype.value.RgbValue.Command.*;
 import static pl.grzeslowski.openhab.supla.internal.Localization.text;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ChannelIds.Hvac.*;
+import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.Channels.*;
 import static pl.grzeslowski.openhab.supla.internal.server.ChannelUtil.findSuplaChannelNumber;
 import static tech.units.indriya.unit.Units.CELSIUS;
 
@@ -21,6 +22,7 @@ import lombok.RequiredArgsConstructor;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.openhab.core.library.types.*;
+import org.openhab.core.thing.Channel;
 import org.openhab.core.thing.ChannelGroupUID;
 import org.openhab.core.thing.ChannelUID;
 import org.openhab.core.types.Command;
@@ -48,11 +50,10 @@ public class HandlerCommandTrait implements HandleCommand {
 
     @Override
     public void handleOnOffCommand(ChannelUID channelUID, OnOffType command) {
-        var toSend =
-                switch (command) {
-                    case ON -> new ValueAndPrevState(OnOffValue.ON, OnOffType.OFF);
-                    case OFF -> new ValueAndPrevState(OnOffValue.OFF, OnOffType.ON);
-                };
+        var toSend = semanticOnOffCommand(channelUID, command).orElseGet(() -> switch (command) {
+            case ON -> new ValueAndPrevState(OnOffValue.ON, OnOffType.OFF);
+            case OFF -> new ValueAndPrevState(OnOffValue.OFF, OnOffType.ON);
+        });
         sendCommandToSuplaServer(channelUID, toSend.value, command, toSend.prev);
     }
 
@@ -68,12 +69,105 @@ public class HandlerCommandTrait implements HandleCommand {
 
     @Override
     public void handleOpenClosedCommand(ChannelUID channelUID, OpenClosedType command) {
-        var toSend =
-                switch (command) {
-                    case OPEN -> new ValueAndPrevState(OnOffValue.ON, OnOffType.OFF);
-                    case CLOSED -> new ValueAndPrevState(OnOffValue.OFF, OnOffType.ON);
-                };
+        var toSend = semanticOpenClosedCommand(channelUID, command).orElseGet(() -> switch (command) {
+            case OPEN -> new ValueAndPrevState(OnOffValue.ON, OnOffType.OFF);
+            case CLOSED -> new ValueAndPrevState(OnOffValue.OFF, OnOffType.ON);
+        });
         sendCommandToSuplaServer(channelUID, toSend.value, command, toSend.prev);
+    }
+
+    private Optional<ValueAndPrevState> semanticOnOffCommand(ChannelUID channelUID, OnOffType command) {
+        return findChannelTypeId(channelUID).map(channelTypeId -> switch (channelTypeId) {
+            case GATEWAY_LOCK_VALUE_CHANNEL_ID ->
+                switch (command) {
+                    case ON -> new ValueAndPrevState(GatewayLockValue.LOCKED, OnOffType.OFF);
+                    case OFF -> new ValueAndPrevState(GatewayLockValue.UNLOCKED, OnOffType.ON);
+                };
+            case DOOR_LOCK_VALUE_CHANNEL_ID ->
+                switch (command) {
+                    case ON -> new ValueAndPrevState(DoorLockValue.LOCKED, OnOffType.OFF);
+                    case OFF -> new ValueAndPrevState(DoorLockValue.UNLOCKED, OnOffType.ON);
+                };
+            case POWER_SWITCH_VALUE_CHANNEL_ID ->
+                switch (command) {
+                    case ON -> new ValueAndPrevState(PowerSwitchValue.ON, OnOffType.OFF);
+                    case OFF -> new ValueAndPrevState(PowerSwitchValue.OFF, OnOffType.ON);
+                };
+            case LIGHT_SWITCH_VALUE_CHANNEL_ID ->
+                switch (command) {
+                    case ON -> new ValueAndPrevState(LightSwitchValue.ON, OnOffType.OFF);
+                    case OFF -> new ValueAndPrevState(LightSwitchValue.OFF, OnOffType.ON);
+                };
+            case STAIRCASE_TIMER_VALUE_CHANNEL_ID ->
+                switch (command) {
+                    case ON -> new ValueAndPrevState(StaircaseTimerValue.ON, OnOffType.OFF);
+                    case OFF -> new ValueAndPrevState(StaircaseTimerValue.OFF, OnOffType.ON);
+                };
+            default -> null;
+        });
+    }
+
+    private Optional<ValueAndPrevState> semanticOpenClosedCommand(ChannelUID channelUID, OpenClosedType command) {
+        return findChannelTypeId(channelUID).map(channelTypeId -> switch (channelTypeId) {
+            case GATE_VALUE_CHANNEL_ID ->
+                switch (command) {
+                    case OPEN -> new ValueAndPrevState(GateValue.OPEN, OpenClosedType.CLOSED);
+                    case CLOSED -> new ValueAndPrevState(GateValue.CLOSE, OpenClosedType.OPEN);
+                };
+            case GARAGE_DOOR_VALUE_CHANNEL_ID ->
+                switch (command) {
+                    case OPEN -> new ValueAndPrevState(GarageDoorValue.OPEN, OpenClosedType.CLOSED);
+                    case CLOSED -> new ValueAndPrevState(GarageDoorValue.CLOSE, OpenClosedType.OPEN);
+                };
+            case ROLLER_SHUTTER_VALUE_CHANNEL_ID ->
+                switch (command) {
+                    case OPEN -> new ValueAndPrevState(RollerShutterValue.OPEN, OpenClosedType.CLOSED);
+                    case CLOSED -> new ValueAndPrevState(RollerShutterValue.CLOSE, OpenClosedType.OPEN);
+                };
+            case ROOF_WINDOW_VALUE_CHANNEL_ID ->
+                switch (command) {
+                    case OPEN -> new ValueAndPrevState(RoofWindowValue.OPEN, OpenClosedType.CLOSED);
+                    case CLOSED -> new ValueAndPrevState(RoofWindowValue.CLOSE, OpenClosedType.OPEN);
+                };
+            case FACADE_BLIND_VALUE_CHANNEL_ID ->
+                switch (command) {
+                    case OPEN -> new ValueAndPrevState(FacadeBlindValue.OPEN, OpenClosedType.CLOSED);
+                    case CLOSED -> new ValueAndPrevState(FacadeBlindValue.CLOSE, OpenClosedType.OPEN);
+                };
+            case TERRACE_AWNING_VALUE_CHANNEL_ID ->
+                switch (command) {
+                    case OPEN -> new ValueAndPrevState(TerraceAwningValue.OPEN, OpenClosedType.CLOSED);
+                    case CLOSED -> new ValueAndPrevState(TerraceAwningValue.CLOSE, OpenClosedType.OPEN);
+                };
+            case PROJECTOR_SCREEN_VALUE_CHANNEL_ID ->
+                switch (command) {
+                    case OPEN -> new ValueAndPrevState(ProjectorScreenValue.OPEN, OpenClosedType.CLOSED);
+                    case CLOSED -> new ValueAndPrevState(ProjectorScreenValue.CLOSE, OpenClosedType.OPEN);
+                };
+            case CURTAIN_VALUE_CHANNEL_ID ->
+                switch (command) {
+                    case OPEN -> new ValueAndPrevState(CurtainValue.OPEN, OpenClosedType.CLOSED);
+                    case CLOSED -> new ValueAndPrevState(CurtainValue.CLOSE, OpenClosedType.OPEN);
+                };
+            case VERTICAL_BLIND_VALUE_CHANNEL_ID ->
+                switch (command) {
+                    case OPEN -> new ValueAndPrevState(VerticalBlindValue.OPEN, OpenClosedType.CLOSED);
+                    case CLOSED -> new ValueAndPrevState(VerticalBlindValue.CLOSE, OpenClosedType.OPEN);
+                };
+            case ROLLER_GARAGE_DOOR_VALUE_CHANNEL_ID ->
+                switch (command) {
+                    case OPEN -> new ValueAndPrevState(RollerGarageDoorValue.OPEN, OpenClosedType.CLOSED);
+                    case CLOSED -> new ValueAndPrevState(RollerGarageDoorValue.CLOSE, OpenClosedType.OPEN);
+                };
+            default -> null;
+        });
+    }
+
+    private Optional<String> findChannelTypeId(ChannelUID channelUID) {
+        return Optional.ofNullable(serverDevice.getThing())
+                .map(thing -> thing.getChannel(channelUID))
+                .map(Channel::getChannelTypeUID)
+                .map(typeUID -> typeUID.getId());
     }
 
     @Override

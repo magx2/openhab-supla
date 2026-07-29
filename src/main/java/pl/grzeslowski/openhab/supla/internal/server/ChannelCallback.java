@@ -51,6 +51,91 @@ public class ChannelCallback implements ChannelClassSwitch.Callback<Stream<Chann
         return switchChannel();
     }
 
+    @Override
+    public Stream<Channel> onGateValue() {
+        return semanticChannel(GATE_VALUE_CHANNEL_ID, "Gate", "Contact");
+    }
+
+    @Override
+    public Stream<Channel> onGatewayLockValue() {
+        return semanticChannel(GATEWAY_LOCK_VALUE_CHANNEL_ID, "Gateway Lock", "Switch");
+    }
+
+    @Override
+    public Stream<Channel> onGarageDoorValue() {
+        return semanticChannel(GARAGE_DOOR_VALUE_CHANNEL_ID, "Garage Door", "Contact");
+    }
+
+    @Override
+    public Stream<Channel> onDoorLockValue() {
+        return semanticChannel(DOOR_LOCK_VALUE_CHANNEL_ID, "Door Lock", "Switch");
+    }
+
+    @Override
+    public Stream<Channel> onRollerShutterValue() {
+        return semanticChannel(ROLLER_SHUTTER_VALUE_CHANNEL_ID, "Roller Shutter", "Contact");
+    }
+
+    @Override
+    public Stream<Channel> onPowerSwitchValue() {
+        return semanticChannel(POWER_SWITCH_VALUE_CHANNEL_ID, "Power Switch", "Switch");
+    }
+
+    @Override
+    public Stream<Channel> onLightSwitchValue() {
+        return semanticChannel(LIGHT_SWITCH_VALUE_CHANNEL_ID, "Light Switch", "Switch");
+    }
+
+    @Override
+    public Stream<Channel> onStaircaseTimerValue() {
+        return semanticChannel(STAIRCASE_TIMER_VALUE_CHANNEL_ID, "Staircase Timer", "Switch");
+    }
+
+    @Override
+    public Stream<Channel> onRoofWindowValue() {
+        return semanticChannel(ROOF_WINDOW_VALUE_CHANNEL_ID, "Roof Window", "Contact");
+    }
+
+    @Override
+    public Stream<Channel> onFacadeBlindValue() {
+        return semanticChannel(FACADE_BLIND_VALUE_CHANNEL_ID, "Facade Blind", "Contact");
+    }
+
+    @Override
+    public Stream<Channel> onTerraceAwningValue() {
+        return semanticChannel(TERRACE_AWNING_VALUE_CHANNEL_ID, "Terrace Awning", "Contact");
+    }
+
+    @Override
+    public Stream<Channel> onProjectorScreenValue() {
+        return semanticChannel(PROJECTOR_SCREEN_VALUE_CHANNEL_ID, "Projector Screen", "Contact");
+    }
+
+    @Override
+    public Stream<Channel> onCurtainValue() {
+        return semanticChannel(CURTAIN_VALUE_CHANNEL_ID, "Curtain", "Contact");
+    }
+
+    @Override
+    public Stream<Channel> onVerticalBlindValue() {
+        return semanticChannel(VERTICAL_BLIND_VALUE_CHANNEL_ID, "Vertical Blind", "Contact");
+    }
+
+    @Override
+    public Stream<Channel> onRollerGarageDoorValue() {
+        return semanticChannel(ROLLER_GARAGE_DOOR_VALUE_CHANNEL_ID, "Roller Garage Door", "Contact");
+    }
+
+    @Override
+    public Stream<Channel> onPumpSwitchValue() {
+        return semanticChannel(PUMP_SWITCH_VALUE_CHANNEL_ID, "Pump Switch", "Switch");
+    }
+
+    @Override
+    public Stream<Channel> onHeatOrColdSourceSwitchValue() {
+        return semanticChannel(HEAT_OR_COLD_SOURCE_SWITCH_VALUE_CHANNEL_ID, "Heat Or Cold Source Switch", "Switch");
+    }
+
     private Stream<Channel> switchChannel() {
         final ChannelUID channelUid = createChannelUid();
         final ChannelTypeUID channelTypeUID = createChannelTypeUID(SWITCH_CHANNEL_ID);
@@ -58,6 +143,17 @@ public class ChannelCallback implements ChannelClassSwitch.Callback<Stream<Chann
         return Stream.of(ChannelBuilder.create(channelUid, "Switch")
                 .withType(channelTypeUID)
                 .withLabel("Allows you to turn thing ON/OFF")
+                .build());
+    }
+
+    private Stream<Channel> semanticChannel(String channelTypeId, String label, String itemType) {
+        log.debug("{} {} {}", thingUID, deviceChannel, label);
+        final ChannelUID channelUid = createChannelUid();
+        final ChannelTypeUID channelTypeUID = createChannelTypeUID(channelTypeId);
+
+        return Stream.of(ChannelBuilder.create(channelUid, itemType)
+                .withType(channelTypeUID)
+                .withLabel(label)
                 .build());
     }
 

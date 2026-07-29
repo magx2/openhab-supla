@@ -110,6 +110,24 @@ public class SuplaBindingConstants {
     public static class Channels {
         public static final String LIGHT_CHANNEL_ID = "light-channel";
         public static final String SWITCH_CHANNEL_ID = "switch-channel";
+        public static final String GATE_VALUE_CHANNEL_ID = "gate-value-channel";
+        public static final String GATEWAY_LOCK_VALUE_CHANNEL_ID = "gateway-lock-value-channel";
+        public static final String GARAGE_DOOR_VALUE_CHANNEL_ID = "garage-door-value-channel";
+        public static final String DOOR_LOCK_VALUE_CHANNEL_ID = "door-lock-value-channel";
+        public static final String ROLLER_SHUTTER_VALUE_CHANNEL_ID = "roller-shutter-value-channel";
+        public static final String POWER_SWITCH_VALUE_CHANNEL_ID = "power-switch-value-channel";
+        public static final String LIGHT_SWITCH_VALUE_CHANNEL_ID = "light-switch-value-channel";
+        public static final String STAIRCASE_TIMER_VALUE_CHANNEL_ID = "staircase-timer-value-channel";
+        public static final String ROOF_WINDOW_VALUE_CHANNEL_ID = "roof-window-value-channel";
+        public static final String FACADE_BLIND_VALUE_CHANNEL_ID = "facade-blind-value-channel";
+        public static final String TERRACE_AWNING_VALUE_CHANNEL_ID = "terrace-awning-value-channel";
+        public static final String PROJECTOR_SCREEN_VALUE_CHANNEL_ID = "projector-screen-value-channel";
+        public static final String CURTAIN_VALUE_CHANNEL_ID = "curtain-value-channel";
+        public static final String VERTICAL_BLIND_VALUE_CHANNEL_ID = "vertical-blind-value-channel";
+        public static final String ROLLER_GARAGE_DOOR_VALUE_CHANNEL_ID = "roller-garage-door-value-channel";
+        public static final String PUMP_SWITCH_VALUE_CHANNEL_ID = "pump-switch-value-channel";
+        public static final String HEAT_OR_COLD_SOURCE_SWITCH_VALUE_CHANNEL_ID =
+                "heat-or-cold-source-switch-value-channel";
         public static final String SWITCH_CHANNEL_RO_ID = "switch-channel-ro";
         public static final String FLAG_CHANNEL_ID = "flag-channel";
         public static final String DECIMAL_CHANNEL_ID = "decimal-channel";

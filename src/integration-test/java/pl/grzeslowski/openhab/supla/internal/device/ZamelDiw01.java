@@ -8,7 +8,9 @@ import static pl.grzeslowski.openhab.supla.internal.server.ByteArrayToHex.hexToB
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Set;
 import lombok.Getter;
+import pl.grzeslowski.jsupla.protocol.api.channeltype.ChannelDescription;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.decoders.ChannelTypeDecoder;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.encoders.ChannelTypeEncoder;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.value.PercentValue;
@@ -67,7 +69,8 @@ public class ZamelDiw01 extends Device {
     @Override
     protected void updateChannel(short channelNumber, byte[] value) {
         assertThat(channelNumber).isZero();
-        this.value = (PercentValue) decoder.decode(SUPLA_CHANNELTYPE_DIMMER, value);
+        this.value = (PercentValue)
+                decoder.decode(new ChannelDescription(SUPLA_CHANNELTYPE_DIMMER, Set.of(), Set.of()), value);
     }
 
     public void dim() throws IOException {

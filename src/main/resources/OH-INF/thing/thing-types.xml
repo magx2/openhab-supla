@@ -218,6 +218,111 @@
 		<category>Switch</category>
 	</channel-type>
 
+	<channel-type id="gate-value-channel">
+		<item-type>Contact</item-type>
+		<label>%channel-type.supla.gate-value-channel.label</label>
+		<category>MoveControl</category>
+	</channel-type>
+
+	<channel-type id="gateway-lock-value-channel">
+		<item-type>Switch</item-type>
+		<label>%channel-type.supla.gateway-lock-value-channel.label</label>
+		<category>Switch</category>
+	</channel-type>
+
+	<channel-type id="garage-door-value-channel">
+		<item-type>Contact</item-type>
+		<label>%channel-type.supla.garage-door-value-channel.label</label>
+		<category>MoveControl</category>
+	</channel-type>
+
+	<channel-type id="door-lock-value-channel">
+		<item-type>Switch</item-type>
+		<label>%channel-type.supla.door-lock-value-channel.label</label>
+		<category>Switch</category>
+	</channel-type>
+
+	<channel-type id="roller-shutter-value-channel">
+		<item-type>Contact</item-type>
+		<label>%channel-type.supla.roller-shutter-value-channel.label</label>
+		<category>Rollershutter</category>
+	</channel-type>
+
+	<channel-type id="power-switch-value-channel">
+		<item-type>Switch</item-type>
+		<label>%channel-type.supla.power-switch-value-channel.label</label>
+		<category>Switch</category>
+	</channel-type>
+
+	<channel-type id="light-switch-value-channel">
+		<item-type>Switch</item-type>
+		<label>%channel-type.supla.light-switch-value-channel.label</label>
+		<category>Light</category>
+	</channel-type>
+
+	<channel-type id="staircase-timer-value-channel">
+		<item-type>Switch</item-type>
+		<label>%channel-type.supla.staircase-timer-value-channel.label</label>
+		<category>Switch</category>
+	</channel-type>
+
+	<channel-type id="roof-window-value-channel">
+		<item-type>Contact</item-type>
+		<label>%channel-type.supla.roof-window-value-channel.label</label>
+		<category>MoveControl</category>
+	</channel-type>
+
+	<channel-type id="facade-blind-value-channel">
+		<item-type>Contact</item-type>
+		<label>%channel-type.supla.facade-blind-value-channel.label</label>
+		<category>Rollershutter</category>
+	</channel-type>
+
+	<channel-type id="terrace-awning-value-channel">
+		<item-type>Contact</item-type>
+		<label>%channel-type.supla.terrace-awning-value-channel.label</label>
+		<category>Rollershutter</category>
+	</channel-type>
+
+	<channel-type id="projector-screen-value-channel">
+		<item-type>Contact</item-type>
+		<label>%channel-type.supla.projector-screen-value-channel.label</label>
+		<category>Rollershutter</category>
+	</channel-type>
+
+	<channel-type id="curtain-value-channel">
+		<item-type>Contact</item-type>
+		<label>%channel-type.supla.curtain-value-channel.label</label>
+		<category>Rollershutter</category>
+	</channel-type>
+
+	<channel-type id="vertical-blind-value-channel">
+		<item-type>Contact</item-type>
+		<label>%channel-type.supla.vertical-blind-value-channel.label</label>
+		<category>Rollershutter</category>
+	</channel-type>
+
+	<channel-type id="roller-garage-door-value-channel">
+		<item-type>Contact</item-type>
+		<label>%channel-type.supla.roller-garage-door-value-channel.label</label>
+		<category>MoveControl</category>
+	</channel-type>
+
+	<channel-type id="pump-switch-value-channel">
+		<item-type>Switch</item-type>
+		<label>%channel-type.supla.pump-switch-value-channel.label</label>
+		<category>Switch</category>
+		<state readOnly="true" />
+	</channel-type>
+
+	<channel-type
+		id="heat-or-cold-source-switch-value-channel">
+		<item-type>Switch</item-type>
+		<label>%channel-type.supla.heat-or-cold-source-switch-value-channel.label</label>
+		<category>Heating</category>
+		<state readOnly="true" />
+	</channel-type>
+
 	<channel-type id="switch-channel-ro">
 		<item-type>Switch</item-type>
 		<label>%channel-type.supla.switch-channel-ro.label</label>

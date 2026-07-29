@@ -20,6 +20,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import pl.grzeslowski.jsupla.protocol.api.*;
 import pl.grzeslowski.jsupla.protocol.api.calltypes.CallTypeParser;
+import pl.grzeslowski.jsupla.protocol.api.channeltype.ChannelDescription;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.decoders.ChannelTypeDecoder;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.decoders.HvacTypeDecoder;
 import pl.grzeslowski.jsupla.protocol.api.channeltype.value.ChannelValue;
@@ -37,6 +38,19 @@ public class DecipherProtocol {
                     + "dataSize=(?<dataSize>-?\\d+)\\s*,\\s*data=\\[");
     final CallTypeParser callTypeParser = CallTypeParser.INSTANCE;
     final DecoderFactoryImpl decoderFactory = DecoderFactoryImpl.INSTANCE;
+
+    private static ChannelValue decode(int type, byte[] value) {
+        return decode(type, Set.of(), Set.of(), value);
+    }
+
+    private static ChannelValue decode(int type, Set<BitFunction> functions, byte[] value) {
+        return decode(type, Set.of(), functions, value);
+    }
+
+    private static ChannelValue decode(int type, Set<ChannelFlag> flags, Set<BitFunction> functions, byte[] value) {
+        var channelType = ChannelType.findByValue(type).orElse(null);
+        return ChannelTypeDecoder.INSTANCE.decode(new ChannelDescription(channelType, flags, functions), value);
+    }
 
     @SuppressWarnings("SwitchStatementWithTooFewBranches")
     @ParameterizedTest(name = "{index}: should decode `SuplaDataPacket` for {0}")
@@ -490,7 +504,7 @@ public class DecipherProtocol {
                     null,
                     null,
                     null,
-                    ChannelTypeDecoder.INSTANCE.decode(channel.type(), channel.value()),
+                    decode(channel.type(), channel.value()),
                     channel.value(),
                     null,
                     null,
@@ -519,7 +533,12 @@ public class DecipherProtocol {
                     null,
                     null,
                     null,
-                    ChannelTypeDecoder.INSTANCE.decode(channel.type(), channel.value()),
+                    decode(
+                            channel.type(),
+                            Optional.of(channel.funcList())
+                                    .map(BitFunction::findByMask)
+                                    .orElse(Set.of()),
+                            channel.value()),
                     channel.value(),
                     null,
                     null,
@@ -550,7 +569,13 @@ public class DecipherProtocol {
                     (long) channel.flags(),
                     null,
                     null,
-                    ChannelTypeDecoder.INSTANCE.decode(channel.type(), channel.value()),
+                    decode(
+                            channel.type(),
+                            ChannelFlag.findByMask(channel.flags()),
+                            Optional.ofNullable(channel.funcList())
+                                    .map(BitFunction::findByMask)
+                                    .orElse(Set.of()),
+                            channel.value()),
                     channel.value(),
                     (channel.actionTriggerCaps() == null || channel.actionTriggerProperties() == null)
                             ? null
@@ -588,7 +613,13 @@ public class DecipherProtocol {
                     channel.valueValidityTimeSec(),
                     Optional.ofNullable(channel.value())
                             .filter(c -> c.length > 0)
-                            .map(c -> ChannelTypeDecoder.INSTANCE.decode(channel.type(), c))
+                            .map(c -> decode(
+                                    channel.type(),
+                                    ChannelFlag.findByMask(channel.flags()),
+                                    Optional.ofNullable(channel.funcList())
+                                            .map(BitFunction::findByMask)
+                                            .orElse(Set.of()),
+                                    c))
                             .orElse(null),
                     channel.value(),
                     (channel.actionTriggerCaps() == null || channel.actionTriggerProperties() == null)
@@ -627,7 +658,13 @@ public class DecipherProtocol {
                     channel.flags(),
                     channel.offline(),
                     channel.valueValidityTimeSec(),
-                    ChannelTypeDecoder.INSTANCE.decode(channel.type(), channel.value()),
+                    decode(
+                            channel.type(),
+                            ChannelFlag.findByMask(channel.flags()),
+                            Optional.ofNullable(channel.funcList())
+                                    .map(BitFunction::findByMask)
+                                    .orElse(Set.of()),
+                            channel.value()),
                     channel.value(),
                     (channel.actionTriggerCaps() == null || channel.actionTriggerProperties() == null)
                             ? null
