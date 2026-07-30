@@ -115,7 +115,6 @@ public class SuplaBindingConstants {
         public static final String GARAGE_DOOR_VALUE_CHANNEL_ID = "garage-door-value-channel";
         public static final String DOOR_LOCK_VALUE_CHANNEL_ID = "door-lock-value-channel";
         public static final String ROLLER_SHUTTER_VALUE_CHANNEL_ID = "roller-shutter-value-channel";
-        public static final String POWER_SWITCH_VALUE_CHANNEL_ID = "power-switch-value-channel";
         public static final String LIGHT_SWITCH_VALUE_CHANNEL_ID = "light-switch-value-channel";
         public static final String STAIRCASE_TIMER_VALUE_CHANNEL_ID = "staircase-timer-value-channel";
         public static final String ROOF_WINDOW_VALUE_CHANNEL_ID = "roof-window-value-channel";
@@ -153,6 +152,7 @@ public class SuplaBindingConstants {
         public static final String WIND_CHANNEL_ID = "wind-channel";
         public static final String ACTION_TRIGGER_ID = "action-trigger";
         public static final String UNKNOWN_CHANNEL_ID = "unknown-channel";
+        public static final String SYSTEM_POWER_CHANNEL_TYPE = "power";
         // hvac
         public static final String HVAC_WORKING_CHANNEL_ID = "hvac-working";
         public static final String HVAC_MODE_CHANNEL_ID = "hvac-mode";

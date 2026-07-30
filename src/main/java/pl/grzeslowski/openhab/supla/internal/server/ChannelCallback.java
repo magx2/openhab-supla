@@ -45,6 +45,10 @@ public class ChannelCallback implements ChannelClassSwitch.Callback<Stream<Chann
         return new ChannelTypeUID(SuplaBindingConstants.BINDING_ID, id);
     }
 
+    private ChannelTypeUID createSystemChannelTypeUID(String id) {
+        return new ChannelTypeUID("system", id);
+    }
+
     @Override
     public Stream<Channel> onOnOff() {
         log.debug("{} {} onOnOff", thingUID, deviceChannel);
@@ -78,7 +82,7 @@ public class ChannelCallback implements ChannelClassSwitch.Callback<Stream<Chann
 
     @Override
     public Stream<Channel> onPowerSwitchValue() {
-        return semanticChannel(POWER_SWITCH_VALUE_CHANNEL_ID, "Power Switch", "Switch");
+        return semanticChannel(createSystemChannelTypeUID(SYSTEM_POWER_CHANNEL_TYPE), "Power Switch", "Switch");
     }
 
     @Override
@@ -147,9 +151,12 @@ public class ChannelCallback implements ChannelClassSwitch.Callback<Stream<Chann
     }
 
     private Stream<Channel> semanticChannel(String channelTypeId, String label, String itemType) {
+        return semanticChannel(createChannelTypeUID(channelTypeId), label, itemType);
+    }
+
+    private Stream<Channel> semanticChannel(ChannelTypeUID channelTypeUID, String label, String itemType) {
         log.debug("{} {} {}", thingUID, deviceChannel, label);
         final ChannelUID channelUid = createChannelUid();
-        final ChannelTypeUID channelTypeUID = createChannelTypeUID(channelTypeId);
 
         return Stream.of(ChannelBuilder.create(channelUid, itemType)
                 .withType(channelTypeUID)

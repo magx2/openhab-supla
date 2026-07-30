@@ -88,7 +88,7 @@ public class HandlerCommandTrait implements HandleCommand {
                     case ON -> new ValueAndPrevState(DoorLockValue.LOCKED, OnOffType.OFF);
                     case OFF -> new ValueAndPrevState(DoorLockValue.UNLOCKED, OnOffType.ON);
                 };
-            case POWER_SWITCH_VALUE_CHANNEL_ID ->
+            case SYSTEM_POWER_CHANNEL_TYPE ->
                 switch (command) {
                     case ON -> new ValueAndPrevState(PowerSwitchValue.ON, OnOffType.OFF);
                     case OFF -> new ValueAndPrevState(PowerSwitchValue.OFF, OnOffType.ON);
