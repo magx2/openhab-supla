@@ -24,57 +24,60 @@ class ChannelCallbackTest {
 
     private static Stream<Arguments> semanticChannels() {
         return Stream.of(
-                Arguments.of("Gate", GATE_VALUE_CHANNEL_ID, "Contact", (Function<ChannelCallback, Stream<Channel>>)
-                        ChannelCallback::onGateValue),
-                Arguments.of("Gateway Lock", GATEWAY_LOCK_VALUE_CHANNEL_ID, "Switch", (Function<
+                Arguments.of(
+                        "Gate", GATE_VALUE_CHANNEL_ID, "supla", "Contact", (Function<ChannelCallback, Stream<Channel>>)
+                                ChannelCallback::onGateValue),
+                Arguments.of("Gateway Lock", GATEWAY_LOCK_VALUE_CHANNEL_ID, "supla", "Switch", (Function<
                                 ChannelCallback, Stream<Channel>>)
                         ChannelCallback::onGatewayLockValue),
-                Arguments.of("Garage Door", GARAGE_DOOR_VALUE_CHANNEL_ID, "Contact", (Function<
+                Arguments.of("Garage Door", GARAGE_DOOR_VALUE_CHANNEL_ID, "supla", "Contact", (Function<
                                 ChannelCallback, Stream<Channel>>)
                         ChannelCallback::onGarageDoorValue),
-                Arguments.of(
-                        "Door Lock", DOOR_LOCK_VALUE_CHANNEL_ID, "Switch", (Function<ChannelCallback, Stream<Channel>>)
-                                ChannelCallback::onDoorLockValue),
-                Arguments.of("Roller Shutter", ROLLER_SHUTTER_VALUE_CHANNEL_ID, "Contact", (Function<
+                Arguments.of("Door Lock", DOOR_LOCK_VALUE_CHANNEL_ID, "supla", "Switch", (Function<
+                                ChannelCallback, Stream<Channel>>)
+                        ChannelCallback::onDoorLockValue),
+                Arguments.of("Roller Shutter", ROLLER_SHUTTER_VALUE_CHANNEL_ID, "supla", "Contact", (Function<
                                 ChannelCallback, Stream<Channel>>)
                         ChannelCallback::onRollerShutterValue),
-                Arguments.of("Power Switch", POWER_SWITCH_VALUE_CHANNEL_ID, "Switch", (Function<
+                Arguments.of("Power Switch", SYSTEM_POWER_CHANNEL_TYPE, "system", "Switch", (Function<
                                 ChannelCallback, Stream<Channel>>)
                         ChannelCallback::onPowerSwitchValue),
-                Arguments.of("Light Switch", LIGHT_SWITCH_VALUE_CHANNEL_ID, "Switch", (Function<
+                Arguments.of("Light Switch", LIGHT_SWITCH_VALUE_CHANNEL_ID, "supla", "Switch", (Function<
                                 ChannelCallback, Stream<Channel>>)
                         ChannelCallback::onLightSwitchValue),
-                Arguments.of("Staircase Timer", STAIRCASE_TIMER_VALUE_CHANNEL_ID, "Switch", (Function<
+                Arguments.of("Staircase Timer", STAIRCASE_TIMER_VALUE_CHANNEL_ID, "supla", "Switch", (Function<
                                 ChannelCallback, Stream<Channel>>)
                         ChannelCallback::onStaircaseTimerValue),
-                Arguments.of("Roof Window", ROOF_WINDOW_VALUE_CHANNEL_ID, "Contact", (Function<
+                Arguments.of("Roof Window", ROOF_WINDOW_VALUE_CHANNEL_ID, "supla", "Contact", (Function<
                                 ChannelCallback, Stream<Channel>>)
                         ChannelCallback::onRoofWindowValue),
-                Arguments.of("Facade Blind", FACADE_BLIND_VALUE_CHANNEL_ID, "Contact", (Function<
+                Arguments.of("Facade Blind", FACADE_BLIND_VALUE_CHANNEL_ID, "supla", "Contact", (Function<
                                 ChannelCallback, Stream<Channel>>)
                         ChannelCallback::onFacadeBlindValue),
-                Arguments.of("Terrace Awning", TERRACE_AWNING_VALUE_CHANNEL_ID, "Contact", (Function<
+                Arguments.of("Terrace Awning", TERRACE_AWNING_VALUE_CHANNEL_ID, "supla", "Contact", (Function<
                                 ChannelCallback, Stream<Channel>>)
                         ChannelCallback::onTerraceAwningValue),
-                Arguments.of("Projector Screen", PROJECTOR_SCREEN_VALUE_CHANNEL_ID, "Contact", (Function<
+                Arguments.of("Projector Screen", PROJECTOR_SCREEN_VALUE_CHANNEL_ID, "supla", "Contact", (Function<
                                 ChannelCallback, Stream<Channel>>)
                         ChannelCallback::onProjectorScreenValue),
-                Arguments.of(
-                        "Curtain", CURTAIN_VALUE_CHANNEL_ID, "Contact", (Function<ChannelCallback, Stream<Channel>>)
-                                ChannelCallback::onCurtainValue),
-                Arguments.of("Vertical Blind", VERTICAL_BLIND_VALUE_CHANNEL_ID, "Contact", (Function<
+                Arguments.of("Curtain", CURTAIN_VALUE_CHANNEL_ID, "supla", "Contact", (Function<
+                                ChannelCallback, Stream<Channel>>)
+                        ChannelCallback::onCurtainValue),
+                Arguments.of("Vertical Blind", VERTICAL_BLIND_VALUE_CHANNEL_ID, "supla", "Contact", (Function<
                                 ChannelCallback, Stream<Channel>>)
                         ChannelCallback::onVerticalBlindValue),
-                Arguments.of("Roller Garage Door", ROLLER_GARAGE_DOOR_VALUE_CHANNEL_ID, "Contact", (Function<
+                Arguments.of("Roller Garage Door", ROLLER_GARAGE_DOOR_VALUE_CHANNEL_ID, "supla", "Contact", (Function<
                                 ChannelCallback, Stream<Channel>>)
                         ChannelCallback::onRollerGarageDoorValue),
-                Arguments.of("Pump Switch", PUMP_SWITCH_VALUE_CHANNEL_ID, "Switch", (Function<
+                Arguments.of("Pump Switch", PUMP_SWITCH_VALUE_CHANNEL_ID, "supla", "Switch", (Function<
                                 ChannelCallback, Stream<Channel>>)
                         ChannelCallback::onPumpSwitchValue),
                 Arguments.of(
-                        "Heat Or Cold Source Switch", HEAT_OR_COLD_SOURCE_SWITCH_VALUE_CHANNEL_ID, "Switch", (Function<
-                                        ChannelCallback, Stream<Channel>>)
-                                ChannelCallback::onHeatOrColdSourceSwitchValue));
+                        "Heat Or Cold Source Switch",
+                        HEAT_OR_COLD_SOURCE_SWITCH_VALUE_CHANNEL_ID,
+                        "supla",
+                        "Switch",
+                        (Function<ChannelCallback, Stream<Channel>>) ChannelCallback::onHeatOrColdSourceSwitchValue));
     }
 
     @Test
@@ -97,6 +100,7 @@ class ChannelCallbackTest {
     void shouldCreateSemanticChannel(
             String label,
             String channelTypeId,
+            String bindingId,
             String acceptedItemType,
             Function<ChannelCallback, Stream<Channel>> channelFactory) {
         var callback = new ChannelCallback(thingUID, mockDeviceChannel(6));
@@ -105,8 +109,7 @@ class ChannelCallbackTest {
 
         assertThat(channels).singleElement().satisfies(channel -> {
             assertThat(channel.getUID()).isEqualTo(new ChannelUID(thingUID, "6"));
-            assertThat(channel.getChannelTypeUID())
-                    .isEqualTo(new ChannelTypeUID(SuplaBindingConstants.BINDING_ID, channelTypeId));
+            assertThat(channel.getChannelTypeUID()).isEqualTo(new ChannelTypeUID(bindingId, channelTypeId));
             assertThat(channel.getLabel()).isEqualTo(label);
             assertThat(channel.getAcceptedItemType()).isEqualTo(acceptedItemType);
         });

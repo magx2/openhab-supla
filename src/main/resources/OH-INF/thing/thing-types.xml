@@ -248,12 +248,6 @@
 		<category>Rollershutter</category>
 	</channel-type>
 
-	<channel-type id="power-switch-value-channel">
-		<item-type>Switch</item-type>
-		<label>%channel-type.supla.power-switch-value-channel.label</label>
-		<category>Switch</category>
-	</channel-type>
-
 	<channel-type id="light-switch-value-channel">
 		<item-type>Switch</item-type>
 		<label>%channel-type.supla.light-switch-value-channel.label</label>
