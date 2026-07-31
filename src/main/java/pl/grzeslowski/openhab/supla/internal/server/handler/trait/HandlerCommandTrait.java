@@ -79,88 +79,54 @@ public class HandlerCommandTrait implements HandleCommand {
     private Optional<ValueAndPrevState> semanticOnOffCommand(ChannelUID channelUID, OnOffType command) {
         return findChannelTypeId(channelUID).map(channelTypeId -> switch (channelTypeId) {
             case GATEWAY_LOCK_VALUE_CHANNEL_ID ->
-                switch (command) {
-                    case ON -> new ValueAndPrevState(GatewayLockValue.LOCKED, OnOffType.OFF);
-                    case OFF -> new ValueAndPrevState(GatewayLockValue.UNLOCKED, OnOffType.ON);
-                };
-            case DOOR_LOCK_VALUE_CHANNEL_ID ->
-                switch (command) {
-                    case ON -> new ValueAndPrevState(DoorLockValue.LOCKED, OnOffType.OFF);
-                    case OFF -> new ValueAndPrevState(DoorLockValue.UNLOCKED, OnOffType.ON);
-                };
-            case SYSTEM_POWER_CHANNEL_TYPE ->
-                switch (command) {
-                    case ON -> new ValueAndPrevState(PowerSwitchValue.ON, OnOffType.OFF);
-                    case OFF -> new ValueAndPrevState(PowerSwitchValue.OFF, OnOffType.ON);
-                };
-            case LIGHT_SWITCH_VALUE_CHANNEL_ID ->
-                switch (command) {
-                    case ON -> new ValueAndPrevState(LightSwitchValue.ON, OnOffType.OFF);
-                    case OFF -> new ValueAndPrevState(LightSwitchValue.OFF, OnOffType.ON);
-                };
+                onOffCommand(GatewayLockValue.UNLOCKED, GatewayLockValue.LOCKED, command);
+            case DOOR_LOCK_VALUE_CHANNEL_ID -> onOffCommand(DoorLockValue.UNLOCKED, DoorLockValue.LOCKED, command);
+            case SYSTEM_POWER_CHANNEL_TYPE -> onOffCommand(PowerSwitchValue.ON, PowerSwitchValue.OFF, command);
+            case LIGHT_SWITCH_VALUE_CHANNEL_ID -> onOffCommand(LightSwitchValue.ON, LightSwitchValue.OFF, command);
             case STAIRCASE_TIMER_VALUE_CHANNEL_ID ->
-                switch (command) {
-                    case ON -> new ValueAndPrevState(StaircaseTimerValue.ON, OnOffType.OFF);
-                    case OFF -> new ValueAndPrevState(StaircaseTimerValue.OFF, OnOffType.ON);
-                };
+                onOffCommand(StaircaseTimerValue.ON, StaircaseTimerValue.OFF, command);
             default -> null;
         });
     }
 
+    private static ValueAndPrevState onOffCommand(
+            AbstractOnOffValue onValue, AbstractOnOffValue offValue, OnOffType command) {
+        return switch (command) {
+            case ON -> new ValueAndPrevState(onValue, OnOffType.OFF);
+            case OFF -> new ValueAndPrevState(offValue, OnOffType.ON);
+        };
+    }
+
     private Optional<ValueAndPrevState> semanticOpenClosedCommand(ChannelUID channelUID, OpenClosedType command) {
         return findChannelTypeId(channelUID).map(channelTypeId -> switch (channelTypeId) {
-            case GATE_VALUE_CHANNEL_ID ->
-                switch (command) {
-                    case OPEN -> new ValueAndPrevState(GateValue.OPEN, OpenClosedType.CLOSED);
-                    case CLOSED -> new ValueAndPrevState(GateValue.CLOSE, OpenClosedType.OPEN);
-                };
+            case GATE_VALUE_CHANNEL_ID -> openClosedCommand(GateValue.OPEN, GateValue.CLOSE, command);
             case GARAGE_DOOR_VALUE_CHANNEL_ID ->
-                switch (command) {
-                    case OPEN -> new ValueAndPrevState(GarageDoorValue.OPEN, OpenClosedType.CLOSED);
-                    case CLOSED -> new ValueAndPrevState(GarageDoorValue.CLOSE, OpenClosedType.OPEN);
-                };
+                openClosedCommand(GarageDoorValue.OPEN, GarageDoorValue.CLOSE, command);
             case ROLLER_SHUTTER_VALUE_CHANNEL_ID ->
-                switch (command) {
-                    case OPEN -> new ValueAndPrevState(RollerShutterValue.OPEN, OpenClosedType.CLOSED);
-                    case CLOSED -> new ValueAndPrevState(RollerShutterValue.CLOSE, OpenClosedType.OPEN);
-                };
+                openClosedCommand(RollerShutterValue.OPEN, RollerShutterValue.CLOSE, command);
             case ROOF_WINDOW_VALUE_CHANNEL_ID ->
-                switch (command) {
-                    case OPEN -> new ValueAndPrevState(RoofWindowValue.OPEN, OpenClosedType.CLOSED);
-                    case CLOSED -> new ValueAndPrevState(RoofWindowValue.CLOSE, OpenClosedType.OPEN);
-                };
+                openClosedCommand(RoofWindowValue.OPEN, RoofWindowValue.CLOSE, command);
             case FACADE_BLIND_VALUE_CHANNEL_ID ->
-                switch (command) {
-                    case OPEN -> new ValueAndPrevState(FacadeBlindValue.OPEN, OpenClosedType.CLOSED);
-                    case CLOSED -> new ValueAndPrevState(FacadeBlindValue.CLOSE, OpenClosedType.OPEN);
-                };
+                openClosedCommand(FacadeBlindValue.OPEN, FacadeBlindValue.CLOSE, command);
             case TERRACE_AWNING_VALUE_CHANNEL_ID ->
-                switch (command) {
-                    case OPEN -> new ValueAndPrevState(TerraceAwningValue.OPEN, OpenClosedType.CLOSED);
-                    case CLOSED -> new ValueAndPrevState(TerraceAwningValue.CLOSE, OpenClosedType.OPEN);
-                };
+                openClosedCommand(TerraceAwningValue.OPEN, TerraceAwningValue.CLOSE, command);
             case PROJECTOR_SCREEN_VALUE_CHANNEL_ID ->
-                switch (command) {
-                    case OPEN -> new ValueAndPrevState(ProjectorScreenValue.OPEN, OpenClosedType.CLOSED);
-                    case CLOSED -> new ValueAndPrevState(ProjectorScreenValue.CLOSE, OpenClosedType.OPEN);
-                };
-            case CURTAIN_VALUE_CHANNEL_ID ->
-                switch (command) {
-                    case OPEN -> new ValueAndPrevState(CurtainValue.OPEN, OpenClosedType.CLOSED);
-                    case CLOSED -> new ValueAndPrevState(CurtainValue.CLOSE, OpenClosedType.OPEN);
-                };
+                openClosedCommand(ProjectorScreenValue.OPEN, ProjectorScreenValue.CLOSE, command);
+            case CURTAIN_VALUE_CHANNEL_ID -> openClosedCommand(CurtainValue.OPEN, CurtainValue.CLOSE, command);
             case VERTICAL_BLIND_VALUE_CHANNEL_ID ->
-                switch (command) {
-                    case OPEN -> new ValueAndPrevState(VerticalBlindValue.OPEN, OpenClosedType.CLOSED);
-                    case CLOSED -> new ValueAndPrevState(VerticalBlindValue.CLOSE, OpenClosedType.OPEN);
-                };
+                openClosedCommand(VerticalBlindValue.OPEN, VerticalBlindValue.CLOSE, command);
             case ROLLER_GARAGE_DOOR_VALUE_CHANNEL_ID ->
-                switch (command) {
-                    case OPEN -> new ValueAndPrevState(RollerGarageDoorValue.OPEN, OpenClosedType.CLOSED);
-                    case CLOSED -> new ValueAndPrevState(RollerGarageDoorValue.CLOSE, OpenClosedType.OPEN);
-                };
+                openClosedCommand(RollerGarageDoorValue.OPEN, RollerGarageDoorValue.CLOSE, command);
             default -> null;
         });
+    }
+
+    private static ValueAndPrevState openClosedCommand(
+            AbstractOnOffValue openValue, AbstractOnOffValue closedValue, OpenClosedType command) {
+        return switch (command) {
+            case OPEN -> new ValueAndPrevState(openValue, OpenClosedType.CLOSED);
+            case CLOSED -> new ValueAndPrevState(closedValue, OpenClosedType.OPEN);
+        };
     }
 
     private Optional<String> findChannelTypeId(ChannelUID channelUID) {

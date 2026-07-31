@@ -125,7 +125,7 @@ class HandlerCommandTraitTest {
         verify(serverDevice)
                 .write(argThat(proto -> proto instanceof SuplaChannelNewValue newValue
                         && Arrays.equals(
-                                newValue.value(), ChannelTypeEncoder.INSTANCE.encode(GatewayLockValue.LOCKED))));
+                                newValue.value(), ChannelTypeEncoder.INSTANCE.encode(GatewayLockValue.UNLOCKED))));
     }
 
     @Test

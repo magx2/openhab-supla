@@ -67,11 +67,11 @@ public class ChannelValueToState {
             case HumidityValue value -> onHumidityValue(value);
             case HvacValue value -> onHvacValue(value);
             case CurtainValue value -> onOpenClosed(value);
-            case DoorLockValue value -> onLocked(value);
+            case DoorLockValue value -> onOnOff(value);
             case FacadeBlindValue value -> onOpenClosed(value);
             case GateValue value -> onOpenClosed(value);
             case GarageDoorValue value -> onOpenClosed(value);
-            case GatewayLockValue value -> onLocked(value);
+            case GatewayLockValue value -> onOnOff(value);
             case HeatOrColdSourceSwitchValue value -> onOnOff(value);
             case LightSwitchValue value -> onOnOff(value);
             case OnOffValue value -> onOnOff(value);
@@ -136,26 +136,13 @@ public class ChannelValueToState {
         return Stream.of(new ChannelState(createChannelUid(), new DecimalType(value.value())));
     }
 
-    private Stream<ChannelState> onOnOff(OnOffValue onOff) {
-        val id = createChannelUid();
-        return switch (onOff) {
-            case ON -> Stream.of(new ChannelState(id, OnOffType.ON));
-            case OFF -> Stream.of(new ChannelState(id, OnOffType.OFF));
-        };
-    }
-
-    private Stream<ChannelState> onOpenClosed(Enum<?> value) {
-        val state = "OPEN".equals(value.name()) ? OpenClosedType.OPEN : OpenClosedType.CLOSED;
+    private Stream<ChannelState> onOpenClosed(AbstractOnOffValue value) {
+        val state = value.toCommonBase() == OnOffValue.ON ? OpenClosedType.OPEN : OpenClosedType.CLOSED;
         return Stream.of(new ChannelState(createChannelUid(), state));
     }
 
-    private Stream<ChannelState> onOnOff(Enum<?> value) {
-        val state = "ON".equals(value.name()) ? OnOffType.ON : OnOffType.OFF;
-        return Stream.of(new ChannelState(createChannelUid(), state));
-    }
-
-    private Stream<ChannelState> onLocked(Enum<?> value) {
-        val state = "LOCKED".equals(value.name()) ? OnOffType.ON : OnOffType.OFF;
+    private Stream<ChannelState> onOnOff(AbstractOnOffValue value) {
+        val state = OnOffType.from(value.toCommonBase() == OnOffValue.ON);
         return Stream.of(new ChannelState(createChannelUid(), state));
     }
 
