@@ -70,11 +70,11 @@ class ChannelValueToStateTest {
     private static Stream<Arguments> semanticValues() {
         return Stream.of(
                 Arguments.of(CurtainValue.OPEN, OpenClosedType.OPEN),
-                Arguments.of(DoorLockValue.LOCKED, OnOffType.ON),
+                Arguments.of(DoorLockValue.LOCKED, OnOffType.OFF),
                 Arguments.of(FacadeBlindValue.CLOSE, OpenClosedType.CLOSED),
                 Arguments.of(GateValue.OPEN, OpenClosedType.OPEN),
                 Arguments.of(GarageDoorValue.CLOSE, OpenClosedType.CLOSED),
-                Arguments.of(GatewayLockValue.UNLOCKED, OnOffType.OFF),
+                Arguments.of(GatewayLockValue.UNLOCKED, OnOffType.ON),
                 Arguments.of(HeatOrColdSourceSwitchValue.ON, OnOffType.ON),
                 Arguments.of(LightSwitchValue.OFF, OnOffType.OFF),
                 Arguments.of(PowerSwitchValue.ON, OnOffType.ON),
