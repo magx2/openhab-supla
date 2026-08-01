@@ -5,7 +5,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.*;
 import static org.openhab.core.library.types.OnOffType.OFF;
-import static org.openhab.core.library.types.OpenClosedType.CLOSED;
+import static org.openhab.core.library.types.UpDownType.DOWN;
 import static pl.grzeslowski.jsupla.protocol.api.BitFunction.*;
 import static pl.grzeslowski.jsupla.protocol.api.ChannelFunction.SUPLA_CHANNELFNC_CONTROLLINGTHEGATE;
 import static pl.grzeslowski.jsupla.protocol.api.ChannelType.EV_TYPE_ELECTRICITY_METER_MEASUREMENT_V1;
@@ -243,7 +243,7 @@ class ChannelUtilTest {
                 .singleElement()
                 .extracting(Channel::getChannelTypeUID)
                 .isEqualTo(new ChannelTypeUID(SuplaBindingConstants.BINDING_ID, GATE_VALUE_CHANNEL_ID));
-        verify(serverDevice).updateState(new ChannelUID(thingUid, "0"), CLOSED);
+        verify(serverDevice).updateState(new ChannelUID(thingUid, "0"), DOWN);
     }
 
     @Test

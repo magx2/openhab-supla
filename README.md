@@ -78,13 +78,14 @@ manufacturer and product IDs are known:
 Native server devices can expose semantic Supla channel values as OpenHAB-native channels. The binding maps those values
 to standard item types so they can be linked directly from the UI or `.items` files:
 
-- `Contact` channels report `OPEN` or `CLOSED` for gates, garage doors, roller shutters, roof windows, facade blinds,
-terrace awnings, projector screens, curtains, vertical blinds, and roller garage doors.
+- `Rollershutter` channels report `UP` or `DOWN` and accept `UP`/`DOWN` commands for gates, garage doors, roller
+shutters, roof windows, facade blinds, terrace awnings, projector screens, curtains, vertical blinds, and roller
+garage doors.
 - `Switch` channels report `ON` or `OFF` for gateway locks, door locks, light switches, staircase timers, pump switches,
 heat or cold source switches, and power switches. Lock channels use Supla's common on/off mapping, where `ON` means
 unlocked and `OFF` means locked.
 - Power switch values use OpenHAB's built-in `system.power` channel type.
-- Pump switch and heat or cold source switch value channels are read-only. Other semantic `Contact` and `Switch`
+- Pump switch and heat or cold source switch value channels are read-only. Other semantic `Rollershutter` and `Switch`
 channels accept matching OpenHAB commands and send the corresponding Supla value back to the device.
 
 ## Cloud

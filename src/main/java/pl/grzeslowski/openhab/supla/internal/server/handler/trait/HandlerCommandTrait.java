@@ -43,6 +43,8 @@ public class HandlerCommandTrait implements HandleCommand {
 
     private record ValueAndPrevState(ChannelValue value, State prev) {}
 
+    private record MovementValues(AbstractOnOffValue upValue, AbstractOnOffValue downValue) {}
+
     @Override
     public void handleRefreshCommand(ChannelUID channelUID) {
         serverDevice.findState(channelUID).ifPresent(state -> serverDevice.updateState(channelUID, state));
@@ -59,11 +61,10 @@ public class HandlerCommandTrait implements HandleCommand {
 
     @Override
     public void handleUpDownCommand(ChannelUID channelUID, UpDownType command) {
-        var toSend =
-                switch (command) {
-                    case UP -> new ValueAndPrevState(OnOffValue.ON, OnOffType.OFF);
-                    case DOWN -> new ValueAndPrevState(OnOffValue.OFF, OnOffType.ON);
-                };
+        var toSend = semanticUpDownCommand(channelUID, command).orElseGet(() -> switch (command) {
+            case UP -> new ValueAndPrevState(OnOffValue.ON, OnOffType.OFF);
+            case DOWN -> new ValueAndPrevState(OnOffValue.OFF, OnOffType.ON);
+        });
         sendCommandToSuplaServer(channelUID, toSend.value, command, toSend.prev);
     }
 
@@ -98,25 +99,32 @@ public class HandlerCommandTrait implements HandleCommand {
     }
 
     private Optional<ValueAndPrevState> semanticOpenClosedCommand(ChannelUID channelUID, OpenClosedType command) {
+        return semanticMovementValues(channelUID)
+                .map(values -> openClosedCommand(values.upValue(), values.downValue(), command));
+    }
+
+    private Optional<ValueAndPrevState> semanticUpDownCommand(ChannelUID channelUID, UpDownType command) {
+        return semanticMovementValues(channelUID)
+                .map(values -> upDownCommand(values.upValue(), values.downValue(), command));
+    }
+
+    private Optional<MovementValues> semanticMovementValues(ChannelUID channelUID) {
         return findChannelTypeId(channelUID).map(channelTypeId -> switch (channelTypeId) {
-            case GATE_VALUE_CHANNEL_ID -> openClosedCommand(GateValue.OPEN, GateValue.CLOSE, command);
-            case GARAGE_DOOR_VALUE_CHANNEL_ID ->
-                openClosedCommand(GarageDoorValue.OPEN, GarageDoorValue.CLOSE, command);
+            case GATE_VALUE_CHANNEL_ID -> new MovementValues(GateValue.OPEN, GateValue.CLOSE);
+            case GARAGE_DOOR_VALUE_CHANNEL_ID -> new MovementValues(GarageDoorValue.OPEN, GarageDoorValue.CLOSE);
             case ROLLER_SHUTTER_VALUE_CHANNEL_ID ->
-                openClosedCommand(RollerShutterValue.OPEN, RollerShutterValue.CLOSE, command);
-            case ROOF_WINDOW_VALUE_CHANNEL_ID ->
-                openClosedCommand(RoofWindowValue.OPEN, RoofWindowValue.CLOSE, command);
-            case FACADE_BLIND_VALUE_CHANNEL_ID ->
-                openClosedCommand(FacadeBlindValue.OPEN, FacadeBlindValue.CLOSE, command);
+                new MovementValues(RollerShutterValue.OPEN, RollerShutterValue.CLOSE);
+            case ROOF_WINDOW_VALUE_CHANNEL_ID -> new MovementValues(RoofWindowValue.OPEN, RoofWindowValue.CLOSE);
+            case FACADE_BLIND_VALUE_CHANNEL_ID -> new MovementValues(FacadeBlindValue.OPEN, FacadeBlindValue.CLOSE);
             case TERRACE_AWNING_VALUE_CHANNEL_ID ->
-                openClosedCommand(TerraceAwningValue.OPEN, TerraceAwningValue.CLOSE, command);
+                new MovementValues(TerraceAwningValue.OPEN, TerraceAwningValue.CLOSE);
             case PROJECTOR_SCREEN_VALUE_CHANNEL_ID ->
-                openClosedCommand(ProjectorScreenValue.OPEN, ProjectorScreenValue.CLOSE, command);
-            case CURTAIN_VALUE_CHANNEL_ID -> openClosedCommand(CurtainValue.OPEN, CurtainValue.CLOSE, command);
+                new MovementValues(ProjectorScreenValue.OPEN, ProjectorScreenValue.CLOSE);
+            case CURTAIN_VALUE_CHANNEL_ID -> new MovementValues(CurtainValue.OPEN, CurtainValue.CLOSE);
             case VERTICAL_BLIND_VALUE_CHANNEL_ID ->
-                openClosedCommand(VerticalBlindValue.OPEN, VerticalBlindValue.CLOSE, command);
+                new MovementValues(VerticalBlindValue.OPEN, VerticalBlindValue.CLOSE);
             case ROLLER_GARAGE_DOOR_VALUE_CHANNEL_ID ->
-                openClosedCommand(RollerGarageDoorValue.OPEN, RollerGarageDoorValue.CLOSE, command);
+                new MovementValues(RollerGarageDoorValue.OPEN, RollerGarageDoorValue.CLOSE);
             default -> null;
         });
     }
@@ -129,6 +137,14 @@ public class HandlerCommandTrait implements HandleCommand {
         };
     }
 
+    private static ValueAndPrevState upDownCommand(
+            AbstractOnOffValue upValue, AbstractOnOffValue downValue, UpDownType command) {
+        return switch (command) {
+            case UP -> new ValueAndPrevState(upValue, UpDownType.DOWN);
+            case DOWN -> new ValueAndPrevState(downValue, UpDownType.UP);
+        };
+    }
+
     private Optional<String> findChannelTypeId(ChannelUID channelUID) {
         return Optional.ofNullable(serverDevice.getThing())
                 .map(thing -> thing.getChannel(channelUID))
@@ -138,6 +154,10 @@ public class HandlerCommandTrait implements HandleCommand {
 
     @Override
     public void handleStopMoveTypeCommand(ChannelUID channelUID, StopMoveType command) {
+        if (semanticMovementValues(channelUID).isPresent()) {
+            warnUnsupportedSemanticMovementCommand(channelUID, command);
+            return;
+        }
         var toSend =
                 switch (command) {
                     case MOVE -> new ValueAndPrevState(OnOffValue.ON, OnOffType.OFF);
@@ -168,8 +188,39 @@ public class HandlerCommandTrait implements HandleCommand {
         } else if (RgbwLed.BRIGHTNESS_CCT.equals(channelUID.getIdWithoutGroup())) {
             ledChangeDimCct(channelUID, command);
         } else {
-            sendCommandToSuplaServer(channelUID, new PercentValue(command.intValue()), command, null);
+            var semanticMovementValues = semanticMovementValues(channelUID);
+            if (semanticMovementValues.isPresent()) {
+                handlePercentCommandOnSemanticMovement(channelUID, command, semanticMovementValues.get());
+            } else {
+                sendCommandToSuplaServer(channelUID, new PercentValue(command.intValue()), command, null);
+            }
         }
+    }
+
+    private void handlePercentCommandOnSemanticMovement(
+            ChannelUID channelUID, PercentType command, MovementValues movementValues) {
+        var toSend =
+                switch (command.intValue()) {
+                    case 0 -> Optional.of(new ValueAndPrevState(movementValues.upValue(), UpDownType.DOWN));
+                    case 100 -> Optional.of(new ValueAndPrevState(movementValues.downValue(), UpDownType.UP));
+                    default -> Optional.<ValueAndPrevState>empty();
+                };
+        if (toSend.isEmpty()) {
+            warnUnsupportedSemanticMovementCommand(channelUID, command);
+            return;
+        }
+        var value = toSend.get();
+        sendCommandToSuplaServer(channelUID, value.value(), command, value.prev());
+    }
+
+    private void warnUnsupportedSemanticMovementCommand(ChannelUID channelUID, Command command) {
+        serverDevice
+                .getLogger()
+                .warn(
+                        "Not handling `{}` ({}) on semantic movement channel `{}`",
+                        command,
+                        command.getClass().getSimpleName(),
+                        channelUID);
     }
 
     @Override

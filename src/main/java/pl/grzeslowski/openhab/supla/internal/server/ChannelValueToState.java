@@ -66,32 +66,32 @@ public class ChannelValueToState {
             case HeatpolThermostatValue value -> onHeatpolThermostatValue(value);
             case HumidityValue value -> onHumidityValue(value);
             case HvacValue value -> onHvacValue(value);
-            case CurtainValue value -> onOpenClosed(value);
+            case CurtainValue value -> onUpDown(value);
             case DoorLockValue value -> onOnOff(value);
-            case FacadeBlindValue value -> onOpenClosed(value);
-            case GateValue value -> onOpenClosed(value);
-            case GarageDoorValue value -> onOpenClosed(value);
+            case FacadeBlindValue value -> onUpDown(value);
+            case GateValue value -> onUpDown(value);
+            case GarageDoorValue value -> onUpDown(value);
             case GatewayLockValue value -> onOnOff(value);
             case HeatOrColdSourceSwitchValue value -> onOnOff(value);
             case LightSwitchValue value -> onOnOff(value);
             case OnOffValue value -> onOnOff(value);
             case PercentValue value -> onPercentValue(value);
             case PowerSwitchValue value -> onOnOff(value);
-            case ProjectorScreenValue value -> onOpenClosed(value);
+            case ProjectorScreenValue value -> onUpDown(value);
             case PumpSwitchValue value -> onOnOff(value);
             case PressureValue value -> onPressureValue(value);
             case RainValue value -> onRainValue(value);
             case RgbValue value -> onRgbValue(value);
-            case RollerGarageDoorValue value -> onOpenClosed(value);
-            case RollerShutterValue value -> onOpenClosed(value);
-            case RoofWindowValue value -> onOpenClosed(value);
+            case RollerGarageDoorValue value -> onUpDown(value);
+            case RollerShutterValue value -> onUpDown(value);
+            case RoofWindowValue value -> onUpDown(value);
             case StaircaseTimerValue value -> onOnOff(value);
-            case TerraceAwningValue value -> onOpenClosed(value);
+            case TerraceAwningValue value -> onUpDown(value);
             case TemperatureAndHumidityValue value -> onTemperatureAndHumidityValue(value);
             case TemperatureDoubleValue value -> onTemperatureValue(value);
             case TimerValue value -> onTimerValue(value);
             case UnknownValue value -> onUnknownValue(value);
-            case VerticalBlindValue value -> onOpenClosed(value);
+            case VerticalBlindValue value -> onUpDown(value);
             case WeightValue value -> onWeightValue(value);
             case WindValue value -> onWindValue(value);
             case ActionTrigger value -> onActionTrigger(value);
@@ -138,6 +138,11 @@ public class ChannelValueToState {
 
     private Stream<ChannelState> onOpenClosed(AbstractOnOffValue value) {
         val state = value.toCommonBase() == OnOffValue.ON ? OpenClosedType.OPEN : OpenClosedType.CLOSED;
+        return Stream.of(new ChannelState(createChannelUid(), state));
+    }
+
+    private Stream<ChannelState> onUpDown(AbstractOnOffValue value) {
+        val state = value.toCommonBase() == OnOffValue.ON ? UpDownType.UP : UpDownType.DOWN;
         return Stream.of(new ChannelState(createChannelUid(), state));
     }
 

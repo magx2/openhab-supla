@@ -219,7 +219,7 @@
 	</channel-type>
 
 	<channel-type id="gate-value-channel">
-		<item-type>Contact</item-type>
+		<item-type>Rollershutter</item-type>
 		<label>%channel-type.supla.gate-value-channel.label</label>
 		<category>MoveControl</category>
 	</channel-type>
@@ -231,7 +231,7 @@
 	</channel-type>
 
 	<channel-type id="garage-door-value-channel">
-		<item-type>Contact</item-type>
+		<item-type>Rollershutter</item-type>
 		<label>%channel-type.supla.garage-door-value-channel.label</label>
 		<category>MoveControl</category>
 	</channel-type>
@@ -243,7 +243,7 @@
 	</channel-type>
 
 	<channel-type id="roller-shutter-value-channel">
-		<item-type>Contact</item-type>
+		<item-type>Rollershutter</item-type>
 		<label>%channel-type.supla.roller-shutter-value-channel.label</label>
 		<category>Rollershutter</category>
 	</channel-type>
@@ -261,43 +261,43 @@
 	</channel-type>
 
 	<channel-type id="roof-window-value-channel">
-		<item-type>Contact</item-type>
+		<item-type>Rollershutter</item-type>
 		<label>%channel-type.supla.roof-window-value-channel.label</label>
 		<category>MoveControl</category>
 	</channel-type>
 
 	<channel-type id="facade-blind-value-channel">
-		<item-type>Contact</item-type>
+		<item-type>Rollershutter</item-type>
 		<label>%channel-type.supla.facade-blind-value-channel.label</label>
 		<category>Rollershutter</category>
 	</channel-type>
 
 	<channel-type id="terrace-awning-value-channel">
-		<item-type>Contact</item-type>
+		<item-type>Rollershutter</item-type>
 		<label>%channel-type.supla.terrace-awning-value-channel.label</label>
 		<category>Rollershutter</category>
 	</channel-type>
 
 	<channel-type id="projector-screen-value-channel">
-		<item-type>Contact</item-type>
+		<item-type>Rollershutter</item-type>
 		<label>%channel-type.supla.projector-screen-value-channel.label</label>
 		<category>Rollershutter</category>
 	</channel-type>
 
 	<channel-type id="curtain-value-channel">
-		<item-type>Contact</item-type>
+		<item-type>Rollershutter</item-type>
 		<label>%channel-type.supla.curtain-value-channel.label</label>
 		<category>Rollershutter</category>
 	</channel-type>
 
 	<channel-type id="vertical-blind-value-channel">
-		<item-type>Contact</item-type>
+		<item-type>Rollershutter</item-type>
 		<label>%channel-type.supla.vertical-blind-value-channel.label</label>
 		<category>Rollershutter</category>
 	</channel-type>
 
 	<channel-type id="roller-garage-door-value-channel">
-		<item-type>Contact</item-type>
+		<item-type>Rollershutter</item-type>
 		<label>%channel-type.supla.roller-garage-door-value-channel.label</label>
 		<category>MoveControl</category>
 	</channel-type>

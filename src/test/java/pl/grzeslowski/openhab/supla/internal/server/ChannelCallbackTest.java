@@ -24,19 +24,19 @@ class ChannelCallbackTest {
 
     private static Stream<Arguments> semanticChannels() {
         return Stream.of(
-                Arguments.of(
-                        "Gate", GATE_VALUE_CHANNEL_ID, "supla", "Contact", (Function<ChannelCallback, Stream<Channel>>)
-                                ChannelCallback::onGateValue),
+                Arguments.of("Gate", GATE_VALUE_CHANNEL_ID, "supla", "Rollershutter", (Function<
+                                ChannelCallback, Stream<Channel>>)
+                        ChannelCallback::onGateValue),
                 Arguments.of("Gateway Lock", GATEWAY_LOCK_VALUE_CHANNEL_ID, "supla", "Switch", (Function<
                                 ChannelCallback, Stream<Channel>>)
                         ChannelCallback::onGatewayLockValue),
-                Arguments.of("Garage Door", GARAGE_DOOR_VALUE_CHANNEL_ID, "supla", "Contact", (Function<
+                Arguments.of("Garage Door", GARAGE_DOOR_VALUE_CHANNEL_ID, "supla", "Rollershutter", (Function<
                                 ChannelCallback, Stream<Channel>>)
                         ChannelCallback::onGarageDoorValue),
                 Arguments.of("Door Lock", DOOR_LOCK_VALUE_CHANNEL_ID, "supla", "Switch", (Function<
                                 ChannelCallback, Stream<Channel>>)
                         ChannelCallback::onDoorLockValue),
-                Arguments.of("Roller Shutter", ROLLER_SHUTTER_VALUE_CHANNEL_ID, "supla", "Contact", (Function<
+                Arguments.of("Roller Shutter", ROLLER_SHUTTER_VALUE_CHANNEL_ID, "supla", "Rollershutter", (Function<
                                 ChannelCallback, Stream<Channel>>)
                         ChannelCallback::onRollerShutterValue),
                 Arguments.of("Power Switch", SYSTEM_POWER_CHANNEL_TYPE, "system", "Switch", (Function<
@@ -48,27 +48,28 @@ class ChannelCallbackTest {
                 Arguments.of("Staircase Timer", STAIRCASE_TIMER_VALUE_CHANNEL_ID, "supla", "Switch", (Function<
                                 ChannelCallback, Stream<Channel>>)
                         ChannelCallback::onStaircaseTimerValue),
-                Arguments.of("Roof Window", ROOF_WINDOW_VALUE_CHANNEL_ID, "supla", "Contact", (Function<
+                Arguments.of("Roof Window", ROOF_WINDOW_VALUE_CHANNEL_ID, "supla", "Rollershutter", (Function<
                                 ChannelCallback, Stream<Channel>>)
                         ChannelCallback::onRoofWindowValue),
-                Arguments.of("Facade Blind", FACADE_BLIND_VALUE_CHANNEL_ID, "supla", "Contact", (Function<
+                Arguments.of("Facade Blind", FACADE_BLIND_VALUE_CHANNEL_ID, "supla", "Rollershutter", (Function<
                                 ChannelCallback, Stream<Channel>>)
                         ChannelCallback::onFacadeBlindValue),
-                Arguments.of("Terrace Awning", TERRACE_AWNING_VALUE_CHANNEL_ID, "supla", "Contact", (Function<
+                Arguments.of("Terrace Awning", TERRACE_AWNING_VALUE_CHANNEL_ID, "supla", "Rollershutter", (Function<
                                 ChannelCallback, Stream<Channel>>)
                         ChannelCallback::onTerraceAwningValue),
-                Arguments.of("Projector Screen", PROJECTOR_SCREEN_VALUE_CHANNEL_ID, "supla", "Contact", (Function<
+                Arguments.of("Projector Screen", PROJECTOR_SCREEN_VALUE_CHANNEL_ID, "supla", "Rollershutter", (Function<
                                 ChannelCallback, Stream<Channel>>)
                         ChannelCallback::onProjectorScreenValue),
-                Arguments.of("Curtain", CURTAIN_VALUE_CHANNEL_ID, "supla", "Contact", (Function<
+                Arguments.of("Curtain", CURTAIN_VALUE_CHANNEL_ID, "supla", "Rollershutter", (Function<
                                 ChannelCallback, Stream<Channel>>)
                         ChannelCallback::onCurtainValue),
-                Arguments.of("Vertical Blind", VERTICAL_BLIND_VALUE_CHANNEL_ID, "supla", "Contact", (Function<
+                Arguments.of("Vertical Blind", VERTICAL_BLIND_VALUE_CHANNEL_ID, "supla", "Rollershutter", (Function<
                                 ChannelCallback, Stream<Channel>>)
                         ChannelCallback::onVerticalBlindValue),
-                Arguments.of("Roller Garage Door", ROLLER_GARAGE_DOOR_VALUE_CHANNEL_ID, "supla", "Contact", (Function<
-                                ChannelCallback, Stream<Channel>>)
-                        ChannelCallback::onRollerGarageDoorValue),
+                Arguments.of(
+                        "Roller Garage Door", ROLLER_GARAGE_DOOR_VALUE_CHANNEL_ID, "supla", "Rollershutter", (Function<
+                                        ChannelCallback, Stream<Channel>>)
+                                ChannelCallback::onRollerGarageDoorValue),
                 Arguments.of("Pump Switch", PUMP_SWITCH_VALUE_CHANNEL_ID, "supla", "Switch", (Function<
                                 ChannelCallback, Stream<Channel>>)
                         ChannelCallback::onPumpSwitchValue),
