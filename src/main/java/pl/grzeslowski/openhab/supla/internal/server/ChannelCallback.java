@@ -57,7 +57,7 @@ public class ChannelCallback implements ChannelClassSwitch.Callback<Stream<Chann
 
     @Override
     public Stream<Channel> onGateValue() {
-        return semanticChannel(GATE_VALUE_CHANNEL_ID, "Gate", ROLLER_SHUTTER);
+        return semanticChannel(GATE_VALUE_CHANNEL_ID, "Gate", SWITCH);
     }
 
     @Override

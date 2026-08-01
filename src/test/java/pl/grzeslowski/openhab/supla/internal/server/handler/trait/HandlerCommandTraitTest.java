@@ -132,6 +132,20 @@ class HandlerCommandTraitTest {
     }
 
     @Test
+    void shouldSendSemanticGateOnOffCommandAndRecordPreviousState() {
+        ChannelUID channelUID = new ChannelUID("binding:thing:sub:1");
+        var thing = thingWithChannelType(channelUID, GATE_VALUE_CHANNEL_ID);
+        when(serverDevice.getThing()).thenReturn(thing);
+
+        handlerCommandTrait.handleOnOffCommand(channelUID, ON);
+
+        verify(serverDevice)
+                .write(argThat(proto -> proto instanceof SuplaChannelNewValue newValue
+                        && Arrays.equals(newValue.value(), ChannelTypeEncoder.INSTANCE.encode(GateValue.OPEN))));
+        assertThat(channelNumberMap.get(1).previousState()).isEqualTo(OFF);
+    }
+
+    @Test
     void shouldSendSemanticOpenClosedCommand() {
         ChannelUID channelUID = new ChannelUID("binding:thing:sub:1");
         var thing = thingWithChannelType(channelUID, GATE_VALUE_CHANNEL_ID);
@@ -173,7 +187,7 @@ class HandlerCommandTraitTest {
     }
 
     @Test
-    void shouldIgnoreUnsupportedSemanticMovementCommands() {
+    void shouldIgnoreUnsupportedSemanticMovementStopCommandWithoutWarning() {
         ChannelUID channelUID = new ChannelUID("binding:thing:sub:1");
         var thing = thingWithChannelType(channelUID, GATE_VALUE_CHANNEL_ID);
         when(serverDevice.getThing()).thenReturn(thing);
@@ -181,6 +195,13 @@ class HandlerCommandTraitTest {
         handlerCommandTrait.handleStopMoveTypeCommand(channelUID, StopMoveType.STOP);
 
         verify(serverDevice, never()).write(any());
+        verify(logger)
+                .debug(
+                        "Ignoring `{}` ({}) on semantic movement channel `{}` because there is no STOP/MOVE payload",
+                        StopMoveType.STOP,
+                        StopMoveType.class.getSimpleName(),
+                        channelUID);
+        verify(logger, never()).warn(anyString(), any(), any(), any());
     }
 
     @Test

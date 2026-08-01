@@ -79,6 +79,7 @@ public class HandlerCommandTrait implements HandleCommand {
 
     private Optional<ValueAndPrevState> semanticOnOffCommand(ChannelUID channelUID, OnOffType command) {
         return findChannelTypeId(channelUID).map(channelTypeId -> switch (channelTypeId) {
+            case GATE_VALUE_CHANNEL_ID -> onOffCommand(GateValue.OPEN, GateValue.CLOSE, command);
             case GATEWAY_LOCK_VALUE_CHANNEL_ID ->
                 onOffCommand(GatewayLockValue.UNLOCKED, GatewayLockValue.LOCKED, command);
             case DOOR_LOCK_VALUE_CHANNEL_ID -> onOffCommand(DoorLockValue.UNLOCKED, DoorLockValue.LOCKED, command);

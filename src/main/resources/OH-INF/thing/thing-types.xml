@@ -219,7 +219,7 @@
 	</channel-type>
 
 	<channel-type id="gate-value-channel">
-		<item-type>Rollershutter</item-type>
+		<item-type>Switch</item-type>
 		<label>%channel-type.supla.gate-value-channel.label</label>
 		<category>MoveControl</category>
 	</channel-type>

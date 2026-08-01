@@ -72,7 +72,7 @@ class ChannelValueToStateTest {
                 Arguments.of(CurtainValue.OPEN, UpDownType.UP),
                 Arguments.of(DoorLockValue.LOCKED, OnOffType.OFF),
                 Arguments.of(FacadeBlindValue.CLOSE, UpDownType.DOWN),
-                Arguments.of(GateValue.OPEN, UpDownType.UP),
+                Arguments.of(GateValue.OPEN, OnOffType.ON),
                 Arguments.of(GarageDoorValue.CLOSE, UpDownType.DOWN),
                 Arguments.of(GatewayLockValue.UNLOCKED, OnOffType.ON),
                 Arguments.of(HeatOrColdSourceSwitchValue.ON, OnOffType.ON),
