@@ -57,7 +57,7 @@ public class ChannelCallback implements ChannelClassSwitch.Callback<Stream<Chann
 
     @Override
     public Stream<Channel> onGateValue() {
-        return semanticChannel(GATE_VALUE_CHANNEL_ID, "Gate", "Contact");
+        return semanticChannel(GATE_VALUE_CHANNEL_ID, "Gate", ROLLER_SHUTTER);
     }
 
     @Override
@@ -67,7 +67,7 @@ public class ChannelCallback implements ChannelClassSwitch.Callback<Stream<Chann
 
     @Override
     public Stream<Channel> onGarageDoorValue() {
-        return semanticChannel(GARAGE_DOOR_VALUE_CHANNEL_ID, "Garage Door", "Contact");
+        return semanticChannel(GARAGE_DOOR_VALUE_CHANNEL_ID, "Garage Door", ROLLER_SHUTTER);
     }
 
     @Override
@@ -77,7 +77,7 @@ public class ChannelCallback implements ChannelClassSwitch.Callback<Stream<Chann
 
     @Override
     public Stream<Channel> onRollerShutterValue() {
-        return semanticChannel(ROLLER_SHUTTER_VALUE_CHANNEL_ID, "Roller Shutter", "Contact");
+        return semanticChannel(ROLLER_SHUTTER_VALUE_CHANNEL_ID, "Roller Shutter", ROLLER_SHUTTER);
     }
 
     @Override
@@ -97,37 +97,37 @@ public class ChannelCallback implements ChannelClassSwitch.Callback<Stream<Chann
 
     @Override
     public Stream<Channel> onRoofWindowValue() {
-        return semanticChannel(ROOF_WINDOW_VALUE_CHANNEL_ID, "Roof Window", "Contact");
+        return semanticChannel(ROOF_WINDOW_VALUE_CHANNEL_ID, "Roof Window", ROLLER_SHUTTER);
     }
 
     @Override
     public Stream<Channel> onFacadeBlindValue() {
-        return semanticChannel(FACADE_BLIND_VALUE_CHANNEL_ID, "Facade Blind", "Contact");
+        return semanticChannel(FACADE_BLIND_VALUE_CHANNEL_ID, "Facade Blind", ROLLER_SHUTTER);
     }
 
     @Override
     public Stream<Channel> onTerraceAwningValue() {
-        return semanticChannel(TERRACE_AWNING_VALUE_CHANNEL_ID, "Terrace Awning", "Contact");
+        return semanticChannel(TERRACE_AWNING_VALUE_CHANNEL_ID, "Terrace Awning", ROLLER_SHUTTER);
     }
 
     @Override
     public Stream<Channel> onProjectorScreenValue() {
-        return semanticChannel(PROJECTOR_SCREEN_VALUE_CHANNEL_ID, "Projector Screen", "Contact");
+        return semanticChannel(PROJECTOR_SCREEN_VALUE_CHANNEL_ID, "Projector Screen", ROLLER_SHUTTER);
     }
 
     @Override
     public Stream<Channel> onCurtainValue() {
-        return semanticChannel(CURTAIN_VALUE_CHANNEL_ID, "Curtain", "Contact");
+        return semanticChannel(CURTAIN_VALUE_CHANNEL_ID, "Curtain", ROLLER_SHUTTER);
     }
 
     @Override
     public Stream<Channel> onVerticalBlindValue() {
-        return semanticChannel(VERTICAL_BLIND_VALUE_CHANNEL_ID, "Vertical Blind", "Contact");
+        return semanticChannel(VERTICAL_BLIND_VALUE_CHANNEL_ID, "Vertical Blind", ROLLER_SHUTTER);
     }
 
     @Override
     public Stream<Channel> onRollerGarageDoorValue() {
-        return semanticChannel(ROLLER_GARAGE_DOOR_VALUE_CHANNEL_ID, "Roller Garage Door", "Contact");
+        return semanticChannel(ROLLER_GARAGE_DOOR_VALUE_CHANNEL_ID, "Roller Garage Door", ROLLER_SHUTTER);
     }
 
     @Override

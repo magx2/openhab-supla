@@ -24,6 +24,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.openhab.core.library.types.OnOffType;
+import org.openhab.core.library.types.PercentType;
+import org.openhab.core.library.types.StopMoveType;
+import org.openhab.core.library.types.UpDownType;
 import org.openhab.core.thing.Channel;
 import org.openhab.core.thing.ChannelUID;
 import org.openhab.core.thing.Thing;
@@ -139,6 +142,45 @@ class HandlerCommandTraitTest {
         verify(serverDevice)
                 .write(argThat(proto -> proto instanceof SuplaChannelNewValue newValue
                         && Arrays.equals(newValue.value(), ChannelTypeEncoder.INSTANCE.encode(GateValue.OPEN))));
+    }
+
+    @Test
+    void shouldSendSemanticUpDownCommandAndRecordPreviousState() {
+        ChannelUID channelUID = new ChannelUID("binding:thing:sub:1");
+        var thing = thingWithChannelType(channelUID, GATE_VALUE_CHANNEL_ID);
+        when(serverDevice.getThing()).thenReturn(thing);
+
+        handlerCommandTrait.handleUpDownCommand(channelUID, UpDownType.UP);
+
+        verify(serverDevice)
+                .write(argThat(proto -> proto instanceof SuplaChannelNewValue newValue
+                        && Arrays.equals(newValue.value(), ChannelTypeEncoder.INSTANCE.encode(GateValue.OPEN))));
+        assertThat(channelNumberMap.get(1).previousState()).isEqualTo(UpDownType.DOWN);
+    }
+
+    @Test
+    void shouldMapSemanticMovementPercentEndpoints() {
+        ChannelUID channelUID = new ChannelUID("binding:thing:sub:1");
+        var thing = thingWithChannelType(channelUID, GATE_VALUE_CHANNEL_ID);
+        when(serverDevice.getThing()).thenReturn(thing);
+
+        handlerCommandTrait.handlePercentCommand(channelUID, new PercentType(100));
+
+        verify(serverDevice)
+                .write(argThat(proto -> proto instanceof SuplaChannelNewValue newValue
+                        && Arrays.equals(newValue.value(), ChannelTypeEncoder.INSTANCE.encode(GateValue.CLOSE))));
+        assertThat(channelNumberMap.get(1).previousState()).isEqualTo(UpDownType.UP);
+    }
+
+    @Test
+    void shouldIgnoreUnsupportedSemanticMovementCommands() {
+        ChannelUID channelUID = new ChannelUID("binding:thing:sub:1");
+        var thing = thingWithChannelType(channelUID, GATE_VALUE_CHANNEL_ID);
+        when(serverDevice.getThing()).thenReturn(thing);
+
+        handlerCommandTrait.handleStopMoveTypeCommand(channelUID, StopMoveType.STOP);
+
+        verify(serverDevice, never()).write(any());
     }
 
     @Test

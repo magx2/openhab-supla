@@ -39,10 +39,10 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.openhab.core.library.types.HSBType;
 import org.openhab.core.library.types.OnOffType;
-import org.openhab.core.library.types.OpenClosedType;
 import org.openhab.core.library.types.PercentType;
 import org.openhab.core.library.types.QuantityType;
 import org.openhab.core.library.types.StringType;
+import org.openhab.core.library.types.UpDownType;
 import org.openhab.core.thing.ChannelGroupUID;
 import org.openhab.core.thing.ChannelUID;
 import org.openhab.core.thing.ThingUID;
@@ -69,23 +69,23 @@ class ChannelValueToStateTest {
 
     private static Stream<Arguments> semanticValues() {
         return Stream.of(
-                Arguments.of(CurtainValue.OPEN, OpenClosedType.OPEN),
+                Arguments.of(CurtainValue.OPEN, UpDownType.UP),
                 Arguments.of(DoorLockValue.LOCKED, OnOffType.OFF),
-                Arguments.of(FacadeBlindValue.CLOSE, OpenClosedType.CLOSED),
-                Arguments.of(GateValue.OPEN, OpenClosedType.OPEN),
-                Arguments.of(GarageDoorValue.CLOSE, OpenClosedType.CLOSED),
+                Arguments.of(FacadeBlindValue.CLOSE, UpDownType.DOWN),
+                Arguments.of(GateValue.OPEN, UpDownType.UP),
+                Arguments.of(GarageDoorValue.CLOSE, UpDownType.DOWN),
                 Arguments.of(GatewayLockValue.UNLOCKED, OnOffType.ON),
                 Arguments.of(HeatOrColdSourceSwitchValue.ON, OnOffType.ON),
                 Arguments.of(LightSwitchValue.OFF, OnOffType.OFF),
                 Arguments.of(PowerSwitchValue.ON, OnOffType.ON),
-                Arguments.of(ProjectorScreenValue.CLOSE, OpenClosedType.CLOSED),
+                Arguments.of(ProjectorScreenValue.CLOSE, UpDownType.DOWN),
                 Arguments.of(PumpSwitchValue.OFF, OnOffType.OFF),
-                Arguments.of(RollerGarageDoorValue.OPEN, OpenClosedType.OPEN),
-                Arguments.of(RollerShutterValue.CLOSE, OpenClosedType.CLOSED),
-                Arguments.of(RoofWindowValue.OPEN, OpenClosedType.OPEN),
+                Arguments.of(RollerGarageDoorValue.OPEN, UpDownType.UP),
+                Arguments.of(RollerShutterValue.CLOSE, UpDownType.DOWN),
+                Arguments.of(RoofWindowValue.OPEN, UpDownType.UP),
                 Arguments.of(StaircaseTimerValue.ON, OnOffType.ON),
-                Arguments.of(TerraceAwningValue.CLOSE, OpenClosedType.CLOSED),
-                Arguments.of(VerticalBlindValue.OPEN, OpenClosedType.OPEN));
+                Arguments.of(TerraceAwningValue.CLOSE, UpDownType.DOWN),
+                Arguments.of(VerticalBlindValue.OPEN, UpDownType.UP));
     }
 
     private DeviceChannel mockDeviceChannel(int number) {
