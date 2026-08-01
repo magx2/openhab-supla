@@ -2,6 +2,7 @@ package pl.grzeslowski.openhab.supla.internal.device;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
+import static pl.grzeslowski.jsupla.protocol.api.ChannelFunction.SUPLA_CHANNELFNC_NONE;
 import static pl.grzeslowski.jsupla.protocol.api.ChannelType.SUPLA_CHANNELTYPE_DIMMERANDRGBLED;
 import static pl.grzeslowski.jsupla.protocol.api.channeltype.value.ActionTrigger.Capabilities.HOLD;
 import static pl.grzeslowski.jsupla.protocol.api.channeltype.value.ActionTrigger.Capabilities.SHORT_PRESS_x1;
@@ -91,7 +92,9 @@ public class ZamelMslw01 extends Device {
 
     private void updateRgb(byte[] value) {
         var rgbwValue = (RgbValue) ChannelTypeDecoder.INSTANCE.decode(
-                new ChannelDescription(SUPLA_CHANNELTYPE_DIMMERANDRGBLED, Set.of(), Set.of()), value);
+                ChannelDescription.fromValues(
+                        SUPLA_CHANNELTYPE_DIMMERANDRGBLED, Set.of(), null, SUPLA_CHANNELFNC_NONE.getValue()),
+                value);
         if (rgbwValue.command().equals(TURN_ON_DIMMER) || rgbwValue.command().equals(TURN_OFF_DIMMER)) {
             this.rgbwValue = new RgbValue(
                     rgbwValue.brightness(),

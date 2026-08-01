@@ -117,41 +117,20 @@ public class ChannelUtil {
     }
 
     private static ChannelDescription channelDescription(DeviceChannel deviceChannel) {
-        var channelFunction = deviceChannel.channelFunction();
-        var functions = channelFunction == null
-                ? deviceChannel.functions()
-                : semanticFunction(channelFunction).map(Set::of).orElse(deviceChannel.functions());
-        return new ChannelDescription(deviceChannel.type(), deviceChannel.flags(), functions);
+        return ChannelDescription.fromValues(
+                deviceChannel.type(),
+                deviceChannel.flags(),
+                functionsMask(deviceChannel.functions()),
+                Optional.ofNullable(deviceChannel.channelFunction())
+                        .orElse(ChannelFunction.SUPLA_CHANNELFNC_NONE)
+                        .getValue());
     }
 
-    private static Optional<BitFunction> semanticFunction(ChannelFunction channelFunction) {
-        return switch (channelFunction) {
-            case SUPLA_CHANNELFNC_CONTROLLINGTHEGATEWAYLOCK ->
-                Optional.of(BitFunction.SUPLA_BIT_FUNC_CONTROLLINGTHEGATEWAYLOCK);
-            case SUPLA_CHANNELFNC_CONTROLLINGTHEGATE -> Optional.of(BitFunction.SUPLA_BIT_FUNC_CONTROLLINGTHEGATE);
-            case SUPLA_CHANNELFNC_CONTROLLINGTHEGARAGEDOOR ->
-                Optional.of(BitFunction.SUPLA_BIT_FUNC_CONTROLLINGTHEGARAGEDOOR);
-            case SUPLA_CHANNELFNC_CONTROLLINGTHEDOORLOCK ->
-                Optional.of(BitFunction.SUPLA_BIT_FUNC_CONTROLLINGTHEDOORLOCK);
-            case SUPLA_CHANNELFNC_CONTROLLINGTHEROLLERSHUTTER ->
-                Optional.of(BitFunction.SUPLA_BIT_FUNC_CONTROLLINGTHEROLLERSHUTTER);
-            case SUPLA_CHANNELFNC_POWERSWITCH -> Optional.of(BitFunction.SUPLA_BIT_FUNC_POWERSWITCH);
-            case SUPLA_CHANNELFNC_LIGHTSWITCH -> Optional.of(BitFunction.SUPLA_BIT_FUNC_LIGHTSWITCH);
-            case SUPLA_CHANNELFNC_STAIRCASETIMER -> Optional.of(BitFunction.SUPLA_BIT_FUNC_STAIRCASETIMER);
-            case SUPLA_CHANNELFNC_CONTROLLINGTHEROOFWINDOW ->
-                Optional.of(BitFunction.SUPLA_BIT_FUNC_CONTROLLINGTHEROOFWINDOW);
-            case SUPLA_CHANNELFNC_CONTROLLINGTHEFACADEBLIND ->
-                Optional.of(BitFunction.SUPLA_BIT_FUNC_CONTROLLINGTHEFACADEBLIND);
-            case SUPLA_CHANNELFNC_TERRACE_AWNING -> Optional.of(BitFunction.SUPLA_BIT_FUNC_TERRACE_AWNING);
-            case SUPLA_CHANNELFNC_PROJECTOR_SCREEN -> Optional.of(BitFunction.SUPLA_BIT_FUNC_PROJECTOR_SCREEN);
-            case SUPLA_CHANNELFNC_CURTAIN -> Optional.of(BitFunction.SUPLA_BIT_FUNC_CURTAIN);
-            case SUPLA_CHANNELFNC_VERTICAL_BLIND -> Optional.of(BitFunction.SUPLA_BIT_FUNC_VERTICAL_BLIND);
-            case SUPLA_CHANNELFNC_ROLLER_GARAGE_DOOR -> Optional.of(BitFunction.SUPLA_BIT_FUNC_ROLLER_GARAGE_DOOR);
-            case SUPLA_CHANNELFNC_PUMPSWITCH -> Optional.of(BitFunction.SUPLA_BIT_FUNC_PUMPSWITCH);
-            case SUPLA_CHANNELFNC_HEATORCOLDSOURCESWITCH ->
-                Optional.of(BitFunction.SUPLA_BIT_FUNC_HEATORCOLDSOURCESWITCH);
-            default -> Optional.empty();
-        };
+    private static @Nullable Integer functionsMask(Set<BitFunction> functions) {
+        if (functions.isEmpty()) {
+            return null;
+        }
+        return functions.stream().mapToInt(BitFunction::getValue).reduce(0, (left, right) -> left | right);
     }
 
     public Stream<ChannelValueToState.ChannelState> findState(DeviceChannel deviceChannel) {
@@ -231,7 +210,7 @@ public class ChannelUtil {
     }
 
     private static ChannelDescription channelDescription(ChannelType type) {
-        return new ChannelDescription(type, Set.of(), Set.of());
+        return ChannelDescription.fromValues(type, Set.of(), null, ChannelFunction.SUPLA_CHANNELFNC_NONE.getValue());
     }
 
     private void updateStatus(int channelNumber, byte[] channelValue, @Nullable Long validityTimeSec) {
