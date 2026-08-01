@@ -548,8 +548,6 @@ public class ChannelValueToState {
     }
 
     private Stream<ChannelState> onTimerValue(TimerValue channelValue) {
-        // do not know what to do with this
-        log.debug("Do not know how to handle timer={}", channelValue);
         return Stream.empty();
     }
 
