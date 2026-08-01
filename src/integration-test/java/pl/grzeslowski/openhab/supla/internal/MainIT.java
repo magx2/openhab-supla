@@ -241,7 +241,7 @@ public class MainIT {
             await().untilAsserted(() -> {
                 assertThat(deviceCtx.openHabDevice().getChannelStates()).hasSize(6);
                 assertThat(deviceCtx.openHabDevice().findChannelState(gateChannel))
-                        .isEqualTo(OpenClosedType.CLOSED);
+                        .isEqualTo(OnOffType.OFF);
                 assertThat(deviceCtx.openHabDevice().findChannelState(gatewayLockChannel))
                         .isEqualTo(OnOffType.OFF);
                 for (int channelNumber = 2; channelNumber <= 5; channelNumber++) {
@@ -253,7 +253,7 @@ public class MainIT {
             var registeredThing = requireNonNull(deviceCtx.openHabDevice().getThing());
             assertThat(registeredThing.getChannels()).hasSize(10);
             var registeredGateChannel = requireNonNull(registeredThing.getChannel(gateChannel));
-            assertThat(registeredGateChannel.getAcceptedItemType()).isEqualTo("Contact");
+            assertThat(registeredGateChannel.getAcceptedItemType()).isEqualTo("Switch");
             assertThat(registeredGateChannel.getChannelTypeUID())
                     .isEqualTo(new ChannelTypeUID(BINDING_ID, GATE_VALUE_CHANNEL_ID));
             var registeredGatewayLockChannel = requireNonNull(registeredThing.getChannel(gatewayLockChannel));
@@ -263,7 +263,7 @@ public class MainIT {
 
             device.toggleState(0);
             await().untilAsserted(() -> assertThat(deviceCtx.openHabDevice().findChannelState(gateChannel))
-                    .isEqualTo(OpenClosedType.OPEN));
+                    .isEqualTo(OnOffType.ON));
             device.toggleState(1);
             await().untilAsserted(() -> assertThat(deviceCtx.openHabDevice().findChannelState(gatewayLockChannel))
                     .isEqualTo(OnOffType.ON));
@@ -275,7 +275,7 @@ public class MainIT {
                         .isEqualTo(OnOffType.ON));
             }
 
-            deviceCtx.handler().handleCommand(gateChannel, OpenClosedType.CLOSED);
+            deviceCtx.handler().handleCommand(gateChannel, OnOffType.OFF);
             device.updateChannel();
             assertThat(device.getState(0)).isFalse();
             deviceCtx.handler().handleCommand(gatewayLockChannel, OnOffType.OFF);
