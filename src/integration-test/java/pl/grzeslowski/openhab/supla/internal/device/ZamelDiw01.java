@@ -2,6 +2,7 @@ package pl.grzeslowski.openhab.supla.internal.device;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
+import static pl.grzeslowski.jsupla.protocol.api.ChannelFunction.SUPLA_CHANNELFNC_NONE;
 import static pl.grzeslowski.jsupla.protocol.api.ChannelType.SUPLA_CHANNELTYPE_DIMMER;
 import static pl.grzeslowski.jsupla.protocol.api.consts.ProtoConsts.SUPLA_EMAIL_MAXSIZE;
 import static pl.grzeslowski.openhab.supla.internal.server.ByteArrayToHex.hexToBytes;
@@ -69,8 +70,10 @@ public class ZamelDiw01 extends Device {
     @Override
     protected void updateChannel(short channelNumber, byte[] value) {
         assertThat(channelNumber).isZero();
-        this.value = (PercentValue)
-                decoder.decode(new ChannelDescription(SUPLA_CHANNELTYPE_DIMMER, Set.of(), Set.of()), value);
+        this.value = (PercentValue) decoder.decode(
+                ChannelDescription.fromValues(
+                        SUPLA_CHANNELTYPE_DIMMER, Set.of(), null, SUPLA_CHANNELFNC_NONE.getValue()),
+                value);
     }
 
     public void dim() throws IOException {

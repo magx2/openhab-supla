@@ -49,7 +49,17 @@ public class DecipherProtocol {
 
     private static ChannelValue decode(int type, Set<ChannelFlag> flags, Set<BitFunction> functions, byte[] value) {
         var channelType = ChannelType.findByValue(type).orElse(null);
-        return ChannelTypeDecoder.INSTANCE.decode(new ChannelDescription(channelType, flags, functions), value);
+        return ChannelTypeDecoder.INSTANCE.decode(
+                ChannelDescription.fromValues(
+                        channelType, flags, functionsMask(functions), SUPLA_CHANNELFNC_NONE.getValue()),
+                value);
+    }
+
+    private static Integer functionsMask(Set<BitFunction> functions) {
+        if (functions.isEmpty()) {
+            return null;
+        }
+        return functions.stream().mapToInt(BitFunction::getValue).reduce(0, (left, right) -> left | right);
     }
 
     @SuppressWarnings("SwitchStatementWithTooFewBranches")
