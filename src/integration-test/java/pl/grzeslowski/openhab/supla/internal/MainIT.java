@@ -1,5 +1,6 @@
 package pl.grzeslowski.openhab.supla.internal;
 
+import static java.util.Objects.requireNonNull;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.openhab.core.library.unit.Units.KILOWATT_HOUR;
@@ -10,6 +11,9 @@ import static org.openhab.core.thing.ThingStatusDetail.*;
 import static org.openhab.core.types.RefreshType.REFRESH;
 import static org.openhab.core.types.UnDefType.UNDEF;
 import static pl.grzeslowski.jsupla.protocol.api.HvacMode.SUPLA_HVAC_MODE_OFF;
+import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.BINDING_ID;
+import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.Channels.GATEWAY_LOCK_VALUE_CHANNEL_ID;
+import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.Channels.GATE_VALUE_CHANNEL_ID;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.SUPLA_SERVER_DEVICE_TYPE_ID;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.SUPLA_SERVER_TYPE_ID;
 import static pl.grzeslowski.openhab.supla.internal.extension.supla.SuplaExtension.deviceInitialize;
@@ -31,6 +35,7 @@ import org.openhab.core.library.types.*;
 import org.openhab.core.thing.ChannelUID;
 import org.openhab.core.thing.ThingStatusInfo;
 import org.openhab.core.thing.binding.builder.ThingStatusInfoBuilder;
+import org.openhab.core.thing.type.ChannelTypeUID;
 import org.openhab.core.util.ColorUtil;
 import pl.grzeslowski.jsupla.protocol.api.structs.sd.SuplaRegisterDeviceResultA;
 import pl.grzeslowski.openhab.supla.internal.device.*;
@@ -194,6 +199,103 @@ public class MainIT {
             }
         }
         // device is closed
+        log.info("Waiting for the device to disconnect");
+        await().untilAsserted(() -> assertThat(deviceCtx.openHabDevice().findThingStatus())
+                .isEqualTo(
+                        new ThingStatusInfo(OFFLINE, COMMUNICATION_ERROR, "@text/supla.offline.channel-disconnected")));
+    }
+
+    @Test
+    @DisplayName("should run tests for Zamel mSBW-02")
+    void zamelMsbw02(
+            @CreateHandler(thingTypeId = SUPLA_SERVER_DEVICE_TYPE_ID) ThingCtx deviceCtx,
+            @CreateHandler(thingTypeId = SUPLA_SERVER_TYPE_ID) BridgeCtx serverCtx,
+            @Port int port,
+            @Email String email,
+            @AuthKey String authKey)
+            throws Exception {
+        var guid = deviceCtx.thing().getUID().getId();
+        log.info(
+                "Testing Zamel mSBW-02 with GUID={}, using socket on port={}, email={}, authKey={}",
+                guid,
+                port,
+                email,
+                authKey);
+        serverInitialize(serverCtx, port);
+        deviceInitialize(deviceCtx, serverCtx, email, authKey, guid);
+
+        try (var device = new ZamelMsbw02(guid, email, authKey)) {
+            device.initialize("localhost", port);
+            device.register();
+            var registerResult = device.readRegisterDeviceResultA();
+            assertThat(registerResult).isEqualTo(new SuplaRegisterDeviceResultA(3, (short) 100, (short) 25, (short) 1));
+            awaitWaitingForRegistration(deviceCtx);
+
+            device.sendPing();
+            assertThat(device.readPing().now()).isNotNull();
+            await().untilAsserted(() -> assertThat(deviceCtx.openHabDevice().findThingStatus())
+                    .isEqualTo(ThingStatusInfoBuilder.create(ONLINE, NONE).build()));
+
+            var gateChannel = new ChannelUID(deviceCtx.thing().getUID(), "0");
+            var gatewayLockChannel = new ChannelUID(deviceCtx.thing().getUID(), "1");
+            await().untilAsserted(() -> {
+                assertThat(deviceCtx.openHabDevice().getChannelStates()).hasSize(6);
+                assertThat(deviceCtx.openHabDevice().findChannelState(gateChannel))
+                        .isEqualTo(OpenClosedType.CLOSED);
+                assertThat(deviceCtx.openHabDevice().findChannelState(gatewayLockChannel))
+                        .isEqualTo(OnOffType.OFF);
+                for (int channelNumber = 2; channelNumber <= 5; channelNumber++) {
+                    assertThat(deviceCtx.openHabDevice().findChannelState(channelNumber))
+                            .isEqualTo(OnOffType.OFF);
+                }
+            });
+
+            var registeredThing = requireNonNull(deviceCtx.openHabDevice().getThing());
+            assertThat(registeredThing.getChannels()).hasSize(10);
+            var registeredGateChannel = requireNonNull(registeredThing.getChannel(gateChannel));
+            assertThat(registeredGateChannel.getAcceptedItemType()).isEqualTo("Contact");
+            assertThat(registeredGateChannel.getChannelTypeUID())
+                    .isEqualTo(new ChannelTypeUID(BINDING_ID, GATE_VALUE_CHANNEL_ID));
+            var registeredGatewayLockChannel = requireNonNull(registeredThing.getChannel(gatewayLockChannel));
+            assertThat(registeredGatewayLockChannel.getAcceptedItemType()).isEqualTo("Switch");
+            assertThat(registeredGatewayLockChannel.getChannelTypeUID())
+                    .isEqualTo(new ChannelTypeUID(BINDING_ID, GATEWAY_LOCK_VALUE_CHANNEL_ID));
+
+            device.toggleState(0);
+            await().untilAsserted(() -> assertThat(deviceCtx.openHabDevice().findChannelState(gateChannel))
+                    .isEqualTo(OpenClosedType.OPEN));
+            device.toggleState(1);
+            await().untilAsserted(() -> assertThat(deviceCtx.openHabDevice().findChannelState(gatewayLockChannel))
+                    .isEqualTo(OnOffType.ON));
+
+            for (int channelNumber = 2; channelNumber <= 5; channelNumber++) {
+                device.toggleState(channelNumber);
+                int currentChannel = channelNumber;
+                await().untilAsserted(() -> assertThat(deviceCtx.openHabDevice().findChannelState(currentChannel))
+                        .isEqualTo(OnOffType.ON));
+            }
+
+            deviceCtx.handler().handleCommand(gateChannel, OpenClosedType.CLOSED);
+            device.updateChannel();
+            assertThat(device.getState(0)).isFalse();
+            deviceCtx.handler().handleCommand(gatewayLockChannel, OnOffType.OFF);
+            device.updateChannel();
+            assertThat(device.getState(1)).isFalse();
+
+            for (int channelNumber = 6; channelNumber <= 9; channelNumber++) {
+                device.shortPress(channelNumber);
+                var trigger = deviceCtx.openHabDevice().popTrigger();
+                assertThat(trigger.channelUID().getId()).isEqualTo(String.valueOf(channelNumber));
+                assertThat(trigger.event()).isEqualTo("SHORT_PRESS_x1");
+            }
+            for (int channelNumber = 6; channelNumber <= 9; channelNumber++) {
+                device.hold(channelNumber);
+                var trigger = deviceCtx.openHabDevice().popTrigger();
+                assertThat(trigger.channelUID().getId()).isEqualTo(String.valueOf(channelNumber));
+                assertThat(trigger.event()).isEqualTo("HOLD");
+            }
+        }
+
         log.info("Waiting for the device to disconnect");
         await().untilAsserted(() -> assertThat(deviceCtx.openHabDevice().findThingStatus())
                 .isEqualTo(

@@ -28,6 +28,8 @@ import org.openhab.core.thing.ChannelUID;
 import org.openhab.core.thing.binding.builder.ChannelBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import pl.grzeslowski.jsupla.protocol.api.BitFunction;
+import pl.grzeslowski.jsupla.protocol.api.ChannelFunction;
 import pl.grzeslowski.jsupla.protocol.api.ChannelStateField;
 import pl.grzeslowski.jsupla.protocol.api.ChannelType;
 import pl.grzeslowski.jsupla.protocol.api.LastConnectionResetCause;
@@ -115,7 +117,41 @@ public class ChannelUtil {
     }
 
     private static ChannelDescription channelDescription(DeviceChannel deviceChannel) {
-        return new ChannelDescription(deviceChannel.type(), deviceChannel.flags(), deviceChannel.functions());
+        var channelFunction = deviceChannel.channelFunction();
+        var functions = channelFunction == null
+                ? deviceChannel.functions()
+                : semanticFunction(channelFunction).map(Set::of).orElse(deviceChannel.functions());
+        return new ChannelDescription(deviceChannel.type(), deviceChannel.flags(), functions);
+    }
+
+    private static Optional<BitFunction> semanticFunction(ChannelFunction channelFunction) {
+        return switch (channelFunction) {
+            case SUPLA_CHANNELFNC_CONTROLLINGTHEGATEWAYLOCK ->
+                Optional.of(BitFunction.SUPLA_BIT_FUNC_CONTROLLINGTHEGATEWAYLOCK);
+            case SUPLA_CHANNELFNC_CONTROLLINGTHEGATE -> Optional.of(BitFunction.SUPLA_BIT_FUNC_CONTROLLINGTHEGATE);
+            case SUPLA_CHANNELFNC_CONTROLLINGTHEGARAGEDOOR ->
+                Optional.of(BitFunction.SUPLA_BIT_FUNC_CONTROLLINGTHEGARAGEDOOR);
+            case SUPLA_CHANNELFNC_CONTROLLINGTHEDOORLOCK ->
+                Optional.of(BitFunction.SUPLA_BIT_FUNC_CONTROLLINGTHEDOORLOCK);
+            case SUPLA_CHANNELFNC_CONTROLLINGTHEROLLERSHUTTER ->
+                Optional.of(BitFunction.SUPLA_BIT_FUNC_CONTROLLINGTHEROLLERSHUTTER);
+            case SUPLA_CHANNELFNC_POWERSWITCH -> Optional.of(BitFunction.SUPLA_BIT_FUNC_POWERSWITCH);
+            case SUPLA_CHANNELFNC_LIGHTSWITCH -> Optional.of(BitFunction.SUPLA_BIT_FUNC_LIGHTSWITCH);
+            case SUPLA_CHANNELFNC_STAIRCASETIMER -> Optional.of(BitFunction.SUPLA_BIT_FUNC_STAIRCASETIMER);
+            case SUPLA_CHANNELFNC_CONTROLLINGTHEROOFWINDOW ->
+                Optional.of(BitFunction.SUPLA_BIT_FUNC_CONTROLLINGTHEROOFWINDOW);
+            case SUPLA_CHANNELFNC_CONTROLLINGTHEFACADEBLIND ->
+                Optional.of(BitFunction.SUPLA_BIT_FUNC_CONTROLLINGTHEFACADEBLIND);
+            case SUPLA_CHANNELFNC_TERRACE_AWNING -> Optional.of(BitFunction.SUPLA_BIT_FUNC_TERRACE_AWNING);
+            case SUPLA_CHANNELFNC_PROJECTOR_SCREEN -> Optional.of(BitFunction.SUPLA_BIT_FUNC_PROJECTOR_SCREEN);
+            case SUPLA_CHANNELFNC_CURTAIN -> Optional.of(BitFunction.SUPLA_BIT_FUNC_CURTAIN);
+            case SUPLA_CHANNELFNC_VERTICAL_BLIND -> Optional.of(BitFunction.SUPLA_BIT_FUNC_VERTICAL_BLIND);
+            case SUPLA_CHANNELFNC_ROLLER_GARAGE_DOOR -> Optional.of(BitFunction.SUPLA_BIT_FUNC_ROLLER_GARAGE_DOOR);
+            case SUPLA_CHANNELFNC_PUMPSWITCH -> Optional.of(BitFunction.SUPLA_BIT_FUNC_PUMPSWITCH);
+            case SUPLA_CHANNELFNC_HEATORCOLDSOURCESWITCH ->
+                Optional.of(BitFunction.SUPLA_BIT_FUNC_HEATORCOLDSOURCESWITCH);
+            default -> Optional.empty();
+        };
     }
 
     public Stream<ChannelValueToState.ChannelState> findState(DeviceChannel deviceChannel) {

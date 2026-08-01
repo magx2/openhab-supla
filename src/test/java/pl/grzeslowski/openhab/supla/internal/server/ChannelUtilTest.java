@@ -5,10 +5,15 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.*;
 import static org.openhab.core.library.types.OnOffType.OFF;
+import static org.openhab.core.library.types.OpenClosedType.CLOSED;
+import static pl.grzeslowski.jsupla.protocol.api.BitFunction.*;
+import static pl.grzeslowski.jsupla.protocol.api.ChannelFunction.SUPLA_CHANNELFNC_CONTROLLINGTHEGATE;
 import static pl.grzeslowski.jsupla.protocol.api.ChannelType.EV_TYPE_ELECTRICITY_METER_MEASUREMENT_V1;
 import static pl.grzeslowski.jsupla.protocol.api.ChannelType.SUPLA_CHANNELTYPE_ACTIONTRIGGER;
 import static pl.grzeslowski.jsupla.protocol.api.ChannelType.SUPLA_CHANNELTYPE_ELECTRICITY_METER;
+import static pl.grzeslowski.jsupla.protocol.api.ChannelType.SUPLA_CHANNELTYPE_RELAY;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.Channels.ACTION_TRIGGER_ID;
+import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.Channels.GATE_VALUE_CHANNEL_ID;
 
 import java.math.BigDecimal;
 import java.time.Duration;
@@ -17,6 +22,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -200,6 +206,44 @@ class ChannelUtilTest {
                     .isEqualTo(new ChannelTypeUID(SuplaBindingConstants.BINDING_ID, ACTION_TRIGGER_ID));
             assertThat(channel.getKind()).isEqualTo(ChannelKind.TRIGGER);
         });
+    }
+
+    @Test
+    void shouldPreferConfiguredSemanticFunctionOverSupportedFunctions() {
+        var thingUid = new ThingUID("supla:test:1");
+        when(thing.getUID()).thenReturn(thingUid);
+        when(thingBuilder.build()).thenReturn(thing);
+        var gateChannel = new DeviceChannel(
+                0,
+                false,
+                SUPLA_CHANNELTYPE_RELAY,
+                Set.of(),
+                SUPLA_CHANNELFNC_CONTROLLINGTHEGATE,
+                Set.of(),
+                new byte[8],
+                null,
+                null,
+                null,
+                0L,
+                Set.of(
+                        SUPLA_BIT_FUNC_CONTROLLINGTHEGATEWAYLOCK,
+                        SUPLA_BIT_FUNC_CONTROLLINGTHEGATE,
+                        SUPLA_BIT_FUNC_CONTROLLINGTHEGARAGEDOOR,
+                        SUPLA_BIT_FUNC_POWERSWITCH),
+                0);
+
+        channelUtil.buildChannels(List.of(gateChannel));
+
+        @SuppressWarnings("unchecked")
+        var channelsCaptor = org.mockito.ArgumentCaptor.forClass(List.class);
+        verify(thingBuilder).withChannels(channelsCaptor.capture());
+        @SuppressWarnings("unchecked")
+        var channels = (List<Channel>) channelsCaptor.getValue();
+        assertThat(channels)
+                .singleElement()
+                .extracting(Channel::getChannelTypeUID)
+                .isEqualTo(new ChannelTypeUID(SuplaBindingConstants.BINDING_ID, GATE_VALUE_CHANNEL_ID));
+        verify(serverDevice).updateState(new ChannelUID(thingUid, "0"), CLOSED);
     }
 
     @Test
