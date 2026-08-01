@@ -25,6 +25,7 @@ import static pl.grzeslowski.jsupla.protocol.api.channeltype.value.ElectricityMe
 import static pl.grzeslowski.jsupla.protocol.api.channeltype.value.ElectricityMeterValue.Sequence.COUNTER_CLOCKWISE_132;
 
 import java.math.BigDecimal;
+import java.time.Duration;
 import java.util.Currency;
 import java.util.List;
 import java.util.Optional;
@@ -192,6 +193,16 @@ class ChannelValueToStateTest {
                 converter.switchOn(unknownValue).map(ChannelState::state).toList();
 
         assertThat(messageStates).containsExactly(new StringType("oops"));
+    }
+
+    @Test
+    void shouldIgnoreTimerValue() {
+        var converter = new ChannelValueToState(thingUID, mockDeviceChannel(5));
+        var timerValue = new TimerValue(Duration.ZERO, new byte[8], 0, "");
+
+        List<ChannelState> channelStates = converter.switchOn(timerValue).toList();
+
+        assertThat(channelStates).isEmpty();
     }
 
     @Test

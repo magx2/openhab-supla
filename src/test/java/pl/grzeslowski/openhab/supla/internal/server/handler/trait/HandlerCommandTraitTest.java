@@ -187,7 +187,7 @@ class HandlerCommandTraitTest {
     }
 
     @Test
-    void shouldIgnoreUnsupportedSemanticMovementStopCommandWithoutWarning() {
+    void shouldWarnUnsupportedSemanticMovementStopCommand() {
         ChannelUID channelUID = new ChannelUID("binding:thing:sub:1");
         var thing = thingWithChannelType(channelUID, GATE_VALUE_CHANNEL_ID);
         when(serverDevice.getThing()).thenReturn(thing);
@@ -196,12 +196,11 @@ class HandlerCommandTraitTest {
 
         verify(serverDevice, never()).write(any());
         verify(logger)
-                .debug(
-                        "Ignoring `{}` ({}) on semantic movement channel `{}` because there is no STOP/MOVE payload",
+                .warn(
+                        "Not handling `{}` ({}) on semantic movement channel `{}`",
                         StopMoveType.STOP,
                         StopMoveType.class.getSimpleName(),
                         channelUID);
-        verify(logger, never()).warn(anyString(), any(), any(), any());
     }
 
     @Test
