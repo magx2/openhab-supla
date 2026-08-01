@@ -24,9 +24,9 @@ class ChannelCallbackTest {
 
     private static Stream<Arguments> semanticChannels() {
         return Stream.of(
-                Arguments.of("Gate", GATE_VALUE_CHANNEL_ID, "supla", "Rollershutter", (Function<
-                                ChannelCallback, Stream<Channel>>)
-                        ChannelCallback::onGateValue),
+                Arguments.of(
+                        "Gate", GATE_VALUE_CHANNEL_ID, "supla", "Switch", (Function<ChannelCallback, Stream<Channel>>)
+                                ChannelCallback::onGateValue),
                 Arguments.of("Gateway Lock", GATEWAY_LOCK_VALUE_CHANNEL_ID, "supla", "Switch", (Function<
                                 ChannelCallback, Stream<Channel>>)
                         ChannelCallback::onGatewayLockValue),

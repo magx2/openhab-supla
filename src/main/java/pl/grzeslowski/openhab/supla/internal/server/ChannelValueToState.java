@@ -69,7 +69,7 @@ public class ChannelValueToState {
             case CurtainValue value -> onUpDown(value);
             case DoorLockValue value -> onOnOff(value);
             case FacadeBlindValue value -> onUpDown(value);
-            case GateValue value -> onUpDown(value);
+            case GateValue value -> onOnOff(value);
             case GarageDoorValue value -> onUpDown(value);
             case GatewayLockValue value -> onOnOff(value);
             case HeatOrColdSourceSwitchValue value -> onOnOff(value);
