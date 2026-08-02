@@ -13,16 +13,18 @@ This binding has been tested and certified to work with a variety of Supla devic
 seamless integration with your OpenHAB setup. The following devices are officially certified, listed in alphabetical
 order:
 
-- [AURATON Aries](https://www.auraton.pl/oferta/ogrzewanie-podlogowe/auraton-aries) (successor to AURATON RTH 8D PRO) is
+Devices marked with 🎁 were sponsored by their manufacturers for certification testing.
+
+- [AURATON Aries](https://www.auraton.pl/oferta/ogrzewanie-podlogowe/auraton-aries) 🎁 (successor to AURATON RTH 8D PRO) is
 an advanced wireless control strip, for managing underfloor heating actuators. Designed for installation in electrical
 boxes, it provides a versatile and reliable solution for modern heating systems. With its ability to integrate with
 other devices, the AURATON Aries is the ideal solution for homes concerned with thermal comfort and energy efficiency.
 By installing it with AURATON Vela actuators, you ensure a 10-year warranty on the strip!
-- [Auraton Heat Monitor](https://www.auraton.pl/oferta/inteligentny-dom-smart/ogrzewanie/auraton-heat-monitor)  brings
+- [Auraton Heat Monitor](https://www.auraton.pl/oferta/inteligentny-dom-smart/ogrzewanie/auraton-heat-monitor) 🎁 brings
 comfort in your home to a new level. The device will ensure that your desired temperature is exactly where you are.
 This minimalist thermostat was created to be close to you and your loved ones. Available in two versatile colours:
 white and black.
-- [AURATON Switch ONE](https://www.auraton.pl/oferta/inteligentny-dom-smart/energia/auraton-switch-one-1) Switch One
+- [AURATON Switch ONE](https://www.auraton.pl/oferta/inteligentny-dom-smart/energia/auraton-switch-one-1) 🎁 Switch One
 makes it convenient for you to control electrical devices. For example, to control the lighting of the entire house.
 Just download the Auraton Smart App after installation and Switch One will help you create a fully smart home.
 - [Zamel DIW-01](https://supla.zamel.com/product/sciemniacz-oswietlenia-wi-fi-diw-01/) The DIW-01 dimmer is designed to regulate the intensity of lighting fixtures equipped with conventional incandescent and halogen bulbs rated at 230 V AC. The dimmer also works with light sources powered by an electronic transformer. It is also possible to change the light intensity for selected dimmable LED bulbs and dimmable CFL fluorescent lamps. The dimmer can be controlled wirelessly from the Supla application and wired from a monostable or bistable switch (on/off only).
@@ -31,13 +33,16 @@ Just download the Auraton Smart App after installation and Switch One will help 
 accuracy in electricity consumption monitoring available with tools for advanced data analysis. MEW-01 is designed for
 DIN-rail (TH35) mounting, occupies a width of two modules and offers the possibility of attaching an external antenna
 for use also outside the switchgear.
+- [Zamel mSBW-02](https://supla.zamel.com/product/sterownik-bramowy-wi-fi-2-kanalowy-msbw-02/) 🎁 is a compact
+two-channel Wi-Fi gate controller that integrates with gate drives and wickets. It supports remote control through
+the Supla mobile application and can monitor gate state using limit switch inputs.
 - [Zamel mSLW-01](https://supla.zamel.com/product/sterownik-led-rgbw-wi-fi/) The mSLW-01 device is an advanced RGBW LED mood lighting controller in a compact mini version. Designed for convenience and flexibility, it allows you to personalise and control lighting in any interior where LED lighting is used. Retaining all the features of the original SLW-01 controller, it offers a smaller and easier to install housing. In addition to RGB colour control, the mSLW-01 is equipped with an additional channel for controlling white LED lighting. The ideal controller for RGBW LED strips.
 - [Zamel ROW-01](https://supla.zamel.com/product/odbiornik-wi-fi-dopuszkowy-1-kanalowy-dwukierunkowy-row-01/) belongs to
 a family of smart home control products via wi-fi. The device uses SUPLA cloud technology. The ROW-01 module allows
 you to control lighting, turn on and off sockets and electrical appliances using a smartphone or tablet. The ROW-01
 extension modules are used both as elements for mounting in under- and surface-mounted installation boxes, and as
 actuators built directly into the housings of lighting fixtures.
-- [Zamel ROW-02](https://supla.zamel.com/product/odbiornik-wi-fi-dopuszkowy-2-kanalowy-dwukierunkowy-row-02/) controller
+- [Zamel ROW-02](https://supla.zamel.com/product/odbiornik-wi-fi-dopuszkowy-2-kanalowy-dwukierunkowy-row-02/) 🎁 controller
 allows you to control lighting with buttons or switches in bistable mode. In addition, thanks to the built-in wi-fi
 module, it is possible to remotely manage lighting using a smartphone application. The device informs about the status
 of the lighting. The user can control the lighting from anywhere in the world. Thanks to the cloud application, it is
