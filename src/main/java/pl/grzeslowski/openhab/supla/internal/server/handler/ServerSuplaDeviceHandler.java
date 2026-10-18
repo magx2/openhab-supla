@@ -341,8 +341,10 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler
                     consumeSuplaSetActivityTimeout(activityTimeout, writer);
                 case SuplaDeviceChannelValue value -> {
                     var trait = DeviceChannelValue.fromProto(value);
-                    if (isSleepModeEnabled() && !trait.offline() && trait.validityTimeSec() != null) {
-                        ping.keepAliveFor(Duration.ofSeconds(trait.validityTimeSec()));
+                    if (isSleepModeEnabled() && !trait.offline()) {
+                        var validityTime = trait.validityTimeSec();
+                        ping.updateChannelValidity(
+                                trait.channelNumber(), validityTime != null ? Duration.ofSeconds(validityTime) : null);
                     }
                     consumeDeviceChannelValueTrait(trait);
                 }
@@ -494,9 +496,8 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler
         if (isSleepModeEnabled()) {
             registerEntity.channels().stream()
                     .filter(channel -> !channel.offline())
-                    .mapToLong(DeviceChannel::valueValidityTimeSec)
-                    .max()
-                    .ifPresent(seconds -> ping.keepAliveFor(Duration.ofSeconds(seconds)));
+                    .forEach(channel -> ping.updateChannelValidity(
+                            channel.number(), Duration.ofSeconds(channel.valueValidityTimeSec())));
         }
         ping.ping();
         checkForSoftwareUpdate(registerEntity);

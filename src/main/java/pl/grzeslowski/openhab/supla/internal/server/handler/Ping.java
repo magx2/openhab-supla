@@ -10,6 +10,8 @@ import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.BINDIN
 import java.io.Closeable;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ScheduledFuture;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,8 +33,7 @@ class Ping implements Closeable {
     @Nullable
     private TimeoutConfiguration timeout;
 
-    @Nullable
-    private Instant valuesValidUntil;
+    private final Map<Integer, Instant> channelValidity = new HashMap<>();
 
     public synchronized boolean isRunning() {
         return pingSchedule != null && !pingSchedule.isCancelled() && timeout != null && lastMessageFromDevice != null;
@@ -53,10 +54,11 @@ class Ping implements Closeable {
                         MILLISECONDS);
     }
 
-    public synchronized void keepAliveFor(Duration validityTime) {
-        var validUntil = now().plus(validityTime);
-        if (valuesValidUntil == null || validUntil.isAfter(valuesValidUntil)) {
-            valuesValidUntil = validUntil;
+    public synchronized void updateChannelValidity(int channelNumber, @Nullable Duration validityTime) {
+        if (validityTime != null && validityTime.compareTo(Duration.ZERO) > 0) {
+            channelValidity.put(channelNumber, now().plus(validityTime));
+        } else {
+            channelValidity.remove(channelNumber);
         }
     }
 
@@ -65,7 +67,7 @@ class Ping implements Closeable {
             return;
         }
         var now = now();
-        if (valuesValidUntil != null && !now.isAfter(valuesValidUntil)) {
+        if (channelValidity.values().stream().anyMatch(validUntil -> !now.isAfter(validUntil))) {
             return;
         }
         if (lastMessageFromDevice.plus(requireNonNull(timeout).max()).compareTo(now) < 0) {
@@ -98,7 +100,7 @@ class Ping implements Closeable {
         pingSchedule = null;
         timeout = null;
         lastMessageFromDevice = null;
-        valuesValidUntil = null;
+        channelValidity.clear();
 
         var cancelled = requireNonNull(localPingSchedule).cancel(true);
         if (!cancelled) {
