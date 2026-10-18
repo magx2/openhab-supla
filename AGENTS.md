@@ -144,6 +144,7 @@ logger.debug("Message with " + value); // ❌
 - **ALWAYS** run `mvn spotless:apply` before committing
 - **ALWAYS** run `mvn test` before committing
 - **ALWAYS** read files before modifying them
+- **ALWAYS** update the current unreleased version's changelog in `changelog/` when creating a PR, following `changelog/AGENTS.md`
 - Use Lombok annotations for boilerplate (e.g., `@Getter`, `@RequiredArgsConstructor`)
 - Use parameterized logging with SLF4J
 - Add `@NonNullByDefault` to new classes
