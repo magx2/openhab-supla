@@ -239,6 +239,31 @@ class ServerSuplaDeviceHandlerTest {
         }
     }
 
+    @ParameterizedTest
+    @ValueSource(longs = {0, 5})
+    void shouldReplaceChannelValidityWhenNewReadingArrives(long validitySeconds) throws Exception {
+        prepareLifecycle(true);
+        handler.active(mock(SuplaWriter.class));
+        var currentTime = new AtomicReference<>(Instant.parse("2026-10-18T12:00:00Z"));
+        try (var clock = mockStatic(Instant.class, CALLS_REAL_METHODS)) {
+            clock.when(Instant::now).thenAnswer(__ -> currentTime.get());
+            handler.register(registration(true), mock(OpenHabMessageHandler.class));
+            currentTime.set(currentTime.get().plusSeconds(30));
+
+            handler.handle(new SuplaDeviceChannelValueC((short) 0, (short) 0, validitySeconds, new byte[8]));
+            handler.inactive();
+            clearInvocations(handler);
+            currentTime.set(currentTime.get().plusSeconds(13));
+            checkPing();
+
+            assertThat(devicePing().isRunning()).isFalse();
+            verify(handler)
+                    .updateStatus(eq(ThingStatus.OFFLINE), eq(ThingStatusDetail.COMMUNICATION_ERROR), anyString());
+        } finally {
+            handler.dispose();
+        }
+    }
+
     private void prepareLifecycle(boolean sleepEnabled) throws Exception {
         handler = mock(
                 TestServerSuplaDeviceHandler.class,
