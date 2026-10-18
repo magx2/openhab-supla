@@ -65,6 +65,11 @@ However, it's important to note that by opting for this setup, you lose the inte
 won't have remote access through the Supla Cloud app or benefit from cloud-based services and updates provided by Supla.
 Ensure this trade-off aligns with your smart home requirements before proceeding with the native device configuration.
 
+Sleep-capable devices such as ZAMEL THW-01 may send sensor readings and disconnect while sleeping. The binding
+keeps their cached readings and tolerates socket timeouts and reconnects without warnings. Reported channel value
+validity extends the activity watchdog across the sleep interval; if the device does not return before both value
+validity and the configured maximum activity timeout expire, it is marked offline.
+
 After a native server device registers, the binding stores Supla product catalog metadata in thing properties when the
 manufacturer and product IDs are known:
 

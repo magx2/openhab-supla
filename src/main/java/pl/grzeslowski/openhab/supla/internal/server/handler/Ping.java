@@ -22,7 +22,6 @@ import pl.grzeslowski.openhab.supla.internal.server.oh_config.TimeoutConfigurati
 @Slf4j
 @RequiredArgsConstructor
 class Ping implements Closeable {
-    private static final Duration MINIMAL_TIMEOUT_FOR_SLEEP_DEVICE = Duration.ofSeconds(30);
     private final DeviceStatusUpdater updater;
     private volatile Instant lastMessageFromDevice;
 
@@ -32,7 +31,10 @@ class Ping implements Closeable {
     @Nullable
     private TimeoutConfiguration timeout;
 
-    public boolean isRunning() {
+    @Nullable
+    private Instant valuesValidUntil;
+
+    public synchronized boolean isRunning() {
         return pingSchedule != null && !pingSchedule.isCancelled() && timeout != null && lastMessageFromDevice != null;
     }
 
@@ -43,14 +45,6 @@ class Ping implements Closeable {
         }
         lastMessageFromDevice = now();
         this.timeout = timeout;
-        if (updater.isSleepModeEnabled() && timeout.timeout().compareTo(MINIMAL_TIMEOUT_FOR_SLEEP_DEVICE) < 0) {
-            attachGuid(
-                    updater.getGuid(),
-                    () -> log.warn(
-                            "This is a sleep device and timeout is low ({}). Consider increasing the timeout to {}.",
-                            timeout.timeout(),
-                            MINIMAL_TIMEOUT_FOR_SLEEP_DEVICE));
-        }
         pingSchedule = ThreadPoolManager.getScheduledPool(BINDING_ID)
                 .scheduleWithFixedDelay(
                         this::checkIfDeviceIsUp,
@@ -59,11 +53,21 @@ class Ping implements Closeable {
                         MILLISECONDS);
     }
 
+    public synchronized void keepAliveFor(Duration validityTime) {
+        var validUntil = now().plus(validityTime);
+        if (valuesValidUntil == null || validUntil.isAfter(valuesValidUntil)) {
+            valuesValidUntil = validUntil;
+        }
+    }
+
     private synchronized void checkIfDeviceIsUp() {
         if (!isRunning()) {
             return;
         }
         var now = now();
+        if (valuesValidUntil != null && !now.isAfter(valuesValidUntil)) {
+            return;
+        }
         if (lastMessageFromDevice.plus(requireNonNull(timeout).max()).compareTo(now) < 0) {
             var delta = Duration.between(lastMessageFromDevice, now);
             try {
@@ -71,7 +75,7 @@ class Ping implements Closeable {
                     attachGuid(
                             updater.getGuid(),
                             () -> log.debug(
-                                    "Updater is sleeping and there was no ping in {} so disconneting channel", delta));
+                                    "Updater is sleeping and there was no ping in {} so disconnecting channel", delta));
                     updater.channelDisconnected();
                 } else {
                     attachGuid(updater.getGuid(), () -> log.debug("Ping expired, delta={}", delta));
@@ -87,14 +91,14 @@ class Ping implements Closeable {
 
     @Override
     public synchronized void close() {
-        if (!isRunning()) {
-            attachGuid(updater.getGuid(), () -> log.warn("Ping is not running for device {}", updater.getGuid()));
+        var localPingSchedule = pingSchedule;
+        if (localPingSchedule == null) {
             return;
         }
-        var localPingSchedule = pingSchedule;
         pingSchedule = null;
         timeout = null;
         lastMessageFromDevice = null;
+        valuesValidUntil = null;
 
         var cancelled = requireNonNull(localPingSchedule).cancel(true);
         if (!cancelled) {
@@ -102,6 +106,13 @@ class Ping implements Closeable {
                     updater.getGuid(),
                     () -> log.warn("Failed to cancel ping schedule for device {}", updater.getGuid()));
         }
+    }
+
+    public synchronized void ping(TimeoutConfiguration timeout) {
+        if (!isRunning()) {
+            start(timeout);
+        }
+        ping();
     }
 
     public synchronized void ping() {
@@ -113,7 +124,7 @@ class Ping implements Closeable {
         lastMessageFromDevice = now();
     }
 
-    public State toState() {
+    public synchronized State toState() {
         return isRunning() ? new DateTimeType(lastMessageFromDevice) : UNDEF;
     }
 

@@ -333,14 +333,19 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler
             logger.warn("The write channel is not active, messages should not be incoming!");
             return;
         }
-        ping.ping();
+        ping.ping(requireNonNull(deviceConfiguration).timeoutConfiguration());
         try {
             switch (entity) {
                 case SuplaPingServer ping -> consumeSuplaPingServer(ping, writer);
                 case SuplaSetActivityTimeout(var activityTimeout) ->
                     consumeSuplaSetActivityTimeout(activityTimeout, writer);
-                case SuplaDeviceChannelValue value ->
-                    consumeDeviceChannelValueTrait(DeviceChannelValue.fromProto(value));
+                case SuplaDeviceChannelValue value -> {
+                    var trait = DeviceChannelValue.fromProto(value);
+                    if (isSleepModeEnabled() && !trait.offline() && trait.validityTimeSec() != null) {
+                        ping.keepAliveFor(Duration.ofSeconds(trait.validityTimeSec()));
+                    }
+                    consumeDeviceChannelValueTrait(trait);
+                }
                 case SuplaDeviceChannelExtendedValue value -> {
                     var extendedValue = value.value();
                     var extendedType = ChannelType.findByValue(extendedValue.type());
@@ -382,11 +387,8 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler
     public void inactive() {
         if (isSleepModeEnabled()) {
             logger.debug("Channel is inactive but sleep mode is on, not transitioning to OFFLINE");
-            // still have to dispose handler,
-            // because when new connection arrive
-            // it will have new handler
-            disposeHandler();
             sleeping = true;
+            disposeHandler();
             return;
         }
         channelDisconnected();
@@ -401,15 +403,18 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler
 
     public void register(@NonNull RegisterDeviceTrait registerEntity, OpenHabMessageHandler handler)
             throws InitializationException {
+        var oldHandler = this.handler;
+        if (oldHandler != null && suplaDevice != null && isSleepModeEnabled()) {
+            sleeping = true;
+        }
         if (sleeping) {
             logger.debug("Not changing status to OFFLINE, because sleep device woke up");
         } else {
             updateStatus(OFFLINE, HANDLER_CONFIGURATION_PENDING, text("supla.offline.device-authorizing"));
         }
-        var oldHandler = this.handler;
         if (oldHandler != null) {
-            logger.warn(
-                    "Having old handler. Should not happen! handler={}#{}",
+            logger.debug(
+                    "Replacing previous connection handler={}#{}",
                     oldHandler.getClass().getSimpleName(),
                     oldHandler.hashCode());
             oldHandler.clear();
@@ -486,6 +491,13 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler
         }
 
         ping.start(requireNonNull(deviceConfiguration).timeoutConfiguration());
+        if (isSleepModeEnabled()) {
+            registerEntity.channels().stream()
+                    .filter(channel -> !channel.offline())
+                    .mapToLong(DeviceChannel::valueValidityTimeSec)
+                    .max()
+                    .ifPresent(seconds -> ping.keepAliveFor(Duration.ofSeconds(seconds)));
+        }
         ping.ping();
         checkForSoftwareUpdate(registerEntity);
     }
@@ -509,10 +521,7 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler
                         timeout.max().toSeconds());
         writer.write(data).addListener(f -> logger.trace("setActivityTimeout {}", data));
 
-        if (ping.isRunning()) {
-            ping.close();
-        }
-        ping.start(timeout);
+        ping.ping(timeout);
     }
 
     public final void consumeLocalTimeRequest(SuplaWriter writer) {
@@ -1198,6 +1207,12 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler
     @GuidLogged
     @Override
     public void socketException(Throwable exception) {
+        if (isSleepModeEnabled()
+                && (exception instanceof ReadTimeoutException || exception instanceof SocketException)) {
+            logger.debug("Sleep device connection ended: {}", exception.toString());
+            inactive();
+            return;
+        }
         var text =
                 switch (exception) {
                     case ReadTimeoutException readTimeoutException -> {
