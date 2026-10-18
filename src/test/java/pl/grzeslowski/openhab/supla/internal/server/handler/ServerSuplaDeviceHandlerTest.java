@@ -2,14 +2,14 @@ package pl.grzeslowski.openhab.supla.internal.server.handler;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.nullable;
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 import static pl.grzeslowski.jsupla.protocol.api.CalCfgCommand.SUPLA_CALCFG_CMD_CHECK_FIRMWARE_UPDATE;
 import static pl.grzeslowski.jsupla.protocol.api.CalCfgResult.SUPLA_CALCFG_RESULT_DONE;
 import static pl.grzeslowski.jsupla.protocol.api.CalCfgResult.SUPLA_CALCFG_RESULT_NOT_SUPPORTED;
 import static pl.grzeslowski.jsupla.protocol.api.ChannelFunction.SUPLA_CHANNELFNC_CONTROLLINGTHEROLLERSHUTTER;
 import static pl.grzeslowski.jsupla.protocol.api.ChannelType.SUPLA_CHANNELTYPE_DIMMER;
+import static pl.grzeslowski.jsupla.protocol.api.ChannelType.SUPLA_CHANNELTYPE_HUMIDITYANDTEMPSENSOR;
 import static pl.grzeslowski.jsupla.protocol.api.FirmwareCheckResultCode.*;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ServerDevicesProperties.MANUFACTURER_ID_PROPERTY;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ServerDevicesProperties.OTA_CHANGELOG_URL_PROPERTY;
@@ -30,7 +30,10 @@ import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.Server
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ServerDevicesProperties.SOFTWARE_UPDATE_URL_PROPERTY;
 import static pl.grzeslowski.openhab.supla.internal.SuplaBindingConstants.ServerDevicesProperties.SOFTWARE_UPDATE_VERSION_PROPERTY;
 
+import io.netty.handler.timeout.ReadTimeoutException;
+import java.net.SocketException;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -38,23 +41,42 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mockito;
 import org.openhab.core.i18n.TimeZoneProvider;
+import org.openhab.core.library.types.DecimalType;
+import org.openhab.core.thing.ChannelUID;
 import org.openhab.core.thing.Thing;
+import org.openhab.core.thing.ThingStatus;
+import org.openhab.core.thing.ThingStatusDetail;
+import org.slf4j.Logger;
 import pl.grzeslowski.jsupla.protocol.api.BitFunction;
 import pl.grzeslowski.jsupla.protocol.api.ChannelFlag;
+import pl.grzeslowski.jsupla.protocol.api.DeviceFlag;
 import pl.grzeslowski.jsupla.protocol.api.SuplaProducts;
 import pl.grzeslowski.jsupla.protocol.api.encoders.FirmwareCheckResultEncoder;
 import pl.grzeslowski.jsupla.protocol.api.structs.FirmwareCheckResult;
 import pl.grzeslowski.jsupla.protocol.api.structs.ds.DeviceCalCfgResult;
+import pl.grzeslowski.jsupla.protocol.api.structs.ds.SuplaDeviceChannelValueC;
+import pl.grzeslowski.jsupla.server.SuplaWriteFuture;
+import pl.grzeslowski.jsupla.server.SuplaWriter;
 import pl.grzeslowski.openhab.supla.actions.SuplaServerConfigModeActions;
 import pl.grzeslowski.openhab.supla.actions.SuplaServerDeviceConfigActions;
 import pl.grzeslowski.openhab.supla.actions.SuplaServerElectricityMeterActions;
 import pl.grzeslowski.openhab.supla.actions.SuplaServerFirmwareUpdateActions;
+import pl.grzeslowski.openhab.supla.internal.server.netty.OpenHabMessageHandler;
+import pl.grzeslowski.openhab.supla.internal.server.oh_config.AuthData;
+import pl.grzeslowski.openhab.supla.internal.server.oh_config.DeviceConfiguration;
+import pl.grzeslowski.openhab.supla.internal.server.oh_config.TimeoutConfiguration;
 import pl.grzeslowski.openhab.supla.internal.server.traits.DeviceChannel;
 import pl.grzeslowski.openhab.supla.internal.server.traits.RegisterEmailDeviceTrait;
+import pl.grzeslowski.openhab.supla.internal.server.traits.SuplaDevice;
 import pl.grzeslowski.openhab.supla.internal.updates.SuplaUpdatesClient;
 
 class ServerSuplaDeviceHandlerTest {
@@ -78,6 +100,208 @@ class ServerSuplaDeviceHandlerTest {
             return properties.put(key, value);
         });
         handler = new TestServerSuplaDeviceHandler(thing, TIME_ZONE_PROVIDER);
+    }
+
+    @ParameterizedTest
+    @MethodSource("sleepDisconnects")
+    void shouldTreatSleepingDeviceSocketDisconnectAsSleep(Throwable exception) throws Exception {
+        prepareLifecycle(true);
+        var connection = mock(OpenHabMessageHandler.class);
+        setHandlerField("handler", connection);
+        var writer = mock(SuplaWriter.class);
+        handler.active(writer);
+
+        handler.socketException(exception);
+
+        assertThat(handler.isSleeping()).isTrue();
+        assertThat(handler.getWriter().get()).isNull();
+        verify(connection).clear();
+        verify(handler, never()).updateStatus(eq(ThingStatus.OFFLINE), any(), any());
+        verify(handler.getLogger(), never()).warn(anyString());
+        verify(handler.getLogger(), never()).warn(anyString(), any(Object.class));
+    }
+
+    private static Stream<Throwable> sleepDisconnects() {
+        return Stream.of(ReadTimeoutException.INSTANCE, new SocketException("Connection reset"));
+    }
+
+    @Test
+    void shouldWakeAndSleepRepeatedlyWithoutLosingCachedState() throws Exception {
+        prepareLifecycle(true);
+        var channelUid = new ChannelUID("supla:server-device:guid:0#temperature");
+        var state = new DecimalType(21);
+        handler.saveState(channelUid, state, Duration.ofMinutes(1));
+        try {
+            for (int cycle = 0; cycle < 3; cycle++) {
+                handler.active(mock(SuplaWriter.class));
+                handler.register(registration(true), mock(OpenHabMessageHandler.class));
+                handler.handle(new SuplaDeviceChannelValueC((short) 0, (short) 0, 60L, new byte[8]));
+                assertThat(handler.isSleeping()).isFalse();
+
+                handler.socketException(ReadTimeoutException.INSTANCE);
+                handler.inactive();
+
+                assertThat(handler.isSleeping()).isTrue();
+                assertThat(handler.getWriter().get()).isNull();
+                assertThat(handler.findState(channelUid)).contains(state);
+            }
+            verify(handler.getLogger(), never()).warn(anyString());
+            verify(handler.getLogger(), never()).warn(anyString(), any(), any());
+            verify(handler.getLogger(), never()).error(anyString(), any(Throwable.class));
+        } finally {
+            handler.dispose();
+        }
+    }
+
+    @Test
+    void shouldStillReportNormalDeviceSocketTimeout() throws Exception {
+        prepareLifecycle(false);
+
+        handler.socketException(ReadTimeoutException.INSTANCE);
+
+        verify(handler).updateStatus(eq(ThingStatus.OFFLINE), eq(ThingStatusDetail.COMMUNICATION_ERROR), anyString());
+        assertThat(handler.isSleeping()).isFalse();
+    }
+
+    @Test
+    void shouldReplacePreviousConnectionQuietlyAndRestartPing() throws Exception {
+        prepareLifecycle(true);
+        var oldConnection = mock(OpenHabMessageHandler.class);
+        var newConnection = mock(OpenHabMessageHandler.class);
+        setHandlerField("handler", oldConnection);
+        var writer = mock(SuplaWriter.class);
+        handler.active(writer);
+        try {
+            handler.register(registration(true), newConnection);
+
+            verify(oldConnection).clear();
+            assertThat(handler.getWriter().get()).isSameAs(writer);
+            assertThat(handler.isSleeping()).isFalse();
+            verify(handler.getLogger(), never()).warn(anyString(), any(), any());
+        } finally {
+            handler.dispose();
+        }
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void shouldReceiveDataAfterPingExpiredWithoutWarnings(boolean sleepEnabled) throws Exception {
+        prepareLifecycle(sleepEnabled);
+        handler.active(mock(SuplaWriter.class));
+        var currentTime = new AtomicReference<>(Instant.parse("2026-10-18T12:00:00Z"));
+        try (var clock = mockStatic(Instant.class, CALLS_REAL_METHODS)) {
+            clock.when(Instant::now).thenAnswer(__ -> currentTime.get());
+            handler.register(registration(sleepEnabled), mock(OpenHabMessageHandler.class));
+            var ping = devicePing();
+            currentTime.set(currentTime.get().plusSeconds(61));
+            checkPing();
+            assertThat(ping.isRunning()).isFalse();
+
+            handler.handle(new SuplaDeviceChannelValueC((short) 0, (short) 0, 60L, new byte[8]));
+
+            verify(handler).updateStatus(ThingStatus.ONLINE);
+            verify(handler.getLogger(), never()).error(anyString(), any(Throwable.class));
+            assertThat(ping.isRunning()).isTrue();
+        } finally {
+            handler.dispose();
+        }
+    }
+
+    @Test
+    void shouldPreserveSleepValidityDuringActivityTimeoutNegotiation() throws Exception {
+        prepareLifecycle(true);
+        var writer = mock(SuplaWriter.class);
+        when(writer.write(any())).thenReturn(mock(SuplaWriteFuture.class));
+        handler.active(writer);
+        var currentTime = new AtomicReference<>(Instant.parse("2026-10-18T12:00:00Z"));
+        try (var clock = mockStatic(Instant.class, CALLS_REAL_METHODS)) {
+            clock.when(Instant::now).thenAnswer(__ -> currentTime.get());
+            handler.register(registration(true), mock(OpenHabMessageHandler.class));
+            handler.consumeSuplaSetActivityTimeout((short) 10, writer);
+            handler.inactive();
+            clearInvocations(handler);
+
+            currentTime.set(currentTime.get().plusSeconds(30));
+            checkPing();
+
+            assertThat(devicePing().isRunning()).isTrue();
+            assertThat(handler.isSleeping()).isTrue();
+            verify(handler, never()).updateStatus(eq(ThingStatus.OFFLINE), any(), any());
+
+            currentTime.set(currentTime.get().plusSeconds(31));
+            checkPing();
+
+            assertThat(devicePing().isRunning()).isFalse();
+            verify(handler)
+                    .updateStatus(eq(ThingStatus.OFFLINE), eq(ThingStatusDetail.COMMUNICATION_ERROR), anyString());
+        } finally {
+            handler.dispose();
+        }
+    }
+
+    private void prepareLifecycle(boolean sleepEnabled) throws Exception {
+        handler = mock(
+                TestServerSuplaDeviceHandler.class,
+                withSettings().useConstructor(thing, TIME_ZONE_PROVIDER).defaultAnswer(CALLS_REAL_METHODS));
+        when(thing.getProperties()).thenAnswer(__ -> Map.copyOf(properties));
+        handler.logger = mock(Logger.class);
+        setHandlerField("guid", "guid");
+        doNothing().when(handler).updateStatus(any(ThingStatus.class));
+        doNothing()
+                .when(handler)
+                .updateStatus(any(ThingStatus.class), any(ThingStatusDetail.class), nullable(String.class));
+        setHandlerField("suplaDevice", SuplaDevice.of(registration(sleepEnabled)));
+        setHandlerField(
+                "deviceConfiguration",
+                new DeviceConfiguration(
+                        new TimeoutConfiguration(10, 8, 12),
+                        new AuthData(null, new AuthData.EmailAuthData("test@example.org", ""))));
+    }
+
+    private RegisterEmailDeviceTrait registration(boolean sleepEnabled) {
+        var channel = new DeviceChannel(
+                0,
+                false,
+                SUPLA_CHANNELTYPE_HUMIDITYANDTEMPSENSOR,
+                Set.of(),
+                null,
+                Set.of(),
+                new byte[8],
+                null,
+                null,
+                null,
+                60L,
+                Set.of(),
+                0);
+        return new RegisterEmailDeviceTrait(
+                "guid",
+                "THW-01",
+                "1.0",
+                null,
+                null,
+                sleepEnabled ? Set.of(DeviceFlag.SUPLA_DEVICE_FLAG_SLEEP_MODE_ENABLED) : Set.of(),
+                List.of(channel),
+                "test@example.org",
+                new byte[0],
+                "server");
+    }
+
+    private Ping devicePing() throws Exception {
+        var field = ServerSuplaDeviceHandler.class.getDeclaredField("ping");
+        field.setAccessible(true);
+        return (Ping) field.get(handler);
+    }
+
+    private void checkPing() throws Exception {
+        var check = Ping.class.getDeclaredMethod("checkIfDeviceIsUp");
+        check.setAccessible(true);
+        check.invoke(devicePing());
+    }
+
+    private void setHandlerField(String name, Object value) throws Exception {
+        var field = ServerSuplaDeviceHandler.class.getDeclaredField(name);
+        field.setAccessible(true);
+        field.set(handler, value);
     }
 
     @Test
