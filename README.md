@@ -183,6 +183,8 @@ Use the action scope matching the action group:
 - `supla-config-mode` for Enter Device Config Mode
 - `supla-firmware-update` for Firmware Update Actions
 
+Native devices that report thermal protection or input activation settings expose their values as thing properties.
+
 ### Set Device Config
 
 Set Device Config action allows to send new configuration to the given device.
