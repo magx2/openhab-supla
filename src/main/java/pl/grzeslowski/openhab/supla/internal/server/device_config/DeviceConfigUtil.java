@@ -286,6 +286,23 @@ public class DeviceConfigUtil {
                                 .orElse("UNKNOWN"));
                 yield new DecodeResult(values, decode.protoSize());
             }
+            case SUPLA_DEVICE_CONFIG_FIELD_THERMAL_PROTECTION -> {
+                var decode = ThermalProtectionDecoder.INSTANCE.decode(config, offset);
+                var values = Map.of(
+                        field.name() + "_THRESHOLD", String.valueOf(decode.threshold()),
+                        field.name() + "_MIN_THRESHOLD", String.valueOf(decode.minThreshold()),
+                        field.name() + "_MAX_THRESHOLD", String.valueOf(decode.maxThreshold()),
+                        field.name() + "_ENABLED", Boolean.toString(decode.enabled() != 0),
+                        field.name() + "_DISABLE_ALLOWED", Boolean.toString(decode.disableAllowed() != 0));
+                yield new DecodeResult(values, decode.protoSize());
+            }
+            case SUPLA_DEVICE_CONFIG_FIELD_INPUT_ACTIVATION -> {
+                var decode = InputActivationDecoder.INSTANCE.decode(config, offset);
+                var values = Map.of(
+                        field.name() + "_AVAILABLE_MODES", String.valueOf(decode.availableModes()),
+                        field.name() + "_MODE", String.valueOf(decode.mode()));
+                yield new DecodeResult(values, decode.protoSize());
+            }
         };
     }
 

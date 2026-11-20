@@ -1144,8 +1144,8 @@ public abstract class ServerSuplaDeviceHandler extends SuplaDeviceHandler
             return;
         }
         var actionChannel = actionChannels.get(channelNumber);
-        var configProto =
-                new ChannelConfigActionTrigger(Capabilities.toMask(actionChannel.actionTrigger.capabilities()));
+        var configProto = new ChannelConfigActionTrigger(
+                Capabilities.toMask(actionChannel.actionTrigger.capabilities()), 0, (short) 0, null, new short[3]);
         var config = ChannelConfigActionTriggerEncoder.INSTANCE.encode(configProto);
         var channelConfig = new ChannelConfig(
                 (short) channelNumber,
